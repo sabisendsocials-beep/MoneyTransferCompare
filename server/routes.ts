@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { transferRequestSchema } from "@shared/schema";
 import { updateExchangeRates, ensureProvidersExist } from "./scrapers/providers";
 import { updateFinancialNews } from "./scrapers/news";
+import { initializeDatabase } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api

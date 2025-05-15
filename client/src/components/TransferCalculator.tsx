@@ -147,29 +147,18 @@ const TransferCalculator = ({ onCompare }: CalculatorProps) => {
   const currentRate = getExchangeRate(fromCurrency, toCurrency);
 
   const swapCurrencies = () => {
-    // Check if the currencies can be swapped (they must be in the respective available lists)
-    const canSwapFrom = receiveCurrencies.some(c => c.code === fromCurrency);
-    const canSwapTo = sendCurrencies.some(c => c.code === toCurrency);
+    // Instead of swapping currencies, toggle between 'send' and 'receive' tabs
+    setActiveTab(activeTab === 'send' ? 'receive' : 'send');
     
-    if (canSwapFrom && canSwapTo) {
-      const tempCurrency = fromCurrency;
-      setFromCurrency(toCurrency);
-      setToCurrency(tempCurrency);
-      
-      // Also swap the amounts
-      if (activeTab === 'send') {
-        const newReceiveAmount = Math.round(sendAmount * getExchangeRate(toCurrency, tempCurrency));
-        setReceiveAmount(newReceiveAmount);
-      } else {
-        const newSendAmount = parseFloat((receiveAmount / getExchangeRate(toCurrency, tempCurrency)).toFixed(2));
-        setSendAmount(newSendAmount);
-      }
+    // Recalculate the amounts based on the new active tab
+    if (activeTab === 'send') {
+      // Switching to 'receive' tab
+      const newSendAmount = parseFloat((receiveAmount / currentRate).toFixed(2));
+      setSendAmount(newSendAmount);
     } else {
-      toast({
-        title: "Cannot swap currencies",
-        description: "This currency combination cannot be swapped.",
-        variant: "destructive",
-      });
+      // Switching to 'send' tab
+      const newReceiveAmount = Math.round(sendAmount * currentRate);
+      setReceiveAmount(newReceiveAmount);
     }
   };
 
