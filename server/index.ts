@@ -38,6 +38,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize database tables
+  try {
+    log("Initializing database...");
+    await initializeDatabase();
+    log("Database initialized successfully");
+  } catch (error) {
+    log(`Failed to initialize database: ${error}`);
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
