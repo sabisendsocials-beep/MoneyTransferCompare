@@ -243,7 +243,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">
-                            1 {fromCurrency} = {bestProvider.exchangeRate.toLocaleString()} {toCurrency}
+                            1 {fromCurrency} = {bestProvider.exchangeRate?.toLocaleString() || '-'} {toCurrency}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
@@ -278,14 +278,14 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
               {otherProviders.map((provider, index) => {
                 const details = getProviderDetails(provider);
                 return (
-                  <Card key={provider.provider_id} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
+                  <Card key={provider.providerId} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
                     <div className="border-b p-4 flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="w-12 h-12 bg-white p-2 rounded-lg shadow-sm flex items-center justify-center mr-3">
-                          {provider.provider_logo || providerLogos[provider.provider_name] ? (
+                          {provider.providerLogo || providerLogos[provider.providerName] ? (
                             <img
-                              src={provider.provider_logo || providerLogos[provider.provider_name]}
-                              alt={`${provider.provider_name} Logo`}
+                              src={provider.providerLogo || providerLogos[provider.providerName]}
+                              alt={`${provider.providerName} Logo`}
                               className="max-h-8 max-w-full object-contain"
                             />
                           ) : (
@@ -295,7 +295,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           )}
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-800 dark:text-white">{provider.provider_name}</h3>
+                          <h3 className="font-medium text-gray-800 dark:text-white">{provider.providerName}</h3>
                           {renderStars(provider.rating)}
                         </div>
                       </div>
@@ -314,10 +314,10 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Recipient gets</p>
-                          <p className="font-semibold">{formatCurrency(provider.received_amount, toCurrency)}</p>
+                          <p className="font-semibold">{formatCurrency(provider.receivedAmount, toCurrency)}</p>
                           <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
                             <Clock className="h-3 w-3 mr-1" />
-                            {provider.transfer_time || "Unknown"}
+                            {provider.transferTime || "Unknown"}
                           </div>
                         </div>
                       </div>
