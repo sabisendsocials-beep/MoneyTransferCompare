@@ -414,7 +414,8 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       Fee
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Exchange Rate
+                      Exchange Rate<br/>
+                      <span className="font-normal text-gray-400 normal-case text-[10px]">Including timestamp</span>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Recipient Gets
@@ -467,7 +468,18 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          1 {fromCurrency} = {provider.exchangeRate?.toLocaleString() || '-'} {toCurrency}
+                          <div>1 {fromCurrency} = {provider.exchangeRate?.toFixed(2) || '-'} {toCurrency}</div>
+                          <div className="mt-1 text-xs bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span className="font-medium">
+                              {provider.lastUpdated ? new Date(provider.lastUpdated).toLocaleString('en-GB', {
+                                month: 'short', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : 'Unknown'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {index === 0 ? (
