@@ -201,7 +201,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Transfer amount</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {formatCurrency(bestProvider.send_amount, fromCurrency)}
+                            {formatCurrency(bestProvider.sendAmount, fromCurrency)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
@@ -235,7 +235,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         </div>
                         <div className="flex items-baseline">
                           <span className="text-2xl font-bold text-green-500">
-                            {formatCurrency(bestProvider.received_amount, toCurrency)}
+                            {formatCurrency(bestProvider.receivedAmount, toCurrency)}
                           </span>
                         </div>
                       </div>
@@ -243,14 +243,14 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">
-                            1 {fromCurrency} = {bestProvider.exchange_rate.toLocaleString()} {toCurrency}
+                            1 {fromCurrency} = {bestProvider.exchangeRate.toLocaleString()} {toCurrency}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Transfer time</span>
                           <div className="flex items-center text-gray-800 dark:text-gray-200">
                             <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-                            <span className="font-medium">{bestProvider.transfer_time || "Unknown"}</span>
+                            <span className="font-medium">{bestProvider.transferTime || "Unknown"}</span>
                           </div>
                         </div>
                       </div>
@@ -265,7 +265,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                   </div>
                   <Button 
                     className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white px-8"
-                    onClick={() => window.open(bestProvider.website_url || '#', '_blank')}
+                    onClick={() => window.open(bestProvider.websiteUrl || '#', '_blank')}
                   >
                     Go to provider
                   </Button>
