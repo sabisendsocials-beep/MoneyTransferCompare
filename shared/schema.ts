@@ -91,17 +91,17 @@ export type TransferRequest = z.infer<typeof transferRequestSchema>;
 
 // Schema for comparison results
 export const transferResultSchema = z.object({
-  providerId: z.number(),
-  providerName: z.string(),
-  providerLogo: z.string().nullable().optional(),
+  provider_id: z.number(),
+  provider_name: z.string(),
+  provider_logo: z.string().nullable().optional(),
   rating: z.number().nullable().optional(),
-  exchangeRate: z.number(),
+  exchange_rate: z.number(),
   fee: z.number(),
-  receivedAmount: z.number(),
-  sendAmount: z.number(),
-  transferTime: z.string().nullable().optional(),
-  totalCost: z.number(),
-  websiteUrl: z.string().nullable().optional(),
+  received_amount: z.number(),
+  send_amount: z.number(),
+  transfer_time: z.string().nullable().optional(),
+  total_cost: z.number(),
+  website_url: z.string().nullable().optional(),
 });
 
 export type TransferResult = z.infer<typeof transferResultSchema>;

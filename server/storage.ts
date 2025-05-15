@@ -399,26 +399,26 @@ export class MemStorage implements IStorage {
         }
         
         results.push({
-          providerId: provider.id,
-          providerName: provider.name,
-          providerLogo: provider.logo || null,
+          provider_id: provider.id,
+          provider_name: provider.name,
+          provider_logo: provider.logo || null,
           rating: provider.rating || null,
-          exchangeRate,
+          exchange_rate: exchangeRate,
           fee,
-          receivedAmount,
-          sendAmount,
-          transferTime: provider.transfer_time || null,
-          totalCost: fee + (type === 'send' ? amount * percentageFee / 100 : sendAmount * percentageFee / 100),
-          websiteUrl: provider.website_url || null
+          received_amount: receivedAmount,
+          send_amount: sendAmount,
+          transfer_time: provider.transfer_time || null,
+          total_cost: fee + (type === 'send' ? amount * percentageFee / 100 : sendAmount * percentageFee / 100),
+          website_url: provider.website_url || null
         });
       }
     }
     
     // Sort results by best deal (highest received amount for 'send' or lowest send amount for 'receive')
     if (type === 'send') {
-      results.sort((a, b) => b.receivedAmount - a.receivedAmount);
+      results.sort((a, b) => b.received_amount - a.received_amount);
     } else {
-      results.sort((a, b) => a.sendAmount - b.sendAmount);
+      results.sort((a, b) => a.send_amount - b.send_amount);
     }
     
     return results;
