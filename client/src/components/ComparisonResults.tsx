@@ -277,20 +277,18 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
                           <div className="text-right">
                             <span className="font-medium text-gray-800 dark:text-gray-200">
-                              1 {fromCurrency} = {bestProvider.exchangeRate?.toLocaleString() || '-'} {toCurrency}
+                              1 {fromCurrency} = {bestProvider.exchangeRate?.toFixed(2) || '-'} {toCurrency}
                             </span>
-                            <div className="text-xs text-gray-500 flex items-center justify-end mt-1">
+                            <div className="text-xs flex items-center justify-end mt-1 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
                               <Clock className="h-3 w-3 mr-1" />
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger className="text-xs">
-                                    Updated {formatLastUpdated(bestProvider.lastUpdated)}
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p className="max-w-xs text-xs">Rates are sourced directly from provider websites when possible</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <span className="font-medium">
+                                Rate from {bestProvider.lastUpdated ? new Date(bestProvider.lastUpdated).toLocaleString('en-GB', {
+                                  month: 'short', 
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : 'Unknown'}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -372,19 +370,17 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
                         <div className="text-right">
-                          <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toLocaleString(undefined, {maximumFractionDigits: 2}) || '-'} {toCurrency}</span>
-                          <div className="flex items-center justify-end mt-1">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="flex items-center text-xs text-gray-500">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Updated {formatLastUpdated(provider.lastUpdated)}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="max-w-xs text-xs">Rates are sourced directly from provider websites when possible</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                          <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toFixed(2) || '-'} {toCurrency}</span>
+                          <div className="flex items-center justify-end mt-1 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 text-xs">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span className="font-medium">
+                              Rate from {provider.lastUpdated ? new Date(provider.lastUpdated).toLocaleString('en-GB', {
+                                month: 'short', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : 'Unknown'}
+                            </span>
                           </div>
                         </div>
                       </div>
