@@ -17,7 +17,7 @@ function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency =
     case 'Remitly':
       return `https://www.remitly.com/gb/en/nigeria/pricing`;
     case 'WorldRemit':
-      return `https://www.worldremit.com/en/currency-converter`;
+      return `https://www.worldremit.com/en/gbp-to-ngn-exchange-rate`;
     case 'Azimo':
       return `https://azimo.com/en/exchange-rates`;
     case 'TorFX':
@@ -49,7 +49,7 @@ function getScrapingSelector(providerName: string): string | null {
     case 'Remitly':
       return '.exchange-rate-display, .rate-calculator-result';
     case 'WorldRemit':
-      return '.converter-result, .text-amount-default, .exchange-rate';
+      return '.exchange-rate-value, .converter-result, .text-amount-default, .exchange-rate, [data-testid="rateValue"]';
     case 'Azimo':
       return '.rate-display, .currency-converter-result';
     case 'TorFX':
@@ -314,14 +314,12 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             if (rateText) {
               const rate = extractExchangeRate(rateText, provider.name);
               
-              // Validate the rate is within a reasonable range for GBP to NGN
-              // Typically around 1500-1600 as of 2024-2025
-              const isValidRate = rate && (
-                // For GBP to NGN, should be around 1500-1600
-                (rate >= 1400 && rate <= 1700) ||
-                // For Nala, they sometimes return rates around 1000 (actual rate is approximately 1568)
-                (provider.name === 'Nala' && rate >= 900 && rate <= 1700)
-              );
+              // Only validate that the rate is positive - don't restrict to a narrow range
+              // since exchange rates can vary significantly
+              const isValidRate = rate && rate > 0;
+              
+              // Log the rate for debugging
+              console.log(`Extracted rate for ${provider.name}: ${rate}, Valid: ${isValidRate}`);
               
               if (isValidRate) {
                 const rateData: InsertExchangeRate = {
