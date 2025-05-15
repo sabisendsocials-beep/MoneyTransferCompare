@@ -323,7 +323,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       </div>
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
-                        <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchange_rate.toLocaleString()} {toCurrency}</span>
+                        <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toLocaleString() || '-'} {toCurrency}</span>
                       </div>
                       <Button 
                         variant="outline" 
@@ -408,7 +408,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          1 {fromCurrency} = {provider.exchange_rate.toLocaleString()} {toCurrency}
+                          1 {fromCurrency} = {provider.exchangeRate?.toLocaleString() || '-'} {toCurrency}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {index === 0 ? (
