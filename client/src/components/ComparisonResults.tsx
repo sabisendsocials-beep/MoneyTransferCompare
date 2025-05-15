@@ -370,7 +370,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
                         <div className="text-right">
-                          <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toLocaleString() || '-'} {toCurrency}</span>
+                          <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toLocaleString(undefined, {maximumFractionDigits: 2}) || '-'} {toCurrency}</span>
                           <div className="flex items-center justify-end mt-1">
                             <TooltipProvider>
                               <Tooltip>
