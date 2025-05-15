@@ -574,6 +574,17 @@ export class MemStorage implements IStorage {
     // For now, in the in-memory version, we'll just log them
     console.log(`Updated ${trends.length} trend data points for ${fromCurrency}/${toCurrency}`);
   }
+  
+  async deleteAllProviders(): Promise<void> {
+    // Clear the providers map
+    this.providers.clear();
+    // Reset the ID counter
+    this.currentProviderId = 1;
+    // Clear the exchange rates related to these providers
+    this.exchangeRates = [];
+    
+    console.log('All in-memory providers and their exchange rates have been deleted');
+  }
 }
 
 import { DatabaseStorage } from './databaseStorage';

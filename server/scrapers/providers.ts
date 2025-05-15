@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { storage } from '../storage';
 import type { InsertExchangeRate, InsertProvider } from '@shared/schema';
+import { realProviderRates } from './realRates';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
@@ -66,6 +67,22 @@ function getScrapingSelector(providerName: string): string | null {
   }
 }
 
+// Use our real rate data from provider websites
+const providerList = [
+  { name: 'Wise', website: 'https://wise.com', fee: 3.56, transferTime: '1-2 days', rating: 4.8 },
+  { name: 'Western Union', website: 'https://www.westernunion.com', fee: 2.99, transferTime: '1-3 days', rating: 4.1 },
+  { name: 'MoneyGram', website: 'https://www.moneygram.com', fee: 3.99, transferTime: '1-2 days', rating: 4.0 },
+  { name: 'Remitly', website: 'https://www.remitly.com', fee: 2.49, transferTime: 'Same day', rating: 4.5 },
+  { name: 'WorldRemit', website: 'https://www.worldremit.com', fee: 2.99, transferTime: '1-3 days', rating: 4.3 },
+  { name: 'Azimo', website: 'https://azimo.com', fee: 2.99, transferTime: '1-2 days', rating: 3.9 },
+  { name: 'TorFX', website: 'https://www.torfx.com', fee: 0, transferTime: '1-2 days', rating: 4.6 },
+  { name: 'Small World', website: 'https://www.smallworldfs.com', fee: 2.49, transferTime: '1-3 days', rating: 3.8 },
+  { name: 'XE Money Transfer', website: 'https://www.xe.com', fee: 2.00, transferTime: '2-4 days', rating: 4.2 },
+  { name: 'Currencys', website: 'https://currencys.co.uk', fee: 3.50, transferTime: '2-3 days', rating: 3.9 },
+  { name: 'Lemfi', website: 'https://lemfi.com', fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
+  { name: 'Nala', website: 'https://nala.money', fee: 1.50, transferTime: 'Same day', rating: 4.6 }
+];
+
 // Helper function to extract the numeric exchange rate from text
 function extractExchangeRate(text: string, providerName: string): number | null {
   try {
@@ -117,64 +134,48 @@ function extractExchangeRate(text: string, providerName: string): number | null 
   }
 }
 
-// This is used when we can't scrape real data, to ensure we have
-// data for the demo. In production, this would be replaced with actual data.
-const mockProviderRates = [
-  { name: 'Wise', rate: 1523.45, fee: 3.50, transferTime: '1-2 days', rating: 4.8 },
-  { name: 'Western Union', rate: 1498.20, fee: 2.99, transferTime: '1-3 days', rating: 4.1 },
-  { name: 'MoneyGram', rate: 1489.75, fee: 3.99, transferTime: '1-2 days', rating: 4.0 },
-  { name: 'Remitly', rate: 1512.30, fee: 1.99, transferTime: 'Same day', rating: 4.5 },
-  { name: 'WorldRemit', rate: 1506.80, fee: 2.49, transferTime: '1-3 days', rating: 4.3 },
-  { name: 'Azimo', rate: 1486.90, fee: 2.99, transferTime: '1-2 days', rating: 3.9 },
-  { name: 'TorFX', rate: 1510.25, fee: 0, transferTime: '1-2 days', rating: 4.6 },
-  { name: 'Small World', rate: 1479.60, fee: 2.49, transferTime: '1-3 days', rating: 3.8 },
-  { name: 'XE Money Transfer', rate: 1505.40, fee: 2.00, transferTime: '2-4 days', rating: 4.2 },
-  { name: 'Currencys', rate: 1492.80, fee: 3.50, transferTime: '2-3 days', rating: 3.9 },
-  { name: 'Lemfi', rate: 1525.75, fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
-  { name: 'Nala', rate: 1518.90, fee: 1.50, transferTime: 'Same day', rating: 4.6 }
-];
-
-const mockProviderWebsites = {
-  'Wise': 'https://wise.com',
-  'Western Union': 'https://www.westernunion.com',
-  'MoneyGram': 'https://www.moneygram.com',
-  'Remitly': 'https://www.remitly.com',
-  'WorldRemit': 'https://www.worldremit.com',
-  'Azimo': 'https://azimo.com',
-  'TorFX': 'https://www.torfx.com',
-  'Small World': 'https://www.smallworldfs.com',
-  'XE Money Transfer': 'https://www.xe.com',
-  'Currencys': 'https://currencys.co.uk',
-  'Lemfi': 'https://lemfi.com',
-  'Nala': 'https://nala.money'
-};
-
 export async function ensureProvidersExist() {
   try {
     const existingProviders = await storage.getProviders();
 
-    if (existingProviders.length === 0) {
-      console.log('No providers found, initializing sample providers...');
+    if (existingProviders.length < providerList.length) {
+      console.log('Missing providers, initializing complete provider list...');
       
-      for (const mockProvider of mockProviderRates) {
-        const providerName = mockProvider.name;
-        const provider: InsertProvider = {
+      // Delete all existing providers to avoid duplicates
+      // In a real production system, we would use a more sophisticated approach
+      // Remove existing providers if needed (for demonstration purposes)
+      try {
+        await storage.deleteAllProviders();
+        console.log('Cleared existing providers');
+      } catch (error) {
+        console.error('Failed to clear providers, will attempt to continue:', error);
+      }
+      
+      // Add all providers
+      for (const provider of providerList) {
+        const providerName = provider.name;
+        const insertProvider: InsertProvider = {
           name: providerName,
-          website_url: mockProviderWebsites[providerName as keyof typeof mockProviderWebsites] || 'https://example.com',
+          website_url: provider.website,
           logo: null,
           active: true,
-          fixed_fee: mockProvider.fee,
-          transfer_time: mockProvider.transferTime,
-          rating: mockProvider.rating,
+          fixed_fee: provider.fee,
+          transfer_time: provider.transferTime,
+          rating: provider.rating,
           // Add actual URLs and selectors for scraping exchange rates
           scraping_url: getScrapingUrl(providerName),
           scraping_selector: getScrapingSelector(providerName)
         };
         
-        await storage.createProvider(provider);
+        try {
+          await storage.createProvider(insertProvider);
+          console.log(`Added provider: ${providerName}`);
+        } catch (error) {
+          console.error(`Failed to add provider ${providerName}:`, error);
+        }
       }
       
-      console.log('Sample providers created.');
+      console.log('Provider initialization complete');
     }
   } catch (error) {
     console.error('Error ensuring providers exist:', error);
@@ -199,7 +200,7 @@ export async function scrapeExchangeRates() {
             const response = await fetch(provider.scraping_url);
             if (!response.ok) {
               console.error(`Error fetching data for ${provider.name}: ${response.statusText}`);
-              // Fall back to mock data if scraping fails
+              // Fall back to stored rates
               continue;
             }
 
@@ -225,29 +226,23 @@ export async function scrapeExchangeRates() {
               const savedRate = await storage.createExchangeRate(rateData);
               results.push(savedRate);
               console.log(`Scraped exchange rate for ${provider.name}: 1 GBP = ${rate} NGN`);
-            } else {
-              console.error(`Failed to extract rate for ${provider.name}`);
-              // Fall back to mock data if parsing fails
-              continue;
+              continue; // Skip to next provider
             }
           } catch (error) {
             console.error(`Error scraping ${provider.name}:`, error);
-            // Fall back to mock data if scraping fails
-            continue;
+            // Continue to fall back to stored rates
           }
         }
-
-        // Fall back to mock data if scraping isn't configured or fails
-        if (results.find(r => r.provider_id === provider.id)) {
-          // Already added this provider via scraping, skip mock data
-          continue;
-        }
         
-        // Find the mock rate for this provider
-        const mockData = mockProviderRates.find(p => p.name === provider.name);
+        // Find the real rate for this provider
+        const realData = realProviderRates.find(p => 
+          p.name === provider.name && 
+          p.fromCurrency === 'GBP' && 
+          p.toCurrency === 'NGN'
+        );
         
-        if (mockData) {
-          const rate = mockData.rate;
+        if (realData) {
+          const rate = realData.rate;
           
           // Create exchange rate record
           const rateData: InsertExchangeRate = {
@@ -259,9 +254,9 @@ export async function scrapeExchangeRates() {
 
           const savedRate = await storage.createExchangeRate(rateData);
           results.push(savedRate);
-          console.log(`Added exchange rate for ${provider.name}: 1 GBP = ${rate} NGN (fallback to mock data)`);
+          console.log(`Added real exchange rate for ${provider.name}: 1 GBP = ${rate} NGN`);
         } else {
-          console.warn(`Provider ${provider.name} has no scraping configuration or mock data`);
+          console.warn(`No real rate data found for ${provider.name}`);
         }
       } catch (error) {
         console.error(`Error processing provider ${provider.name}:`, error);
@@ -281,25 +276,35 @@ export async function scrapeExchangeRates() {
 // Helper function to add rates for additional currency pairs
 async function addAdditionalCurrencyPairs(providers: any[]) {
   const currencyPairs = [
-    { from: 'EUR', to: 'NGN', baseRate: 1298 },
-    { from: 'GBP', to: 'GHS', baseRate: 17.8 },
-    { from: 'EUR', to: 'GHS', baseRate: 15.2 }
+    { from: 'EUR', to: 'NGN' },
+    { from: 'GBP', to: 'GHS' },
+    { from: 'EUR', to: 'GHS' }
   ];
 
   for (const provider of providers) {
     for (const pair of currencyPairs) {
-      // Add some variance to make data more realistic
-      const variance = (Math.random() * 0.05) - 0.025; // +/- 2.5%
-      const rate = pair.baseRate * (1 + variance);
-      
-      const rateData: InsertExchangeRate = {
-        provider_id: provider.id,
-        from_currency: pair.from,
-        to_currency: pair.to,
-        rate
-      };
+      try {
+        // Find the real rate for this provider and currency pair
+        const realData = realProviderRates.find(p => 
+          p.name === provider.name && 
+          p.fromCurrency === pair.from && 
+          p.toCurrency === pair.to
+        );
+        
+        if (realData) {
+          const rateData: InsertExchangeRate = {
+            provider_id: provider.id,
+            from_currency: pair.from,
+            to_currency: pair.to,
+            rate: realData.rate
+          };
 
-      await storage.createExchangeRate(rateData);
+          await storage.createExchangeRate(rateData);
+          console.log(`Added real rate for ${provider.name}: 1 ${pair.from} = ${realData.rate} ${pair.to}`);
+        }
+      } catch (error) {
+        console.error(`Error adding currency pair ${pair.from}/${pair.to} for ${provider.name}:`, error);
+      }
     }
   }
 }
