@@ -341,9 +341,9 @@ export class MemStorage implements IStorage {
   async getLatestNews(limit: number): Promise<News[]> {
     return this.news
       .sort((a, b) => {
-        if (!a.publishedAt) return 1;
-        if (!b.publishedAt) return -1;
-        return b.publishedAt.getTime() - a.publishedAt.getTime();
+        if (!a.published_at) return 1;
+        if (!b.published_at) return -1;
+        return b.published_at.getTime() - a.published_at.getTime();
       })
       .slice(0, limit);
   }
@@ -358,8 +358,8 @@ export class MemStorage implements IStorage {
       summary: insertNews.summary || null,
       source: insertNews.source || null,
       url: insertNews.url || null,
-      imageUrl: insertNews.imageUrl || null,
-      publishedAt: insertNews.publishedAt || null
+      image_url: insertNews.image_url || null,
+      published_at: insertNews.published_at || null
     };
     this.news.push(newsItem);
     return newsItem;
@@ -439,8 +439,8 @@ export class MemStorage implements IStorage {
       dayEnd.setHours(23, 59, 59, 999);
       
       const dayRates = this.exchangeRates.filter(rate => 
-        rate.fromCurrency === fromCurrency && 
-        rate.toCurrency === toCurrency && 
+        rate.from_currency === fromCurrency && 
+        rate.to_currency === toCurrency && 
         rate.timestamp >= dayStart && 
         rate.timestamp <= dayEnd
       );
@@ -469,8 +469,8 @@ export class MemStorage implements IStorage {
     
     // Get rates for the last 30 days
     const thirtyDayRates = this.exchangeRates.filter(rate => 
-      rate.fromCurrency === fromCurrency && 
-      rate.toCurrency === toCurrency && 
+      rate.from_currency === fromCurrency && 
+      rate.to_currency === toCurrency && 
       rate.timestamp >= thirtyDaysAgo
     );
     
