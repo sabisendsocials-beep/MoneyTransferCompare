@@ -4,6 +4,11 @@ import { News } from "@shared/schema";
 import { Calendar, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
+// Extended type to include the formatted_date from backend
+type NewsWithFormattedDate = News & {
+  formatted_date?: string;
+};
+
 const NewsSection = () => {
   const { data: news, isLoading } = useQuery<News[]>({
     queryKey: ["/api/news?limit=3"],
@@ -77,7 +82,7 @@ const NewsSection = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
                     <Calendar className="mr-1 h-3 w-3" />
-                    <span>{formatDate(item.publishedAt)}</span>
+                    <span>{item.formatted_date || formatDate(item.publishedAt)}</span>
                     {item.source && (
                       <>
                         <span className="mx-2">•</span>

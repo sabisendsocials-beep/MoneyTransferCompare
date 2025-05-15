@@ -166,7 +166,7 @@ const NewsPage = () => {
                     <CardContent className="p-6 flex-grow flex flex-col">
                       <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
                         <Calendar className="mr-1 h-3 w-3" />
-                        <span>{formatDate(item.publishedAt)}</span>
+                        <span className="font-medium">{item.formatted_date || formatDate(item.publishedAt)}</span>
                         {item.source && (
                           <>
                             <span className="mx-2">•</span>

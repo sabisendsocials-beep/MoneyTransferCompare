@@ -94,11 +94,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 5;
       let news = await storage.getLatestNews(limit);
       
-      // If no news found, let's populate the database with our sample news
-      if (!news || news.length === 0) {
-        console.log("No news found in database, using sample news...");
+      // Calculate the date 3 days ago for freshness check
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      
+      // Check if we have fresh news (not older than 3 days)
+      const hasFreshNews = news && news.length > 0 && 
+        news.some(item => new Date(item.published_at) >= threeDaysAgo);
+      
+      // If no news found or no fresh news, populate with updated sample news
+      if (!hasFreshNews) {
+        console.log("No fresh news found (within last 3 days), using updated sample news...");
         
-        // Import sample news data
+        // Import sample news data with current dates
         const { sampleNews } = await import('./sampleNewsData');
         
         // Clear any existing news first
@@ -111,10 +119,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Fetch again after adding sample data
         news = await storage.getLatestNews(limit);
-        console.log(`Added ${sampleNews.length} sample news items to database`);
+        console.log(`Added ${sampleNews.length} fresh sample news items to database (all within last 3 days)`);
       }
       
-      res.json(news);
+      // Format the dates to display in the frontend
+      const formattedNews = news.map(item => ({
+        ...item,
+        // Keep the original date but add a formatted_date field
+        formatted_date: new Date(item.published_at).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        })
+      }));
+      
+      res.json(formattedNews);
     } catch (error) {
       console.error("Error fetching news:", error);
       res.status(500).json({ message: "Failed to fetch news" });
