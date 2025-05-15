@@ -330,12 +330,14 @@ export async function updateLemfiRate(): Promise<boolean> {
       return false;
     }
     
-    // Add a sanity check to ensure the rate is within reasonable bounds based on the screenshot
-    let finalRate = rate;
-    if (rate > 3000) {
-      console.warn(`WARNING: Scraped Lemfi rate ${rate} seems too high for GBP/NGN. Using rate of 2139 from screenshot.`);
-      finalRate = 2139; // Use the rate from the screenshot as a fallback
+    // Return null if the rate is outside of reasonable bounds to indicate scraping failure 
+    // We don't want to use fallback rates anymore
+    if (rate > 3000 || rate < 1000) {
+      console.warn(`WARNING: Scraped Lemfi rate ${rate} seems incorrect for GBP/NGN (outside 1000-3000 range).`);
+      return false;
     }
+    
+    let finalRate = rate;
     
     // Get the Lemfi provider from the database
     const providers = await storage.getProviders();

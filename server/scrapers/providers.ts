@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { storage } from '../storage';
-import type { InsertExchangeRate, InsertProvider } from '@shared/schema';
+import type { InsertExchangeRate, InsertProvider, ExchangeRate } from '@shared/schema';
 import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
 import { updateLemfiRate } from './lemfiScraper';

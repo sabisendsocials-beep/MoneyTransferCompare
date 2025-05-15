@@ -27,6 +27,7 @@ export interface IStorage {
   getLatestRates(fromCurrency: string, toCurrency: string): Promise<ExchangeRate[]>;
   createExchangeRate(rate: InsertExchangeRate): Promise<ExchangeRate>;
   getRatesByProvider(providerId: number, fromCurrency: string, toCurrency: string, limit: number): Promise<ExchangeRate[]>;
+  deleteAllExchangeRates(): Promise<void>; // New method to clear all exchange rates
   
   // News methods
   getLatestNews(limit: number): Promise<News[]>;
