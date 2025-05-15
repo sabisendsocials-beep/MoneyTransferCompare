@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, MenuIcon, X } from "lucide-react";
+import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -17,50 +17,52 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const navItems = [
+    { href: "/", label: "Home", icon: <Home size={18} /> },
+    { href: "/compare", label: "Compare", icon: <Banknote size={18} /> },
+    { href: "/trends", label: "Trends", icon: <TrendingUp size={18} /> },
+    { href: "/news", label: "News", icon: <Newspaper size={18} /> },
+    { href: "/how-it-works", label: "How It Works", icon: <HelpCircle size={18} /> }
+  ];
+
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm">
+    <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-primary"
-          >
-            <path d="M12 12V6"></path>
-            <path d="M12 12h6"></path>
-            <circle cx="12" cy="12" r="10"></circle>
-          </svg>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white">TransferWise</h1>
+        <div className="flex items-center space-x-2" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
+          <div className="bg-primary rounded-full p-1.5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-white"
+            >
+              <path d="M12 12V6"></path>
+              <path d="M12 12h6"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white">TransferCompare</h1>
         </div>
         
         <nav className="hidden md:flex space-x-6">
-          <Link href="/">
-            <a className={`font-medium hover:text-primary ${location === '/' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
-              Home
-            </a>
-          </Link>
-          <Link href="/compare">
-            <a className={`font-medium hover:text-primary ${location === '/compare' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
-              Compare
-            </a>
-          </Link>
-          <Link href="/trends">
-            <a className={`font-medium hover:text-primary ${location === '/trends' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
-              Trends
-            </a>
-          </Link>
-          <Link href="/news">
-            <a className={`font-medium hover:text-primary ${location === '/news' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
-              News
-            </a>
-          </Link>
+          {navItems.map((item) => (
+            <div
+              key={item.href}
+              className={`font-medium hover:text-primary cursor-pointer ${
+                location === item.href ? 'text-primary' : 'text-gray-600 dark:text-gray-300'
+              } flex items-center space-x-1`}
+              onClick={() => window.location.href = item.href}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </div>
+          ))}
         </nav>
         
         <div className="flex items-center space-x-4">
@@ -97,38 +99,21 @@ const Header = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white dark:bg-gray-900 px-4 py-2 shadow-md">
           <nav className="flex flex-col space-y-3 py-3">
-            <Link href="/">
-              <a 
-                className={`font-medium py-2 ${location === '/' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}
-                onClick={() => setIsMobileMenuOpen(false)}
+            {navItems.map((item) => (
+              <div
+                key={item.href}
+                className={`font-medium py-2 cursor-pointer ${
+                  location === item.href ? 'text-primary' : 'text-gray-600 dark:text-gray-300'
+                } flex items-center space-x-2`}
+                onClick={() => {
+                  window.location.href = item.href;
+                  setIsMobileMenuOpen(false);
+                }}
               >
-                Home
-              </a>
-            </Link>
-            <Link href="/compare">
-              <a 
-                className={`font-medium py-2 ${location === '/compare' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Compare
-              </a>
-            </Link>
-            <Link href="/trends">
-              <a 
-                className={`font-medium py-2 ${location === '/trends' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Trends
-              </a>
-            </Link>
-            <Link href="/news">
-              <a 
-                className={`font-medium py-2 ${location === '/news' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                News
-              </a>
-            </Link>
+                {item.icon}
+                <span>{item.label}</span>
+              </div>
+            ))}
           </nav>
         </div>
       )}

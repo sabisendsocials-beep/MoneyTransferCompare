@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Compare from "@/pages/Compare";
 import Trends from "@/pages/Trends";
 import News from "@/pages/News";
+import HowItWorks from "@/pages/HowItWorks";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/compare" component={Compare} />
           <Route path="/trends" component={Trends} />
           <Route path="/news" component={News} />
+          <Route path="/how-it-works" component={HowItWorks} />
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -32,7 +34,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="transferwise-theme">
+    <ThemeProvider defaultTheme="light" storageKey="transfercompare-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
