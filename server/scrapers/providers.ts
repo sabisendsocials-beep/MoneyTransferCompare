@@ -3,6 +3,7 @@ import { storage } from '../storage';
 import type { InsertExchangeRate, InsertProvider } from '@shared/schema';
 import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
+import { updateLemfiRate } from './lemfiScraper';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
@@ -274,6 +275,18 @@ export async function scrapeExchangeRates() {
     for (const provider of providers) {
       try {
         if (provider.scraping_url && provider.scraping_selector) {
+          // Special handling for Lemfi - use our dedicated scraper
+          if (provider.name === 'Lemfi') {
+            console.log('Using dedicated Lemfi scraper...');
+            const success = await updateLemfiRate();
+            if (success) {
+              console.log('Successfully updated Lemfi rate with dedicated scraper');
+              continue; // Skip to next provider
+            } else {
+              console.log('Dedicated Lemfi scraper failed, trying enhanced scraping...');
+            }
+          }
+          
           // Determine if we should use enhanced scraping for this provider
           const needsEnhancedScraping = ['Lemfi', 'Nala', 'WorldRemit', 'Wise'].includes(provider.name);
           
@@ -287,6 +300,8 @@ export async function scrapeExchangeRates() {
               scrapingUrl = 'https://lemfi.com/en-gb/international-money-transfer';
             } else if (provider.name === 'Nala') {
               scrapingUrl = 'https://nala.money/';
+            } else if (provider.name === 'WorldRemit') {
+              scrapingUrl = 'https://www.worldremit.com/en/gbp-to-ngn-exchange-rate';
             }
             
             const selectors = getEnhancedSelectors(provider.name);
