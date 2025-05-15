@@ -612,6 +612,12 @@ export class MemStorage implements IStorage {
     console.log(`Deleted exchange rates for provider ${providerId} (${fromCurrency} → ${toCurrency})`);
     return Promise.resolve();
   }
+  
+  async deleteAllNews(): Promise<void> {
+    this.news = [];
+    console.log('Deleted all news from memory');
+    return Promise.resolve();
+  }
 }
 
 import { DatabaseStorage } from './databaseStorage';

@@ -133,6 +133,12 @@ export class DatabaseStorage implements IStorage {
     return newNews;
   }
   
+  async deleteAllNews(): Promise<void> {
+    // Delete all news entries
+    await db.delete(schema.news);
+    console.log('All news have been deleted from the database');
+  }
+  
   // Comparison methods
   async compareTransferOptions(request: TransferRequest): Promise<TransferResult[]> {
     // Get latest rates for all providers
