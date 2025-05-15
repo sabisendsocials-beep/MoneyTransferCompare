@@ -147,18 +147,22 @@ const TransferCalculator = ({ onCompare }: CalculatorProps) => {
   const currentRate = getExchangeRate(fromCurrency, toCurrency);
 
   const swapCurrencies = () => {
-    // Instead of swapping currencies, toggle between 'send' and 'receive' tabs
-    setActiveTab(activeTab === 'send' ? 'receive' : 'send');
+    // Actually swap the currencies, not just the tab
+    const tempCurrency = fromCurrency;
+    setFromCurrency(toCurrency);
+    setToCurrency(tempCurrency);
     
-    // Recalculate the amounts based on the new active tab
+    // Update the amounts based on new rate
+    const newRate = getExchangeRate(toCurrency, fromCurrency);
+    
     if (activeTab === 'send') {
-      // Switching to 'receive' tab
-      const newSendAmount = parseFloat((receiveAmount / currentRate).toFixed(2));
-      setSendAmount(newSendAmount);
-    } else {
-      // Switching to 'send' tab
-      const newReceiveAmount = Math.round(sendAmount * currentRate);
+      // Keep send amount the same, update receive
+      const newReceiveAmount = Math.round(sendAmount * newRate);
       setReceiveAmount(newReceiveAmount);
+    } else {
+      // Keep receive amount the same, update send
+      const newSendAmount = parseFloat((receiveAmount / newRate).toFixed(2));
+      setSendAmount(newSendAmount);
     }
   };
 

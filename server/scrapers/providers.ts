@@ -41,14 +41,14 @@ export async function ensureProvidersExist() {
         const providerName = mockProvider.name;
         const provider: InsertProvider = {
           name: providerName,
-          websiteUrl: mockProviderWebsites[providerName as keyof typeof mockProviderWebsites] || 'https://example.com',
+          website_url: mockProviderWebsites[providerName as keyof typeof mockProviderWebsites] || 'https://example.com',
           logo: null,
           active: true,
-          fixedFee: mockProvider.fee,
-          transferTime: mockProvider.transferTime,
+          fixed_fee: mockProvider.fee,
+          transfer_time: mockProvider.transferTime,
           rating: mockProvider.rating,
-          scrapingUrl: null,
-          scrapingSelector: null
+          scraping_url: null,
+          scraping_selector: null
         };
         
         await storage.createProvider(provider);

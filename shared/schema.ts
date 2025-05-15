@@ -23,13 +23,13 @@ export const providers = pgTable("providers", {
   name: text("name").notNull(),
   logo: text("logo"),
   rating: real("rating"),
-  websiteUrl: text("website_url"),
-  scrapingUrl: text("scraping_url"),
-  scrapingSelector: text("scraping_selector"),
-  transferTime: text("transfer_time"),
-  hasFixedFee: boolean("has_fixed_fee").default(false),
-  fixedFee: real("fixed_fee"),
-  percentageFee: real("percentage_fee"),
+  website_url: text("website_url"),
+  scraping_url: text("scraping_url"),
+  scraping_selector: text("scraping_selector"),
+  transfer_time: text("transfer_time"),
+  has_fixed_fee: boolean("has_fixed_fee").default(false),
+  fixed_fee: real("fixed_fee"),
+  percentage_fee: real("percentage_fee"),
   active: boolean("active").default(true),
 });
 
@@ -43,9 +43,9 @@ export type Provider = typeof providers.$inferSelect;
 // Exchange rate schema
 export const exchangeRates = pgTable("exchange_rates", {
   id: serial("id").primaryKey(),
-  providerId: integer("provider_id").notNull(),
-  fromCurrency: text("from_currency").notNull(),
-  toCurrency: text("to_currency").notNull(),
+  provider_id: integer("provider_id").notNull(),
+  from_currency: text("from_currency").notNull(),
+  to_currency: text("to_currency").notNull(),
   rate: real("rate").notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
