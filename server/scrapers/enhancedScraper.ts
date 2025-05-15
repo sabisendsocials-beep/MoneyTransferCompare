@@ -18,10 +18,15 @@ export async function enhancedScrape(
   try {
     // Make sure we're using the correct URL for each provider
     let scrapingUrl = url;
-    if (url.includes('lemfi.com') && !url.includes('international-money-transfer')) {
+    if (url.includes('lemfi.com')) {
+      // Always use this specific URL for Lemfi which contains their calculator
       scrapingUrl = 'https://lemfi.com/en-gb/international-money-transfer';
-    } else if (url.includes('nala.money') && url.includes('pricing')) {
+    } else if (url.includes('nala.money')) {
+      // Always use the main page for Nala
       scrapingUrl = 'https://nala.money/';
+    } else if (url.includes('worldremit.com')) {
+      // For WorldRemit, use a better URL
+      scrapingUrl = 'https://www.worldremit.com/en/gbp-to-ngn-exchange-rate';
     }
     
     console.log(`Enhanced scraping of ${scrapingUrl}...`);
@@ -58,7 +63,22 @@ export async function enhancedScrape(
       }
     }
     
-    // If no specific selector worked, try pattern matching on the entire page text
+    // If no specific selector worked, try more targeted scraping first
+    
+    // Try to find any element mentioning exchange rates
+    const exchangeRateElements = $('*:contains("exchange rate")');
+    if (exchangeRateElements.length > 0) {
+      for (let i = 0; i < exchangeRateElements.length; i++) {
+        const elemText = $(exchangeRateElements[i]).text();
+        const pattern = findExchangeRatePattern(elemText);
+        if (pattern) {
+          console.log(`Found exchange rate in targeted element: ${pattern}`);
+          return pattern;
+        }
+      }
+    }
+    
+    // Then try the whole page content
     const pageText = $('body').text();
     return findExchangeRatePattern(pageText);
     
@@ -74,6 +94,7 @@ export async function enhancedScrape(
  * @returns Found exchange rate text or null
  */
 export function findExchangeRatePattern(text: string): string | null {
+  // First look for common rate patterns
   const patterns = [
     // Standard exchange rate formats
     /(?:1|one)\s*(?:GBP|gbp|£)\s*(?:=|equals|is)\s*([\d,]+\.?\d*)\s*(?:NGN|ngn)/i,
@@ -84,13 +105,18 @@ export function findExchangeRatePattern(text: string): string | null {
     /(?:1|one)\s*(?:British Pound|Pound Sterling|GBP|£)[^\d]*(\d{1,3}(?:,\d{3})*\.\d{1,4})/i,
     
     // For rates displayed without decimal points (e.g., "1580 NGN")
-    /(?:1|one)\s*(?:GBP|gbp|£)[^\d]*(\d{4,5})[^\d]*(?:NGN|ngn|Naira)/i,
+    /(?:1|one)\s*(?:GBP|gbp|£)[^\d]*(\d{3,5})[^\d]*(?:NGN|ngn|Naira)/i,
     
     // For currency calculator results
     /receive[^\d]*([\d,]+\.?\d*)[^\d]*(?:NGN|ngn|Naira)/i,
+    /you\s*(?:get|receive)[^\d]*([\d,]+\.?\d*)[^\d]*(?:NGN|ngn|Naira)/i,
+    /send.*?\s+(\d[\d,.]+)\s*NGN/i,
     
     // For providers that show the inverse rate (NGN to GBP)
     /(?:1000|1,000)\s*(?:NGN|ngn|Naira)[^\d]*([\d\.]+)\s*(?:GBP|gbp|£)/i,
+    
+    // For providers showing just the number (we'll look for numbers around 1500-1600 which are likely GBP to NGN rates)
+    /(1[5-6]\d\d(?:\.\d+)?)/i,
   ];
   
   for (const pattern of patterns) {
