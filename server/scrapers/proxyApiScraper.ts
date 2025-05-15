@@ -205,16 +205,48 @@ export async function updateWorldRemitRateViaApi(): Promise<boolean> {
     const rate = await getWorldRemitRate();
     
     if (rate !== null) {
-      // Add the rate to the database
+      // Calculate with example values to show in logs
+      const amount = 1000;
+      const fee = provider.fee || 2.99;
+      const amountAfterFees = amount - fee;
+      const receivedAmount = amountAfterFees * rate;
+      
+      console.log(`*** IMPORTANT: Updated WorldRemit rate is ${rate} NGN per GBP ***`);
+      console.log(`WorldRemit Rate Summary:`);
+      console.log(`- Rate: ${rate} NGN per GBP`);
+      console.log(`- For ${amount} GBP with fee ${fee}:`);
+      console.log(`- Amount after fees: ${amountAfterFees} GBP`);
+      console.log(`- Received amount: ${receivedAmount.toFixed(2)} NGN`);
+      
+      // Add the rate to the database with all required fields
       const rateData: InsertExchangeRate = {
-        provider_id: provider.id,
-        from_currency: 'GBP',
-        to_currency: 'NGN',
-        rate
+        providerId: provider.id,
+        fromCurrency: 'GBP',
+        toCurrency: 'NGN',
+        rate: rate,
+        fee: provider.fee || 2.99,
+        minAmount: provider.minAmount || 1,
+        maxAmount: provider.maxAmount || 8000,
+        transferTime: provider.transferTime || '1-3 days'
       };
       
-      await storage.createExchangeRate(rateData);
+      // Try to delete old rates first to make sure the new one is used right away
+      try {
+        // Note: We need to check if this method exists in the storage interface
+        // @ts-ignore - this might be added to the storage interface
+        if (typeof storage.deleteExchangeRatesForProvider === 'function') {
+          await storage.deleteExchangeRatesForProvider(provider.id, 'GBP', 'NGN');
+          console.log('Cleared old WorldRemit rates from database');
+        }
+      } catch (error) {
+        console.warn('Note: Could not clear old rates, continuing with update');
+      }
+      
+      // Save the new rate
+      const savedRate = await storage.createExchangeRate(rateData);
       console.log(`Successfully updated WorldRemit GBP to NGN rate: ${rate}`);
+      console.log(`Saved with ID: ${savedRate.id}, timestamp: ${savedRate.timestamp}`);
+      
       return true;
     } else {
       console.error('Failed to get a valid rate from the API');
