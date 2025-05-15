@@ -151,11 +151,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/api/update-news", async (req: Request, res: Response) => {
     try {
+      console.log("Starting news update process...");
+      
+      // First clear existing news to avoid duplicates
+      try {
+        await storage.deleteAllNews();
+        console.log("Cleared existing news before update");
+      } catch (clearError) {
+        console.error("Error clearing existing news:", clearError);
+        // Continue with the update anyway
+      }
+      
+      // Fetch and store new news
       const results = await updateFinancialNews();
-      res.json({ message: `Updated ${results.length} news items` });
+      
+      console.log(`Successfully updated ${results.length} news items`);
+      res.json({ 
+        success: true,
+        message: `Updated ${results.length} news items`,
+        count: results.length,
+        timestamp: new Date()
+      });
     } catch (error) {
       console.error("Error updating news:", error);
-      res.status(500).json({ message: "Failed to update news" });
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to update news", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   

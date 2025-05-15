@@ -4,6 +4,9 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
 import { ensureProvidersExist, updateExchangeRates } from "./scrapers/providers";
 import { updateRatesFromScreenshots } from "./updateScreenshotRates";
+import { updateFinancialNews } from "./scrapers/news";
+import { updateRateTrends } from "./api/exchangeRateApi";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -71,6 +74,9 @@ app.use((req, res, next) => {
   }
   
   const server = await registerRoutes(app);
+  
+  // Set up automatic update intervals for data
+  setupAutomaticUpdates();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -79,6 +85,51 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+  
+  /**
+   * Sets up automatic interval-based updates for various data sources
+   * This ensures our data stays fresh without manual intervention
+   */
+  function setupAutomaticUpdates(): void {
+    // Update exchange rates every 6 hours
+    const SIX_HOURS = 6 * 60 * 60 * 1000; 
+    setInterval(async () => {
+      try {
+        log("Running scheduled exchange rate update...");
+        await updateExchangeRates();
+        log("Scheduled exchange rate update completed successfully");
+      } catch (error) {
+        log(`Error in scheduled exchange rate update: ${error}`);
+      }
+    }, SIX_HOURS);
+    
+    // Update exchange rate trends every 12 hours
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        log("Running scheduled exchange rate trends update...");
+        await updateRateTrends();
+        log("Exchange rate trends updated successfully");
+      } catch (error) {
+        log(`Error updating exchange rate trends: ${error}`);
+      }
+    }, TWELVE_HOURS);
+    
+    // Update news every 8 hours
+    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        log("Running scheduled news update...");
+        await storage.deleteAllNews();
+        const results = await updateFinancialNews();
+        log(`Scheduled news update completed with ${results.length} news items added`);
+      } catch (error) {
+        log(`Error in scheduled news update: ${error}`);
+      }
+    }, EIGHT_HOURS);
+    
+    log("Automatic update intervals have been set up");
+  }
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
