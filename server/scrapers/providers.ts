@@ -379,14 +379,9 @@ export async function scrapeExchangeRates() {
             
             const rate = extractExchangeRate(rateText, provider.name);
 
-            // Validate the rate is within a reasonable range for GBP to NGN
-            // Typically around 1500-1600 as of 2024-2025
-            const isValidRate = rate && (
-              // For GBP to NGN, should be around 1500-1600
-              (rate >= 1400 && rate <= 1700) ||
-              // For Nala, they sometimes return rates around 1000 (actual rate is approximately 1568)
-              (provider.name === 'Nala' && rate >= 900 && rate <= 1700)
-            );
+            // Validate the rate is a positive number - no longer restricting to a specific range
+            // Special case for Lemfi which has a higher rate (around 2139)
+            const isValidRate = rate && rate > 0;
             
             if (isValidRate) {
               const rateData: InsertExchangeRate = {
@@ -518,25 +513,19 @@ async function addAllRealRates() {
 }
 
 // This function would be called periodically to update rates
-export async function updateExchangeRates() {
+export async function updateExchangeRates(): Promise<ExchangeRate[]> {
   console.log('Starting exchange rate update...');
-  let results = [];
+  let results: ExchangeRate[] = [];
   
   try {
-    // First try web scraping (but this often fails in the repl environment)
+    // Only use scraped rates - no fallbacks to predefined rates
     results = await scrapeExchangeRates();
     console.log(`Updated ${results.length} exchange rates via scraping`);
     
-    // If we got less than expected, add all real rates
-    if (results.length < 10) {
-      const allRates = await addAllRealRates();
-      console.log(`Updated ${allRates.length} exchange rates from real rate data`);
-      results = [...results, ...allRates];
-    }
+    // We'll no longer add predefined rates as fallback
   } catch (error) {
     console.error('Error in updateExchangeRates:', error);
-    // Fall back to adding all real rates
-    results = await addAllRealRates();
+    // No fallback to adding all real rates
   }
   
   console.log(`Total updated ${results.length} exchange rates`);
