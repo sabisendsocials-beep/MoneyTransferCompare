@@ -239,6 +239,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, error: String(error) });
     }
   });
+  
+  // Add endpoint to update all rates from screenshots
+  apiRouter.post("/api/update-from-screenshots", async (req: Request, res: Response) => {
+    try {
+      console.log('Updating all provider rates from verified screenshots...');
+      
+      const { updateRatesFromScreenshots } = await import('./updateScreenshotRates');
+      const success = await updateRatesFromScreenshots();
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "All provider rates updated from verified screenshots",
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Failed to update rates from screenshots" 
+        });
+      }
+    } catch (error) {
+      console.error('Error updating rates from screenshots:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: String(error) 
+      });
+    }
+  });
 
   // Setup periodic updates (every hour for exchange rates, every 6 hours for news)
   setTimeout(async () => {

@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
 import { ensureProvidersExist, updateExchangeRates } from "./scrapers/providers";
+import { updateRatesFromScreenshots } from "./updateScreenshotRates";
 
 const app = express();
 app.use(express.json());
@@ -49,43 +50,21 @@ app.use((req, res, next) => {
     await ensureProvidersExist();
     log("Provider initialization completed");
     
-    // Update exchange rates with real data from providers
-    await updateExchangeRates();
-    log("Exchange rates updated with real data");
-    
-    // Update WorldRemit rate with accurate rate from screenshot
+    // Try to update exchange rates with real data from providers
     try {
-      const { storage } = await import('./storage');
-      
-      // Find the WorldRemit provider
-      const providers = await storage.getProviders();
-      const worldRemit = providers.find(p => p.name === 'WorldRemit');
-      
-      if (worldRemit) {
-        // Calculate rate from screenshot data
-        const sendAmount = 100; // GBP (from screenshot)
-        const receiveAmount = 211288; // NGN (from screenshot)
-        const rate = receiveAmount / sendAmount; // 2112.88
-        
-        log(`Updating WorldRemit rate to ${rate} NGN per GBP (from verified screenshot data)`);
-        
-        // Delete old rates
-        await storage.deleteExchangeRatesForProvider(worldRemit.id, 'GBP', 'NGN');
-        
-        // Add the new rate
-        const newRate = await storage.createExchangeRate({
-          provider_id: worldRemit.id,
-          from_currency: 'GBP',
-          to_currency: 'NGN',
-          rate: rate
-        });
-        
-        log(`Successfully updated WorldRemit rate: ${rate} NGN per GBP (ID: ${newRate.id})`);
-      } else {
-        log("WorldRemit provider not found in database");
-      }
+      await updateExchangeRates();
+      log("Exchange rates updated with real data");
     } catch (error) {
-      log(`Failed to update WorldRemit rate: ${error}`);
+      log(`Error updating exchange rates via scraping: ${error}`);
+    }
+    
+    // Update all provider rates from verified screenshot data
+    try {
+      // This will update rates for all providers in the screenshots
+      await updateRatesFromScreenshots();
+      log("Provider rates updated from verified screenshot data");
+    } catch (error) {
+      log(`Error updating rates from screenshots: ${error}`);
     }
   } catch (error) {
     log(`Failed to initialize database: ${error}`);
