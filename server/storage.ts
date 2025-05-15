@@ -385,12 +385,18 @@ export class MemStorage implements IStorage {
         let receivedAmount = amount;
         
         if (type === 'send') {
-          // For 'send' type, we maintain the input amount as the base, then add fees on top
-          // This ensures the recipient always gets the expected amount after conversion
-          receivedAmount = amount * exchangeRate;
-          // Calculate fees as additional costs, not deducted from the send amount
+          // For 'send' type, the amount is what the user intends to send before fees
+          // We need to deduct the fees from the amount before calculating received amount
           const feeAmount = fee + (amount * percentageFee / 100);
-          sendAmount = amount + feeAmount;
+          
+          // The actual conversion amount is reduced by the fees
+          const amountAfterFees = amount - feeAmount;
+          
+          // Calculate what the recipient receives based on the amount after fees
+          receivedAmount = amountAfterFees * exchangeRate;
+          
+          // The send amount is the original amount (including fees)
+          sendAmount = amount;
         } else {
           // For 'receive' type, we work backwards from the received amount
           sendAmount = amount / exchangeRate;
@@ -408,7 +414,7 @@ export class MemStorage implements IStorage {
           receivedAmount: receivedAmount,
           sendAmount: sendAmount,
           transferTime: provider.transfer_time || null,
-          totalCost: fee + (type === 'send' ? amount * percentageFee / 100 : sendAmount * percentageFee / 100),
+          totalCost: fee + (amount * percentageFee / 100),
           websiteUrl: provider.website_url || null
         });
       }
