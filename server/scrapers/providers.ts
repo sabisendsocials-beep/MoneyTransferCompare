@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import { storage } from '../storage';
 import type { InsertExchangeRate, InsertProvider } from '@shared/schema';
 import { realProviderRates } from './realRates';
+import { scrapeWithPuppeteer, getPuppeteerSelectors } from './puppeteerScraper';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
@@ -244,7 +245,37 @@ export async function scrapeExchangeRates() {
     for (const provider of providers) {
       try {
         if (provider.scraping_url && provider.scraping_selector) {
-          // If we have scraping configuration, try to use it
+          // Determine if we should use Puppeteer for this provider
+          const needsPuppeteer = ['Lemfi', 'Nala', 'WorldRemit'].includes(provider.name);
+          
+          if (needsPuppeteer) {
+            // Use Puppeteer for JavaScript-heavy sites
+            console.log(`Attempting to scrape ${provider.name} with Puppeteer...`);
+            const selectors = getPuppeteerSelectors(provider.name);
+            const rateText = await scrapeWithPuppeteer(provider.scraping_url, selectors);
+            
+            if (rateText) {
+              const rate = extractExchangeRate(rateText, provider.name);
+              
+              if (rate) {
+                const rateData: InsertExchangeRate = {
+                  provider_id: provider.id,
+                  from_currency: 'GBP',
+                  to_currency: 'NGN',
+                  rate
+                };
+
+                const savedRate = await storage.createExchangeRate(rateData);
+                results.push(savedRate);
+                console.log(`Scraped exchange rate with Puppeteer for ${provider.name}: 1 GBP = ${rate} NGN`);
+                continue; // Skip to next provider
+              }
+            }
+            
+            console.log(`Failed to scrape ${provider.name} with Puppeteer, falling back to traditional method`);
+          }
+          
+          // Standard scraping for simpler sites
           try {
             // Attempt to scrape real data from provider website
             console.log(`Attempting to scrape exchange rate from ${provider.name}...`);
