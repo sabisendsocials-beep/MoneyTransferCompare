@@ -138,20 +138,7 @@ async function updateRatesFromScreenshots(): Promise<boolean> {
   }
 }
 
-// ES Module version - only runs when executed directly as a script 
-// This is used for the standalone script execution
-if (import.meta.url === import.meta.main?.url) {
-  updateRatesFromScreenshots()
-    .then(success => {
-      if (success) {
-        log('Screenshot rate update completed successfully');
-      } else {
-        log('Screenshot rate update failed');
-      }
-    })
-    .catch(error => {
-      log(`Unhandled error during rate update: ${error}`);
-    });
-}
+// For direct execution, we won't attempt this check in an ES module environment
+// as it's imported into other modules
 
 export { updateRatesFromScreenshots };
