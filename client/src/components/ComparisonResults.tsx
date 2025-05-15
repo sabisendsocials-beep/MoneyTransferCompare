@@ -25,6 +25,37 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
     });
     return formatter.format(value);
   };
+  
+  const formatLastUpdated = (dateString?: string) => {
+    if (!dateString) return 'Unknown';
+    
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      
+      if (diffMins < 60) {
+        return diffMins <= 1 ? 'Just now' : `${diffMins} minutes ago`;
+      } else if (diffHours < 24) {
+        return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+      } else if (diffDays < 7) {
+        return diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
+      } else {
+        return date.toLocaleDateString('en-GB', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    } catch (e) {
+      console.error('Error formatting date:', e);
+      return 'Unknown';
+    }
+  };
 
   // Best provider is the first in the sorted results
   const bestProvider = results[0];
@@ -112,7 +143,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Compare the best providers for sending money from {fromCurrency} to {toCurrency}. 
-            All rates are updated in real-time.
+            Rate freshness information is displayed for each provider.
           </p>
         </div>
 
@@ -242,9 +273,24 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            1 {fromCurrency} = {bestProvider.exchangeRate?.toLocaleString() || '-'} {toCurrency}
-                          </span>
+                          <div className="text-right">
+                            <span className="font-medium text-gray-800 dark:text-gray-200">
+                              1 {fromCurrency} = {bestProvider.exchangeRate?.toLocaleString() || '-'} {toCurrency}
+                            </span>
+                            <div className="text-xs text-gray-500 flex items-center justify-end mt-1">
+                              <Clock className="h-3 w-3 mr-1" />
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger className="text-xs">
+                                    Updated {formatLastUpdated(bestProvider.lastUpdated)}
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="max-w-xs text-xs">Rates are sourced directly from provider websites when possible</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Transfer time</span>
@@ -323,7 +369,22 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       </div>
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
-                        <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toLocaleString() || '-'} {toCurrency}</span>
+                        <div className="text-right">
+                          <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toLocaleString() || '-'} {toCurrency}</span>
+                          <div className="flex items-center justify-end mt-1">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="flex items-center text-xs text-gray-500">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Updated {formatLastUpdated(provider.lastUpdated)}
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs text-xs">Rates are sourced directly from provider websites when possible</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
                       </div>
                       <Button 
                         variant="outline" 
