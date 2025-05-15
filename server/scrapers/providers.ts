@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { storage } from '../storage';
 import type { InsertExchangeRate, InsertProvider } from '@shared/schema';
 import { realProviderRates } from './realRates';
-import { scrapeWithPuppeteer, getPuppeteerSelectors } from './puppeteerScraper';
+import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
@@ -30,7 +30,7 @@ function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency =
     case 'Lemfi':
       return `https://lemfi.com/en-gb/international-money-transfer`;
     case 'Nala':
-      return `https://nala.money/pricing`;
+      return `https://nala.money/`;
     default:
       return null;
   }
@@ -245,14 +245,23 @@ export async function scrapeExchangeRates() {
     for (const provider of providers) {
       try {
         if (provider.scraping_url && provider.scraping_selector) {
-          // Determine if we should use Puppeteer for this provider
-          const needsPuppeteer = ['Lemfi', 'Nala', 'WorldRemit'].includes(provider.name);
+          // Determine if we should use enhanced scraping for this provider
+          const needsEnhancedScraping = ['Lemfi', 'Nala', 'WorldRemit', 'Wise'].includes(provider.name);
           
-          if (needsPuppeteer) {
-            // Use Puppeteer for JavaScript-heavy sites
-            console.log(`Attempting to scrape ${provider.name} with Puppeteer...`);
-            const selectors = getPuppeteerSelectors(provider.name);
-            const rateText = await scrapeWithPuppeteer(provider.scraping_url, selectors);
+          if (needsEnhancedScraping) {
+            // Use enhanced scraping for JavaScript-heavy sites
+            console.log(`Attempting to scrape ${provider.name} with enhanced scraper...`);
+            
+            // Use specific URLs for each provider
+            let scrapingUrl = provider.scraping_url;
+            if (provider.name === 'Lemfi') {
+              scrapingUrl = 'https://lemfi.com/en-gb/international-money-transfer';
+            } else if (provider.name === 'Nala') {
+              scrapingUrl = 'https://nala.money/';
+            }
+            
+            const selectors = getEnhancedSelectors(provider.name);
+            const rateText = await enhancedScrape(scrapingUrl, selectors);
             
             if (rateText) {
               const rate = extractExchangeRate(rateText, provider.name);
@@ -267,12 +276,12 @@ export async function scrapeExchangeRates() {
 
                 const savedRate = await storage.createExchangeRate(rateData);
                 results.push(savedRate);
-                console.log(`Scraped exchange rate with Puppeteer for ${provider.name}: 1 GBP = ${rate} NGN`);
+                console.log(`Scraped exchange rate with enhanced scraper for ${provider.name}: 1 GBP = ${rate} NGN`);
                 continue; // Skip to next provider
               }
             }
             
-            console.log(`Failed to scrape ${provider.name} with Puppeteer, falling back to traditional method`);
+            console.log(`Failed to scrape ${provider.name} with enhanced scraper, falling back to traditional method`);
           }
           
           // Standard scraping for simpler sites
