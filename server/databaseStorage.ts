@@ -176,17 +176,27 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
+        // Override specific provider settings based on latest information
+        let finalFee = fee;
+        let finalTransferTime = provider.transfer_time || 'Unknown';
+        
+        // Special handling for Lemfi (zero fees, minutes transfer time)
+        if (provider.name === 'Lemfi') {
+          finalFee = 0;
+          finalTransferTime = 'Minutes';
+        }
+        
         results.push({
           providerId: provider.id,
           providerName: provider.name,
           providerLogo: provider.logo,
           rating: provider.rating,
           exchangeRate: rate.rate,
-          fee,
-          receivedAmount,
+          fee: finalFee,
+          receivedAmount: finalFee === 0 ? request.amount * rate.rate : receivedAmount, // Recalculate if fee was adjusted
           sendAmount,
-          transferTime: provider.transfer_time || 'Unknown',
-          totalCost: fee,
+          transferTime: finalTransferTime,
+          totalCost: finalFee,
           websiteUrl: provider.website_url,
           lastUpdated: rate.timestamp.toISOString(),
           lastChecked: new Date().toISOString()
