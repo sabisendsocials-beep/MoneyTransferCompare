@@ -103,16 +103,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Manually trigger data updates (for testing purposes)
   apiRouter.post("/api/update-rates", async (req: Request, res: Response) => {
     try {
+      // Extract option to clear existing rates from request body
+      const { clearExisting = false } = req.body;
+      
       // First reset providers to ensure we have up-to-date provider list including Lemfi and Nala
       await storage.deleteAllProviders();
       await ensureProvidersExist();
       
-      // Then update the rates
-      const results = await updateExchangeRates();
-      res.json({ message: `Updated ${results.length} exchange rates` });
+      // Then update the rates, optionally clearing existing rates
+      const results = await updateExchangeRates(clearExisting);
+      res.json({ 
+        message: `Updated ${results.length} exchange rates`,
+        clearedExisting: clearExisting
+      });
     } catch (error) {
       console.error("Error updating exchange rates:", error);
       res.status(500).json({ message: "Failed to update exchange rates" });
+    }
+  });
+  
+  // New endpoint to clear all exchange rates and refresh
+  apiRouter.post("/api/refresh-rates", async (req: Request, res: Response) => {
+    try {
+      console.log("Clearing all exchange rates and refreshing with only scraped values...");
+      
+      // First clear all exchange rates
+      await storage.deleteAllExchangeRates();
+      
+      // Then update the providers list
+      await storage.deleteAllProviders();
+      await ensureProvidersExist();
+      
+      // Finally scrape fresh rates
+      const results = await updateExchangeRates(false); // Don't need to clear again
+      
+      res.json({ 
+        message: `Successfully refreshed rates. Added ${results.length} scraped exchange rates`,
+        scrapedRates: results.length
+      });
+    } catch (error) {
+      console.error("Error refreshing exchange rates:", error);
+      res.status(500).json({ message: "Failed to refresh exchange rates" });
     }
   });
   

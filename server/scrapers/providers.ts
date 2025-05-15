@@ -264,7 +264,7 @@ export async function ensureProvidersExist() {
   }
 }
 
-export async function scrapeExchangeRates() {
+export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider: string, success: boolean })[]> {
   try {
     // First ensure we have providers
     await ensureProvidersExist();
@@ -513,13 +513,24 @@ async function addAllRealRates() {
 }
 
 // This function would be called periodically to update rates
-export async function updateExchangeRates(): Promise<ExchangeRate[]> {
+export async function updateExchangeRates(clearExisting: boolean = false): Promise<ExchangeRate[]> {
   console.log('Starting exchange rate update...');
   let results: ExchangeRate[] = [];
   
   try {
+    // Optionally clear all existing rates
+    if (clearExisting) {
+      console.log('Clearing all existing exchange rates from database...');
+      await storage.deleteAllExchangeRates();
+    }
+    
     // Only use scraped rates - no fallbacks to predefined rates
-    results = await scrapeExchangeRates();
+    const scrapedResults = await scrapeExchangeRates();
+    const validResults = scrapedResults.filter(result => 
+      'id' in result // Only keep exchange rate objects, not success/failure objects
+    ) as ExchangeRate[];
+    
+    results = validResults;
     console.log(`Updated ${results.length} exchange rates via scraping`);
     
     // We'll no longer add predefined rates as fallback
