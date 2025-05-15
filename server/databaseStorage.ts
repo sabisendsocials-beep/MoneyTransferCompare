@@ -56,6 +56,16 @@ export class DatabaseStorage implements IStorage {
     return updatedProvider;
   }
   
+  async deleteAllProviders(): Promise<void> {
+    // First delete all exchange rates (due to foreign key constraints)
+    await db.delete(schema.exchangeRates);
+    
+    // Then delete all providers
+    await db.delete(schema.providers);
+    
+    console.log('All providers and their exchange rates have been deleted');
+  }
+  
   // Exchange rate methods
   async getLatestRates(fromCurrency: string, toCurrency: string): Promise<ExchangeRate[]> {
     // Get providers first

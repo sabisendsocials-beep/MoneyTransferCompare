@@ -21,6 +21,7 @@ export interface IStorage {
   getProvider(id: number): Promise<Provider | undefined>;
   createProvider(provider: InsertProvider): Promise<Provider>;
   updateProvider(id: number, provider: Partial<InsertProvider>): Promise<Provider | undefined>;
+  deleteAllProviders(): Promise<void>;
   
   // Exchange rate methods
   getLatestRates(fromCurrency: string, toCurrency: string): Promise<ExchangeRate[]>;
