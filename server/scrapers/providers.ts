@@ -5,6 +5,8 @@ import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
 import { updateLemfiRate } from './lemfiScraper';
 import { updateWorldRemitRate } from './worldRemitScraper';
+import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
+import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
@@ -292,13 +294,78 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             }
           } else if (provider.name === 'WorldRemit') {
             console.log('=== Using dedicated WorldRemit scraper... ===');
-            const success = await updateWorldRemitRate();
+            let success = await updateWorldRemitRate();
             if (success) {
               console.log('=== Successfully updated WorldRemit rate with dedicated scraper ===');
               results.push({ provider: provider.name, success: true });
               continue; // Skip to next provider
             } else {
-              console.log('=== Dedicated WorldRemit scraper failed, trying enhanced scraping... ===');
+              console.log('=== Dedicated WorldRemit scraper failed, trying proxy API scraper... ===');
+              
+              // Try with our proxy API scraper (more reliable)
+              success = await updateWorldRemitRateViaApi();
+              if (success) {
+                console.log('=== Successfully updated WorldRemit rate with proxy API ===');
+                results.push({ provider: provider.name, success: true });
+                continue; // Skip to next provider
+              } else {
+                console.log('=== Proxy API scraper also failed, trying robust browser scraper... ===');
+                
+                // Try with robust browser-based scraping approach
+                try {
+                  const rate = await robustScrapeWorldRemitRate();
+                  if (rate !== null) {
+                    console.log(`=== Successfully scraped WorldRemit rate with robust scraper: ${rate} ===`);
+                    
+                    // Add the rate to database
+                    const rateData: InsertExchangeRate = {
+                      provider_id: provider.id,
+                      from_currency: 'GBP',
+                      to_currency: 'NGN',
+                      rate
+                    };
+                    
+                    await storage.createExchangeRate(rateData);
+                    results.push({ provider: provider.name, success: true });
+                    continue; // Skip to next provider
+                  } else {
+                    console.log('=== Robust scraper also failed, trying enhanced scraping... ===');
+                  }
+                } catch (error) {
+                  console.error('Error using robust scraper for WorldRemit:', error);
+                  console.log('=== Robust scraper failed with error, trying enhanced scraping... ===');
+                }
+              }
+            }
+          }
+          
+          // Special handling for Wise with robust scraper
+          if (provider.name === 'Wise') {
+            console.log('=== Using robust scraper for Wise... ===');
+            try {
+              const wiseUrl = 'https://wise.com/gb/currency-converter/gbp-to-ngn-rate';
+              const rate = await scrapeExchangeRate(wiseUrl, 'GBP', 'NGN');
+              
+              if (rate !== null) {
+                console.log(`=== Successfully scraped Wise rate with robust scraper: ${rate} ===`);
+                
+                // Add the rate to database
+                const rateData: InsertExchangeRate = {
+                  provider_id: provider.id,
+                  from_currency: 'GBP',
+                  to_currency: 'NGN',
+                  rate
+                };
+                
+                await storage.createExchangeRate(rateData);
+                results.push({ provider: provider.name, success: true });
+                continue; // Skip to next provider
+              } else {
+                console.log('=== Robust scraper failed for Wise, trying enhanced scraping... ===');
+              }
+            } catch (error) {
+              console.error('Error using robust scraper for Wise:', error);
+              console.log('=== Robust scraper for Wise failed with error, trying enhanced scraping... ===');
             }
           }
           

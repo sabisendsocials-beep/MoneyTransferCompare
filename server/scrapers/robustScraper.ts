@@ -49,7 +49,7 @@ export async function scrapeWithBrowser(
   } = {}
 ): Promise<string | null> {
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -93,21 +93,21 @@ export async function scrapeWithBrowser(
     // Wait additional time if specified to allow for any lazy-loaded content
     if (options.waitTime) {
       console.log(`Waiting ${options.waitTime}ms for page to fully render...`);
-      await page.waitForTimeout(options.waitTime);
+      await new Promise(resolve => setTimeout(resolve, options.waitTime));
     }
     
     // Execute custom JavaScript if provided
     if (options.executeScript) {
       console.log('Executing custom script on page...');
       await page.evaluate(options.executeScript);
-      await page.waitForTimeout(1000); // Wait for script execution
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for script execution
     }
     
     // Click on elements if specified
     if (options.clickSelector) {
       console.log(`Clicking element: ${options.clickSelector}`);
       await page.click(options.clickSelector);
-      await page.waitForTimeout(2000); // Wait for any resulting changes
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for any resulting changes
     }
     
     // Input data if specified
@@ -115,12 +115,12 @@ export async function scrapeWithBrowser(
       for (const input of options.inputData) {
         console.log(`Entering text into: ${input.selector}`);
         await page.type(input.selector, input.value);
-        await page.waitForTimeout(500);
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     
     // Wait a bit more to ensure all dynamic content has loaded
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Get the page content
     const pageContent = await page.content();
