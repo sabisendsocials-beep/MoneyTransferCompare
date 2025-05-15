@@ -6,6 +6,7 @@ import { updateExchangeRates, ensureProvidersExist } from "./scrapers/providers"
 import { updateFinancialNews } from "./scrapers/news";
 import { initializeDatabase } from "./db";
 import { updateRateTrends } from "./api/exchangeRateApi";
+import { realProviderRates } from "./scrapers/realRates";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api
@@ -111,6 +112,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating exchange rates:", error);
       res.status(500).json({ message: "Failed to update exchange rates" });
+    }
+  });
+  
+  // Special endpoint to add missing GBP-NGN rates for all providers
+  apiRouter.post("/api/add-gbp-ngn-rates", async (req: Request, res: Response) => {
+    try {
+      const providers = await storage.getActiveProviders();
+      const results = [];
+      
+      // Get data from realRates for GBP-NGN
+      const gbpNgnRates = realProviderRates.filter(r => 
+        r.fromCurrency === 'GBP' && r.toCurrency === 'NGN'
+      );
+      
+      for (const provider of providers) {
+        const rateData = gbpNgnRates.find(r => r.name === provider.name);
+        if (rateData) {
+          try {
+            const exchangeRate = {
+              provider_id: provider.id,
+              from_currency: 'GBP',
+              to_currency: 'NGN',
+              rate: rateData.rate
+            };
+            
+            const savedRate = await storage.createExchangeRate(exchangeRate);
+            results.push(savedRate);
+            console.log(`Added GBP-NGN rate for ${provider.name}: ${rateData.rate}`);
+          } catch (error) {
+            console.error(`Error adding GBP-NGN rate for ${provider.name}:`, error);
+          }
+        }
+      }
+      
+      res.json({ message: `Added ${results.length} GBP-NGN rates` });
+    } catch (error) {
+      console.error("Error adding GBP-NGN rates:", error);
+      res.status(500).json({ message: "Failed to add GBP-NGN rates" });
     }
   });
 

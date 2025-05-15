@@ -251,10 +251,14 @@ export async function scrapeExchangeRates() {
             to_currency: realData.toCurrency,
             rate
           };
+          
+          // Log using the actual currency pair
+          const fromCurrency = realData.fromCurrency;
+          const toCurrency = realData.toCurrency;
 
           const savedRate = await storage.createExchangeRate(rateData);
           results.push(savedRate);
-          console.log(`Added real exchange rate for ${provider.name}: 1 GBP = ${rate} NGN`);
+          console.log(`Added real exchange rate for ${provider.name}: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
         } else {
           console.warn(`No real rate data found for ${provider.name}`);
         }
@@ -309,10 +313,59 @@ async function addAdditionalCurrencyPairs(providers: any[]) {
   }
 }
 
+// This function adds all real rates for all providers
+async function addAllRealRates() {
+  console.log('Adding all real rates for all providers...');
+  const providers = await storage.getActiveProviders();
+  const results = [];
+  
+  for (const provider of providers) {
+    // For each provider, find all matching rates
+    const providerRates = realProviderRates.filter(p => p.name === provider.name);
+    
+    for (const rateData of providerRates) {
+      try {
+        const exchangeRate: InsertExchangeRate = {
+          provider_id: provider.id,
+          from_currency: rateData.fromCurrency,
+          to_currency: rateData.toCurrency,
+          rate: rateData.rate
+        };
+        
+        const savedRate = await storage.createExchangeRate(exchangeRate);
+        results.push(savedRate);
+        console.log(`Added real rate for ${provider.name}: 1 ${rateData.fromCurrency} = ${rateData.rate} ${rateData.toCurrency}`);
+      } catch (error) {
+        console.error(`Error adding rate for ${provider.name}:`, error);
+      }
+    }
+  }
+  
+  return results;
+}
+
 // This function would be called periodically to update rates
 export async function updateExchangeRates() {
   console.log('Starting exchange rate update...');
-  const results = await scrapeExchangeRates();
-  console.log(`Updated ${results.length} exchange rates`);
+  let results = [];
+  
+  try {
+    // First try web scraping (but this often fails in the repl environment)
+    results = await scrapeExchangeRates();
+    console.log(`Updated ${results.length} exchange rates via scraping`);
+    
+    // If we got less than expected, add all real rates
+    if (results.length < 10) {
+      const allRates = await addAllRealRates();
+      console.log(`Updated ${allRates.length} exchange rates from real rate data`);
+      results = [...results, ...allRates];
+    }
+  } catch (error) {
+    console.error('Error in updateExchangeRates:', error);
+    // Fall back to adding all real rates
+    results = await addAllRealRates();
+  }
+  
+  console.log(`Total updated ${results.length} exchange rates`);
   return results;
 }
