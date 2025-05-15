@@ -92,7 +92,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/api/news", async (req: Request, res: Response) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
-      const news = await storage.getLatestNews(limit);
+      let news = await storage.getLatestNews(limit);
+      
+      // If no news found, let's populate the database with our sample news
+      if (!news || news.length === 0) {
+        console.log("No news found in database, using sample news...");
+        
+        // Import sample news data
+        const { sampleNews } = await import('./sampleNewsData');
+        
+        // Clear any existing news first
+        await storage.deleteAllNews();
+        
+        // Add each sample news item
+        for (const item of sampleNews) {
+          await storage.createNews(item);
+        }
+        
+        // Fetch again after adding sample data
+        news = await storage.getLatestNews(limit);
+        console.log(`Added ${sampleNews.length} sample news items to database`);
+      }
+      
       res.json(news);
     } catch (error) {
       console.error("Error fetching news:", error);
