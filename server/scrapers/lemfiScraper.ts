@@ -146,7 +146,26 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       console.log(`Retrieved HTML content (${html.length} characters)`);
       
       // Check for rate information in the HTML using various patterns
-      console.log('Trying to find rate information in the HTML using pattern: 1 GBP = X NGN');
+      console.log('Trying to find rate information in the HTML using exact rate format from website');
+      
+      // Looking specifically for the exact format seen in the screenshot: "1 GBP = 2,139 NGN"
+      const exactRatePattern = /1\s*GBP\s*=\s*([\d,]+)\s*NGN/i;
+      const exactMatch = html.match(exactRatePattern);
+      if (exactMatch && exactMatch[1]) {
+        const rateValue = parseFloat(exactMatch[1].replace(/,/g, ''));
+        console.log(`Found exact Lemfi rate format: ${rateValue}`);
+        // No arbitrary range check - if it matches the exact format, use it
+        return rateValue;
+      }
+      
+      // Exchange rate label format - looks for "Exchange rate" followed by a value
+      const exchangeRatePattern = /Exchange\s*rate[^]*?1\s*GBP\s*=\s*([\d,]+)\s*NGN/i;
+      const exchangeMatch = html.match(exchangeRatePattern);
+      if (exchangeMatch && exchangeMatch[1]) {
+        const rateValue = parseFloat(exchangeMatch[1].replace(/,/g, ''));
+        console.log(`Found Lemfi exchange rate label format: ${rateValue}`);
+        return rateValue;
+      }
       
       // Look for HTML that might contain the rate in a structured format
       const calculatorPattern = /data-amount="1"[^>]*data-from="GBP"[^>]*data-to="NGN"[^>]*data-result="(\d+(\.\d+)?)"[^>]*/i;
@@ -154,29 +173,24 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       if (calculatorMatch && calculatorMatch[1]) {
         const calculatorRate = parseFloat(calculatorMatch[1]);
         console.log(`Found Lemfi rate in calculator markup: ${calculatorRate}`);
-        if (calculatorRate >= 2000 && calculatorRate <= 3000) {
-          return calculatorRate;
-        }
+        return calculatorRate;
       }
       
-      // Try to find sections that talk about GBP to NGN specifically
-      const gbpNgnSectionPattern = /(GBP\s*to\s*NGN)[^]*?(\d{4}[\d,.]*)/i;
-      const sectionMatch = html.match(gbpNgnSectionPattern);
-      if (sectionMatch && sectionMatch[2]) {
-        const sectionRate = parseFloat(sectionMatch[2].replace(/,/g, ''));
-        console.log(`Found Lemfi rate in GBP to NGN section: ${sectionRate}`);
-        if (sectionRate >= 2000 && sectionRate <= 3000) {
-          return sectionRate;
-        }
+      // Try to find the specific UI element that shows the exchange rate
+      const rateElemPattern = /<div[^>]*>Exchange\s+rate<\/div>[^]*?<div[^>]*>(1\s*GBP\s*=\s*([\d,]+)\s*NGN)<\/div>/i;
+      const rateElemMatch = html.match(rateElemPattern);
+      if (rateElemMatch && rateElemMatch[2]) {
+        const elemRate = parseFloat(rateElemMatch[2].replace(/,/g, ''));
+        console.log(`Found Lemfi rate in rate element: ${elemRate}`);
+        return elemRate;
       }
       
+      // General patterns to try if the specific ones don't work
       const ratePatterns = [
         /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i,
         /GBP\s*1\s*=\s*NGN\s*([\d,]+\.?\d*)/i,
         /GBP\s*to\s*NGN\s*.*?(\d{4}[\d,.]*)/i,
-        /exchange\s*rate\s*.*?(\d{4}[\d,.]*)\s/i,
-        /rate\s*.*?(\d{4}[\d,.]*)\s/i,
-        /(\d{4}(?:\.\d+)?)\s*NGN/i  // Looking for 4-digit numbers followed by NGN
+        /exchange\s*rate\s*.*?(\d{4}[\d,.]*)\s/i
       ];
       
       for (const pattern of ratePatterns) {
