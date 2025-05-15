@@ -392,8 +392,12 @@ export class MemStorage implements IStorage {
           // The actual conversion amount is reduced by the fees
           const amountAfterFees = amount - feeAmount;
           
+          console.log(`Provider: ${provider.name}, Amount: ${amount}, Fee: ${feeAmount}, Amount After Fees: ${amountAfterFees}, Exchange Rate: ${exchangeRate}`);
+          
           // Calculate what the recipient receives based on the amount after fees
           receivedAmount = amountAfterFees * exchangeRate;
+          
+          console.log(`Received Amount: ${receivedAmount}`);
           
           // The send amount is the original amount (including fees)
           sendAmount = amount;
