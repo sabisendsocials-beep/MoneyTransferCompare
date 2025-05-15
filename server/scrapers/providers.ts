@@ -38,13 +38,13 @@ export async function ensureProvidersExist() {
       console.log('No providers found, initializing sample providers...');
       
       for (const mockProvider of mockProviderRates) {
+        const providerName = mockProvider.name;
         const provider: InsertProvider = {
-          name: mockProvider.name,
-          description: `${mockProvider.name} money transfer service`,
-          website: mockProviderWebsites[mockProvider.name] || 'https://example.com',
+          name: providerName,
+          websiteUrl: mockProviderWebsites[providerName as keyof typeof mockProviderWebsites] || 'https://example.com',
           logo: null,
           active: true,
-          fee: mockProvider.fee,
+          fixedFee: mockProvider.fee,
           transferTime: mockProvider.transferTime,
           rating: mockProvider.rating,
           scrapingUrl: null,

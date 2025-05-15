@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { transferRequestSchema } from "@shared/schema";
-import { updateExchangeRates } from "./scrapers/providers";
+import { updateExchangeRates, ensureProvidersExist } from "./scrapers/providers";
 import { updateFinancialNews } from "./scrapers/news";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -118,7 +118,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Setup periodic updates (every hour for exchange rates, every 6 hours for news)
-  setTimeout(() => {
+  setTimeout(async () => {
+    // Initialize providers and data
+    await ensureProvidersExist().catch(err => console.error("Failed to initialize providers:", err));
+    
     // Initial updates
     updateExchangeRates().catch(err => console.error("Failed to update exchange rates:", err));
     updateFinancialNews().catch(err => console.error("Failed to update news:", err));
