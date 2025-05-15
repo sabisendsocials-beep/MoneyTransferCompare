@@ -251,13 +251,13 @@ export class MemStorage implements IStorage {
       name: insertProvider.name,
       logo: insertProvider.logo || null,
       rating: insertProvider.rating || null,
-      websiteUrl: insertProvider.websiteUrl || null,
-      scrapingUrl: insertProvider.scrapingUrl || null,
-      scrapingSelector: insertProvider.scrapingSelector || null,
-      transferTime: insertProvider.transferTime || null,
-      hasFixedFee: insertProvider.hasFixedFee || null,
-      fixedFee: insertProvider.fixedFee || null,
-      percentageFee: insertProvider.percentageFee || null,
+      website_url: insertProvider.website_url || null,
+      scraping_url: insertProvider.scraping_url || null,
+      scraping_selector: insertProvider.scraping_selector || null,
+      transfer_time: insertProvider.transfer_time || null,
+      has_fixed_fee: insertProvider.has_fixed_fee || null,
+      fixed_fee: insertProvider.fixed_fee || null,
+      percentage_fee: insertProvider.percentage_fee || null,
       active: insertProvider.active || null
     };
     this.providers.set(id, provider);

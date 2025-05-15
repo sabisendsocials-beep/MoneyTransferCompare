@@ -132,7 +132,7 @@ export class DatabaseStorage implements IStorage {
     // Map providers to their rates
     const providerRatesMap = new Map<number, ExchangeRate>();
     rates.forEach(rate => {
-      providerRatesMap.set(rate.providerId, rate);
+      providerRatesMap.set(rate.provider_id, rate);
     });
     
     // Calculate results for each provider
@@ -144,11 +144,11 @@ export class DatabaseStorage implements IStorage {
       if (rate) {
         let sendAmount = request.amount;
         let receivedAmount = request.amount;
-        let fee = provider.fixedFee || 0;
+        let fee = provider.fixed_fee || 0;
         
         // If percentage fee exists, calculate it
-        if (provider.percentageFee) {
-          fee += (request.amount * provider.percentageFee / 100);
+        if (provider.percentage_fee) {
+          fee += (request.amount * provider.percentage_fee / 100);
         }
         
         // Calculate based on whether this is a "send" or "receive" request
@@ -171,9 +171,9 @@ export class DatabaseStorage implements IStorage {
           fee,
           receivedAmount,
           sendAmount,
-          transferTime: provider.transferTime || 'Unknown',
+          transferTime: provider.transfer_time || 'Unknown',
           totalCost: sendAmount + fee,
-          websiteUrl: provider.websiteUrl
+          websiteUrl: provider.website_url
         });
       }
     }

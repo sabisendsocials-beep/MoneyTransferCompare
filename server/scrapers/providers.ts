@@ -91,10 +91,10 @@ export async function scrapeExchangeRates() {
           const savedRate = await storage.createExchangeRate(rateData);
           results.push(savedRate);
           console.log(`Added exchange rate for ${provider.name}: 1 GBP = ${rate} NGN`);
-        } else if (provider.scrapingUrl && provider.scrapingSelector) {
+        } else if (provider.scraping_url && provider.scraping_selector) {
           // If we have scraping configuration, try to use it
           try {
-            const response = await fetch(provider.scrapingUrl);
+            const response = await fetch(provider.scraping_url);
             if (!response.ok) {
               console.error(`Error fetching data for ${provider.name}: ${response.statusText}`);
               continue;
@@ -103,7 +103,7 @@ export async function scrapeExchangeRates() {
             const html = await response.text();
             const $ = cheerio.load(html);
 
-            const rateText = $(provider.scrapingSelector).text();
+            const rateText = $(provider.scraping_selector).text();
             const rate = extractExchangeRate(rateText, provider.name);
 
             if (rate) {
