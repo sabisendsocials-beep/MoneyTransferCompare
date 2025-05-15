@@ -14,7 +14,9 @@ const mockProviderRates = [
   { name: 'TorFX', rate: 1510.25, fee: 0, transferTime: '1-2 days', rating: 4.6 },
   { name: 'Small World', rate: 1479.60, fee: 2.49, transferTime: '1-3 days', rating: 3.8 },
   { name: 'XE Money Transfer', rate: 1505.40, fee: 2.00, transferTime: '2-4 days', rating: 4.2 },
-  { name: 'Currencys', rate: 1492.80, fee: 3.50, transferTime: '2-3 days', rating: 3.9 }
+  { name: 'Currencys', rate: 1492.80, fee: 3.50, transferTime: '2-3 days', rating: 3.9 },
+  { name: 'Lemfi', rate: 1525.75, fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
+  { name: 'Nala', rate: 1518.90, fee: 1.50, transferTime: 'Same day', rating: 4.6 }
 ];
 
 const mockProviderWebsites = {
@@ -27,7 +29,9 @@ const mockProviderWebsites = {
   'TorFX': 'https://www.torfx.com',
   'Small World': 'https://www.smallworldfs.com',
   'XE Money Transfer': 'https://www.xe.com',
-  'Currencys': 'https://currencys.co.uk'
+  'Currencys': 'https://currencys.co.uk',
+  'Lemfi': 'https://lemfi.com',
+  'Nala': 'https://nala.money'
 };
 
 export async function ensureProvidersExist() {
@@ -47,8 +51,9 @@ export async function ensureProvidersExist() {
           fixed_fee: mockProvider.fee,
           transfer_time: mockProvider.transferTime,
           rating: mockProvider.rating,
-          scraping_url: null,
-          scraping_selector: null
+          // Add actual URLs and selectors for scraping exchange rates
+          scraping_url: getScrapingUrl(providerName),
+          scraping_selector: getScrapingSelector(providerName)
         };
         
         await storage.createProvider(provider);
