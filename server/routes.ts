@@ -7,6 +7,7 @@ import { updateFinancialNews } from "./scrapers/news";
 import { initializeDatabase } from "./db";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { realProviderRates } from "./scrapers/realRates";
+import { updateLemfiRate } from "./scrapers/lemfiScraper";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api
@@ -160,6 +161,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating news:", error);
       res.status(500).json({ message: "Failed to update news" });
+    }
+  });
+  
+  // Special endpoint to test the Lemfi scraper directly
+  apiRouter.get("/api/test-lemfi", async (req: Request, res: Response) => {
+    try {
+      console.log("Testing Lemfi rate scraper directly...");
+      const success = await updateLemfiRate();
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "Lemfi rate successfully updated using dedicated scraper" 
+        });
+      } else {
+        res.status(404).json({ 
+          success: false, 
+          message: "Lemfi scraper ran but couldn't find a valid rate" 
+        });
+      }
+    } catch (error) {
+      console.error("Error in /api/test-lemfi:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error testing Lemfi scraper", 
+        error: String(error) 
+      });
     }
   });
 
