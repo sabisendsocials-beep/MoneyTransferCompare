@@ -47,12 +47,12 @@ export const exchangeRates = pgTable("exchange_rates", {
   from_currency: text("from_currency").notNull(),
   to_currency: text("to_currency").notNull(),
   rate: real("rate").notNull(),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull()
 });
 
 export const insertExchangeRateSchema = createInsertSchema(exchangeRates).omit({
   id: true,
-  timestamp: true,
+  timestamp: true
 });
 
 export type InsertExchangeRate = z.infer<typeof insertExchangeRateSchema>;
@@ -102,6 +102,8 @@ export const transferResultSchema = z.object({
   transferTime: z.string().nullable().optional(),
   totalCost: z.number(),
   websiteUrl: z.string().nullable().optional(),
+  lastUpdated: z.string().optional(), // ISO date string of when the rate was last updated
+  lastChecked: z.string().optional() // ISO date string of when we last tried to get a live rate
 });
 
 export type TransferResult = z.infer<typeof transferResultSchema>;

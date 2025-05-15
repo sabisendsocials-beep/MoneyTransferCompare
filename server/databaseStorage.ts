@@ -187,7 +187,9 @@ export class DatabaseStorage implements IStorage {
           sendAmount,
           transferTime: provider.transfer_time || 'Unknown',
           totalCost: fee,
-          websiteUrl: provider.website_url
+          websiteUrl: provider.website_url,
+          lastUpdated: rate.timestamp.toISOString(),
+          lastChecked: new Date().toISOString()
         });
       }
     }

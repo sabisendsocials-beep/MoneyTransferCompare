@@ -410,6 +410,10 @@ export class MemStorage implements IStorage {
           sendAmount += feeAmount;
         }
         
+        // Find the most recent rate to get the timestamp
+        const mostRecentRate = rates.find(rate => rate.provider_id === provider.id);
+        const lastUpdated = mostRecentRate ? mostRecentRate.timestamp.toISOString() : new Date().toISOString();
+        
         results.push({
           providerId: provider.id,
           providerName: provider.name,
@@ -421,7 +425,9 @@ export class MemStorage implements IStorage {
           sendAmount: sendAmount,
           transferTime: provider.transfer_time || null,
           totalCost: fee + (amount * percentageFee / 100),
-          websiteUrl: provider.website_url || null
+          websiteUrl: provider.website_url || null,
+          lastUpdated: lastUpdated,
+          lastChecked: new Date().toISOString()
         });
       }
     }
