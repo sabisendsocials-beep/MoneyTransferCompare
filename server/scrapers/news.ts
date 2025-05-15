@@ -287,9 +287,14 @@ export async function scrapeFinancialNews() {
 }
 
 // Helper function to extract an image URL from an article
-function extractImageUrl(articleElement: cheerio.Cheerio<cheerio.Element>): string | undefined {
-  const img = articleElement.find('img').first();
-  return img.attr('src') || img.attr('data-src');
+function extractImageUrl(articleElement: any): string | undefined {
+  try {
+    const img = articleElement.find('img').first();
+    return img.attr('src') || img.attr('data-src');
+  } catch (error) {
+    console.error('Error extracting image URL:', error);
+    return undefined;
+  }
 }
 
 // Helper function to parse date text into a Date object
@@ -307,7 +312,21 @@ function parseDateText(dateText: string): Date | undefined {
 // This function would be called periodically to update news
 export async function updateFinancialNews() {
   console.log('Starting financial news update...');
+  // First clear existing news to avoid duplicates
+  await clearExistingNews();
+  // Then scrape and add new news
   const results = await scrapeFinancialNews();
   console.log(`Updated ${results.length} news items`);
   return results;
+}
+
+// Helper function to clear existing news to avoid duplicates
+async function clearExistingNews(): Promise<void> {
+  console.log('Clearing existing news...');
+  try {
+    await storage.deleteAllNews();
+    console.log('Cleared existing news');
+  } catch (error) {
+    console.error('Error clearing news:', error);
+  }
 }

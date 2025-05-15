@@ -33,6 +33,7 @@ export interface IStorage {
   // News methods
   getLatestNews(limit: number): Promise<News[]>;
   createNews(news: InsertNews): Promise<News>;
+  deleteAllNews(): Promise<void>; // Method to clear all news
   
   // Comparison methods
   compareTransferOptions(request: TransferRequest): Promise<TransferResult[]>;
