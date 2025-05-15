@@ -374,23 +374,25 @@ export class MemStorage implements IStorage {
     const results: TransferResult[] = [];
     
     for (const provider of providers) {
-      const providerRate = rates.find(rate => rate.providerId === provider.id);
+      const providerRate = rates.find(rate => rate.provider_id === provider.id);
       
       if (providerRate) {
         const exchangeRate = providerRate.rate;
-        const fee = provider.hasFixedFee && provider.fixedFee !== null ? provider.fixedFee : 0;
-        const percentageFee = provider.percentageFee !== null ? provider.percentageFee : 0;
+        const fee = provider.has_fixed_fee && provider.fixed_fee !== null ? provider.fixed_fee : 0;
+        const percentageFee = provider.percentage_fee !== null ? provider.percentage_fee : 0;
         
         let sendAmount = amount;
         let receivedAmount = amount;
         
         if (type === 'send') {
-          // Calculate how much recipient will get
+          // For 'send' type, we maintain the input amount as the base, then add fees on top
+          // This ensures the recipient always gets the expected amount after conversion
+          receivedAmount = amount * exchangeRate;
+          // Calculate fees as additional costs, not deducted from the send amount
           const feeAmount = fee + (amount * percentageFee / 100);
-          const transferAmount = amount - feeAmount;
-          receivedAmount = transferAmount * exchangeRate;
+          sendAmount = amount + feeAmount;
         } else {
-          // Calculate how much sender needs to send
+          // For 'receive' type, we work backwards from the received amount
           sendAmount = amount / exchangeRate;
           const feeAmount = fee + (sendAmount * percentageFee / 100);
           sendAmount += feeAmount;
@@ -405,9 +407,9 @@ export class MemStorage implements IStorage {
           fee,
           receivedAmount,
           sendAmount,
-          transferTime: provider.transferTime || null,
-          totalCost: type === 'send' ? fee + (amount * percentageFee / 100) : fee + (sendAmount * percentageFee / 100),
-          websiteUrl: provider.websiteUrl || null
+          transferTime: provider.transfer_time || null,
+          totalCost: fee + (type === 'send' ? amount * percentageFee / 100 : sendAmount * percentageFee / 100),
+          websiteUrl: provider.website_url || null
         });
       }
     }

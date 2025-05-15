@@ -37,8 +37,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
   // Calculate some additional stats for each provider
   const getProviderDetails = (provider: TransferResult) => {
     // Calculate effective exchange rate (after fees)
-    const totalSendAmount = provider.sendAmount + provider.fee;
-    const effectiveRate = provider.receivedAmount / totalSendAmount;
+    const effectiveRate = provider.receivedAmount / provider.sendAmount;
     
     // Calculate rate margin against mid-market
     const midMarketRate = 1500; // This would normally come from the API
@@ -48,11 +47,15 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
     const mostExpensiveProvider = [...results].sort((a, b) => a.receivedAmount - b.receivedAmount)[0];
     const savings = provider.receivedAmount - mostExpensiveProvider.receivedAmount;
     
+    // Calculate fee as percentage of send amount
+    const feePercentage = (provider.fee / provider.sendAmount) * 100;
+    
     return {
       effectiveRate,
       rateMargin: Math.max(0, rateMargin).toFixed(1),
       savings: Math.max(0, savings),
-      totalCost: totalSendAmount.toFixed(2),
+      totalCost: provider.sendAmount.toFixed(2),
+      feePercentage: feePercentage.toFixed(1),
     };
   };
 
@@ -203,9 +206,14 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Fee</span>
-                          <span className={`font-medium ${bestProvider.fee === 0 ? 'text-green-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                            {bestProvider.fee === 0 ? 'FREE' : formatCurrency(bestProvider.fee, fromCurrency)}
-                          </span>
+                          <div className="text-right">
+                            <span className={`font-medium ${bestProvider.fee === 0 ? 'text-green-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                              {bestProvider.fee === 0 ? 'FREE' : formatCurrency(bestProvider.fee, fromCurrency)}
+                            </span>
+                            <div className="text-xs text-gray-500">
+                              ({bestProviderDetails.feePercentage}% of transaction)
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
