@@ -536,8 +536,8 @@ export class MemStorage implements IStorage {
     dayEnd.setHours(23, 59, 59, 999);
     
     const dayRates = this.exchangeRates.filter(rate => 
-      rate.fromCurrency === fromCurrency && 
-      rate.toCurrency === toCurrency && 
+      rate.from_currency === fromCurrency && 
+      rate.to_currency === toCurrency && 
       rate.timestamp >= dayStart && 
       rate.timestamp <= dayEnd
     );
@@ -545,7 +545,7 @@ export class MemStorage implements IStorage {
     if (dayRates.length === 0) {
       // If no data for the exact date, find the closest date
       const closestRates = this.exchangeRates
-        .filter(rate => rate.fromCurrency === fromCurrency && rate.toCurrency === toCurrency)
+        .filter(rate => rate.from_currency === fromCurrency && rate.to_currency === toCurrency)
         .sort((a, b) => 
           Math.abs(a.timestamp.getTime() - date.getTime()) - 
           Math.abs(b.timestamp.getTime() - date.getTime())
