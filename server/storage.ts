@@ -37,6 +37,7 @@ export interface IStorage {
   // Rate trend methods
   getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrend[]>;
   getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats>;
+  updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrend[]): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -565,6 +566,12 @@ export class MemStorage implements IStorage {
     }
     
     return dayRates.reduce((sum, rate) => sum + rate.rate, 0) / dayRates.length;
+  }
+
+  async updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrend[]): Promise<void> {
+    // In a real database implementation, we would store these trends
+    // For now, in the in-memory version, we'll just log them
+    console.log(`Updated ${trends.length} trend data points for ${fromCurrency}/${toCurrency}`);
   }
 }
 
