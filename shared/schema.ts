@@ -67,6 +67,8 @@ export const news = pgTable("news", {
   source: text("source"),
   url: text("url"),
   image_url: text("image_url"),
+  category: text("category"), // e.g., 'financial', 'general'
+  country: text("country"),   // e.g., 'Nigeria', 'Ghana'
   published_at: timestamp("published_at"),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
