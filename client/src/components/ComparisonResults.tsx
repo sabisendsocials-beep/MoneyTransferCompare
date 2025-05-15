@@ -314,21 +314,21 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Recipient gets</p>
-                          <p className="font-semibold">{formatCurrency(provider.receivedAmount, toCurrency)}</p>
+                          <p className="font-semibold">{formatCurrency(provider.received_amount, toCurrency)}</p>
                           <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
                             <Clock className="h-3 w-3 mr-1" />
-                            {provider.transferTime || "Unknown"}
+                            {provider.transfer_time || "Unknown"}
                           </div>
                         </div>
                       </div>
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
-                        <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate.toLocaleString()} {toCurrency}</span>
+                        <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchange_rate.toLocaleString()} {toCurrency}</span>
                       </div>
                       <Button 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => window.open(provider.websiteUrl || '#', '_blank')}
+                        onClick={() => window.open(provider.website_url || '#', '_blank')}
                       >
                         Go to provider
                       </Button>
