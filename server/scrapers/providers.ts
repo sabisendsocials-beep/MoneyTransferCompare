@@ -39,29 +39,29 @@ function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency =
 function getScrapingSelector(providerName: string): string | null {
   switch (providerName) {
     case 'Wise':
-      return '.rate-value';
+      return '.rate-value, .js-CurrencyConversion-rateValue, .m-t-2'; // Try multiple selectors
     case 'Western Union':
-      return '.exchange-rate-value';
+      return '.exchange-rate-value, .wu-text--rate';
     case 'MoneyGram':
-      return '.exchange-rate';
+      return '.exchange-rate, .result-exchange-rate';
     case 'Remitly':
-      return '.exchange-rate-display';
+      return '.exchange-rate-display, .rate-calculator-result';
     case 'WorldRemit':
-      return '.converter-result';
+      return '.converter-result, .text-amount-default, .exchange-rate';
     case 'Azimo':
-      return '.rate-display';
+      return '.rate-display, .currency-converter-result';
     case 'TorFX':
-      return '.rate-box';
+      return '.rate-box, .conversion-result';
     case 'Small World':
-      return '.current-rate';
+      return '.current-rate, .rate-value';
     case 'XE Money Transfer':
-      return '.result__BigRate-sc-1bsijpp-1';
+      return '.result__BigRate-sc-1bsijpp-1, .result-area-data-row'; // Multiple possible selectors
     case 'Currencys':
-      return '.converter-result-value';
+      return '.converter-result-value, .conversion-result';
     case 'Lemfi':
-      return '.rate-card';
+      return '.rate-card, .exchange-rate, .rate-display';
     case 'Nala':
-      return '.rate-display';
+      return '.rate-display, .exchange-rate, .currency-rate';
     default:
       return null;
   }
@@ -87,47 +87,98 @@ const providerList = [
 function extractExchangeRate(text: string, providerName: string): number | null {
   try {
     let rateText = text.trim();
+    console.log(`Extracting rate from text for ${providerName}: "${rateText}"`);
     
-    // Different providers format their rates differently
-    switch (providerName) {
-      case 'Wise':
-        // Example format: "1 GBP = 1,523 NGN"
+    // Check for common patterns first
+    if (rateText.includes('=')) {
+      // Try to get the part after the equals sign
+      try {
         rateText = rateText.split('=')[1].trim();
-        break;
-      case 'Western Union':
-        // Example format: "1 GBP = 1498.20 NGN"
-        rateText = rateText.split('=')[1].trim();
-        break;
-      case 'MoneyGram':
-        // Example format: "1 GBP equals 1,489.75 NGN"
+        console.log(`After splitting by =: "${rateText}"`);
+      } catch (e) {
+        // If splitting fails, keep original text
+      }
+    } else if (rateText.includes('equals')) {
+      try {
         rateText = rateText.split('equals')[1].trim();
-        break;
-      case 'Remitly':
-        // Example format: "1 GBP = 1512.30 NGN"
-        rateText = rateText.split('=')[1].trim();
-        break;
-      case 'WorldRemit':
-        // Example format: "1 British Pound = 1,506.80 Nigerian Naira"
-        rateText = rateText.split('=')[1].trim();
-        break;
-      case 'Lemfi':
-        // Example format: "1 GBP = 1525.75 NGN"
-        rateText = rateText.split('=')[1].trim();
-        break;
-      case 'Nala':
-        // Example format: "1 GBP = 1518.90 NGN"
-        rateText = rateText.split('=')[1].trim();
-        break;
-      default:
-        // Try to find a number pattern
-        const match = rateText.match(/(\d+[.,]?\d*)/);
-        if (match) {
-          rateText = match[0];
-        }
+        console.log(`After splitting by equals: "${rateText}"`);
+      } catch (e) {
+        // If splitting fails, keep original text
+      }
     }
     
-    // Clean up the rate text and convert to number
-    return parseFloat(rateText.replace(/[^\d.]/g, ''));
+    // For specific provider formats
+    switch (providerName) {
+      case 'Wise':
+      case 'Western Union':
+      case 'MoneyGram':
+      case 'Remitly':
+      case 'WorldRemit':
+      case 'Lemfi':
+      case 'Nala':
+        // For these providers, we want to find a large number (which is likely NGN)
+        const numbers = rateText.match(/[\d,]+\.?\d*/g);
+        if (numbers && numbers.length > 0) {
+          // Convert all matches to numbers
+          const parsedNumbers = numbers.map(n => parseFloat(n.replace(/,/g, '')));
+          // Get the largest number which is likely the NGN amount
+          if (parsedNumbers.some(n => n > 100)) { // If any number is over 100, it's likely a GBP->NGN rate
+            const largeNumbers = parsedNumbers.filter(n => n > 100);
+            const rate = Math.max(...largeNumbers);
+            console.log(`Found large number for ${providerName}: ${rate}`);
+            return rate;
+          }
+        }
+        break;
+    }
+    
+    // If provider-specific logic didn't work, try generic extraction
+    
+    // First, try to extract numbers in the format xxx.xx or xxx,xx
+    const decimalMatches = rateText.match(/(\d{1,3}(?:[,.]\d{3})*(?:\.\d{1,2})?)/g);
+    if (decimalMatches && decimalMatches.length > 0) {
+      // Process each match to find likely exchange rates
+      const rates = decimalMatches
+        .map(match => {
+          // Replace commas with nothing if they appear to be thousand separators
+          if (match.includes(',') && !match.includes('.')) {
+            // If only commas, treat as decimal
+            return parseFloat(match.replace(',', '.'));
+          } else if ((match.match(/,/g) || []).length > 1) {
+            // Multiple commas means thousand separators
+            return parseFloat(match.replace(/,/g, ''));
+          }
+          // Otherwise parse as-is
+          return parseFloat(match);
+        })
+        .filter(rate => !isNaN(rate) && rate > 0);
+      
+      if (rates.length > 0) {
+        // For GBP to NGN, the rate should be a larger number (1000+)
+        const highRates = rates.filter(r => r > 100);
+        if (highRates.length > 0) {
+          const highestRate = Math.max(...highRates);
+          console.log(`Found high rate using decimal extraction: ${highestRate}`);
+          return highestRate;
+        }
+        
+        // If no high rates, return the highest rate we found
+        const highestRate = Math.max(...rates);
+        console.log(`Returning highest found rate: ${highestRate}`);
+        return highestRate;
+      }
+    }
+    
+    // If all else fails, try to extract any number
+    const anyNumberMatch = rateText.match(/\d+(\.\d+)?/);
+    if (anyNumberMatch) {
+      const rate = parseFloat(anyNumberMatch[0]);
+      console.log(`Extracted any number as fallback: ${rate}`);
+      return rate;
+    }
+    
+    console.log(`Failed to extract rate from "${text}" for ${providerName}`);
+    return null;
   } catch (error) {
     console.error(`Error extracting rate from text "${text}" for ${providerName}:`, error);
     return null;
@@ -207,9 +258,25 @@ export async function scrapeExchangeRates() {
             const html = await response.text();
             const $ = cheerio.load(html);
 
-            const rateText = $(provider.scraping_selector).text();
+            // Try to find rate text using all selectors (comma-separated)
+            const selectors = provider.scraping_selector.split(',').map(s => s.trim());
+            let rateText = null;
+            
+            // Try each selector until we find content
+            for (const selector of selectors) {
+              const element = $(selector);
+              if (element.length > 0) {
+                const text = element.text().trim();
+                if (text) {
+                  rateText = text;
+                  console.log(`Found rate text for ${provider.name} using selector "${selector}": ${text}`);
+                  break;
+                }
+              }
+            }
+            
             if (!rateText) {
-              console.error(`No rate text found for ${provider.name} using selector "${provider.scraping_selector}"`);
+              console.error(`No rate text found for ${provider.name} using selectors "${provider.scraping_selector}"`);
               continue;
             }
             
