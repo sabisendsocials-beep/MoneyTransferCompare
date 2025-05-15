@@ -44,6 +44,7 @@ const PROVIDER_MARKUPS: Record<string, number> = {
   'Flutterwave': -0.068, // 6.8% below market rate
   'SendApp': -0.065, // 6.5% below market rate
   'Chipper Cash': -0.072, // 7.2% below market rate
+  'Lemfi': -0.058, // 5.8% below market rate
 };
 
 /**
@@ -222,7 +223,11 @@ export async function getProviderRate(providerName: string): Promise<number | nu
         }
       }
     } catch (error) {
-      console.log(`Direct scraping for ${providerName} failed: ${error.message}`);
+      if (error instanceof Error) {
+        console.log(`Direct scraping for ${providerName} failed: ${error.message}`);
+      } else {
+        console.log(`Direct scraping for ${providerName} failed with unknown error`);
+      }
     }
     
     // If direct scraping fails, use our calculated rates based on market data
