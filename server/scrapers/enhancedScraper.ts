@@ -98,6 +98,11 @@ export function findExchangeRatePattern(text: string): string | null {
   const patterns = [
     // Standard exchange rate formats
     /(?:1|one)\s*(?:GBP|gbp|£)\s*(?:=|equals|is)\s*([\d,]+\.?\d*)\s*(?:NGN|ngn)/i,
+    
+    // WorldRemit specific format from screenshot (1 GBP = 2112.8843 NGN)
+    /1\s*GBP\s*=\s*([\d,]+\.\d+)\s*NGN/i,
+    
+    // Rate display patterns
     /(?:rate|exchange rate|fx rate)[^\d]*([\d,]+\.?\d*)/i,
     /GBP\/NGN[^\d]*([\d,]+\.?\d*)/i,
     
@@ -107,16 +112,18 @@ export function findExchangeRatePattern(text: string): string | null {
     // For rates displayed without decimal points (e.g., "1580 NGN")
     /(?:1|one)\s*(?:GBP|gbp|£)[^\d]*(\d{3,5})[^\d]*(?:NGN|ngn|Naira)/i,
     
-    // For currency calculator results
+    // For currency calculator results - from the screenshot we saw: "You send 100" / "They get 211288"
+    /you\s*send\s*\d+.*?they\s*get\s*(\d[\d,]*)/i,
     /receive[^\d]*([\d,]+\.?\d*)[^\d]*(?:NGN|ngn|Naira)/i,
     /you\s*(?:get|receive)[^\d]*([\d,]+\.?\d*)[^\d]*(?:NGN|ngn|Naira)/i,
     /send.*?\s+(\d[\d,.]+)\s*NGN/i,
+    /they\s*get\s*(\d[\d,]*)/i,
     
     // For providers that show the inverse rate (NGN to GBP)
     /(?:1000|1,000)\s*(?:NGN|ngn|Naira)[^\d]*([\d\.]+)\s*(?:GBP|gbp|£)/i,
     
-    // For providers showing just the number (we'll look for numbers around 1500-1600 which are likely GBP to NGN rates)
-    /(1[5-6]\d\d(?:\.\d+)?)/i,
+    // For providers showing just the number (looking for GBP to NGN rates, which are typically in 1500-2200 range)
+    /(1[5-9]\d\d(?:\.\d+)?|2[0-2]\d\d(?:\.\d+)?)/i,
   ];
   
   for (const pattern of patterns) {
@@ -182,20 +189,20 @@ export function getEnhancedSelectors(providerName: string): string[] {
       ];
     case 'WorldRemit':
       return [
+        // Updated selectors based on actual website structure
         '.exchange-rate-value',
         '.exchange-rate',
         '.converter-result',
-        '.rate-display',
-        '.calculator__exchange-rate',
+        // This one matches the format in the screenshot (1 GBP = 2112.8843 NGN)
+        '*:contains("1 GBP = ")',
+        '*:contains("GBP")',
+        '*:contains("NGN")',
+        '*:contains("send")',
+        '*:contains("get")',
+        'span.font-bold',
         '[data-testid="rateValue"]',
-        'h1',  // Often contains the rate in their page
-        'h2',  // May contain the rate
-        'span.font-bold',  // WorldRemit often uses this for the rate
-        'span:contains("exchange rate")',
-        'p:contains("exchange rate")',
-        'div:contains("1 GBP =")',
-        'span:contains("1 GBP =")',
-        '*:contains("TODAY 1 GBP =")'
+        'h1',
+        'h2'
       ];
     // Add more providers as needed
     default:
