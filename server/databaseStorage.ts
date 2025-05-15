@@ -195,8 +195,8 @@ export class DatabaseStorage implements IStorage {
         AVG(rate) as rate
       FROM ${schema.exchangeRates}
       WHERE 
-        "fromCurrency" = ${fromCurrency} AND 
-        "toCurrency" = ${toCurrency} AND
+        "from_currency" = ${fromCurrency} AND 
+        "to_currency" = ${toCurrency} AND
         "timestamp" >= ${startDate.toISOString()}
       GROUP BY DATE_TRUNC('day', "timestamp")
       ORDER BY date
@@ -261,8 +261,8 @@ export class DatabaseStorage implements IStorage {
       SELECT rate, timestamp
       FROM ${schema.exchangeRates}
       WHERE 
-        "fromCurrency" = ${fromCurrency} AND 
-        "toCurrency" = ${toCurrency} AND
+        "from_currency" = ${fromCurrency} AND 
+        "to_currency" = ${toCurrency} AND
         "timestamp" >= ${oneYearAgo.toISOString()}
       ORDER BY timestamp DESC
     `);

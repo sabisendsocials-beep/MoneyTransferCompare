@@ -82,9 +82,9 @@ export async function scrapeExchangeRates() {
           
           // Create exchange rate record
           const rateData: InsertExchangeRate = {
-            providerId: provider.id,
-            fromCurrency: 'GBP',
-            toCurrency: 'NGN',
+            provider_id: provider.id,
+            from_currency: 'GBP',
+            to_currency: 'NGN',
             rate
           };
 
@@ -156,9 +156,9 @@ async function addAdditionalCurrencyPairs(providers: any[]) {
       const rate = pair.baseRate * (1 + variance);
       
       const rateData: InsertExchangeRate = {
-        providerId: provider.id,
-        fromCurrency: pair.from,
-        toCurrency: pair.to,
+        provider_id: provider.id,
+        from_currency: pair.from,
+        to_currency: pair.to,
         rate
       };
 
