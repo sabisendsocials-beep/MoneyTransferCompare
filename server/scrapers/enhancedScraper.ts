@@ -182,11 +182,20 @@ export function getEnhancedSelectors(providerName: string): string[] {
       ];
     case 'WorldRemit':
       return [
+        '.exchange-rate-value',
         '.exchange-rate',
         '.converter-result',
         '.rate-display',
         '.calculator__exchange-rate',
-        'span:contains("1 GBP =")'
+        '[data-testid="rateValue"]',
+        'h1',  // Often contains the rate in their page
+        'h2',  // May contain the rate
+        'span.font-bold',  // WorldRemit often uses this for the rate
+        'span:contains("exchange rate")',
+        'p:contains("exchange rate")',
+        'div:contains("1 GBP =")',
+        'span:contains("1 GBP =")',
+        '*:contains("TODAY 1 GBP =")'
       ];
     // Add more providers as needed
     default:

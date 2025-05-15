@@ -4,6 +4,7 @@ import type { InsertExchangeRate, InsertProvider, ExchangeRate } from '@shared/s
 import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
 import { updateLemfiRate } from './lemfiScraper';
+import { updateWorldRemitRate } from './worldRemitScraper';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
@@ -288,6 +289,16 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               continue; // Skip to next provider
             } else {
               console.log('=== Dedicated Lemfi scraper failed, trying enhanced scraping... ===');
+            }
+          } else if (provider.name === 'WorldRemit') {
+            console.log('=== Using dedicated WorldRemit scraper... ===');
+            const success = await updateWorldRemitRate();
+            if (success) {
+              console.log('=== Successfully updated WorldRemit rate with dedicated scraper ===');
+              results.push({ provider: provider.name, success: true });
+              continue; // Skip to next provider
+            } else {
+              console.log('=== Dedicated WorldRemit scraper failed, trying enhanced scraping... ===');
             }
           }
           
