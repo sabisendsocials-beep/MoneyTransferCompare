@@ -328,7 +328,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       <Button 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => window.open(provider.website_url || '#', '_blank')}
+                        onClick={() => window.open(provider.websiteUrl || '#', '_blank')}
                       >
                         Go to provider
                       </Button>
@@ -372,13 +372,13 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                   {[bestProvider, ...otherProviders].map((provider, index) => {
                     const details = getProviderDetails(provider);
                     return (
-                      <tr key={provider.provider_id} className={index === 0 ? "bg-green-50 dark:bg-green-900/10" : ""}>
+                      <tr key={provider.providerId} className={index === 0 ? "bg-green-50 dark:bg-green-900/10" : ""}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            {provider.provider_logo || providerLogos[provider.provider_name] ? (
+                            {provider.providerLogo || providerLogos[provider.providerName] ? (
                               <img
-                                src={provider.provider_logo || providerLogos[provider.provider_name]}
-                                alt={`${provider.provider_name} Logo`}
+                                src={provider.providerLogo || providerLogos[provider.providerName]}
+                                alt={`${provider.providerName} Logo`}
                                 className="h-8 w-8 object-contain"
                               />
                             ) : (
@@ -388,7 +388,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                             )}
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                                {provider.provider_name}
+                                {provider.providerName}
                                 {index === 0 && (
                                   <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
                                     Best
@@ -412,9 +412,9 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {index === 0 ? (
-                            <span className="text-green-500">{formatCurrency(provider.received_amount, toCurrency)}</span>
+                            <span className="text-green-500">{formatCurrency(provider.receivedAmount, toCurrency)}</span>
                           ) : (
-                            <span className="text-gray-900 dark:text-white">{formatCurrency(provider.received_amount, toCurrency)}</span>
+                            <span className="text-gray-900 dark:text-white">{formatCurrency(provider.receivedAmount, toCurrency)}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
