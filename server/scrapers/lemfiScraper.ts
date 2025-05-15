@@ -49,7 +49,7 @@ export async function scrapeLemfiRate(): Promise<number | null> {
         
         if (quoteData && quoteData.exchangeRate) {
           const exchangeRate = parseFloat(quoteData.exchangeRate);
-          if (exchangeRate >= 2000 && exchangeRate <= 3000) {
+          if (exchangeRate > 1000) {
             console.log(`Got direct Lemfi rate from quote API: ${exchangeRate}`);
             return exchangeRate;
           }
@@ -80,7 +80,7 @@ export async function scrapeLemfiRate(): Promise<number | null> {
             'Accept-Language': 'en-GB,en;q=0.9',
             'Origin': 'https://lemfi.com',
             'Referer': 'https://lemfi.com/en-gb/international-money-transfer',
-            'X-Forwarded-For': '212.58.244.22', // BBC UK IP address
+            'X-Forwarded-For': '212.58.244.22',
             'X-Forwarded-Proto': 'https',
             'X-Country-Code': 'GB',
             'CF-IPCountry': 'GB'
@@ -120,11 +120,48 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       }
     }
     
-    // All API approaches failed, continue to HTML scraping
+    // All API approaches failed, try using the enhanced scraper
+    console.log('API approach failed, trying enhanced scraper...');
     
-    // Another approach: try to find HTML elements that might contain the rate
-    console.log('API approach failed, trying to scrape HTML page...');
-    const mainUrl = 'https://lemfi.com/en-gb/international-money-transfer';
+    // Import and use enhancedScrape function here
+    const { enhancedScrape, getEnhancedSelectors } = await import('./enhancedScraper');
+    
+    try {
+      console.log('Using enhanced scraper to get Lemfi rate');
+      const lemfiUrl = 'https://lemfi.com/en-gb/send-money-to-nigeria';
+      const selectors = getEnhancedSelectors('Lemfi');
+      const rateText = await enhancedScrape(lemfiUrl, selectors);
+      
+      if (rateText) {
+        console.log(`Enhanced scraper returned text: ${rateText}`);
+        
+        // Look for numbers in the text
+        const matches = rateText.match(/\b(\d{4}[\d,.]*)\b/);
+        if (matches && matches[1]) {
+          const rate = parseFloat(matches[1].replace(/,/g, ''));
+          console.log(`Found rate value from enhanced scraper: ${rate}`);
+          if (rate > 1000) {
+            return rate;
+          }
+        }
+        
+        // Try to extract from format "1 GBP = X NGN"
+        const formatMatch = rateText.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
+        if (formatMatch && formatMatch[1]) {
+          const rate = parseFloat(formatMatch[1].replace(/,/g, ''));
+          console.log(`Found formatted rate: ${rate}`);
+          if (rate > 1000) {
+            return rate;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Enhanced scraper failed:', error);
+    }
+    
+    // Try one more approach: direct HTML scraping
+    console.log('Enhanced scraper failed, trying direct HTML parsing...');
+    const mainUrl = 'https://lemfi.com/en-gb/send-money-to-nigeria';
     console.log(`Fetching HTML from ${mainUrl}`);
     
     const mainResponse = await fetch(mainUrl, {
@@ -133,11 +170,7 @@ export async function scrapeLemfiRate(): Promise<number | null> {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-GB,en;q=0.9',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'X-Forwarded-For': '212.58.244.22', // BBC UK IP address
-        'X-Forwarded-Proto': 'https',
-        'X-Country-Code': 'GB',
-        'CF-IPCountry': 'GB'
+        'Pragma': 'no-cache'
       }
     });
     
@@ -146,170 +179,53 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       console.log(`Retrieved HTML content (${html.length} characters)`);
       
       // Check for rate information in the HTML using various patterns
-      console.log('Trying to find rate information in the HTML using exact rate format from website');
+      console.log('Trying to find rate information in the HTML');
       
-      // Looking specifically for the exact format seen in the screenshot: "1 GBP = 2,139 NGN"
-      const exactRatePattern = /1\s*GBP\s*=\s*([\d,]+)\s*NGN/i;
+      // Looking for the exact format: "1 GBP = X NGN"
+      const exactRatePattern = /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
       const exactMatch = html.match(exactRatePattern);
       if (exactMatch && exactMatch[1]) {
         const rateValue = parseFloat(exactMatch[1].replace(/,/g, ''));
-        console.log(`Found exact Lemfi rate format: ${rateValue}`);
-        // No arbitrary range check - if it matches the exact format, use it
-        return rateValue;
+        console.log(`Found exact rate format: ${rateValue}`);
+        if (rateValue > 1000) {
+          return rateValue;
+        }
       }
       
       // Exchange rate label format - looks for "Exchange rate" followed by a value
-      const exchangeRatePattern = /Exchange\s*rate[^]*?1\s*GBP\s*=\s*([\d,]+)\s*NGN/i;
+      const exchangeRatePattern = /Exchange\s*rate[^]*?1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
       const exchangeMatch = html.match(exchangeRatePattern);
       if (exchangeMatch && exchangeMatch[1]) {
         const rateValue = parseFloat(exchangeMatch[1].replace(/,/g, ''));
-        console.log(`Found Lemfi exchange rate label format: ${rateValue}`);
-        return rateValue;
+        console.log(`Found exchange rate label format: ${rateValue}`);
+        if (rateValue > 1000) {
+          return rateValue;
+        }
       }
       
-      // Look for HTML that might contain the rate in a structured format
-      const calculatorPattern = /data-amount="1"[^>]*data-from="GBP"[^>]*data-to="NGN"[^>]*data-result="(\d+(\.\d+)?)"[^>]*/i;
-      const calculatorMatch = html.match(calculatorPattern);
-      if (calculatorMatch && calculatorMatch[1]) {
-        const calculatorRate = parseFloat(calculatorMatch[1]);
-        console.log(`Found Lemfi rate in calculator markup: ${calculatorRate}`);
-        return calculatorRate;
-      }
-      
-      // Try to find the specific UI element that shows the exchange rate
-      const rateElemPattern = /<div[^>]*>Exchange\s+rate<\/div>[^]*?<div[^>]*>(1\s*GBP\s*=\s*([\d,]+)\s*NGN)<\/div>/i;
-      const rateElemMatch = html.match(rateElemPattern);
-      if (rateElemMatch && rateElemMatch[2]) {
-        const elemRate = parseFloat(rateElemMatch[2].replace(/,/g, ''));
-        console.log(`Found Lemfi rate in rate element: ${elemRate}`);
-        return elemRate;
-      }
-      
-      // General patterns to try if the specific ones don't work
-      const ratePatterns = [
-        /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i,
-        /GBP\s*1\s*=\s*NGN\s*([\d,]+\.?\d*)/i,
-        /GBP\s*to\s*NGN\s*.*?(\d{4}[\d,.]*)/i,
-        /exchange\s*rate\s*.*?(\d{4}[\d,.]*)\s/i
-      ];
-      
-      for (const pattern of ratePatterns) {
-        const rateMatch = html.match(pattern);
-        if (rateMatch && rateMatch[1]) {
-          const extractedRate = parseFloat(rateMatch[1].replace(/,/g, ''));
-          console.log(`Found Lemfi rate in HTML using pattern ${pattern}: ${extractedRate}`);
+      // Look for any 4-digit number that might be a rate (common for GBP to NGN)
+      const rateNumbers = html.match(/\b([\d,]{1,3}\.?\d{0,2}k?)\s*(?:NGN|naira)\b/gi);
+      if (rateNumbers && rateNumbers.length > 0) {
+        console.log(`Found potential rate values: ${rateNumbers.join(', ')}`);
+        
+        // Extract the first valid rate
+        for (const rateText of rateNumbers) {
+          // Remove commas and convert from format like "2.1k" to 2100
+          let rateValue = rateText.replace(/,/g, '');
+          if (rateValue.includes('k')) {
+            rateValue = (parseFloat(rateValue.replace(/k/i, '')) * 1000).toString();
+          }
           
-          // If we've found a rate using a specific format pattern, use it
-          // This allows the rate to fluctuate naturally without arbitrary range checks
-          return extractedRate;
-        }
-      }
-      
-      // Try to extract the most common 4-digit number that appears in the HTML
-      // This often points to the exchange rate shown in UI components
-      const fourDigitMatches = html.match(/\b(2\d{3}(?:\.\d+)?)\b/g);
-      if (fourDigitMatches && fourDigitMatches.length > 0) {
-        // Count occurrences
-        const counts: Record<string, number> = {};
-        fourDigitMatches.forEach(match => {
-          counts[match] = (counts[match] || 0) + 1;
-        });
-        
-        // Find the most common value
-        let mostCommonRate: string | null = null;
-        let highestCount = 0;
-        
-        for (const [rate, count] of Object.entries(counts)) {
-          console.log(`Rate ${rate} appears ${count} times`);
-          if (count > highestCount) {
-            highestCount = count;
-            mostCommonRate = rate;
+          const rate = parseFloat(rateValue);
+          if (rate > 1000) {
+            console.log(`Using rate: ${rate}`);
+            return rate;
           }
         }
-        
-        // Find the rates that appear frequently without arbitrary range constraints
-        // This allows the scraper to adapt to changing market rates
-        const likelyRates = Object.entries(counts)
-          .filter(([rate, count]) => {
-            const rateValue = parseFloat(rate);
-            // We only need to ensure it's a reasonable value for a currency exchange rate
-            // For GBP to NGN this should be a number over 100 at minimum
-            return count > 5 && rateValue > 100;
-          })
-          .sort((a, b) => b[1] - a[1]) // Sort by occurrence count
-          .map(([rate, count]) => ({ rate: parseFloat(rate), count }));
-        
-        console.log('Most likely rates based on frequency:', likelyRates);
-        
-        if (likelyRates.length > 0) {
-          // The rate with the highest occurrence is likely the current exchange rate
-          const mostLikelyRate = likelyRates[0].rate;
-          console.log(`Most likely Lemfi rate based on frequency analysis: ${mostLikelyRate}`);
-          return mostLikelyRate;
-        }
-        
-        if (mostCommonRate) {
-          const extractedRate = parseFloat(mostCommonRate);
-          console.log(`Most common 4-digit rate found: ${extractedRate} (appears ${highestCount} times)`);
-          // No arbitrary range check - if it's a reasonable value for a currency rate, use it
-          if (extractedRate > 100) {
-            return extractedRate;
-          }
-        }
-      }
-      
-      console.log('Specific rate patterns failed, looking for any numbers that might be exchange rates...');
-      // Look for any number in the content that might be an exchange rate without restricting to a specific range
-      const genericNumberPattern = /(\d{3,4}(?:\.\d+)?)/g;
-      let numberMatch;
-      const possibleRates = [];
-      
-      // Manually collect all matches
-      while ((numberMatch = genericNumberPattern.exec(html)) !== null) {
-        if (numberMatch[1]) {
-          const rate = parseFloat(numberMatch[1]);
-          // Only consider values that are reasonable for currency exchange rates
-          if (rate > 100) {
-            possibleRates.push(rate);
-          }
-        }
-      }
-      
-      console.log(`Found ${possibleRates.length} possible rate values in the HTML`);
-      if (possibleRates.length > 0) {
-        console.log(`Possible rates: ${possibleRates.join(', ')}`);
-      }
-      
-      // Filter rates that are in a reasonable range for GBP to NGN
-      // Count occurrence of each rate to identify the most common ones
-      const rateOccurrences: Record<number, number> = {};
-      possibleRates.forEach(rate => {
-        rateOccurrences[rate] = (rateOccurrences[rate] || 0) + 1;
-      });
-      
-      // Sort by number of occurrences
-      const sortedRates = Object.entries(rateOccurrences)
-        .sort((a, b) => b[1] - a[1])
-        .map(([rate, count]) => ({ rate: parseFloat(rate), count }));
-      
-      console.log('Most common rates found:', sortedRates.slice(0, 5));
-      
-      // Filter rates that are in a reasonable range for GBP to NGN
-      const reasonableRates = possibleRates.filter(r => r >= 2000 && r <= 2500);
-      if (reasonableRates.length > 0) {
-        // Check if 2104 appears in reasonable rates, as it's the most likely rate
-        const rate2104 = reasonableRates.find(r => r === 2104);
-        if (rate2104) {
-          console.log('Found most likely Lemfi rate: 2104');
-          return 2104;
-        }
-        
-        console.log(`Found possible Lemfi rates in HTML: ${reasonableRates.join(', ')}`);
-        return reasonableRates[0]; // Return the first reasonable rate
       }
     }
     
-    console.log('Failed to extract Lemfi rate from both API and HTML');
+    console.log('Failed to extract Lemfi rate using all available methods');
     return null;
   } catch (error) {
     console.error('Error scraping Lemfi rate:', error);

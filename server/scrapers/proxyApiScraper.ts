@@ -64,20 +64,55 @@ export async function getWorldRemitRate(): Promise<number | null> {
   try {
     console.log('=== PROXY API SCRAPER FOR WORLDREMIT ===');
     
-    // In a real implementation, this would call an external API or proxy service
-    // For now, we'll use our knowledge of typical WorldRemit rates in relation to the market rate
+    // First attempt to get the rate directly from the WorldRemit website
+    try {
+      console.log('Attempting to scrape WorldRemit rate directly...');
+      const { enhancedScrape, getEnhancedSelectors } = await import('./enhancedScraper');
+      
+      const worldRemitUrl = 'https://www.worldremit.com/en/gb/nigeria';
+      const selectors = getEnhancedSelectors('WorldRemit');
+      const rateText = await enhancedScrape(worldRemitUrl, selectors);
+      
+      if (rateText) {
+        console.log(`Scraped text from WorldRemit: ${rateText}`);
+        
+        // Try to find a rate in this text
+        const rateMatch = rateText.match(/\b(\d{4}[\d,.]*)\b/);
+        if (rateMatch && rateMatch[1]) {
+          const rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+          console.log(`Found WorldRemit rate: ${rate}`);
+          
+          if (rate > 1000) {
+            return rate;
+          }
+        }
+        
+        // Try to extract from format "1 GBP = X NGN"
+        const formatMatch = rateText.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
+        if (formatMatch && formatMatch[1]) {
+          const rate = parseFloat(formatMatch[1].replace(/,/g, ''));
+          console.log(`Found formatted WorldRemit rate: ${rate}`);
+          
+          if (rate > 1000) {
+            return rate;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Direct WorldRemit scraping failed:', error);
+    }
     
+    // If direct scraping failed, use our calculation method instead
     // Calculate WorldRemit's rate based on their typical markup pattern
     const calculatedRate = calculateRealisticRate('WorldRemit');
     
-    // Add a small random variation to simulate real-world fluctuations
-    const variation = (Math.random() * 4) - 2; // Random value between -2 and 2
-    const finalRate = calculatedRate + variation;
+    // Use a fixed, stable rate without random variations
+    const finalRate = calculatedRate;
     
     // Round to 2 decimal places
     const roundedRate = Math.round(finalRate * 100) / 100;
     
-    console.log(`Calculated realistic WorldRemit rate: ${roundedRate} NGN per GBP`);
+    console.log(`Using calculated WorldRemit rate: ${roundedRate} NGN per GBP`);
     console.log(`Based on market rate of ${CURRENT_MARKET_RATE} with WorldRemit's typical markup`);
     
     return roundedRate;
@@ -133,15 +168,77 @@ export async function updateWorldRemitRateViaApi(): Promise<boolean> {
  */
 export async function getProviderRate(providerName: string): Promise<number | null> {
   try {
+    // First try to get a direct rate using enhanced scraper
+    try {
+      console.log(`Attempting direct scraping for ${providerName}...`);
+      const { enhancedScrape, getEnhancedSelectors } = await import('./enhancedScraper');
+      
+      // Use appropriate URL based on provider
+      let providerUrl = '';
+      switch(providerName) {
+        case 'Wise':
+          providerUrl = 'https://wise.com/gb/currency-converter/gbp-to-ngn-rate';
+          break;
+        case 'Western Union':
+          providerUrl = 'https://www.westernunion.com/gb/en/currency-converter/gbp-to-ngn-currency-converter.html';
+          break;
+        case 'MoneyGram':
+          providerUrl = 'https://www.moneygram.com/mgo/gb/en/calculator';
+          break;
+        case 'Remitly':
+          providerUrl = 'https://www.remitly.com/gb/en/nigeria';
+          break;
+        default:
+          // Skip direct scraping for providers without specific URLs
+          throw new Error('No direct URL configured');
+      }
+      
+      const selectors = getEnhancedSelectors(providerName);
+      const rateText = await enhancedScrape(providerUrl, selectors);
+      
+      if (rateText) {
+        console.log(`Scraped text from ${providerName}: ${rateText}`);
+        
+        // Try to find a rate in this text
+        const rateMatch = rateText.match(/\b(\d{4}[\d,.]*)\b/);
+        if (rateMatch && rateMatch[1]) {
+          const rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+          console.log(`Found ${providerName} rate: ${rate}`);
+          
+          if (rate > 1000) {
+            return rate;
+          }
+        }
+        
+        // Try to extract from format "1 GBP = X NGN"
+        const formatMatch = rateText.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
+        if (formatMatch && formatMatch[1]) {
+          const rate = parseFloat(formatMatch[1].replace(/,/g, ''));
+          console.log(`Found formatted ${providerName} rate: ${rate}`);
+          
+          if (rate > 1000) {
+            return rate;
+          }
+        }
+      }
+    } catch (error) {
+      console.log(`Direct scraping for ${providerName} failed: ${error.message}`);
+    }
+    
+    // If direct scraping fails, use our calculated rates based on market data
+    console.log(`Using calculated rate for ${providerName}`);
+    
     // Calculate a realistic rate based on the provider's typical markup
     const rate = calculateRealisticRate(providerName);
     
-    // Add a small random variation
-    const variation = (Math.random() * 3) - 1.5; // Random value between -1.5 and 1.5
-    const finalRate = rate + variation;
+    // Remove random variations for consistent results
+    const finalRate = rate;
     
     // Round to 2 decimal places
-    return Math.round(finalRate * 100) / 100;
+    const roundedRate = Math.round(finalRate * 100) / 100;
+    
+    console.log(`Calculated ${providerName} rate: ${roundedRate}`);
+    return roundedRate;
   } catch (error) {
     console.error(`Error calculating rate for ${providerName}:`, error);
     return null;
