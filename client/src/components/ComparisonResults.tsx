@@ -420,7 +420,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center">
                             <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-                            {provider.transfer_time || "Unknown"}
+                            {provider.transferTime || "Unknown"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -428,7 +428,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                             variant={index === 0 ? "default" : "outline"}
                             size="sm"
                             className={index === 0 ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-                            onClick={() => window.open(provider.website_url || '#', '_blank')}
+                            onClick={() => window.open(provider.websiteUrl || '#', '_blank')}
                           >
                             Select
                           </Button>
