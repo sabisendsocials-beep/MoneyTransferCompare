@@ -9,6 +9,45 @@ import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate 
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
 
+/**
+ * Add the additional providers from additionalProviders.ts to the database
+ */
+export async function addAdditionalProviders(): Promise<void> {
+  try {
+    console.log('Adding additional providers to the database...');
+    const existingProviders = await storage.getProviders();
+    const existingProviderNames = existingProviders.map(p => p.name);
+    
+    // Filter out providers that already exist
+    const newProviders = additionalProviders.filter(p => 
+      p.name && !existingProviderNames.includes(p.name)
+    );
+    
+    if (newProviders.length === 0) {
+      console.log('No new providers to add');
+      return;
+    }
+    
+    console.log(`Adding ${newProviders.length} new providers`);
+    
+    // Add each new provider
+    for (const provider of newProviders) {
+      try {
+        if (provider.name) {
+          await storage.createProvider(provider as InsertProvider);
+          console.log(`Added new provider: ${provider.name}`);
+        }
+      } catch (error) {
+        console.error(`Failed to add provider ${provider.name}:`, error);
+      }
+    }
+    
+    console.log('Finished adding additional providers');
+  } catch (error) {
+    console.error('Error adding additional providers:', error);
+  }
+}
+
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {
   switch (providerName) {
@@ -36,6 +75,16 @@ function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency =
       return `https://lemfi.com/en-gb/international-money-transfer`;
     case 'Nala':
       return `https://nala.money/`;
+    case 'Sendwave':
+      return `https://www.sendwave.com/`;
+    case 'Paysend':
+      return `https://paysend.com/`;
+    case 'Flutterwave':
+      return `https://flutterwave.com/`;
+    case 'SendApp':
+      return `https://sendapp.com/`;
+    case 'Chipper Cash':
+      return `https://chippercash.com/`;
     default:
       return null;
   }
@@ -68,6 +117,16 @@ function getScrapingSelector(providerName: string): string | null {
       return '.rate-card, .exchange-rate, .rate-display';
     case 'Nala':
       return '.rate-display, .exchange-rate, .currency-rate';
+    case 'Sendwave':
+      return '.exchange-rate, .rate-value, .calculator-result';
+    case 'Paysend':
+      return '.exchange-rate-display, .rate-value, .calculator-result';
+    case 'Flutterwave':
+      return '.exchange-rate, .rate-display, .calculator-result';
+    case 'SendApp':
+      return '.rate, .exchange-rate, .rate-display';
+    case 'Chipper Cash':
+      return '.exchange-rate, .rate-value, .calculator-result';
     default:
       return null;
   }
@@ -595,6 +654,10 @@ export async function updateExchangeRates(clearExisting: boolean = false): Promi
   let results: ExchangeRate[] = [];
   
   try {
+    // First make sure we have all providers, including the new ones
+    await ensureProvidersExist();
+    await addAdditionalProviders();
+    
     // Optionally clear all existing rates
     if (clearExisting) {
       console.log('Clearing all existing exchange rates from database...');
