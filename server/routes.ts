@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Schedule periodic updates
     setInterval(() => {
       updateExchangeRates().catch(err => console.error("Failed to update exchange rates:", err));
-    }, 60 * 60 * 1000); // Every hour
+    }, 6 * 60 * 60 * 1000); // Every 6 hours as requested
     
     setInterval(() => {
       updateFinancialNews().catch(err => console.error("Failed to update news:", err));
