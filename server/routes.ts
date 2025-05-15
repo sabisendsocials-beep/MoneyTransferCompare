@@ -5,6 +5,7 @@ import { transferRequestSchema } from "@shared/schema";
 import { updateExchangeRates, ensureProvidersExist } from "./scrapers/providers";
 import { updateFinancialNews } from "./scrapers/news";
 import { initializeDatabase } from "./db";
+import { updateRateTrends } from "./api/exchangeRateApi";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api
@@ -126,6 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Initial updates
     updateExchangeRates().catch(err => console.error("Failed to update exchange rates:", err));
     updateFinancialNews().catch(err => console.error("Failed to update news:", err));
+    updateRateTrends().catch(err => console.error("Failed to update rate trends:", err));
     
     // Schedule periodic updates
     setInterval(() => {
@@ -135,6 +137,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     setInterval(() => {
       updateFinancialNews().catch(err => console.error("Failed to update news:", err));
     }, 6 * 60 * 60 * 1000); // Every 6 hours
+    
+    setInterval(() => {
+      updateRateTrends().catch(err => console.error("Failed to update rate trends:", err));
+    }, 24 * 60 * 60 * 1000); // Daily update for exchange rate trends
   }, 5000); // Start after 5 seconds to allow server to fully initialize
 
   const httpServer = createServer(app);

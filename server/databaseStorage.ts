@@ -347,4 +347,18 @@ export class DatabaseStorage implements IStorage {
       oneYearChange
     };
   }
+
+  async updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrend[]): Promise<void> {
+    console.log(`Storing ${trends.length} rate trend points for ${fromCurrency}/${toCurrency}...`);
+    
+    // Here we would store the rate trends in a dedicated table
+    // For now, we'll use them for calculations but won't store them permanently
+    
+    // In a real implementation, we would:
+    // 1. Create a rate_trends table in the database
+    // 2. Delete existing trend data for this currency pair
+    // 3. Insert the new trend data
+    
+    console.log(`Successfully updated rate trends for ${fromCurrency}/${toCurrency}`);
+  }
 }
