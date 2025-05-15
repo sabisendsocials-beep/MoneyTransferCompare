@@ -217,6 +217,8 @@ export class MemStorage implements IStorage {
         source: "Financial Times",
         url: "https://www.ft.com",
         image_url: "https://example.com/nigeria-central-bank.jpg",
+        category: "Economy",
+        country: "Nigeria",
         published_at: new Date(2023, 10, 20)
       },
       {
@@ -226,6 +228,8 @@ export class MemStorage implements IStorage {
         source: "Reuters",
         url: "https://www.reuters.com",
         image_url: "https://example.com/nigeria-stock-exchange.jpg",
+        category: "Markets",
+        country: "Nigeria",
         published_at: new Date(2023, 10, 18)
       },
       {
@@ -235,6 +239,8 @@ export class MemStorage implements IStorage {
         source: "Bloomberg",
         url: "https://www.bloomberg.com",
         image_url: "https://example.com/nigeria-oil-production.jpg",
+        category: "Energy",
+        country: "Nigeria",
         published_at: new Date(2023, 10, 15)
       }
     ];
@@ -364,6 +370,8 @@ export class MemStorage implements IStorage {
       source: insertNews.source || null,
       url: insertNews.url || null,
       image_url: insertNews.image_url || null,
+      category: insertNews.category || null,
+      country: insertNews.country || null,
       published_at: insertNews.published_at || null
     };
     this.news.push(newsItem);
