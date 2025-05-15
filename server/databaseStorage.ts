@@ -176,14 +176,44 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
-        // Override specific provider settings based on latest information
+        // Override specific provider settings based on latest information from realRates.ts
         let finalFee = fee;
         let finalTransferTime = provider.transfer_time || 'Unknown';
         
-        // Special handling for Lemfi (zero fees, minutes transfer time)
-        if (provider.name === 'Lemfi') {
-          finalFee = 0;
-          finalTransferTime = 'Minutes';
+        // Provider-specific adjustments
+        switch (provider.name) {
+          case 'Lemfi':
+            finalFee = 0;
+            finalTransferTime = 'Minutes';
+            break;
+          case 'TorFX':
+            // TorFX has zero fees
+            finalFee = 0;
+            break;
+          case 'Wise':
+            finalFee = 3.56;
+            finalTransferTime = '1-2 days';
+            break;
+          case 'Western Union':
+            finalFee = 2.99;
+            finalTransferTime = '1-3 days';
+            break;
+          case 'MoneyGram':
+            finalFee = 3.99;
+            finalTransferTime = '1-2 days';
+            break;
+          case 'Remitly':
+            finalFee = 2.49;
+            finalTransferTime = 'Same day';
+            break;
+          case 'WorldRemit':
+            finalFee = 2.99;
+            finalTransferTime = '1-3 days';
+            break;
+          case 'Nala':
+            finalFee = 1.50;
+            finalTransferTime = 'Same day';
+            break;
         }
         
         results.push({
@@ -193,7 +223,7 @@ export class DatabaseStorage implements IStorage {
           rating: provider.rating,
           exchangeRate: rate.rate,
           fee: finalFee,
-          receivedAmount: finalFee === 0 ? request.amount * rate.rate : receivedAmount, // Recalculate if fee was adjusted
+          receivedAmount: finalFee === 0 ? request.amount * rate.rate : (request.amount - finalFee) * rate.rate, // Always recalculate based on final fee
           sendAmount,
           transferTime: finalTransferTime,
           totalCost: finalFee,

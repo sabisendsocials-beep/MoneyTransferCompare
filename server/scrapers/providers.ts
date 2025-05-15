@@ -81,7 +81,7 @@ const providerList = [
   { name: 'Small World', website: 'https://www.smallworldfs.com', fee: 2.49, transferTime: '1-3 days', rating: 3.8 },
   { name: 'XE Money Transfer', website: 'https://www.xe.com', fee: 2.00, transferTime: '2-4 days', rating: 4.2 },
   { name: 'Currencys', website: 'https://currencys.co.uk', fee: 3.50, transferTime: '2-3 days', rating: 3.9 },
-  { name: 'Lemfi', website: 'https://lemfi.com', fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
+  { name: 'Lemfi', website: 'https://lemfi.com', fee: 0.00, transferTime: 'Minutes', rating: 4.7 },
   { name: 'Nala', website: 'https://nala.money', fee: 1.50, transferTime: 'Same day', rating: 4.6 }
 ];
 
