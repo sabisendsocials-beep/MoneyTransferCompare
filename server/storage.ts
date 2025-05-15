@@ -600,6 +600,17 @@ export class MemStorage implements IStorage {
     console.log('Deleted all exchange rates from memory');
     return Promise.resolve();
   }
+  
+  async deleteExchangeRatesForProvider(providerId: number, fromCurrency: string, toCurrency: string): Promise<void> {
+    // Filter out rates that match the criteria
+    this.exchangeRates = this.exchangeRates.filter(rate => 
+      !(rate.provider_id === providerId && 
+        rate.from_currency === fromCurrency && 
+        rate.to_currency === toCurrency)
+    );
+    console.log(`Deleted exchange rates for provider ${providerId} (${fromCurrency} → ${toCurrency})`);
+    return Promise.resolve();
+  }
 }
 
 import { DatabaseStorage } from './databaseStorage';

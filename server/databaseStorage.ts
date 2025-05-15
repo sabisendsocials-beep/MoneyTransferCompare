@@ -283,10 +283,12 @@ export class DatabaseStorage implements IStorage {
         });
       } else if (trends.length > 0) {
         // For missing data, use the last known rate with small random variation
-        const lastRate = trends[trends.length - 1].rate;
+        const lastRateValue = trends[trends.length - 1].rate;
+        // Always use a valid number for calculations
+        const baseRate = typeof lastRateValue === 'number' ? lastRateValue : 1500;
         // Small random variation of ±0.5%
         const variation = (Math.random() - 0.5) * 0.01;
-        const newRate = lastRate * (1 + variation);
+        const newRate = baseRate * (1 + variation);
         
         trends.push({
           date: dateStr,
@@ -440,5 +442,17 @@ export class DatabaseStorage implements IStorage {
   async deleteAllExchangeRates(): Promise<void> {
     await db.delete(schema.exchangeRates);
     console.log('Deleted all exchange rates from database');
+  }
+  
+  async deleteExchangeRatesForProvider(providerId: number, fromCurrency: string, toCurrency: string): Promise<void> {
+    await db.delete(schema.exchangeRates)
+      .where(
+        and(
+          eq(schema.exchangeRates.provider_id, providerId),
+          eq(schema.exchangeRates.from_currency, fromCurrency),
+          eq(schema.exchangeRates.to_currency, toCurrency)
+        )
+      );
+    console.log(`Deleted exchange rates for provider ${providerId} (${fromCurrency} → ${toCurrency})`);
   }
 }

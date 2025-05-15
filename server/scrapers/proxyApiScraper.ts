@@ -207,7 +207,7 @@ export async function updateWorldRemitRateViaApi(): Promise<boolean> {
     if (rate !== null) {
       // Calculate with example values to show in logs
       const amount = 1000;
-      const fee = provider.fee || 2.99;
+      const fee = provider.fixed_fee || 2.99;
       const amountAfterFees = amount - fee;
       const receivedAmount = amountAfterFees * rate;
       
@@ -220,24 +220,17 @@ export async function updateWorldRemitRateViaApi(): Promise<boolean> {
       
       // Add the rate to the database with all required fields
       const rateData: InsertExchangeRate = {
-        providerId: provider.id,
-        fromCurrency: 'GBP',
-        toCurrency: 'NGN',
-        rate: rate,
-        fee: provider.fee || 2.99,
-        minAmount: provider.minAmount || 1,
-        maxAmount: provider.maxAmount || 8000,
-        transferTime: provider.transferTime || '1-3 days'
+        provider_id: provider.id,
+        from_currency: 'GBP',
+        to_currency: 'NGN',
+        rate: rate
       };
       
       // Try to delete old rates first to make sure the new one is used right away
       try {
-        // Note: We need to check if this method exists in the storage interface
-        // @ts-ignore - this might be added to the storage interface
-        if (typeof storage.deleteExchangeRatesForProvider === 'function') {
-          await storage.deleteExchangeRatesForProvider(provider.id, 'GBP', 'NGN');
-          console.log('Cleared old WorldRemit rates from database');
-        }
+        // Delete existing rates for this provider/currency pair to ensure fresh data
+        await storage.deleteExchangeRatesForProvider(provider.id, 'GBP', 'NGN');
+        console.log('Cleared old WorldRemit rates from database');
       } catch (error) {
         console.warn('Note: Could not clear old rates, continuing with update');
       }
