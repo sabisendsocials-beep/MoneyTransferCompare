@@ -10,11 +10,11 @@ type NewsWithFormattedDate = News & {
 };
 
 const NewsSection = () => {
-  const { data: news, isLoading } = useQuery<News[]>({
+  const { data: news, isLoading } = useQuery<NewsWithFormattedDate[]>({
     queryKey: ["/api/news?limit=3"],
   });
 
-  const formatDate = (dateString: string | Date | undefined) => {
+  const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
@@ -54,9 +54,9 @@ const NewsSection = () => {
             {news.map((item) => (
               <Card key={item.id} className="overflow-hidden">
                 <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
-                  {item.imageUrl ? (
+                  {item.image_url ? (
                     <img
-                      src={item.imageUrl}
+                      src={item.image_url}
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
@@ -82,7 +82,7 @@ const NewsSection = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
                     <Calendar className="mr-1 h-3 w-3" />
-                    <span>{item.formatted_date || formatDate(item.publishedAt)}</span>
+                    <span>{item.formatted_date || formatDate(item.published_at)}</span>
                     {item.source && (
                       <>
                         <span className="mx-2">•</span>
@@ -96,15 +96,17 @@ const NewsSection = () => {
                   <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                     {item.summary}
                   </p>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark text-sm font-medium inline-flex items-center"
-                  >
-                    Read more
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </a>
+                  {item.url && (
+                    <a
+                      href={item.url as string}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark text-sm font-medium inline-flex items-center"
+                    >
+                      Read more
+                      <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  )}
                 </CardContent>
               </Card>
             ))}

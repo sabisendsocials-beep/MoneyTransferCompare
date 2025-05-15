@@ -5,6 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, ExternalLink, Search } from "lucide-react";
 import { News } from "@shared/schema";
+
+// Extended type to include the formatted_date from backend
+type NewsWithFormattedDate = News & {
+  formatted_date?: string;
+};
+
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 
@@ -12,7 +18,7 @@ const NewsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [newsLimit, setNewsLimit] = useState(6);
   
-  const { data: news, isLoading } = useQuery<News[]>({
+  const { data: news, isLoading } = useQuery<NewsWithFormattedDate[]>({
     queryKey: [`/api/news?limit=${newsLimit}`],
   });
   
@@ -23,7 +29,7 @@ const NewsPage = () => {
     (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
   
-  const formatDate = (dateString: string | Date | undefined) => {
+  const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
@@ -138,9 +144,9 @@ const NewsPage = () => {
                 {filteredNews.map((item) => (
                   <Card key={item.id} className="overflow-hidden h-full flex flex-col">
                     <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
-                      {item.imageUrl ? (
+                      {item.image_url ? (
                         <img
-                          src={item.imageUrl}
+                          src={item.image_url}
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
@@ -166,7 +172,7 @@ const NewsPage = () => {
                     <CardContent className="p-6 flex-grow flex flex-col">
                       <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
                         <Calendar className="mr-1 h-3 w-3" />
-                        <span className="font-medium">{item.formatted_date || formatDate(item.publishedAt)}</span>
+                        <span className="font-medium">{item.formatted_date || formatDate(item.published_at)}</span>
                         {item.source && (
                           <>
                             <span className="mx-2">•</span>
@@ -180,15 +186,17 @@ const NewsPage = () => {
                       <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 flex-grow">
                         {item.summary || item.content?.substring(0, 150) + '...'}
                       </p>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-dark text-sm font-medium inline-flex items-center mt-auto"
-                      >
-                        Read full article
-                        <ExternalLink className="ml-1 h-3 w-3" />
-                      </a>
+                      {item.url && (
+                        <a
+                          href={item.url as string}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary-dark text-sm font-medium inline-flex items-center mt-auto"
+                        >
+                          Read full article
+                          <ExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
