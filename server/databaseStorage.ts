@@ -413,4 +413,9 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`Successfully updated rate trends for ${fromCurrency}/${toCurrency}`);
   }
+  
+  async deleteAllExchangeRates(): Promise<void> {
+    await db.delete(schema.exchangeRates);
+    console.log('Deleted all exchange rates from database');
+  }
 }
