@@ -153,7 +153,11 @@ export class DatabaseStorage implements IStorage {
         
         // Calculate based on whether this is a "send" or "receive" request
         if (request.type === 'send') {
-          receivedAmount = (request.amount * rate.rate);
+          // For "send" type, deduct fees first, then apply exchange rate
+          const amountAfterFees = request.amount - fee;
+          console.log(`Provider: ${provider.name}, Amount: ${request.amount}, Fee: ${fee}, Amount After Fees: ${amountAfterFees}, Exchange Rate: ${rate.rate}`);
+          receivedAmount = amountAfterFees * rate.rate;
+          console.log(`Received Amount: ${receivedAmount}`);
         } else {
           sendAmount = (request.amount / rate.rate);
           // For "receive" type, add the fee to the send amount
@@ -172,7 +176,7 @@ export class DatabaseStorage implements IStorage {
           receivedAmount,
           sendAmount,
           transferTime: provider.transfer_time || 'Unknown',
-          totalCost: sendAmount + fee,
+          totalCost: fee,
           websiteUrl: provider.website_url
         });
       }
