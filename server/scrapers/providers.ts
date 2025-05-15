@@ -270,20 +270,24 @@ export async function scrapeExchangeRates() {
     await ensureProvidersExist();
     
     const providers = await storage.getActiveProviders();
+    console.log(`Found ${providers.length} active providers to scrape`);
     const results = [];
 
     for (const provider of providers) {
       try {
+        console.log(`Processing provider: ${provider.name}`);
+        
         if (provider.scraping_url && provider.scraping_selector) {
           // Special handling for Lemfi - use our dedicated scraper
           if (provider.name === 'Lemfi') {
-            console.log('Using dedicated Lemfi scraper...');
+            console.log('=== Using dedicated Lemfi scraper... ===');
             const success = await updateLemfiRate();
             if (success) {
-              console.log('Successfully updated Lemfi rate with dedicated scraper');
+              console.log('=== Successfully updated Lemfi rate with dedicated scraper ===');
+              results.push({ provider: provider.name, success: true });
               continue; // Skip to next provider
             } else {
-              console.log('Dedicated Lemfi scraper failed, trying enhanced scraping...');
+              console.log('=== Dedicated Lemfi scraper failed, trying enhanced scraping... ===');
             }
           }
           
