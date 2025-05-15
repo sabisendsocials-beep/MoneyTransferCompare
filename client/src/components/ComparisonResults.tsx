@@ -37,24 +37,24 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
   // Calculate some additional stats for each provider
   const getProviderDetails = (provider: TransferResult) => {
     // Calculate effective exchange rate (after fees)
-    const effectiveRate = provider.received_amount / provider.send_amount;
+    const effectiveRate = provider.receivedAmount / provider.sendAmount;
     
     // Calculate rate margin against mid-market
     const midMarketRate = 1500; // This would normally come from the API
     const rateMargin = ((midMarketRate - effectiveRate) / midMarketRate) * 100;
     
     // Calculate savings compared to most expensive option
-    const mostExpensiveProvider = [...results].sort((a, b) => a.received_amount - b.received_amount)[0];
-    const savings = provider.received_amount - mostExpensiveProvider.received_amount;
+    const mostExpensiveProvider = [...results].sort((a, b) => a.receivedAmount - b.receivedAmount)[0];
+    const savings = provider.receivedAmount - mostExpensiveProvider.receivedAmount;
     
     // Calculate fee as percentage of send amount
-    const feePercentage = (provider.fee / provider.send_amount) * 100;
+    const feePercentage = (provider.fee / provider.sendAmount) * 100;
     
     return {
       effectiveRate,
       rateMargin: Math.max(0, rateMargin).toFixed(1),
       savings: Math.max(0, savings),
-      totalCost: provider.send_amount.toFixed(2),
+      totalCost: provider.sendAmount.toFixed(2),
       feePercentage: feePercentage.toFixed(1),
     };
   };
@@ -143,10 +143,10 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                   <div className="md:w-1/4 mb-6 md:mb-0 flex flex-col items-center md:items-start">
                     <div className="flex items-center mb-3">
                       <div className="w-16 h-16 flex-shrink-0 bg-white p-2 rounded-lg shadow-sm flex items-center justify-center">
-                        {bestProvider.provider_logo || providerLogos[bestProvider.provider_name] ? (
+                        {bestProvider.providerLogo || providerLogos[bestProvider.providerName] ? (
                           <img
-                            src={bestProvider.provider_logo || providerLogos[bestProvider.provider_name]}
-                            alt={`${bestProvider.provider_name} Logo`}
+                            src={bestProvider.providerLogo || providerLogos[bestProvider.providerName]}
+                            alt={`${bestProvider.providerName} Logo`}
                             className="max-h-12 max-w-full object-contain"
                           />
                         ) : (
@@ -157,7 +157,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                       </div>
                       <div className="ml-4">
                         <h3 className="font-semibold text-xl text-gray-800 dark:text-white">
-                          {bestProvider.provider_name}
+                          {bestProvider.providerName}
                         </h3>
                         {renderStars(bestProvider.rating)}
                       </div>
