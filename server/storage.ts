@@ -193,9 +193,9 @@ export class MemStorage implements IStorage {
         
         this.exchangeRates.push({
           id: this.currentExchangeRateId++,
-          providerId: provider.id,
-          fromCurrency: "GBP",
-          toCurrency: "NGN",
+          provider_id: provider.id,
+          from_currency: "GBP",
+          to_currency: "NGN",
           rate: historicalRate,
           timestamp: date
         });
@@ -211,8 +211,8 @@ export class MemStorage implements IStorage {
         content: "The Central Bank of Nigeria has announced a series of measures aimed at stabilizing the naira exchange rate. The new policies include increased intervention in the forex market and changes to the way banks can access foreign currency. Experts believe these measures could help reduce volatility in the naira's value against major currencies.",
         source: "Financial Times",
         url: "https://www.ft.com",
-        imageUrl: "https://example.com/nigeria-central-bank.jpg",
-        publishedAt: new Date(2023, 10, 20)
+        image_url: "https://example.com/nigeria-central-bank.jpg",
+        published_at: new Date(2023, 10, 20)
       },
       {
         title: "Nigerian Stock Market Hits 3-Year High As Foreign Investors Return",
@@ -220,8 +220,8 @@ export class MemStorage implements IStorage {
         content: "Nigeria's equities market has reached a three-year high as international investors return to the country's financial markets. The Nigerian Stock Exchange (NSE) All-Share Index has risen by 15% since the beginning of the year, reflecting growing confidence in the country's economic prospects.",
         source: "Reuters",
         url: "https://www.reuters.com",
-        imageUrl: "https://example.com/nigeria-stock-exchange.jpg",
-        publishedAt: new Date(2023, 10, 18)
+        image_url: "https://example.com/nigeria-stock-exchange.jpg",
+        published_at: new Date(2023, 10, 18)
       },
       {
         title: "Nigeria's Oil Production Increases, Boosting Foreign Exchange Reserves",
@@ -229,8 +229,8 @@ export class MemStorage implements IStorage {
         content: "Nigeria has reported a 15% increase in oil production in the last quarter, which has helped boost the country's foreign exchange reserves. The increase in oil output, combined with stronger global oil prices, has provided much-needed support for the naira and may help stabilize the currency in the coming months.",
         source: "Bloomberg",
         url: "https://www.bloomberg.com",
-        imageUrl: "https://example.com/nigeria-oil-production.jpg",
-        publishedAt: new Date(2023, 10, 15)
+        image_url: "https://example.com/nigeria-oil-production.jpg",
+        published_at: new Date(2023, 10, 15)
       }
     ];
     
@@ -307,9 +307,9 @@ export class MemStorage implements IStorage {
     for (const provider of providers) {
       const rates = this.exchangeRates
         .filter(rate => 
-          rate.providerId === provider.id && 
-          rate.fromCurrency === fromCurrency && 
-          rate.toCurrency === toCurrency)
+          rate.provider_id === provider.id && 
+          rate.from_currency === fromCurrency && 
+          rate.to_currency === toCurrency)
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       
       if (rates.length > 0) {
@@ -330,9 +330,9 @@ export class MemStorage implements IStorage {
   async getRatesByProvider(providerId: number, fromCurrency: string, toCurrency: string, limit: number): Promise<ExchangeRate[]> {
     return this.exchangeRates
       .filter(rate => 
-        rate.providerId === providerId && 
-        rate.fromCurrency === fromCurrency && 
-        rate.toCurrency === toCurrency)
+        rate.provider_id === providerId && 
+        rate.from_currency === fromCurrency && 
+        rate.to_currency === toCurrency)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit);
   }
