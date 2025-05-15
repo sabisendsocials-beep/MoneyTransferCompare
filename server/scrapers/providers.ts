@@ -27,7 +27,7 @@ function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency =
     case 'Currencys':
       return `https://currencys.co.uk/currency-converter/`;
     case 'Lemfi':
-      return `https://lemfi.com/rates`;
+      return `https://lemfi.com/en-gb/international-money-transfer`;
     case 'Nala':
       return `https://nala.money/pricing`;
     default:
