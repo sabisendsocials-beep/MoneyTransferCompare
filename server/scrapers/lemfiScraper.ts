@@ -11,37 +11,44 @@ import { storage } from '../storage';
  */
 export async function scrapeLemfiRate(): Promise<number | null> {
   try {
+    console.log('=== LEMFI DEDICATED SCRAPER RUNNING ===');
+    
     // Use the Lemfi API endpoint that provides rates
+    // First try the API endpoint for rates (this might not exist or might be protected)
     const apiUrl = 'https://lemfi.com/api/calculator/rates?sourceCurrency=GBP&targetCurrency=NGN&amount=100';
     
     console.log(`Scraping Lemfi rate from API endpoint: ${apiUrl}`);
     
-    const response = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json',
-        'Origin': 'https://lemfi.com',
-        'Referer': 'https://lemfi.com/en-gb/international-money-transfer'
+    try {
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'application/json',
+          'Origin': 'https://lemfi.com',
+          'Referer': 'https://lemfi.com/en-gb/international-money-transfer'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch from Lemfi API: ${response.status} ${response.statusText}`);
+      } else {
+        const data = await response.json();
+        console.log('Lemfi API response:', JSON.stringify(data));
+        
+        // Extract the rate from the response
+        if (data && data.rate) {
+          return parseFloat(data.rate);
+        } else if (data && data.exchangeRate) {
+          return parseFloat(data.exchangeRate);
+        } else if (data && data.result) {
+          // If we have the result for 100 GBP, divide by 100 to get the rate for 1 GBP
+          const result = parseFloat(data.result);
+          return result / 100;
+        }
       }
-    });
-    
-    if (!response.ok) {
-      console.error(`Failed to fetch from Lemfi API: ${response.status} ${response.statusText}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    console.log('Lemfi API response:', JSON.stringify(data));
-    
-    // Extract the rate from the response
-    if (data && data.rate) {
-      return parseFloat(data.rate);
-    } else if (data && data.exchangeRate) {
-      return parseFloat(data.exchangeRate);
-    } else if (data && data.result) {
-      // If we have the result for 100 GBP, divide by 100 to get the rate for 1 GBP
-      const result = parseFloat(data.result);
-      return result / 100;
+    } catch (error) {
+      console.log('API fetch failed:', error);
+      // Continue to the HTML scraping
     }
     
     // Another approach: try to find HTML elements that might contain the rate
@@ -72,8 +79,8 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       
       // Manually collect all matches
       while ((numberMatch = largeNumberPattern.exec(html)) !== null) {
-        if (match[1]) {
-          possibleRates.push(parseFloat(match[1]));
+        if (numberMatch[1]) {
+          possibleRates.push(parseFloat(numberMatch[1]));
         }
       }
       
