@@ -18,42 +18,61 @@ export async function scrapeLemfiRate(): Promise<number | null> {
     console.log('2. Try to parse the HTML page for rate information');
     console.log('3. Look for common rate patterns in the page');
     
-    // Use the Lemfi API endpoint that provides rates (first strategy)
-    const apiUrl = 'https://lemfi.com/api/calculator/rates?sourceCurrency=GBP&targetCurrency=NGN&amount=100';
+    // Try multiple API endpoints for Lemfi
+    const apiUrls = [
+      'https://lemfi.com/api/calculator/rates?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
+      'https://lemfi.com/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
+      'https://lemfi.com/api/exchange-rates/GBP/NGN'
+    ];
     
-    console.log(`Scraping Lemfi rate from API endpoint: ${apiUrl}`);
-    
-    try {
-      const response = await fetch(apiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'application/json',
-          'Origin': 'https://lemfi.com',
-          'Referer': 'https://lemfi.com/en-gb/international-money-transfer'
-        }
-      });
+    for (const apiUrl of apiUrls) {
+      console.log(`Trying Lemfi API endpoint: ${apiUrl}`);
       
-      if (!response.ok) {
-        console.error(`Failed to fetch from Lemfi API: ${response.status} ${response.statusText}`);
-      } else {
-        const data = await response.json();
-        console.log('Lemfi API response:', JSON.stringify(data));
+      try {
+        const response = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Origin': 'https://lemfi.com',
+            'Referer': 'https://lemfi.com/en-gb/international-money-transfer'
+          }
+        });
         
-        // Extract the rate from the response
-        if (data && data.rate) {
-          return parseFloat(data.rate);
-        } else if (data && data.exchangeRate) {
-          return parseFloat(data.exchangeRate);
-        } else if (data && data.result) {
-          // If we have the result for 100 GBP, divide by 100 to get the rate for 1 GBP
-          const result = parseFloat(data.result);
-          return result / 100;
+        if (!response.ok) {
+          console.error(`Failed to fetch from Lemfi API: ${response.status} ${response.statusText}`);
+        } else {
+          const data = await response.json();
+          console.log('Lemfi API response:', JSON.stringify(data));
+          
+          // Extract the rate from the response
+          if (data && data.rate) {
+            return parseFloat(data.rate);
+          } else if (data && data.exchangeRate) {
+            return parseFloat(data.exchangeRate);
+          } else if (data && data.result) {
+            // If we have the result for 100 GBP, divide by 100 to get the rate for 1 GBP
+            const result = parseFloat(data.result);
+            return result / 100;
+          } else if (data && data.targetAmount && data.sourceAmount) {
+            // Calculate the rate from target and source amounts
+            return parseFloat(data.targetAmount) / parseFloat(data.sourceAmount);
+          } else if (data && Array.isArray(data)) {
+            // If it's an array, look for rate object
+            for (const item of data) {
+              if (item && item.rate) {
+                return parseFloat(item.rate);
+              }
+            }
+          }
         }
+      } catch (error) {
+        console.log(`API fetch failed for ${apiUrl}:`, error);
+        // Continue to the next API endpoint
       }
-    } catch (error) {
-      console.log('API fetch failed:', error);
-      // Continue to the HTML scraping
     }
+    
+    // All API approaches failed, continue to HTML scraping
     
     // Another approach: try to find HTML elements that might contain the rate
     console.log('API approach failed, trying to scrape HTML page...');
@@ -79,7 +98,8 @@ export async function scrapeLemfiRate(): Promise<number | null> {
         /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i,
         /GBP\s*1\s*=\s*NGN\s*([\d,]+\.?\d*)/i,
         /exchange\s*rate\s*.*?(\d+[\d,.]*)\s/i,
-        /rate\s*.*?(\d+[\d,.]*)\s/i
+        /rate\s*.*?(\d+[\d,.]*)\s/i,
+        /(\d{4}(?:\.\d+)?)\s*NGN/i  // Looking for 4-digit numbers followed by NGN
       ];
       
       for (const pattern of ratePatterns) {
@@ -88,15 +108,16 @@ export async function scrapeLemfiRate(): Promise<number | null> {
           const extractedRate = parseFloat(rateMatch[1].replace(/,/g, ''));
           console.log(`Found Lemfi rate in HTML using pattern ${pattern}: ${extractedRate}`);
           
-          if (extractedRate >= 1400 && extractedRate <= 1700) {
+          // Lemfi's rate is likely to be between 2000-2500 for GBP to NGN
+          if (extractedRate >= 1800 && extractedRate <= 2500) {
             return extractedRate;
           }
         }
       }
       
-      console.log('Specific rate patterns failed, looking for any numbers in the range 1500-1600...');
-      // Look for any number that might be the rate (around 1500-1600)
-      const largeNumberPattern = /(1[4-7]\d\d(?:\.\d+)?)/g;
+      console.log('Specific rate patterns failed, looking for any numbers in the range 2000-2500...');
+      // Look for any number that might be the rate (around 2000-2500)
+      const largeNumberPattern = /(2\d\d\d(?:\.\d+)?)/g;
       let numberMatch;
       const possibleRates = [];
       
@@ -113,7 +134,7 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       }
       
       // Filter rates that are in a reasonable range for GBP to NGN
-      const reasonableRates = possibleRates.filter(r => r >= 1500 && r <= 1650);
+      const reasonableRates = possibleRates.filter(r => r >= 1800 && r <= 2500);
       if (reasonableRates.length > 0) {
         console.log(`Found possible Lemfi rates in HTML: ${reasonableRates.join(', ')}`);
         return reasonableRates[0]; // Return the first reasonable rate
