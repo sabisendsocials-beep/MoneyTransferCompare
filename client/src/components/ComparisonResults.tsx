@@ -372,13 +372,13 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                   {[bestProvider, ...otherProviders].map((provider, index) => {
                     const details = getProviderDetails(provider);
                     return (
-                      <tr key={provider.providerId} className={index === 0 ? "bg-green-50 dark:bg-green-900/10" : ""}>
+                      <tr key={provider.provider_id} className={index === 0 ? "bg-green-50 dark:bg-green-900/10" : ""}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            {provider.providerLogo || providerLogos[provider.providerName] ? (
+                            {provider.provider_logo || providerLogos[provider.provider_name] ? (
                               <img
-                                src={provider.providerLogo || providerLogos[provider.providerName]}
-                                alt={`${provider.providerName} Logo`}
+                                src={provider.provider_logo || providerLogos[provider.provider_name]}
+                                alt={`${provider.provider_name} Logo`}
                                 className="h-8 w-8 object-contain"
                               />
                             ) : (
@@ -388,7 +388,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                             )}
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                                {provider.providerName}
+                                {provider.provider_name}
                                 {index === 0 && (
                                   <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
                                     Best
@@ -408,19 +408,19 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          1 {fromCurrency} = {provider.exchangeRate.toLocaleString()} {toCurrency}
+                          1 {fromCurrency} = {provider.exchange_rate.toLocaleString()} {toCurrency}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {index === 0 ? (
-                            <span className="text-green-500">{formatCurrency(provider.receivedAmount, toCurrency)}</span>
+                            <span className="text-green-500">{formatCurrency(provider.received_amount, toCurrency)}</span>
                           ) : (
-                            <span className="text-gray-900 dark:text-white">{formatCurrency(provider.receivedAmount, toCurrency)}</span>
+                            <span className="text-gray-900 dark:text-white">{formatCurrency(provider.received_amount, toCurrency)}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center">
                             <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-                            {provider.transferTime || "Unknown"}
+                            {provider.transfer_time || "Unknown"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -428,7 +428,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                             variant={index === 0 ? "default" : "outline"}
                             size="sm"
                             className={index === 0 ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-                            onClick={() => window.open(provider.websiteUrl || '#', '_blank')}
+                            onClick={() => window.open(provider.website_url || '#', '_blank')}
                           >
                             Select
                           </Button>
