@@ -7,6 +7,7 @@ import { updateLemfiRate } from './lemfiScraper';
 import { updateWorldRemitRate } from './worldRemitScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
+import { additionalProviders } from './additionalProviders';
 
 // Get the URL to scrape based on provider name and currency pair
 function getScrapingUrl(providerName: string, fromCurrency = 'GBP', toCurrency = 'NGN'): string | null {

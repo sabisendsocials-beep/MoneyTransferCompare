@@ -27,7 +27,7 @@ const WORLDREMIT_RATE_SOURCES = [
 const CURRENT_MARKET_RATE = 2138.50; // Example market rate (as of May 2024)
 
 // Common provider markup patterns (difference from market rate)
-const PROVIDER_MARKUPS = {
+const PROVIDER_MARKUPS: Record<string, number> = {
   'WorldRemit': -0.06, // 6% below market rate (they take a cut)
   'Wise': 0.005, // 0.5% above market (they're close to mid-market)
   'Western Union': -0.08, // 8% below market rate
@@ -39,6 +39,11 @@ const PROVIDER_MARKUPS = {
   'XE Money Transfer': -0.065, // 6.5% below market rate
   'Currencys': -0.075, // 7.5% below market rate
   'Nala': -0.065, // 6.5% below market rate
+  'Sendwave': -0.055, // 5.5% below market rate
+  'Paysend': -0.07, // 7% below market rate
+  'Flutterwave': -0.068, // 6.8% below market rate
+  'SendApp': -0.065, // 6.5% below market rate
+  'Chipper Cash': -0.072, // 7.2% below market rate
 };
 
 /**
