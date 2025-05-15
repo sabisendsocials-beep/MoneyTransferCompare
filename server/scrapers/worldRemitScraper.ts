@@ -77,6 +77,22 @@ export async function scrapeWorldRemitRate(): Promise<number | null> {
         
         // If selectors didn't work, try to find any text mentioning exchange rates
         const bodyText = $('body').text();
+        console.log(`Looking for rate in body text (first 1000 chars): ${bodyText.substring(0, 1000)}`);
+        
+        // Try to extract any numbers that look like rates
+        const numbers = bodyText.match(/[\d,]+\.?\d*/g);
+        if (numbers) {
+          console.log('Found numbers in body text:');
+          numbers.forEach(num => {
+            // Clean the number and try to convert to a float
+            const cleanNum = num.replace(/,/g, '');
+            const floatNum = parseFloat(cleanNum);
+            if (!isNaN(floatNum) && floatNum > 1000 && floatNum < 3000) {
+              console.log(`Found possible GBP/NGN rate: ${floatNum}`);
+            }
+          });
+        }
+        
         const rate = findRateInText(bodyText);
         if (rate !== null) {
           console.log(`Found WorldRemit rate in body text: ${rate}`);
