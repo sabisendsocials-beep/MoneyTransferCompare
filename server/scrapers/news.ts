@@ -70,8 +70,8 @@ export async function scrapeFinancialNews() {
               summary,
               source: source.name,
               url: link,
-              imageUrl: extractImageUrl($(element).closest('article')),
-              publishedAt: parseDateText(dateText),
+              image_url: extractImageUrl($(element).closest('article')),
+              published_at: parseDateText(dateText),
             };
             
             newsItems.push(newsItem);

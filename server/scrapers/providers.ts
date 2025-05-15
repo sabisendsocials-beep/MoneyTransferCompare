@@ -108,9 +108,9 @@ export async function scrapeExchangeRates() {
 
             if (rate) {
               const rateData: InsertExchangeRate = {
-                providerId: provider.id,
-                fromCurrency: 'GBP',
-                toCurrency: 'NGN',
+                provider_id: provider.id,
+                from_currency: 'GBP',
+                to_currency: 'NGN',
                 rate
               };
 
