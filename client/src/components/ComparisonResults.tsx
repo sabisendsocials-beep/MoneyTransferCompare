@@ -235,7 +235,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         </div>
                         <div className="flex items-baseline">
                           <span className="text-2xl font-bold text-green-500">
-                            {formatCurrency(bestProvider.receivedAmount, toCurrency)}
+                            {formatCurrency(bestProvider.received_amount, toCurrency)}
                           </span>
                         </div>
                       </div>
@@ -243,14 +243,14 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">
-                            1 {fromCurrency} = {bestProvider.exchangeRate.toLocaleString()} {toCurrency}
+                            1 {fromCurrency} = {bestProvider.exchange_rate.toLocaleString()} {toCurrency}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Transfer time</span>
                           <div className="flex items-center text-gray-800 dark:text-gray-200">
                             <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-                            <span className="font-medium">{bestProvider.transferTime || "Unknown"}</span>
+                            <span className="font-medium">{bestProvider.transfer_time || "Unknown"}</span>
                           </div>
                         </div>
                       </div>
@@ -265,7 +265,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                   </div>
                   <Button 
                     className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white px-8"
-                    onClick={() => window.open(bestProvider.websiteUrl || '#', '_blank')}
+                    onClick={() => window.open(bestProvider.website_url || '#', '_blank')}
                   >
                     Go to provider
                   </Button>
@@ -278,14 +278,14 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
               {otherProviders.map((provider, index) => {
                 const details = getProviderDetails(provider);
                 return (
-                  <Card key={provider.providerId} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
+                  <Card key={provider.provider_id} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
                     <div className="border-b p-4 flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="w-12 h-12 bg-white p-2 rounded-lg shadow-sm flex items-center justify-center mr-3">
-                          {provider.providerLogo || providerLogos[provider.providerName] ? (
+                          {provider.provider_logo || providerLogos[provider.provider_name] ? (
                             <img
-                              src={provider.providerLogo || providerLogos[provider.providerName]}
-                              alt={`${provider.providerName} Logo`}
+                              src={provider.provider_logo || providerLogos[provider.provider_name]}
+                              alt={`${provider.provider_name} Logo`}
                               className="max-h-8 max-w-full object-contain"
                             />
                           ) : (
@@ -295,7 +295,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           )}
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-800 dark:text-white">{provider.providerName}</h3>
+                          <h3 className="font-medium text-gray-800 dark:text-white">{provider.provider_name}</h3>
                           {renderStars(provider.rating)}
                         </div>
                       </div>
