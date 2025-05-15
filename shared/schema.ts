@@ -111,21 +111,21 @@ export type TransferResult = z.infer<typeof transferResultSchema>;
 // Rate trend data schema
 export const rateTrendSchema = z.object({
   date: z.string(),
-  rate: z.number(),
+  rate: z.number().nullable(),
 });
 
 export type RateTrend = z.infer<typeof rateTrendSchema>;
 
 // Rate statistics schema
 export const rateStatsSchema = z.object({
-  thirtyDayHigh: z.number(),
-  thirtyDayHighDate: z.string(),
-  thirtyDayLow: z.number(), 
-  thirtyDayLowDate: z.string(),
-  thirtyDayAverage: z.number(),
-  oneMonthChange: z.number(),
-  threeMonthChange: z.number(),
-  oneYearChange: z.number(),
+  thirtyDayHigh: z.number().nullable(),
+  thirtyDayHighDate: z.string().nullable(),
+  thirtyDayLow: z.number().nullable(), 
+  thirtyDayLowDate: z.string().nullable(),
+  thirtyDayAverage: z.number().nullable(),
+  oneMonthChange: z.number().nullable(),
+  threeMonthChange: z.number().nullable(),
+  oneYearChange: z.number().nullable(),
 });
 
 export type RateStats = z.infer<typeof rateStatsSchema>;

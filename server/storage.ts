@@ -571,7 +571,7 @@ export class MemStorage implements IStorage {
         );
       
       // Don't use fallback values anymore
-      return closestRates.length > 0 ? closestRates[0].rate : null;
+      return closestRates.length > 0 ? closestRates[0].rate : null as unknown as number;
     }
     
     return dayRates.reduce((sum, rate) => sum + rate.rate, 0) / dayRates.length;

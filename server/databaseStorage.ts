@@ -398,10 +398,18 @@ export class DatabaseStorage implements IStorage {
     const oneYearAgoData = ratesArray.find(r => new Date(r.timestamp) <= oneYearAgo);
     const oneYearAgoRate = oneYearAgoData ? oneYearAgoData.rate : null;
     
-    // Calculate percentage changes
-    const oneMonthChange = ((latestRate - oneMonthAgoRate) / oneMonthAgoRate) * 100;
-    const threeMonthChange = ((latestRate - threeMonthAgoRate) / threeMonthAgoRate) * 100;
-    const oneYearChange = ((latestRate - oneYearAgoRate) / oneYearAgoRate) * 100;
+    // Calculate percentage changes only if we have the historical rates
+    const oneMonthChange = oneMonthAgoRate !== null 
+      ? ((latestRate - oneMonthAgoRate) / oneMonthAgoRate) * 100 
+      : null;
+      
+    const threeMonthChange = threeMonthAgoRate !== null 
+      ? ((latestRate - threeMonthAgoRate) / threeMonthAgoRate) * 100 
+      : null;
+      
+    const oneYearChange = oneYearAgoRate !== null 
+      ? ((latestRate - oneYearAgoRate) / oneYearAgoRate) * 100 
+      : null;
     
     return {
       thirtyDayHigh,
