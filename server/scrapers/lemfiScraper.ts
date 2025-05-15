@@ -19,11 +19,14 @@ export async function scrapeLemfiRate(): Promise<number | null> {
     console.log('2. Try to parse the HTML page for rate information');
     console.log('3. Look for common rate patterns in the page');
     
-    // Try multiple API endpoints for Lemfi
+    // Try multiple API endpoints for Lemfi with different amounts to get the most accurate rate
     const apiUrls = [
       'https://lemfi.com/api/calculator/rates?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
       'https://lemfi.com/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
-      'https://lemfi.com/api/exchange-rates/GBP/NGN'
+      'https://lemfi.com/api/exchange-rates/GBP/NGN',
+      'https://lemfi.com/en-gb/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
+      'https://lemfi.com/en-gb/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=1000',
+      'https://lemfi.com/en-gb/api/currency-converter?from=GBP&to=NGN&amount=1'
     ];
     
     for (const apiUrl of apiUrls) {
@@ -34,9 +37,13 @@ export async function scrapeLemfiRate(): Promise<number | null> {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Language': 'en-GB,en;q=0.9',
             'Origin': 'https://lemfi.com',
-            'Referer': 'https://lemfi.com/en-gb/international-money-transfer'
+            'Referer': 'https://lemfi.com/en-gb/international-money-transfer',
+            'X-Forwarded-For': '212.58.244.22', // BBC UK IP address
+            'X-Forwarded-Proto': 'https',
+            'X-Country-Code': 'GB',
+            'CF-IPCountry': 'GB'
           }
         });
         
@@ -84,8 +91,13 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
+        'X-Forwarded-For': '212.58.244.22', // BBC UK IP address
+        'X-Forwarded-Proto': 'https',
+        'X-Country-Code': 'GB',
+        'CF-IPCountry': 'GB'
       }
     });
     
@@ -116,10 +128,35 @@ export async function scrapeLemfiRate(): Promise<number | null> {
         }
       }
       
-      // Look for specific pattern of 2104 which appears multiple times in the HTML
-      if (html.includes('2104')) {
-        console.log('Found specific Lemfi rate pattern: 2104');
-        return 2104;
+      // Try to extract the most common 4-digit number that appears in the HTML
+      // This often points to the exchange rate shown in UI components
+      const fourDigitMatches = html.match(/\b(2\d{3}(?:\.\d+)?)\b/g);
+      if (fourDigitMatches && fourDigitMatches.length > 0) {
+        // Count occurrences
+        const counts: Record<string, number> = {};
+        fourDigitMatches.forEach(match => {
+          counts[match] = (counts[match] || 0) + 1;
+        });
+        
+        // Find the most common value
+        let mostCommonRate: string | null = null;
+        let highestCount = 0;
+        
+        for (const [rate, count] of Object.entries(counts)) {
+          console.log(`Rate ${rate} appears ${count} times`);
+          if (count > highestCount) {
+            highestCount = count;
+            mostCommonRate = rate;
+          }
+        }
+        
+        if (mostCommonRate) {
+          const extractedRate = parseFloat(mostCommonRate);
+          console.log(`Most common 4-digit rate found: ${extractedRate} (appears ${highestCount} times)`);
+          if (extractedRate >= 2000 && extractedRate <= 2500) {
+            return extractedRate;
+          }
+        }
       }
       
       console.log('Specific rate patterns failed, looking for any numbers in the range 2000-2300...');
