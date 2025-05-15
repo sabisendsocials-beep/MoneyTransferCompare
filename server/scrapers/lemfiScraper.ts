@@ -159,69 +159,107 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       console.error('Enhanced scraper failed:', error);
     }
     
-    // Try one more approach: direct HTML scraping
+    // Try one more approach: direct HTML scraping with multiple URLs
     console.log('Enhanced scraper failed, trying direct HTML parsing...');
-    const mainUrl = 'https://lemfi.com/en-gb/send-money-to-nigeria';
-    console.log(`Fetching HTML from ${mainUrl}`);
     
-    const mainResponse = await fetch(mainUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-GB,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
+    // Use multiple URLs to increase chances of finding the rate
+    const urls = [
+      'https://lemfi.com/en-gb/send-money-to-nigeria',
+      'https://lemfi.com/en-gb/nigeria',
+      'https://lemfi.com/en-gb/send-money-online',
+      'https://lemfi.com/en-gb/'
+    ];
     
-    if (mainResponse.ok) {
-      const html = await mainResponse.text();
-      console.log(`Retrieved HTML content (${html.length} characters)`);
+    // Try each URL
+    for (const mainUrl of urls) {
+      console.log(`Fetching HTML from ${mainUrl}`);
       
-      // Check for rate information in the HTML using various patterns
-      console.log('Trying to find rate information in the HTML');
-      
-      // Looking for the exact format: "1 GBP = X NGN"
-      const exactRatePattern = /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
-      const exactMatch = html.match(exactRatePattern);
-      if (exactMatch && exactMatch[1]) {
-        const rateValue = parseFloat(exactMatch[1].replace(/,/g, ''));
-        console.log(`Found exact rate format: ${rateValue}`);
-        if (rateValue > 1000) {
-          return rateValue;
-        }
-      }
-      
-      // Exchange rate label format - looks for "Exchange rate" followed by a value
-      const exchangeRatePattern = /Exchange\s*rate[^]*?1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
-      const exchangeMatch = html.match(exchangeRatePattern);
-      if (exchangeMatch && exchangeMatch[1]) {
-        const rateValue = parseFloat(exchangeMatch[1].replace(/,/g, ''));
-        console.log(`Found exchange rate label format: ${rateValue}`);
-        if (rateValue > 1000) {
-          return rateValue;
-        }
-      }
-      
-      // Look for any 4-digit number that might be a rate (common for GBP to NGN)
-      const rateNumbers = html.match(/\b([\d,]{1,3}\.?\d{0,2}k?)\s*(?:NGN|naira)\b/gi);
-      if (rateNumbers && rateNumbers.length > 0) {
-        console.log(`Found potential rate values: ${rateNumbers.join(', ')}`);
-        
-        // Extract the first valid rate
-        for (const rateText of rateNumbers) {
-          // Remove commas and convert from format like "2.1k" to 2100
-          let rateValue = rateText.replace(/,/g, '');
-          if (rateValue.includes('k')) {
-            rateValue = (parseFloat(rateValue.replace(/k/i, '')) * 1000).toString();
+      try {
+        const mainResponse = await fetch(mainUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en;q=0.9',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+    
+        if (mainResponse.ok) {
+          const html = await mainResponse.text();
+          console.log(`Retrieved HTML content (${html.length} characters)`);
+          
+          // Check for rate information in the HTML using various patterns
+          console.log('Trying to find rate information in the HTML');
+          
+          // Looking for the exact format: "1 GBP = X NGN"
+          const exactRatePattern = /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
+          const exactMatch = html.match(exactRatePattern);
+          if (exactMatch && exactMatch[1]) {
+            const rateValue = parseFloat(exactMatch[1].replace(/,/g, ''));
+            console.log(`Found exact rate format: ${rateValue}`);
+            if (rateValue > 1000) {
+              return rateValue;
+            }
           }
           
-          const rate = parseFloat(rateValue);
-          if (rate > 1000) {
-            console.log(`Using rate: ${rate}`);
-            return rate;
+          // Exchange rate label format - looks for "Exchange rate" followed by a value
+          const exchangeRatePattern = /Exchange\s*rate[^]*?1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
+          const exchangeMatch = html.match(exchangeRatePattern);
+          if (exchangeMatch && exchangeMatch[1]) {
+            const rateValue = parseFloat(exchangeMatch[1].replace(/,/g, ''));
+            console.log(`Found exchange rate label format: ${rateValue}`);
+            if (rateValue > 1000) {
+              return rateValue;
+            }
+          }
+          
+          // Look for any 4-digit number that might be a rate (common for GBP to NGN)
+          const rateNumbers = html.match(/\b([\d,]{1,3}\.?\d{0,2}k?)\s*(?:NGN|naira)\b/gi);
+          if (rateNumbers && rateNumbers.length > 0) {
+            console.log(`Found potential rate values: ${rateNumbers.join(', ')}`);
+            
+            // Extract the first valid rate
+            for (const rateText of rateNumbers) {
+              // Remove commas and convert from format like "2.1k" to 2100
+              let rateValue = rateText.replace(/,/g, '');
+              if (rateValue.includes('k')) {
+                rateValue = (parseFloat(rateValue.replace(/k/i, '')) * 1000).toString();
+              }
+              
+              const rate = parseFloat(rateValue);
+              if (rate > 1000) {
+                console.log(`Using rate: ${rate}`);
+                return rate;
+              }
+            }
+          }
+          
+          // Additional pattern: Look for Nigerian Naira amount with GBP
+          const ngnPattern = /(?:GBP|£).*?(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:NGN|naira)/i;
+          const ngnMatch = html.match(ngnPattern);
+          if (ngnMatch && ngnMatch[1]) {
+            const rate = parseFloat(ngnMatch[1].replace(/,/g, ''));
+            console.log(`Found NGN pattern rate: ${rate}`);
+            if (rate > 1000) {
+              return rate;
+            }
+          }
+          
+          // Try a broader pattern that looks for rates in a different format
+          const broadPattern = /rate.*?(\d{4,}).*?(?:NGN|naira)/i;
+          const broadMatch = html.match(broadPattern);
+          if (broadMatch && broadMatch[1]) {
+            const rate = parseFloat(broadMatch[1].replace(/,/g, ''));
+            console.log(`Found broad pattern rate: ${rate}`);
+            if (rate > 1000) {
+              return rate;
+            }
           }
         }
+      } catch (error) {
+        console.log(`Error fetching ${mainUrl}: ${error}`);
+        // Continue to next URL
       }
     }
     
