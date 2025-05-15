@@ -44,6 +44,14 @@ app.use((req, res, next) => {
     log("Initializing database...");
     await initializeDatabase();
     log("Database initialized successfully");
+    
+    // Ensure all providers exist (including Lemfi and Nala)
+    await ensureProvidersExist();
+    log("Provider initialization completed");
+    
+    // Update exchange rates with real data from providers
+    await updateExchangeRates();
+    log("Exchange rates updated with real data");
   } catch (error) {
     log(`Failed to initialize database: ${error}`);
   }

@@ -101,6 +101,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Manually trigger data updates (for testing purposes)
   apiRouter.post("/api/update-rates", async (req: Request, res: Response) => {
     try {
+      // First reset providers to ensure we have up-to-date provider list including Lemfi and Nala
+      await storage.deleteAllProviders();
+      await ensureProvidersExist();
+      
+      // Then update the rates
       const results = await updateExchangeRates();
       res.json({ message: `Updated ${results.length} exchange rates` });
     } catch (error) {

@@ -247,8 +247,8 @@ export async function scrapeExchangeRates() {
           // Create exchange rate record
           const rateData: InsertExchangeRate = {
             provider_id: provider.id,
-            from_currency: 'GBP',
-            to_currency: 'NGN',
+            from_currency: realData.fromCurrency,
+            to_currency: realData.toCurrency,
             rate
           };
 
