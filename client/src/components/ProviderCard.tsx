@@ -58,9 +58,9 @@ export function ProviderCard({
             <div>
               <ProviderBadge 
                 provider={{
-                  id: result.provider_id,
+                  id: result.providerId,
                   name: result.providerName,
-                  website_url: result.website,
+                  website_url: result.websiteUrl,
                   logo: result.providerLogo
                 }}
                 fromCurrency={fromCurrency}
@@ -69,7 +69,7 @@ export function ProviderCard({
             </div>
             <div className="flex flex-col items-end">
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {formatCurrency(result.recipientGets, toCurrency)}
+                {formatCurrency(result.receivedAmount, toCurrency)}
               </div>
               <div className="text-sm text-muted-foreground">
                 Recipient gets
@@ -93,7 +93,7 @@ export function ProviderCard({
             <div>
               <div className="text-sm text-muted-foreground">Exchange Rate</div>
               <div className="font-medium">
-                1 {fromCurrency} = {result.rate.toFixed(2)} {toCurrency}
+                1 {fromCurrency} = {result.exchangeRate.toFixed(2)} {toCurrency}
               </div>
             </div>
             <div>
@@ -108,7 +108,11 @@ export function ProviderCard({
             <Button 
               className="w-full bg-primary hover:bg-primary/90" 
               size="lg"
-              onClick={() => window.open(result.website, '_blank')}
+              onClick={() => {
+                if (typeof result.websiteUrl === 'string') {
+                  window.open(result.websiteUrl, '_blank')
+                }
+              }}
             >
               Transfer with {result.providerName} <ExternalLink className="ml-2 h-4 w-4" />
             </Button>

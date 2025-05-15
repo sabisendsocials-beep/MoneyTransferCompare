@@ -7,7 +7,7 @@ interface ProviderBadgeProps {
   provider: {
     id: number;
     name: string;
-    website_url?: string;
+    website_url?: string | null;
     logo?: string | null;
   };
   showLastUpdated?: boolean;

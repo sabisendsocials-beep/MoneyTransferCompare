@@ -5,6 +5,8 @@ import { TransferResult } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProviderCard } from "./ProviderCard";
+import { ProviderBadge } from "./ProviderBadge";
 
 type ComparisonResultsProps = {
   results: TransferResult[];
