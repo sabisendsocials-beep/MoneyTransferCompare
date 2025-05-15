@@ -66,8 +66,8 @@ export const news = pgTable("news", {
   summary: text("summary"),
   source: text("source"),
   url: text("url"),
-  imageUrl: text("image_url"),
-  publishedAt: timestamp("published_at"),
+  image_url: text("image_url"),
+  published_at: timestamp("published_at"),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 

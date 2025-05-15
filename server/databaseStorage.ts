@@ -69,9 +69,9 @@ export class DatabaseStorage implements IStorage {
         .from(schema.exchangeRates)
         .where(
           and(
-            eq(schema.exchangeRates.providerId, providerId),
-            eq(schema.exchangeRates.fromCurrency, fromCurrency),
-            eq(schema.exchangeRates.toCurrency, toCurrency)
+            eq(schema.exchangeRates.provider_id, providerId),
+            eq(schema.exchangeRates.from_currency, fromCurrency),
+            eq(schema.exchangeRates.to_currency, toCurrency)
           )
         )
         .orderBy(desc(schema.exchangeRates.timestamp))
@@ -100,9 +100,9 @@ export class DatabaseStorage implements IStorage {
       .from(schema.exchangeRates)
       .where(
         and(
-          eq(schema.exchangeRates.providerId, providerId),
-          eq(schema.exchangeRates.fromCurrency, fromCurrency),
-          eq(schema.exchangeRates.toCurrency, toCurrency)
+          eq(schema.exchangeRates.provider_id, providerId),
+          eq(schema.exchangeRates.from_currency, fromCurrency),
+          eq(schema.exchangeRates.to_currency, toCurrency)
         )
       )
       .orderBy(desc(schema.exchangeRates.timestamp))
