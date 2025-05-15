@@ -513,14 +513,14 @@ export class MemStorage implements IStorage {
     dayStart.setHours(0, 0, 0, 0);
     
     const dayRates = this.exchangeRates.filter(rate => 
-      rate.fromCurrency === fromCurrency && 
-      rate.toCurrency === toCurrency && 
+      rate.from_currency === fromCurrency && 
+      rate.to_currency === toCurrency && 
       rate.timestamp >= dayStart
     );
     
     if (dayRates.length === 0) {
       const latestRates = this.exchangeRates
-        .filter(rate => rate.fromCurrency === fromCurrency && rate.toCurrency === toCurrency)
+        .filter(rate => rate.from_currency === fromCurrency && rate.to_currency === toCurrency)
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       
       return latestRates.length > 0 ? latestRates[0].rate : 1520; // Fallback value
