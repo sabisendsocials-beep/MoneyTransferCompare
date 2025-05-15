@@ -570,7 +570,8 @@ export class MemStorage implements IStorage {
           Math.abs(b.timestamp.getTime() - date.getTime())
         );
       
-      return closestRates.length > 0 ? closestRates[0].rate : 1520; // Fallback value
+      // Don't use fallback values anymore
+      return closestRates.length > 0 ? closestRates[0].rate : null;
     }
     
     return dayRates.reduce((sum, rate) => sum + rate.rate, 0) / dayRates.length;

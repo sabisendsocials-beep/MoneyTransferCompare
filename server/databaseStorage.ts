@@ -323,17 +323,17 @@ export class DatabaseStorage implements IStorage {
       ORDER BY timestamp DESC
     `);
     
-    // If no data, return default stats
+    // If no data, return empty stats with null values rather than fallbacks
     if (rates.rows.length === 0) {
       return {
-        thirtyDayHigh: 1530,
-        thirtyDayHighDate: new Date().toISOString(),
-        thirtyDayLow: 1480,
-        thirtyDayLowDate: new Date().toISOString(),
-        thirtyDayAverage: 1500,
-        oneMonthChange: 1.5,
-        threeMonthChange: 2.1,
-        oneYearChange: 5.3
+        thirtyDayHigh: null,
+        thirtyDayHighDate: null,
+        thirtyDayLow: null,
+        thirtyDayLowDate: null,
+        thirtyDayAverage: null,
+        oneMonthChange: null,
+        threeMonthChange: null,
+        oneYearChange: null
       };
     }
     
@@ -364,24 +364,39 @@ export class DatabaseStorage implements IStorage {
       thirtyDaySum += r.rate;
     }
     
-    const thirtyDayAverage = thirtyDayRates.length > 0 ? thirtyDaySum / thirtyDayRates.length : ratesArray[0]?.rate || 1500;
+    // Only use real data, no fallbacks
+    const thirtyDayAverage = thirtyDayRates.length > 0 ? thirtyDaySum / thirtyDayRates.length : ratesArray[0]?.rate || null;
     
-    // Calculate changes over different periods
-    const latestRate = ratesArray[0]?.rate || 1500;
+    // Calculate changes over different periods - only using actual data
+    const latestRate = ratesArray[0]?.rate || null;
     
-    // Find rate 1 month ago
+    if (latestRate === null) {
+      // If we don't have a latest rate, we can't calculate changes
+      return {
+        thirtyDayHigh: null,
+        thirtyDayHighDate: null, 
+        thirtyDayLow: null,
+        thirtyDayLowDate: null,
+        thirtyDayAverage: null,
+        oneMonthChange: null,
+        threeMonthChange: null,
+        oneYearChange: null
+      };
+    }
+    
+    // Find rate 1 month ago - no fallback
     const oneMonthAgoData = ratesArray.find(r => new Date(r.timestamp) <= thirtyDaysAgo);
-    const oneMonthAgoRate = oneMonthAgoData ? oneMonthAgoData.rate : latestRate * 0.98; // Assume 2% lower if no data
+    const oneMonthAgoRate = oneMonthAgoData ? oneMonthAgoData.rate : null;
     
-    // Find rate 3 months ago
+    // Find rate 3 months ago - no fallback
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     const threeMonthAgoData = ratesArray.find(r => new Date(r.timestamp) <= threeMonthsAgo);
-    const threeMonthAgoRate = threeMonthAgoData ? threeMonthAgoData.rate : latestRate * 0.95; // Assume 5% lower if no data
+    const threeMonthAgoRate = threeMonthAgoData ? threeMonthAgoData.rate : null;
     
-    // Find rate 1 year ago
+    // Find rate 1 year ago - no fallback
     const oneYearAgoData = ratesArray.find(r => new Date(r.timestamp) <= oneYearAgo);
-    const oneYearAgoRate = oneYearAgoData ? oneYearAgoData.rate : latestRate * 0.9; // Assume 10% lower if no data
+    const oneYearAgoRate = oneYearAgoData ? oneYearAgoData.rate : null;
     
     // Calculate percentage changes
     const oneMonthChange = ((latestRate - oneMonthAgoRate) / oneMonthAgoRate) * 100;
