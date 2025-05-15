@@ -17,10 +17,10 @@ const HeroSection = () => {
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="md:w-1/2 mb-8 md:mb-0">
             <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-              Find the Best <span className="text-yellow-300">UK to Nigeria</span> Money Transfer
+              Find the Best <span className="text-yellow-300">International Money Transfers</span>
             </h1>
             <p className="text-lg mb-8 text-blue-100 max-w-xl">
-              Compare rates, fees, and delivery times across multiple providers to get the most out of your money.
+              Compare rates, fees, and delivery times across multiple providers for transfers between UK, EU, US, Ghana, Nigeria and other countries.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/compare">
@@ -41,18 +41,47 @@ const HeroSection = () => {
               viewBox="0 0 600 400"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <rect x="50" y="100" width="200" height="150" rx="15" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
-              <text x="150" y="175" textAnchor="middle" dominantBaseline="middle" fontSize="50" fontWeight="bold" fill="#2563eb">£</text>
-              <rect x="350" y="100" width="200" height="150" rx="15" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
-              <text x="450" y="175" textAnchor="middle" dominantBaseline="middle" fontSize="50" fontWeight="bold" fill="#2563eb">₦</text>
-              <path d="M250 175 L350 175" stroke="#94a3b8" strokeWidth="5" strokeDasharray="10,5" />
-              <path d="M275 150 L325 175 L275 200" fill="#94a3b8" />
-              <circle cx="150" cy="310" r="30" fill="#f8fafc" opacity="0.8" />
-              <circle cx="450" cy="310" r="30" fill="#f8fafc" opacity="0.8" />
-              <rect x="120" y="290" width="60" height="40" rx="5" fill="#2563eb" />
-              <rect x="420" y="290" width="60" height="40" rx="5" fill="#2563eb" />
-              <text x="150" y="315" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">GBP</text>
-              <text x="450" y="315" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">NGN</text>
+              {/* Main comparison illustration */}
+              <rect x="100" y="80" width="160" height="120" rx="15" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
+              <text x="180" y="140" textAnchor="middle" dominantBaseline="middle" fontSize="40" fontWeight="bold" fill="#2563eb">£</text>
+              
+              <rect x="340" y="80" width="160" height="120" rx="15" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
+              <text x="420" y="140" textAnchor="middle" dominantBaseline="middle" fontSize="40" fontWeight="bold" fill="#2563eb">₦</text>
+              
+              <path d="M260 140 L340 140" stroke="#94a3b8" strokeWidth="5" strokeDasharray="10,5" />
+              <path d="M285 115 L335 140 L285 165" fill="#94a3b8" />
+              
+              {/* Multiple currency badges */}
+              <g className="currency-badges">
+                {/* Row 1 */}
+                <rect x="80" y="240" width="60" height="40" rx="5" fill="#2563eb" />
+                <text x="110" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">GBP</text>
+                
+                <rect x="150" y="240" width="60" height="40" rx="5" fill="#3b82f6" />
+                <text x="180" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">EUR</text>
+                
+                <rect x="220" y="240" width="60" height="40" rx="5" fill="#2563eb" />
+                <text x="250" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">USD</text>
+
+                {/* Row 2 */}
+                <rect x="320" y="240" width="60" height="40" rx="5" fill="#3b82f6" />
+                <text x="350" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">NGN</text>
+                
+                <rect x="390" y="240" width="60" height="40" rx="5" fill="#2563eb" />
+                <text x="420" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">GHS</text>
+                
+                <rect x="460" y="240" width="60" height="40" rx="5" fill="#3b82f6" />
+                <text x="490" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">KES</text>
+              </g>
+              
+              {/* Connection arrows */}
+              <path d="M180 190 L180 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,3" />
+              <path d="M420 190 L420 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,3" />
+              
+              {/* Add stars for highlighting */}
+              <path d="M300 30 L310 50 L330 55 L315 70 L320 90 L300 80 L280 90 L285 70 L270 55 L290 50 Z" fill="#ffd700" opacity="0.8" />
+              <path d="M80 170 L85 180 L95 182 L87 190 L90 200 L80 195 L70 200 L73 190 L65 182 L75 180 Z" fill="#ffd700" opacity="0.6" />
+              <path d="M520 170 L525 180 L535 182 L527 190 L530 200 L520 195 L510 200 L513 190 L505 182 L515 180 Z" fill="#ffd700" opacity="0.6" />
             </svg>
           </div>
         </div>
