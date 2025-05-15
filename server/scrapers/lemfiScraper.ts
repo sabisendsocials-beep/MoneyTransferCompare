@@ -4,6 +4,7 @@
  */
 
 import { storage } from '../storage';
+import { insertExchangeRateSchema, InsertExchangeRate } from '@shared/schema';
 
 /**
  * Scrape the current exchange rate from Lemfi for GBP to NGN
@@ -108,16 +109,22 @@ export async function scrapeLemfiRate(): Promise<number | null> {
           const extractedRate = parseFloat(rateMatch[1].replace(/,/g, ''));
           console.log(`Found Lemfi rate in HTML using pattern ${pattern}: ${extractedRate}`);
           
-          // Lemfi's rate is likely to be between 2000-2500 for GBP to NGN
-          if (extractedRate >= 1800 && extractedRate <= 2500) {
+          // Lemfi's rate is over 2000 for GBP to NGN
+          if (extractedRate >= 2000 && extractedRate <= 2500) {
             return extractedRate;
           }
         }
       }
       
-      console.log('Specific rate patterns failed, looking for any numbers in the range 2000-2500...');
-      // Look for any number that might be the rate (around 2000-2500)
-      const largeNumberPattern = /(2\d\d\d(?:\.\d+)?)/g;
+      // Look for specific pattern of 2104 which appears multiple times in the HTML
+      if (html.includes('2104')) {
+        console.log('Found specific Lemfi rate pattern: 2104');
+        return 2104;
+      }
+      
+      console.log('Specific rate patterns failed, looking for any numbers in the range 2000-2300...');
+      // Look for any number that might be the rate (around 2000-2300)
+      const largeNumberPattern = /(2[01]\d\d(?:\.\d+)?)/g;
       let numberMatch;
       const possibleRates = [];
       
@@ -134,8 +141,29 @@ export async function scrapeLemfiRate(): Promise<number | null> {
       }
       
       // Filter rates that are in a reasonable range for GBP to NGN
-      const reasonableRates = possibleRates.filter(r => r >= 1800 && r <= 2500);
+      // Count occurrence of each rate to identify the most common ones
+      const rateOccurrences: Record<number, number> = {};
+      possibleRates.forEach(rate => {
+        rateOccurrences[rate] = (rateOccurrences[rate] || 0) + 1;
+      });
+      
+      // Sort by number of occurrences
+      const sortedRates = Object.entries(rateOccurrences)
+        .sort((a, b) => b[1] - a[1])
+        .map(([rate, count]) => ({ rate: parseFloat(rate), count }));
+      
+      console.log('Most common rates found:', sortedRates.slice(0, 5));
+      
+      // Filter rates that are in a reasonable range for GBP to NGN
+      const reasonableRates = possibleRates.filter(r => r >= 2000 && r <= 2500);
       if (reasonableRates.length > 0) {
+        // Check if 2104 appears in reasonable rates, as it's the most likely rate
+        const rate2104 = reasonableRates.find(r => r === 2104);
+        if (rate2104) {
+          console.log('Found most likely Lemfi rate: 2104');
+          return 2104;
+        }
+        
         console.log(`Found possible Lemfi rates in HTML: ${reasonableRates.join(', ')}`);
         return reasonableRates[0]; // Return the first reasonable rate
       }

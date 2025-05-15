@@ -17,7 +17,7 @@ export const realProviderRates = [
   { name: 'Currencys', fromCurrency: 'GBP', toCurrency: 'NGN', rate: 1534.80, fee: 3.50, transferTime: '2-3 days', rating: 3.9 },
   
   // New providers
-  { name: 'Lemfi', fromCurrency: 'GBP', toCurrency: 'NGN', rate: 1585.75, fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
+  { name: 'Lemfi', fromCurrency: 'GBP', toCurrency: 'NGN', rate: 2104.00, fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
   { name: 'Nala', fromCurrency: 'GBP', toCurrency: 'NGN', rate: 1568.90, fee: 1.50, transferTime: 'Same day', rating: 4.6 },
   
   // EUR to NGN rates
@@ -26,7 +26,7 @@ export const realProviderRates = [
   { name: 'MoneyGram', fromCurrency: 'EUR', toCurrency: 'NGN', rate: 1319.75, fee: 3.99, transferTime: '1-2 days', rating: 4.0 },
   { name: 'Remitly', fromCurrency: 'EUR', toCurrency: 'NGN', rate: 1342.30, fee: 2.49, transferTime: 'Same day', rating: 4.5 },
   { name: 'WorldRemit', fromCurrency: 'EUR', toCurrency: 'NGN', rate: 1326.80, fee: 2.99, transferTime: '1-3 days', rating: 4.3 },
-  { name: 'Lemfi', fromCurrency: 'EUR', toCurrency: 'NGN', rate: 1350.75, fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
+  { name: 'Lemfi', fromCurrency: 'EUR', toCurrency: 'NGN', rate: 1805.35, fee: 1.25, transferTime: '1-2 days', rating: 4.7 },
   { name: 'Nala', fromCurrency: 'EUR', toCurrency: 'NGN', rate: 1343.90, fee: 1.50, transferTime: 'Same day', rating: 4.6 },
   
   // GBP to GHS rates
