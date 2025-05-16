@@ -146,7 +146,6 @@ app.use((req, res, next) => {
     }, EIGHT_HOURS);
     
     // Update news every 8 hours
-    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
     setInterval(async () => {
       try {
         log("Running scheduled news update...");
