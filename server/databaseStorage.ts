@@ -6,7 +6,8 @@ import {
   ExchangeRate, InsertExchangeRate,
   News, InsertNews,
   TransferRequest, TransferResult,
-  RateTrend, RateStats
+  RateTrend, RateTrendResponse, RateStats,
+  InsertRateTrend
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -254,72 +255,102 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Rate trend methods
-  async getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrend[]> {
-    // Calculate date range: from X days ago to now
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+  async getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrendResponse[]> {
+    console.log(`Getting ${days}-day rate trends for ${fromCurrency}/${toCurrency}...`);
     
-    // First get data points from the database using SQL to calculate daily averages
-    const averageDailyRates = await db.execute<{ date: string; rate: number }>(sql`
-      SELECT 
-        DATE_TRUNC('day', "timestamp") as date, 
-        AVG(rate) as rate
-      FROM ${schema.exchangeRates}
-      WHERE 
-        "from_currency" = ${fromCurrency} AND 
-        "to_currency" = ${toCurrency} AND
-        "timestamp" >= ${startDate.toISOString()}
-      GROUP BY DATE_TRUNC('day', "timestamp")
-      ORDER BY date
-    `);
-        
-    // If we have less data points than days requested, generate some reasonable trend data
-    // by filling in missing days with interpolated values
-    const trends: RateTrend[] = [];
-    const resultsMap = new Map<string, number>();
-    
-    // Map the results by date string
-    for (const record of averageDailyRates.rows) {
-      const dateStr = new Date(record.date).toISOString().split('T')[0];
-      resultsMap.set(dateStr, record.rate);
-    }
-    
-    // Generate trend data for each day in the range
-    for (let i = 0; i < days; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - i - 1));
-      const dateStr = date.toISOString().split('T')[0];
+    try {
+      // Check if we should fetch fresh data from the API
+      const shouldRefresh = await this.shouldRefreshRateTrends(fromCurrency, toCurrency);
       
-      // Use actual data if available, otherwise interpolate
-      if (resultsMap.has(dateStr)) {
-        trends.push({
-          date: dateStr,
-          rate: resultsMap.get(dateStr)!
-        });
-      } else if (trends.length > 0) {
-        // For missing data, use the last known rate with small random variation
-        const lastRateValue = trends[trends.length - 1].rate;
-        // Always use a valid number for calculations
-        const baseRate = typeof lastRateValue === 'number' ? lastRateValue : 1500;
-        // Small random variation of ±0.5%
-        const variation = (Math.random() - 0.5) * 0.01;
-        const newRate = baseRate * (1 + variation);
+      if (shouldRefresh) {
+        console.log(`Rate trend data for ${fromCurrency}/${toCurrency} requires refresh from API`);
         
-        trends.push({
-          date: dateStr,
-          rate: newRate
-        });
+        // Update trends from the API
+        try {
+          const { fetchHistoricalRates } = await import('./api/exchangeRateApi');
+          const freshTrends = await fetchHistoricalRates(fromCurrency, toCurrency, days);
+          
+          if (freshTrends && freshTrends.length > 0) {
+            // Save the fresh trends to the database
+            await this.updateRateTrends(fromCurrency, toCurrency, freshTrends);
+            console.log(`Successfully refreshed rate trends for ${fromCurrency}/${toCurrency} from API`);
+          } else {
+            console.warn(`API returned no trend data for ${fromCurrency}/${toCurrency}`);
+          }
+        } catch (apiError) {
+          console.error(`Error refreshing rate trends from API:`, apiError);
+          // Continue to use existing data if available
+        }
       } else {
-        // If no data at all, use a default rate
-        const defaultRate = 1500; // This would be based on your app's default rates
-        trends.push({
-          date: dateStr,
-          rate: defaultRate
-        });
+        console.log(`Using cached rate trend data for ${fromCurrency}/${toCurrency}`);
       }
+      
+      // Retrieve trends from database
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      
+      const trendData = await db.select()
+        .from(schema.rateTrends)
+        .where(
+          and(
+            eq(schema.rateTrends.from_currency, fromCurrency),
+            eq(schema.rateTrends.to_currency, toCurrency),
+            sql`${schema.rateTrends.date} >= ${startDate.toISOString().split('T')[0]}`
+          )
+        )
+        .orderBy(schema.rateTrends.date);
+      
+      if (trendData && trendData.length > 0) {
+        // Convert database records to API response format
+        const trends: RateTrendResponse[] = trendData.map(trend => {
+          // Format the date to YYYY-MM-DD
+          let dateStr = '';
+          
+          if (trend.date) {
+            // For safety, handle the date conversion in a try-catch
+            try {
+              const dateObj = new Date(trend.date);
+              dateStr = dateObj.toISOString().split('T')[0];
+            } catch (e) {
+              console.error(`Error converting date: ${trend.date}`, e);
+              // Use current date as fallback
+              dateStr = new Date().toISOString().split('T')[0];
+            }
+          } else {
+            // Fallback if date is null/undefined
+            dateStr = new Date().toISOString().split('T')[0];
+          }
+              
+          return {
+            date: dateStr,
+            rate: trend.rate,
+            from_currency: trend.from_currency,
+            to_currency: trend.to_currency
+          };
+        });
+        
+        console.log(`Retrieved ${trends.length} trend data points from database`);
+        return trends;
+      }
+      
+      // If no data in database, fetch from API directly
+      console.log(`No stored trend data found, fetching directly from API`);
+      const { fetchHistoricalRates } = await import('./api/exchangeRateApi');
+      const apiTrends = await fetchHistoricalRates(fromCurrency, toCurrency, days);
+      
+      if (apiTrends && apiTrends.length > 0) {
+        // Store the trends for future use
+        await this.updateRateTrends(fromCurrency, toCurrency, apiTrends);
+        return apiTrends;
+      }
+      
+      // If all else fails, return empty array (no synthetic data generation)
+      console.error(`CRITICAL: Failed to get any rate trend data for ${fromCurrency}/${toCurrency}`);
+      return [];
+    } catch (error) {
+      console.error(`Error retrieving rate trends:`, error);
+      return [];
     }
-    
-    return trends;
   }
   
   async getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats> {
@@ -343,6 +374,7 @@ export class DatabaseStorage implements IStorage {
     // If no data, return empty stats with null values rather than fallbacks
     if (rates.rows.length === 0) {
       return {
+        lastUpdated: new Date().toISOString(), // Always provide the current date/time as last update
         thirtyDayHigh: null,
         thirtyDayHighDate: null,
         thirtyDayLow: null,
@@ -390,6 +422,7 @@ export class DatabaseStorage implements IStorage {
     if (latestRate === null) {
       // If we don't have a latest rate, we can't calculate changes
       return {
+        lastUpdated: new Date().toISOString(), // Always provide the current date/time as last update
         thirtyDayHigh: null,
         thirtyDayHighDate: null, 
         thirtyDayLow: null,
@@ -428,7 +461,10 @@ export class DatabaseStorage implements IStorage {
       ? ((latestRate - oneYearAgoRate) / oneYearAgoRate) * 100 
       : null;
     
+    const lastUpdated = new Date().toISOString();
+    
     return {
+      lastUpdated,
       thirtyDayHigh,
       thirtyDayHighDate,
       thirtyDayLow,
@@ -455,15 +491,24 @@ export class DatabaseStorage implements IStorage {
             )
           );
         
-        // Insert new trends
-        for (const trend of trends) {
-          const dateObj = new Date(trend.date);
-          await tx.insert(schema.rateTrends).values({
-            from_currency: fromCurrency,
-            to_currency: toCurrency,
-            date: dateObj,
-            rate: trend.rate
+        // Insert new trends as a batch
+        if (trends.length > 0) {
+          // Map the trends to the database schema format
+          // Map trends to a format compatible with the database
+          const trendValues = trends.map(trend => {
+            // Convert the date string to a format that works with SQL
+            const dateStr = trend.date.split('T')[0]; // Ensure format is YYYY-MM-DD
+            
+            return {
+              from_currency: fromCurrency,
+              to_currency: toCurrency,
+              date: dateStr, // Use the string format which gets converted by Drizzle
+              rate: trend.rate
+            };
           });
+          
+          // Insert the batch of trends
+          await tx.insert(schema.rateTrends).values(trendValues);
         }
         
         // Update the cache timestamp

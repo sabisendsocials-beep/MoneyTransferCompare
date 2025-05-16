@@ -1,16 +1,12 @@
 /**
  * Robust scraping solution that can handle websites with anti-scraping measures
  * This module provides advanced scraping techniques including:
- * 1. Headless browser with Puppeteer
- * 2. Randomized user agents and request headers
- * 3. Browser fingerprint evasion
- * 4. Request throttling to avoid rate limits
- * 5. HTML parsing with multiple strategies
- * 6. Page interaction capabilities for SPAs
+ * 1. Randomized user agents and request headers
+ * 2. HTML parsing with multiple strategies
+ * 3. Pattern matching for exchange rates
  */
 
 import * as cheerio from 'cheerio';
-import puppeteer from 'puppeteer';
 
 // Collection of realistic user agents to rotate through
 const USER_AGENTS = [
@@ -27,8 +23,9 @@ function getRandomUserAgent(): string {
 }
 
 /**
- * Scrape content from a website using a headless browser
- * This approach works on JavaScript-heavy sites and can bypass many anti-scraping measures
+ * Scrape content from a website using fetch and cheerio
+ * This approach works for basic websites and provides good fallback 
+ * when headless browsers aren't available
  * 
  * @param url The URL to scrape
  * @param selectors CSS selectors to extract content
@@ -48,136 +45,94 @@ export async function scrapeWithBrowser(
     fullPage?: boolean;
   } = {}
 ): Promise<string | null> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--window-size=1920x1080',
-    ]
-  });
-
   try {
-    console.log(`Starting browser-based scraping of ${url}...`);
+    console.log(`Using fetch-based scraping for ${url} (Puppeteer unavailable in this environment)...`);
     
-    // Create a new page with a random user agent
-    const page = await browser.newPage();
-    const userAgent = getRandomUserAgent();
-    await page.setUserAgent(userAgent);
-    
-    // Set realistic headers
-    await page.setExtraHTTPHeaders({
+    // Set up headers to mimic a browser
+    const headers = {
+      'User-Agent': getRandomUserAgent(),
       'Accept-Language': 'en-US,en;q=0.9',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Cache-Control': 'max-age=0',
       'Connection': 'keep-alive'
-    });
+    };
     
-    // Emulate a realistic viewport
-    await page.setViewport({
-      width: 1366,
-      height: 768,
-      deviceScaleFactor: 1,
-    });
-
-    // Set a timeout for navigation
-    const timeout = options.timeout || 30000;
-    await page.setDefaultNavigationTimeout(timeout);
+    // Fetch the page content with a timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 30000);
     
-    // Navigate to the URL with additional wait time to ensure page loaded
-    await page.goto(url, { waitUntil: 'networkidle2' });
-    
-    // Wait additional time if specified to allow for any lazy-loaded content
-    if (options.waitTime) {
-      console.log(`Waiting ${options.waitTime}ms for page to fully render...`);
-      await new Promise(resolve => setTimeout(resolve, options.waitTime));
-    }
-    
-    // Execute custom JavaScript if provided
-    if (options.executeScript) {
-      console.log('Executing custom script on page...');
-      await page.evaluate(options.executeScript);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for script execution
-    }
-    
-    // Click on elements if specified
-    if (options.clickSelector) {
-      console.log(`Clicking element: ${options.clickSelector}`);
-      await page.click(options.clickSelector);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for any resulting changes
-    }
-    
-    // Input data if specified
-    if (options.inputData && options.inputData.length > 0) {
-      for (const input of options.inputData) {
-        console.log(`Entering text into: ${input.selector}`);
-        await page.type(input.selector, input.value);
-        await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const response = await fetch(url, { 
+        headers, 
+        signal: controller.signal 
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch ${url}, status: ${response.status}`);
+        return null;
       }
-    }
-    
-    // Wait a bit more to ensure all dynamic content has loaded
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Get the page content
-    const pageContent = await page.content();
-    const $ = cheerio.load(pageContent);
-    
-    // If full page extraction is requested, return the entire body text
-    if (options.fullPage) {
-      const bodyText = $('body').text();
-      console.log(`Extracted full page content (${bodyText.length} characters)`);
-      return bodyText;
-    }
-    
-    // Try each provided selector
-    if (selectors.length > 0) {
-      for (const selector of selectors) {
-        const elements = $(selector);
-        if (elements.length > 0) {
-          for (let i = 0; i < elements.length; i++) {
-            let content;
-            
-            // Extract text or specified attribute
-            if (options.extractAttribute) {
-              content = $(elements[i]).attr(options.extractAttribute);
-            } else {
-              content = $(elements[i]).text().trim();
-            }
-            
-            if (content) {
-              console.log(`Found content with selector "${selector}": ${content}`);
-              return content;
+      
+      const html = await response.text();
+      
+      // Use cheerio to parse the HTML
+      const $ = cheerio.load(html);
+      
+      // Note: With fetch-based approach, we can't execute JavaScript, click elements,
+      // or input data as these require browser interaction capabilities
+      if (options.executeScript || options.clickSelector || options.inputData) {
+        console.warn('JavaScript execution, clicking, and data input not supported in fetch mode.');
+      }
+      
+      // If full page extraction is requested, return the entire body text
+      if (options.fullPage) {
+        const bodyText = $('body').text();
+        console.log(`Extracted full page content (${bodyText.length} characters)`);
+        return bodyText;
+      }
+      
+      // Try each provided selector
+      if (selectors.length > 0) {
+        for (const selector of selectors) {
+          const elements = $(selector);
+          if (elements.length > 0) {
+            for (let i = 0; i < elements.length; i++) {
+              let content;
+              
+              // Extract text or specified attribute
+              if (options.extractAttribute) {
+                content = $(elements[i]).attr(options.extractAttribute);
+              } else {
+                content = $(elements[i]).text().trim();
+              }
+              
+              if (content) {
+                console.log(`Found content with selector "${selector}": ${content}`);
+                return content;
+              }
             }
           }
         }
       }
+      
+      // If no content found with selectors, return full body text
+      console.log('No content found with provided selectors, returning full body text...');
+      return $('body').text();
+    } catch (innerError) {
+      console.error(`Error in fetch operation: ${innerError}`);
+      return null;
     }
-    
-    // If no content found with selectors, look for exchange rate patterns
-    console.log('No content found with provided selectors, trying to find rate patterns...');
-    
-    // Take a screenshot for debugging purposes
-    await page.screenshot({ path: 'debug-screenshot.png' });
-    
-    // Return the entire body text as a last resort
-    return $('body').text();
   } catch (error) {
-    console.error('Error in browser-based scraping:', error);
+    console.error(`Error in fetch-based scraping: ${error}`);
     return null;
-  } finally {
-    await browser.close();
-    console.log('Browser closed.');
   }
 }
 
 /**
- * Specialized function to scrape exchange rates using browser automation
+ * Specialized function to scrape exchange rates
  * This function is designed to extract currency exchange rates from various
- * websites regardless of their anti-scraping measures
+ * websites using fetch and pattern matching
  * 
  * @param url The URL to scrape
  * @param fromCurrency Source currency code (e.g., 'GBP')
@@ -299,7 +254,7 @@ export async function scrapeWorldRemitRate(): Promise<number | null> {
     for (const url of urls) {
       console.log(`Attempting to scrape WorldRemit from ${url}...`);
       
-      // Use our robust browser scraper
+      // Use our robust scraper
       const rate = await scrapeExchangeRate(url, 'GBP', 'NGN');
       
       if (rate !== null) {

@@ -2,7 +2,7 @@ import { storage } from '../storage';
 import type { RateTrendResponse } from '@shared/schema';
 
 // Primary API - using exchangerate-api.com which is more reliable for our needs
-const EXCHANGERATE_API_URL = 'https://v6.exchangerate-api.com/v6/open-access-key';
+const EXCHANGERATE_API_URL = 'https://v6.exchangerate-api.com/v6';
 // Fallback options if primary fails
 const FALLBACK_API_OPTIONS = [
   'https://api.exchangerate-api.com/v4',
@@ -10,7 +10,7 @@ const FALLBACK_API_OPTIONS = [
 ];
 
 // Check if we have an API key for enhanced API access
-const EXCHANGE_API_KEY = process.env.EXCHANGE_API_KEY || '';
+const EXCHANGE_API_KEY = process.env.EXCHANGE_API_KEY || 'open-access-key';
 const ALPHAVANTAGE_API_KEY = process.env.ALPHAVANTAGE_API_KEY || '';
 
 // Define known API endpoints and how to extract rates from them
@@ -18,33 +18,43 @@ interface ApiKeyOption {
   url: string;
   keyParam: string;
   latestEndpoint: (from: string, to: string) => string;
-  parseLatest: (data: any) => number | null;
+  parseLatest: (data: any, toCurrency: string) => number | null;
 }
 
 const API_OPTIONS: ApiKeyOption[] = [
+  {
+    url: EXCHANGERATE_API_URL,
+    keyParam: 'api_key',
+    latestEndpoint: (from: string, to: string) => 
+      `/${EXCHANGE_API_KEY}/latest/${from}`,
+    parseLatest: (data: any, toCurrency: string) => 
+      data.result === "success" && data.conversion_rates && data.conversion_rates[toCurrency] 
+        ? data.conversion_rates[toCurrency] 
+        : null
+  },
   {
     url: 'https://api.exchangerate.host',
     keyParam: 'access_key',
     latestEndpoint: (from: string, to: string) => 
       `/latest?base=${from}&symbols=${to}`,
-    parseLatest: (data: any) => 
-      data.success && data.rates && data.rates[to] ? data.rates[to] : null
+    parseLatest: (data: any, toCurrency: string) => 
+      data.success && data.rates && data.rates[toCurrency] ? data.rates[toCurrency] : null
   },
   {
     url: 'https://api.exchangerate-api.com/v4',
     keyParam: 'api_key',
     latestEndpoint: (from: string, to: string) => 
       `/latest/${from}`,
-    parseLatest: (data: any) => 
-      data.rates && data.rates[to] ? data.rates[to] : null
+    parseLatest: (data: any, toCurrency: string) => 
+      data.rates && data.rates[toCurrency] ? data.rates[toCurrency] : null
   },
   {
     url: 'https://open.er-api.com/v6',
     keyParam: 'api_key',
     latestEndpoint: (from: string, to: string) => 
       `/latest/${from}`,
-    parseLatest: (data: any) => 
-      data.rates && data.rates[to] ? data.rates[to] : null
+    parseLatest: (data: any, toCurrency: string) => 
+      data.rates && data.rates[toCurrency] ? data.rates[toCurrency] : null
   }
 ];
 
@@ -108,7 +118,7 @@ export async function fetchLatestExchangeRate(
       }
       
       const data = await response.json();
-      const rate = apiOption.parseLatest(data);
+      const rate = apiOption.parseLatest(data, toCurrency);
       
       if (rate !== null) {
         console.log(`Successfully fetched rate from ${apiOption.url}: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
@@ -252,7 +262,51 @@ export async function fetchHistoricalRates(
       console.error(`Error fetching historical data: ${histError}`);
     }
     
-    // If we couldn't get any historical data, try an alternative API
+    // Try the exchangerate-api.com API directly
+    if (trends.length <= 1) {
+      try {
+        console.log('Trying ExchangeRate API for historical data');
+        
+        // For exchangerate-api.com we need to find the dates manually since they don't have a time series endpoint
+        const datesToCheck = [];
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+          datesToCheck.push(formatDate(new Date(d)));
+        }
+        
+        for (const dateStr of datesToCheck) {
+          try {
+            const url = `${EXCHANGERATE_API_URL}/${EXCHANGE_API_KEY}/history/${fromCurrency}/${dateStr}`;
+            console.log(`Fetching historical rate from ExchangeRate API for ${dateStr}: ${url}`);
+            
+            const response = await fetch(url);
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (data.result === "success" && data.conversion_rates && data.conversion_rates[toCurrency]) {
+                const rate = data.conversion_rates[toCurrency];
+                console.log(`Got historical rate for ${dateStr}: ${rate}`);
+                
+                trends.push({
+                  date: dateStr,
+                  rate: rate,
+                  from_currency: fromCurrency,
+                  to_currency: toCurrency
+                });
+              }
+              
+              // Add a small delay to avoid API rate limits
+              await new Promise(resolve => setTimeout(resolve, 300));
+            }
+          } catch (dateError) {
+            console.error(`Error fetching rate for ${dateStr}: ${dateError}`);
+          }
+        }
+      } catch (exchangeRateApiError) {
+        console.error(`Error with ExchangeRate API: ${exchangeRateApiError}`);
+      }
+    }
+        
+    // If still no data, try an alternative API
     if (trends.length <= 1) {
       try {
         console.log('Trying alternative API for historical data');
@@ -264,10 +318,11 @@ export async function fetchHistoricalRates(
           
           if (data.rates) {
             for (const [date, rates] of Object.entries(data.rates)) {
-              if (rates[toCurrency]) {
+              const anyRates = rates as any;
+              if (anyRates[toCurrency]) {
                 trends.push({
                   date: date,
-                  rate: rates[toCurrency],
+                  rate: anyRates[toCurrency],
                   from_currency: fromCurrency,
                   to_currency: toCurrency
                 });

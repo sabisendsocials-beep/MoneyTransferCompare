@@ -4,7 +4,7 @@ import {
   exchangeRates, type ExchangeRate, type InsertExchangeRate, 
   news, type News, type InsertNews,
   type TransferRequest, type TransferResult,
-  type RateTrend, type RateStats 
+  type RateTrend, type RateTrendResponse, type RateStats 
 } from "@shared/schema";
 
 // modify the interface with any CRUD methods
@@ -464,36 +464,31 @@ export class MemStorage implements IStorage {
   }
   
   // Rate trend methods
-  async getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrend[]> {
-    // Calculate average rate across all providers per day
-    const trends: RateTrend[] = [];
-    const now = new Date();
+  async getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrendResponse[]> {
+    console.log(`MemStorage: Fetching ${days}-day rate trends for ${fromCurrency}/${toCurrency} from API`);
     
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(now.getDate() - i);
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
+    // In MemStorage, always fetch fresh data from API
+    try {
+      const { fetchHistoricalRates } = await import('./api/exchangeRateApi');
+      const trends = await fetchHistoricalRates(fromCurrency, toCurrency, days);
       
-      const dayRates = this.exchangeRates.filter(rate => 
-        rate.from_currency === fromCurrency && 
-        rate.to_currency === toCurrency && 
-        rate.timestamp >= dayStart && 
-        rate.timestamp <= dayEnd
-      );
-      
-      if (dayRates.length > 0) {
-        const avgRate = dayRates.reduce((sum, rate) => sum + rate.rate, 0) / dayRates.length;
-        trends.push({
-          date: date.toISOString().split('T')[0],
-          rate: parseFloat(avgRate.toFixed(2))
-        });
+      if (trends.length === 0) {
+        console.log(`No trend data found for ${fromCurrency}/${toCurrency} in API`);
+      } else {
+        console.log(`Retrieved ${trends.length} trend data points from API for ${fromCurrency}/${toCurrency}`);
       }
+      
+      return trends;
+    } catch (error) {
+      console.error(`Error fetching trend data from API: ${error}`);
+      return [];
     }
-    
-    return trends;
+  }
+  
+  async shouldRefreshRateTrends(fromCurrency: string, toCurrency: string): Promise<boolean> {
+    // In MemStorage, we always return true to indicate refresh is needed
+    // This is because we don't have persistent storage
+    return true;
   }
   
   async getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats> {
@@ -535,6 +530,7 @@ export class MemStorage implements IStorage {
     const oneYearChange = ((latestRate - oneYearAgoRate) / oneYearAgoRate) * 100;
     
     return {
+      lastUpdated: new Date().toISOString(),
       thirtyDayHigh: highRate.rate,
       thirtyDayHighDate: highRate.timestamp.toISOString().split('T')[0],
       thirtyDayLow: lowRate.rate,
@@ -597,10 +593,10 @@ export class MemStorage implements IStorage {
     return dayRates.reduce((sum, rate) => sum + rate.rate, 0) / dayRates.length;
   }
 
-  async updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrend[]): Promise<void> {
-    // In a real database implementation, we would store these trends
-    // For now, in the in-memory version, we'll just log them
-    console.log(`Updated ${trends.length} trend data points for ${fromCurrency}/${toCurrency}`);
+  async updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrendResponse[]): Promise<void> {
+    // In MemStorage, we can't actually store the trends persistently,
+    // but we log that we received them
+    console.log(`Received ${trends.length} trend data points for ${fromCurrency}/${toCurrency}`);
   }
   
   async deleteAllProviders(): Promise<void> {

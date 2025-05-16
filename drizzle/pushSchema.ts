@@ -65,6 +65,29 @@ async function main() {
       );
     `);
     
+    // Create table for rate trends
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "rate_trends" (
+        "id" SERIAL PRIMARY KEY,
+        "date" TEXT NOT NULL,
+        "from_currency" TEXT NOT NULL,
+        "to_currency" TEXT NOT NULL,
+        "rate" REAL NOT NULL,
+        "source" TEXT,
+        "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    
+    // Create table for rate_cache to avoid frequent API calls
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "rate_cache" (
+        "id" SERIAL PRIMARY KEY,
+        "from_currency" TEXT NOT NULL,
+        "to_currency" TEXT NOT NULL,
+        "last_updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    
     console.log('Schema pushed successfully');
     
     // Close the connection
