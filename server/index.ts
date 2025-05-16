@@ -8,6 +8,7 @@ import { updateFinancialNews } from "./scrapers/news";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { storage } from "./storage";
 import updateProviderList from "./updateProviderList";
+import updateProviderInfo from "./scrapers/providerInfo";
 
 const app = express();
 app.use(express.json());

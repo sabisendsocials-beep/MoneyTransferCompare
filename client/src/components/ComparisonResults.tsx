@@ -374,12 +374,15 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           <div className="flex items-center justify-end mt-1 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 text-xs">
                             <Clock className="h-3 w-3 mr-1" />
                             <span className="font-medium">
-                              Rate from {provider.lastUpdated ? new Date(provider.lastUpdated).toLocaleString('en-GB', {
-                                month: 'short', 
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : 'Unknown'}
+                              {provider.lastUpdated 
+                                ? `Rate from ${new Date(provider.lastUpdated).toLocaleString('en-GB', {
+                                  month: 'short', 
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}`
+                                : 'Rate not available from provider website'
+                              }
                             </span>
                           </div>
                         </div>

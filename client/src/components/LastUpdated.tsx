@@ -46,8 +46,8 @@ export function LastUpdated({
   }
 
   if (!timestamp) {
-    return <span className="text-xs text-muted-foreground flex items-center gap-1">
-      <Clock size={12} /> No data available
+    return <span className="text-xs text-amber-600 flex items-center gap-1">
+      <Clock size={12} /> Rate not available from provider
     </span>;
   }
 
