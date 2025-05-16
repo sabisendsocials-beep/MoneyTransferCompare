@@ -5,7 +5,7 @@ import { initializeDatabase } from "./db";
 import { updateExchangeRates } from "./scrapers/providers";
 import { updateRatesFromScreenshots } from "./updateScreenshotRates";
 import { updateFinancialNews } from "./scrapers/news";
-import { updateRateTrends } from "./api/exchangeRateApi";
+import updateRealRateTrends from "./api/exchangeRateService";
 import { storage } from "./storage";
 import updateProviderList from "./updateProviderList";
 import updateProviderInfo from "./scrapers/providerInfo";
@@ -133,17 +133,17 @@ app.use((req, res, next) => {
       }
     }, SIX_HOURS);
     
-    // Update exchange rate trends every 12 hours
-    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    // Update exchange rate trends 3 times per day (every 8 hours)
+    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
     setInterval(async () => {
       try {
         log("Running scheduled exchange rate trends update...");
-        await updateRateTrends();
-        log("Exchange rate trends updated successfully");
+        await updateRealRateTrends();
+        log("Exchange rate trends updated from real APIs");
       } catch (error) {
         log(`Error updating exchange rate trends: ${error}`);
       }
-    }, TWELVE_HOURS);
+    }, EIGHT_HOURS);
     
     // Update news every 8 hours
     const EIGHT_HOURS = 8 * 60 * 60 * 1000;
