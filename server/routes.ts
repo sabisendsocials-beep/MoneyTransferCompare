@@ -392,6 +392,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, error: String(error) });
     }
   });
+  
+  // Endpoint to update provider ratings with verified TrustPilot values
+  apiRouter.get("/api/update-provider-ratings", async (req: Request, res: Response) => {
+    try {
+      const { updateVerifiedRatings } = await import('./updateVerifiedRatings');
+      console.log('Updating provider ratings with verified TrustPilot values...');
+      const success = await updateVerifiedRatings();
+      
+      res.json({ 
+        success: success, 
+        message: success ? 'Successfully updated provider ratings with TrustPilot values' : 'Failed to update provider ratings'
+      });
+    } catch (error) {
+      console.error('Error updating provider ratings:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+  
+  // Endpoint to update provider ratings from Trustpilot
+  apiRouter.get("/api/update-trustpilot-ratings", async (req: Request, res: Response) => {
+    try {
+      const { updateProviderRatingsFromTrustpilot } = await import('./scrapers/trustpilotScraper');
+      console.log('Updating provider ratings from Trustpilot...');
+      const success = await updateProviderRatingsFromTrustpilot();
+      
+      res.json({ 
+        success: success, 
+        message: success ? 'Successfully updated provider ratings from Trustpilot' : 'Failed to update provider ratings from Trustpilot'
+      });
+    } catch (error) {
+      console.error('Error updating provider ratings from Trustpilot:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+  
+  // Endpoint to test fetching Trustpilot ratings (without updating the database)
+  apiRouter.get("/api/test-trustpilot-ratings", async (req: Request, res: Response) => {
+    try {
+      const { testFetchTrustpilotRatings } = await import('./scrapers/trustpilotScraper');
+      console.log('Testing Trustpilot rating fetch...');
+      const ratings = await testFetchTrustpilotRatings();
+      
+      res.json({ 
+        success: true,
+        ratings: ratings,
+        count: Object.keys(ratings).length,
+        message: Object.keys(ratings).length > 0 ? 
+          `Successfully fetched ${Object.keys(ratings).length} ratings from Trustpilot` : 
+          'Failed to fetch any ratings from Trustpilot'
+      });
+    } catch (error) {
+      console.error('Error testing Trustpilot ratings:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
 
   // Add endpoint to update all rates from screenshots
   apiRouter.post("/api/update-from-screenshots", async (req: Request, res: Response) => {

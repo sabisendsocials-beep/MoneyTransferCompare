@@ -55,6 +55,16 @@ app.use((req, res, next) => {
     await updateProviderList();
     log("Provider list updated with latest providers");
     
+    // Update provider ratings with verified TrustPilot values
+    try {
+      const { updateVerifiedRatings } = await import('./updateVerifiedRatings');
+      log("Updating provider ratings with verified TrustPilot values...");
+      await updateVerifiedRatings();
+      log("Provider ratings updated with TrustPilot values");
+    } catch (ratingError) {
+      log(`Error updating provider ratings: ${ratingError}`);
+    }
+    
     // Try to update exchange rates with real data from providers
     try {
       // First refresh our provider list with latest providers
