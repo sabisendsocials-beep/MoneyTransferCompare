@@ -8,6 +8,7 @@ import { initializeDatabase } from "./db";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { realProviderRates } from "./scrapers/realRates";
 import { updateLemfiRate } from "./scrapers/lemfiScraper";
+import { updateAdditionalProviders } from "./scrapers/mainScraper";
 import apiKeysRouter from "./routes/apiKeys";
 import { rateSourceRouter } from "./routes/rateSource";
 
@@ -169,8 +170,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Then update the rates, optionally clearing existing rates
       const results = await updateExchangeRates(clearExisting);
+      
+      // Run specialized scrapers for additional providers
+      console.log('Running specialized scrapers for additional providers...');
+      const additionalResults = await updateAdditionalProviders();
+      
       res.json({ 
-        message: `Updated ${results.length} exchange rates`,
+        message: `Updated ${results.length} exchange rates, additional providers: ${additionalResults ? 'success' : 'no results'}`,
         clearedExisting: clearExisting
       });
     } catch (error) {
