@@ -440,18 +440,98 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrend[]): Promise<void> {
+  async updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrendResponse[]): Promise<void> {
     console.log(`Storing ${trends.length} rate trend points for ${fromCurrency}/${toCurrency}...`);
     
-    // Here we would store the rate trends in a dedicated table
-    // For now, we'll use them for calculations but won't store them permanently
-    
-    // In a real implementation, we would:
-    // 1. Create a rate_trends table in the database
-    // 2. Delete existing trend data for this currency pair
-    // 3. Insert the new trend data
-    
-    console.log(`Successfully updated rate trends for ${fromCurrency}/${toCurrency}`);
+    try {
+      // Begin a transaction
+      await db.transaction(async (tx) => {
+        // Delete existing trends for this currency pair
+        await tx.delete(schema.rateTrends)
+          .where(
+            and(
+              eq(schema.rateTrends.from_currency, fromCurrency),
+              eq(schema.rateTrends.to_currency, toCurrency)
+            )
+          );
+        
+        // Insert new trends
+        for (const trend of trends) {
+          const dateObj = new Date(trend.date);
+          await tx.insert(schema.rateTrends).values({
+            from_currency: fromCurrency,
+            to_currency: toCurrency,
+            date: dateObj,
+            rate: trend.rate
+          });
+        }
+        
+        // Update the cache timestamp
+        const existingCache = await tx.select()
+          .from(schema.rateCache)
+          .where(
+            and(
+              eq(schema.rateCache.from_currency, fromCurrency),
+              eq(schema.rateCache.to_currency, toCurrency)
+            )
+          );
+        
+        if (existingCache.length > 0) {
+          // Update existing cache entry
+          await tx.update(schema.rateCache)
+            .set({ last_fetch_time: new Date() })
+            .where(
+              and(
+                eq(schema.rateCache.from_currency, fromCurrency),
+                eq(schema.rateCache.to_currency, toCurrency)
+              )
+            );
+        } else {
+          // Create new cache entry
+          await tx.insert(schema.rateCache).values({
+            from_currency: fromCurrency,
+            to_currency: toCurrency,
+            last_fetch_time: new Date()
+          });
+        }
+      });
+      
+      console.log(`Successfully updated rate trends for ${fromCurrency}/${toCurrency}`);
+    } catch (error) {
+      console.error(`Error updating rate trends for ${fromCurrency}/${toCurrency}:`, error);
+      throw error;
+    }
+  }
+  
+  // Check if we should refresh the rate trends data
+  async shouldRefreshRateTrends(fromCurrency: string, toCurrency: string): Promise<boolean> {
+    try {
+      // Get the last fetch time from cache
+      const cacheEntries = await db.select()
+        .from(schema.rateCache)
+        .where(
+          and(
+            eq(schema.rateCache.from_currency, fromCurrency),
+            eq(schema.rateCache.to_currency, toCurrency)
+          )
+        );
+      
+      if (cacheEntries.length === 0) {
+        // No cache entry found, should fetch new data
+        return true;
+      }
+      
+      const lastFetchTime = cacheEntries[0].last_fetch_time;
+      const now = new Date();
+      const hoursSinceLastFetch = (now.getTime() - lastFetchTime.getTime()) / (1000 * 60 * 60);
+      
+      // Refresh if it's been more than 12 hours
+      return hoursSinceLastFetch >= 12;
+    } catch (error) {
+      console.error(`Error checking rate trends refresh status:`, error);
+      // On error, assume we should refresh to be safe
+      return true;
+    }
   }
   
   async deleteAllExchangeRates(): Promise<void> {

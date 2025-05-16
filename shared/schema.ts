@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { and, eq } from "drizzle-orm";
 
 // User schema (keeping original)
 export const users = pgTable("users", {
@@ -111,13 +112,48 @@ export const transferResultSchema = z.object({
 
 export type TransferResult = z.infer<typeof transferResultSchema>;
 
-// Rate trend data schema
-export const rateTrendSchema = z.object({
-  date: z.string(),
-  rate: z.number().nullable(),
+// Rate trend data table to store historical exchange rates
+export const rateTrends = pgTable("rate_trends", {
+  id: serial("id").primaryKey(),
+  from_currency: text("from_currency").notNull(),
+  to_currency: text("to_currency").notNull(),
+  date: date("date").notNull(),
+  rate: real("rate").notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
-export type RateTrend = z.infer<typeof rateTrendSchema>;
+export const insertRateTrendSchema = createInsertSchema(rateTrends).omit({
+  id: true,
+  created_at: true
+});
+
+export type InsertRateTrend = z.infer<typeof insertRateTrendSchema>;
+export type RateTrend = typeof rateTrends.$inferSelect;
+
+// Define rate_cache table to track when we last updated from the API
+export const rateCache = pgTable("rate_cache", {
+  id: serial("id").primaryKey(),
+  from_currency: text("from_currency").notNull(),
+  to_currency: text("to_currency").notNull(),
+  last_fetch_time: timestamp("last_fetch_time").defaultNow().notNull()
+});
+
+export const insertRateCacheSchema = createInsertSchema(rateCache).omit({
+  id: true
+});
+
+export type InsertRateCache = z.infer<typeof insertRateCacheSchema>;
+export type RateCache = typeof rateCache.$inferSelect;
+
+// Rate trend data schema for API responses
+export const rateTrendSchema = z.object({
+  date: z.string(),
+  rate: z.number(),
+  from_currency: z.string(),
+  to_currency: z.string()
+});
+
+export type RateTrendResponse = z.infer<typeof rateTrendSchema>;
 
 // Rate statistics schema
 export const rateStatsSchema = z.object({
@@ -129,6 +165,7 @@ export const rateStatsSchema = z.object({
   oneMonthChange: z.number().nullable(),
   threeMonthChange: z.number().nullable(),
   oneYearChange: z.number().nullable(),
+  lastUpdated: z.string().nullable()
 });
 
 export type RateStats = z.infer<typeof rateStatsSchema>;

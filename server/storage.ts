@@ -39,9 +39,10 @@ export interface IStorage {
   compareTransferOptions(request: TransferRequest): Promise<TransferResult[]>;
   
   // Rate trend methods
-  getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrend[]>;
+  getRateTrends(fromCurrency: string, toCurrency: string, days: number): Promise<RateTrendResponse[]>;
   getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats>;
-  updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrend[]): Promise<void>;
+  updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrendResponse[]): Promise<void>;
+  shouldRefreshRateTrends(fromCurrency: string, toCurrency: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

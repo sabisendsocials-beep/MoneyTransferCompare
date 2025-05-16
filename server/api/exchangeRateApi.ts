@@ -1,5 +1,5 @@
 import { storage } from '../storage';
-import type { RateTrend } from '@shared/schema';
+import type { RateTrendResponse } from '@shared/schema';
 
 // Primary API - using exchangerate-api.com which is more reliable for our needs
 const EXCHANGERATE_API_URL = 'https://v6.exchangerate-api.com/v6/open-access-key';
@@ -164,7 +164,7 @@ export async function fetchHistoricalRates(
   fromCurrency: string,
   toCurrency: string,
   days: number
-): Promise<RateTrend[]> {
+): Promise<RateTrendResponse[]> {
   try {
     // Calculate date range
     const endDate = new Date();
@@ -179,217 +179,121 @@ export async function fetchHistoricalRates(
     const startDateFormatted = formatDate(startDate);
     const endDateFormatted = formatDate(endDate);
     
-    // Try the primary API first
+    console.log(`Fetching historical rates for ${fromCurrency}/${toCurrency} from ${startDateFormatted} to ${endDateFormatted}`);
+    
+    // Get today's rate first from the most reliable API
+    const trends: RateTrendResponse[] = [];
+    let currentRate: number | null = null;
+    
     try {
-      // Updated to use a more reliable endpoint format
-      const url = `${EXCHANGERATE_API_URL}/latest/${fromCurrency}`;
-      console.log(`Trying to fetch current rates from primary API: ${url}`);
-      
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
+      currentRate = await fetchLatestExchangeRate(fromCurrency, toCurrency);
+      if (currentRate) {
+        console.log(`Got current ${fromCurrency}/${toCurrency} rate: ${currentRate}`);
         
-        // If we have a successful response, we'll generate rate trends based on real current data
-        if (data.result === "success" && data.conversion_rates && data.conversion_rates[toCurrency]) {
-          // We have the current rate, now we'll generate a realistic trend based on it
-          const currentRate = data.conversion_rates[toCurrency];
-          console.log(`Got current ${fromCurrency}/${toCurrency} rate: ${currentRate}`);
-          
-          // Generate realistic trends based on the current value with slight variations
-          const trends: RateTrend[] = [];
-          const volatilityByPair: Record<string, number> = {
-            'GBPNGN': 0.0025, // 0.25% daily volatility for GBP/NGN
-            'EURNGN': 0.0020, // 0.20% for EUR/NGN
-            'GBPGHS': 0.0020, // 0.20% for GBP/GHS
-            'EURGHS': 0.0015  // 0.15% for EUR/GHS
-          };
-          
-          // Default volatility if pair not specified
-          const pairKey = `${fromCurrency}${toCurrency}`;
-          const volatility = volatilityByPair[pairKey] || 0.002; // 0.2% default
-          
-          for (let i = 0; i < days; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - (days - i - 1));
-            const dateFormatted = formatDate(date);
-            
-            // For first day, start with a rate ~3% away from current
-            if (i === 0) {
-              const initialDeviation = (Math.random() - 0.5) * 0.06; // ±3%
-              const initialRate = currentRate * (1 + initialDeviation);
-              trends.push({
-                date: dateFormatted,
-                rate: initialRate
-              });
-            } else {
-              // Random walk for subsequent days with null safety
-              const prevRate = trends[i-1]?.rate ?? currentRate;
-              const change = (Math.random() - 0.5) * volatility;
-              const newRate = prevRate * (1 + change);
-              trends.push({
-                date: dateFormatted,
-                rate: newRate
-              });
-            }
-          }
-          
-          // Ensure the last data point is close to our current real rate
-          const lastIndex = trends.length - 1;
-          if (lastIndex >= 0) {
-            // Final value is current rate with a tiny random variation
-            trends[lastIndex] = {
-              date: formatDate(new Date()),
-              rate: currentRate * (1 + (Math.random() - 0.5) * 0.001) // ±0.05% tiny variation
-            };
-          }
-          
-          console.log(`Generated ${trends.length} trend points based on current rate data`);
-          return trends;
-        }
+        // Add current rate as the newest data point
+        trends.push({
+          date: formatDate(endDate),
+          rate: currentRate,
+          from_currency: fromCurrency,
+          to_currency: toCurrency
+        });
       }
-      console.log(`Primary API failed or returned no data: ${response.status}`);
     } catch (error) {
-      console.log(`Error with primary API: ${error}`);
+      console.error(`Error fetching current rate: ${error}`);
     }
     
-    // Try each fallback API option
-    for (const baseUrl of FALLBACK_API_OPTIONS) {
-      try {
-        const url = `${baseUrl}/latest/${fromCurrency}`;
-        console.log(`Trying to fetch latest rates from fallback API: ${baseUrl}`);
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-          console.log(`API ${baseUrl} responded with status: ${response.status}`);
-          continue; // Try next API
-        }
-        
-        const data = await response.json();
-        const rate = data.rates?.[toCurrency] || data.conversion_rates?.[toCurrency];
-        
-        if (rate) {
-          console.log(`Got current rate from fallback API: ${rate}`);
-          // Generate realistic trends from this single real datapoint
-          const trends: RateTrend[] = [];
+    // Now try to get historical data from exchangerate.host (free API with historical data)
+    try {
+      // Get historical data from exchangerate.host - they offer a free historical endpoint
+      const baseUrl = 'https://api.exchangerate.host';
+      console.log(`Attempting to fetch historical rates from ${baseUrl}`);
+      
+      // We'll fetch historical data in batches to avoid hitting API rate limits
+      // Start date - get a data point every 3-4 days for 30 days
+      const datesToFetch = [];
+      for (let i = days - 1; i >= 0; i -= 3) { // Every 3-4 days
+        const historicalDate = new Date(endDate);
+        historicalDate.setDate(historicalDate.getDate() - i);
+        datesToFetch.push(formatDate(historicalDate));
+      }
+      
+      // Fetch historical rates for each date
+      for (const dateStr of datesToFetch) {
+        try {
+          const url = `${baseUrl}/${dateStr}?base=${fromCurrency}&symbols=${toCurrency}`;
+          console.log(`Fetching historical rate for ${dateStr}: ${url}`);
           
-          // Similar volatility settings as above
-          const pairKey = `${fromCurrency}${toCurrency}`;
-          const volatilityMap: Record<string, number> = {
-            'GBPNGN': 0.0025,
-            'EURNGN': 0.0020,
-            'GBPGHS': 0.0020, 
-            'EURGHS': 0.0015
-          };
-          const volatility = volatilityMap[pairKey] || 0.002;
-          
-          for (let i = 0; i < days; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - (days - i - 1));
-            const dateStr = formatDate(date);
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
             
-            if (i === 0) {
-              // First day starts with a slight deviation
-              const initialDeviation = (Math.random() - 0.5) * 0.05;
-              const initialRate = rate * (1 + initialDeviation);
-              trends.push({
-                date: dateStr,
-                rate: initialRate
-              });
-            } else {
-              // Use null-safe access for previous rate
-              const prevRate = trends[i-1]?.rate ?? rate;
-              const randomFactor = (Math.random() - 0.5) * volatility;
-              const newRate = prevRate * (1 + randomFactor);
+            if (data.rates && data.rates[toCurrency]) {
+              const rate = data.rates[toCurrency];
+              console.log(`Got historical rate for ${dateStr}: ${rate}`);
               
               trends.push({
                 date: dateStr,
-                rate: newRate
+                rate: rate,
+                from_currency: fromCurrency,
+                to_currency: toCurrency
               });
+              
+              // Add a small delay to avoid API rate limits
+              await new Promise(resolve => setTimeout(resolve, 100));
             }
-          }
-          
-          // Last data point should be very close to the current real rate
-          if (trends.length > 0) {
-            trends[trends.length - 1] = {
-              date: formatDate(new Date()),
-              rate: rate
-            };
-          }
-          
-          console.log(`Generated ${trends.length} trend points from fallback API`);
-          return trends;
-        }
-      } catch (error) {
-        console.log(`Error with API ${baseUrl}: ${error}`);
-        // Continue to next API
-      }
-    }
-    
-    // If no external APIs work, fall back to using our database data to build a trend
-    console.log('All external APIs failed for trends, using internal database');
-    try {
-      const latestRates = await storage.getLatestRates(fromCurrency, toCurrency);
-      if (latestRates && latestRates.length > 0) {
-        // Calculate the average rate from our providers
-        const validRates = latestRates.filter(r => r.rate > 0);
-        if (validRates.length === 0) {
-          console.log('No valid rates found in database');
-          return [];
-        }
-        
-        const sum = validRates.reduce((acc, curr) => acc + curr.rate, 0);
-        const avgRate = sum / validRates.length;
-        
-        console.log(`Using average provider rate of ${avgRate} for trend baseline`);
-        
-        // Now generate a realistic trend around this average
-        const trends: RateTrend[] = [];
-        
-        // Create a trend with realistic daily variations
-        const volatility = 0.003; // 0.3% daily volatility
-        
-        for (let i = 0; i < days; i++) {
-          const date = new Date();
-          date.setDate(date.getDate() - (days - i - 1));
-          const dateStr = formatDate(date);
-          
-          if (i === 0) {
-            // First day starts slightly off from current
-            const initialDelta = (Math.random() - 0.5) * 0.04; // ±2%
-            const initialRate = avgRate * (1 + initialDelta);
-            
-            trends.push({
-              date: dateStr,
-              rate: initialRate
-            });
           } else {
-            // Random walk with small daily changes
-            const prevRate = trends[i-1]?.rate ?? avgRate;
-            const dailyChange = (Math.random() - 0.5) * volatility;
-            
-            trends.push({
-              date: dateStr,
-              rate: prevRate * (1 + dailyChange)
-            });
+            console.log(`API request failed for ${dateStr}: ${response.status}`);
           }
+        } catch (dateError) {
+          console.error(`Error fetching rate for ${dateStr}: ${dateError}`);
         }
-        
-        // Ensure the last day is close to our current average
-        if (trends.length > 0) {
-          trends[trends.length - 1] = {
-            date: formatDate(new Date()),
-            rate: avgRate
-          };
-        }
-        
-        console.log(`Generated ${trends.length} trend points from database rates`);
-        return trends;
       }
-    } catch (dbError) {
-      console.error('Error generating trends from database:', dbError);
+    } catch (histError) {
+      console.error(`Error fetching historical data: ${histError}`);
     }
     
-    console.log('Could not generate any trend data');
+    // If we couldn't get any historical data, try an alternative API
+    if (trends.length <= 1) {
+      try {
+        console.log('Trying alternative API for historical data');
+        const url = `https://api.exchangerate.host/timeseries?start_date=${startDateFormatted}&end_date=${endDateFormatted}&base=${fromCurrency}&symbols=${toCurrency}`;
+        
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.rates) {
+            for (const [date, rates] of Object.entries(data.rates)) {
+              if (rates[toCurrency]) {
+                trends.push({
+                  date: date,
+                  rate: rates[toCurrency],
+                  from_currency: fromCurrency,
+                  to_currency: toCurrency
+                });
+              }
+            }
+            console.log(`Got ${Object.keys(data.rates).length} historical rates from timeseries API`);
+          }
+        }
+      } catch (altError) {
+        console.error(`Error with alternative historical API: ${altError}`);
+      }
+    }
+    
+    // Sort trends by date
+    trends.sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+    
+    // If we got some data, return it
+    if (trends.length > 0) {
+      console.log(`Successfully retrieved ${trends.length} trend data points for ${fromCurrency}/${toCurrency}`);
+      return trends;
+    }
+    
+    // If all APIs failed, return an empty array - we won't use synthetic data
+    console.error(`Failed to retrieve any trend data for ${fromCurrency}/${toCurrency}`);
     return [];
   } catch (error) {
     console.error(`Error in fetchHistoricalRates: ${error}`);
@@ -421,21 +325,30 @@ export async function updateRateTrends(): Promise<void> {
       console.log(`Updating trends for ${from} to ${to}...`);
       
       try {
-        // Fetch historical rates for this pair
-        const trends = await fetchHistoricalRates(from, to, daysToFetch);
+        // Check if we should refresh the data
+        const shouldRefresh = await storage.shouldRefreshRateTrends(from, to);
         
-        // Only update if we have trends data
-        if (trends && trends.length > 0) {
-          await storage.updateRateTrends(from, to, trends);
-          console.log(`✅ Updated ${from}-${to} trends with ${trends.length} data points`);
+        if (shouldRefresh) {
+          console.log(`Data for ${from}-${to} needs refresh (>12 hours old or missing)`);
           
-          // Log the first and last trend points to verify the data
-          if (trends.length > 1 && trends[0]?.rate !== undefined) {
-            console.log(`  First trend point: ${trends[0].date} - ${from} 1 = ${to} ${Number(trends[0].rate).toFixed(2)}`);
-            console.log(`  Last trend point: ${trends[trends.length-1].date} - ${from} 1 = ${to} ${Number(trends[trends.length-1].rate).toFixed(2)}`);
+          // Fetch historical rates for this pair from external APIs
+          const trends = await fetchHistoricalRates(from, to, daysToFetch);
+          
+          // Only update if we have trends data
+          if (trends && trends.length > 0) {
+            await storage.updateRateTrends(from, to, trends);
+            console.log(`✅ Updated ${from}-${to} trends with ${trends.length} data points`);
+            
+            // Log the first and last trend points to verify the data
+            if (trends.length > 1 && trends[0]?.rate !== undefined) {
+              console.log(`  First trend point: ${trends[0].date} - ${from} 1 = ${to} ${Number(trends[0].rate).toFixed(2)}`);
+              console.log(`  Last trend point: ${trends[trends.length-1].date} - ${from} 1 = ${to} ${Number(trends[trends.length-1].rate).toFixed(2)}`);
+            }
+          } else {
+            console.warn(`⚠️ No API trend data available for ${from}-${to}`);
           }
         } else {
-          console.warn(`⚠️ No trend data available for ${from}-${to}`);
+          console.log(`Using cached data for ${from}-${to} (less than 12 hours old)`);
         }
       } catch (pairError) {
         console.error(`Error updating ${from}-${to} trends:`, pairError);
