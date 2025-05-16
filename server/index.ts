@@ -2,11 +2,12 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
-import { ensureProvidersExist, updateExchangeRates } from "./scrapers/providers";
+import { updateExchangeRates } from "./scrapers/providers";
 import { updateRatesFromScreenshots } from "./updateScreenshotRates";
 import { updateFinancialNews } from "./scrapers/news";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { storage } from "./storage";
+import updateProviderList from "./updateProviderList";
 
 const app = express();
 app.use(express.json());
