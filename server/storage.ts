@@ -425,6 +425,14 @@ export class MemStorage implements IStorage {
         const mostRecentRate = rates.find(rate => rate.provider_id === provider.id);
         const lastUpdated = mostRecentRate ? mostRecentRate.timestamp.toISOString() : new Date().toISOString();
         
+        // Determine rate source based on provider name
+        let rateSource: 'api' | 'scraping' | 'screenshot' | 'unavailable' = 'scraping';
+        if (provider.name === 'Wise') {
+          rateSource = 'api'; // Wise uses API integration
+        } else if (['WorldRemit', 'Nala', 'MoneyGram', 'Western Union'].includes(provider.name)) {
+          rateSource = 'screenshot'; // These have screenshot-verified rates
+        }
+        
         results.push({
           providerId: provider.id,
           providerName: provider.name,
@@ -438,7 +446,8 @@ export class MemStorage implements IStorage {
           totalCost: fee + (amount * percentageFee / 100),
           websiteUrl: provider.website_url || null,
           lastUpdated: lastUpdated,
-          lastChecked: new Date().toISOString()
+          lastChecked: new Date().toISOString(),
+          rateSource: rateSource
         });
       }
     }

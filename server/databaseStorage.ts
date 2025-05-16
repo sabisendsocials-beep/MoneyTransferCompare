@@ -222,6 +222,14 @@ export class DatabaseStorage implements IStorage {
             break;
         }
         
+        // Determine rate source based on provider
+        let rateSource: 'api' | 'scraping' | 'screenshot' | 'unavailable' = 'scraping';
+        if (provider.name === 'Wise') {
+          rateSource = 'api'; // Wise uses API integration
+        } else if (['WorldRemit', 'Nala', 'MoneyGram', 'Western Union'].includes(provider.name)) {
+          rateSource = 'screenshot'; // These have screenshot-verified rates
+        }
+        
         results.push({
           providerId: provider.id,
           providerName: provider.name,
@@ -235,7 +243,8 @@ export class DatabaseStorage implements IStorage {
           totalCost: finalFee,
           websiteUrl: provider.website_url,
           lastUpdated: rate.timestamp.toISOString(),
-          lastChecked: new Date().toISOString()
+          lastChecked: new Date().toISOString(),
+          rateSource: rateSource
         });
       }
     }

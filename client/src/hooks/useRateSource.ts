@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-export type RateSource = 'api' | 'scraping' | 'screenshot' | 'unavailable';
+export type RateSource = 'api' | 'screenshot' | 'scraping' | 'unavailable';
 
 export interface RateSourceData {
   providerId: number;
@@ -12,25 +12,16 @@ export interface RateSourceData {
 }
 
 /**
- * Custom hook to fetch the source of a provider's exchange rate
- * This helps identify if rates come from API, scraping, or screenshot verification
+ * Custom hook to get the source of a provider's exchange rate
+ * Returns information about where the rate comes from (API, screenshot, or web scraping)
  */
 export function useRateSource(
-  providerId?: number, 
+  providerId?: number,
   fromCurrency: string = 'GBP',
   toCurrency: string = 'NGN'
 ) {
   return useQuery<RateSourceData>({
     queryKey: ['/api/rate-source', providerId, fromCurrency, toCurrency],
-    enabled: !!providerId,
-  });
-}
-
-/**
- * Custom hook to fetch all rate sources
- */
-export function useAllRateSources() {
-  return useQuery<RateSourceData[]>({
-    queryKey: ['/api/rate-sources'],
+    enabled: !!providerId && !!fromCurrency && !!toCurrency,
   });
 }

@@ -78,13 +78,13 @@ export function LastUpdated({
   const getSourceTooltip = (source: RateSource) => {
     switch (source) {
       case 'api':
-        return 'This rate comes directly from the provider's official API';
+        return "This rate comes directly from the provider's official API";
       case 'screenshot':
-        return 'This rate has been verified with the provider's website';
+        return "This rate has been verified with the provider's website";
       case 'scraping':
-        return 'This rate was collected from the provider's website';
+        return "This rate was collected from the provider's website";
       default:
-        return 'Rate information source is unavailable';
+        return "Rate information source is unavailable";
     }
   };
 

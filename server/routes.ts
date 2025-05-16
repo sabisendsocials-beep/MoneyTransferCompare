@@ -9,10 +9,14 @@ import { updateRateTrends } from "./api/exchangeRateApi";
 import { realProviderRates } from "./scrapers/realRates";
 import { updateLemfiRate } from "./scrapers/lemfiScraper";
 import apiKeysRouter from "./routes/apiKeys";
+import { rateSourceRouter } from "./routes/rateSource";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api
   const apiRouter = app;
+  
+  // Register rate source router
+  app.use(rateSourceRouter);
 
   // Get all providers
   apiRouter.get("/api/providers", async (req: Request, res: Response) => {
@@ -101,7 +105,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if we have fresh news (not older than 3 days)
       const hasFreshNews = news && news.length > 0 && 
-        news.some(item => new Date(item.published_at) >= threeDaysAgo);
+        news.some(item => {
+          if (!item.published_at) return false;
+          const publishDate = new Date(item.published_at);
+          return publishDate >= threeDaysAgo;
+        });
       
       // If no news found or no fresh news, populate with updated sample news
       if (!hasFreshNews) {
@@ -124,15 +132,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Format the dates to display in the frontend
-      const formattedNews = news.map(item => ({
-        ...item,
-        // Keep the original date but add a formatted_date field
-        formatted_date: new Date(item.published_at).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        })
-      }));
+      const formattedNews = news.map(item => {
+        let formattedDate = 'Recent';
+        
+        if (item.published_at) {
+          const pubDate = new Date(item.published_at);
+          formattedDate = pubDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        }
+        
+        return {
+          ...item,
+          formatted_date: formattedDate
+        };
+      });
       
       res.json(formattedNews);
     } catch (error) {

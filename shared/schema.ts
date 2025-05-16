@@ -105,7 +105,8 @@ export const transferResultSchema = z.object({
   totalCost: z.number(),
   websiteUrl: z.string().nullable().optional(),
   lastUpdated: z.string().optional(), // ISO date string of when the rate was last updated
-  lastChecked: z.string().optional() // ISO date string of when we last tried to get a live rate
+  lastChecked: z.string().optional(), // ISO date string of when we last tried to get a live rate
+  rateSource: z.enum(['api', 'scraping', 'screenshot', 'unavailable']).optional().default('scraping') // Source of the exchange rate data
 });
 
 export type TransferResult = z.infer<typeof transferResultSchema>;

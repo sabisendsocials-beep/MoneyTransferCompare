@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StarIcon, InfoIcon, Clock, CheckCircle, AlertCircle, DollarSign, ChevronsDown, ShieldCheck, BadgeCheck } from "lucide-react";
+import { StarIcon, InfoIcon, Clock, CheckCircle, AlertCircle, DollarSign, ChevronsDown, ShieldCheck, BadgeCheck, CheckCircle2, Globe } from "lucide-react";
 import { TransferResult } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -375,19 +375,27 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
                         <div className="text-right">
                           <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toFixed(2) || '-'} {toCurrency}</span>
-                          <div className="flex items-center justify-end mt-1 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 text-xs">
-                            <Clock className="h-3 w-3 mr-1" />
-                            <span className="font-medium">
-                              {provider.lastUpdated 
-                                ? `Rate from ${new Date(provider.lastUpdated).toLocaleString('en-GB', {
-                                  month: 'short', 
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}`
-                                : 'Rate not available from provider website'
-                              }
-                            </span>
+                          <div className="flex flex-row justify-between items-center mt-1">
+                            <div className="bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 text-xs flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              <span className="font-medium">
+                                {provider.lastUpdated 
+                                  ? `Updated ${new Date(provider.lastUpdated).toLocaleString('en-GB', {
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}`
+                                  : 'Rate not available'
+                                }
+                              </span>
+                            </div>
+                            
+                            {/* Data Source Badge */}
+                            <RateSourceBadge 
+                              source={provider.rateSource || 'unavailable'} 
+                              showLabel={true}
+                            />
                           </div>
                         </div>
                       </div>
