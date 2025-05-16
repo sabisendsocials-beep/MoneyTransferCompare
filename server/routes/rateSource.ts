@@ -46,6 +46,39 @@ export function registerApiRate(
   log(`Registered API-verified rate for ${providerName} (${fromCurrency}/${toCurrency})`);
 }
 
+// Get the rate sources from our web scrapers
+export async function updateRateSourcesFromScrapers(): Promise<void> {
+  try {
+    const providers = await storage.getActiveProviders();
+    const latestRates = await storage.getLatestRates('GBP', 'NGN');
+    
+    for (const provider of providers) {
+      if (!latestRates.find(r => r.provider_id === provider.id)) {
+        continue; // Skip if no rate is available
+      }
+      
+      // Determine the source based on the provider
+      let source: 'api' | 'scraping' = 'scraping';
+      
+      // Only Wise currently uses an API connection
+      if (provider.name === 'Wise') {
+        source = 'api';
+      }
+      
+      // Register the rate source
+      if (source === 'api') {
+        registerApiRate(provider.id, provider.name, 'GBP', 'NGN');
+      } else {
+        registerScrapedRate(provider.id, provider.name, 'GBP', 'NGN');
+      }
+    }
+    
+    log(`Updated rate sources for ${providers.length} providers`);
+  } catch (error) {
+    log(`Error updating rate sources: ${error}`);
+  }
+}
+
 // Register a rate was verified via screenshot
 export function registerScreenshotRate(
   providerId: number,

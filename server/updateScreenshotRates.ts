@@ -15,62 +15,46 @@ interface ScreenshotData {
   receiveAmount: number;
 }
 
-// Data extracted directly from the screenshots
-const screenshotData: ScreenshotData[] = [
-  // Lemfi screenshot (1 GBP = 2,139 NGN)
-  {
-    providerName: "Lemfi",
-    fromCurrency: "GBP",
-    toCurrency: "NGN",
-    sendAmount: 100,
-    receiveAmount: 213900 // Shows as 213,900 in screenshot
-  },
+// We'll dynamically fetch real-time rates from our scrapers
+// This ensures we never use hardcoded values and always have current data
+async function getRealTimeRates(): Promise<ScreenshotData[]> {
+  log('Getting real-time rates from active providers using web scraping...');
   
-  // Wise screenshot (1 GBP = 2,138.50 NGN)
-  {
-    providerName: "Wise",
-    fromCurrency: "GBP",
-    toCurrency: "NGN",
-    sendAmount: 100,
-    receiveAmount: 209252.23 // Shows rate as 2,138.50 but calculates to this amount with fees
-  },
+  const result: ScreenshotData[] = [];
   
-  // WorldRemit screenshot (1 GBP = 2112.49 NGN)
-  {
-    providerName: "WorldRemit",
-    fromCurrency: "GBP",
-    toCurrency: "NGN",
-    sendAmount: 100,
-    receiveAmount: 211249 // Shows as 211249 in screenshot
-  },
-  
-  // Remitly screenshot (1 GBP = 2,157.13 NGN)
-  {
-    providerName: "Remitly",
-    fromCurrency: "GBP",
-    toCurrency: "NGN",
-    sendAmount: 100,
-    receiveAmount: 215713 // Shows as 215,713.00 in screenshot
-  },
-  
-  // Western Union screenshot (1 GBP = 2113.6981 NGN)
-  {
-    providerName: "Western Union",
-    fromCurrency: "GBP",
-    toCurrency: "NGN",
-    sendAmount: 100,
-    receiveAmount: 211369.81 // Shows as 211369.81 in screenshot
-  },
-  
-  // Nala screenshot (1 GBP = 2140.93 NGN)
-  {
-    providerName: "Nala",
-    fromCurrency: "GBP",
-    toCurrency: "NGN",
-    sendAmount: 100,
-    receiveAmount: 214093 // Shows as 214,093 in screenshot
+  try {
+    // Get active providers and their latest rates
+    const providers = await storage.getActiveProviders();
+    const latestRates = await storage.getLatestRates('GBP', 'NGN');
+    
+    for (const provider of providers) {
+      const rate = latestRates.find(r => r.provider_id === provider.id);
+      
+      if (rate && rate.rate > 0) {
+        // Calculate what you'd receive for 100 GBP based on the actual rate
+        const sendAmount = 100;
+        const receiveAmount = sendAmount * rate.rate;
+        
+        result.push({
+          providerName: provider.name,
+          fromCurrency: 'GBP',
+          toCurrency: 'NGN',
+          sendAmount,
+          receiveAmount
+        });
+        
+        log(`Using real-time rate for ${provider.name}: 1 GBP = ${rate.rate} NGN`);
+      }
+    }
+  } catch (error) {
+    log(`Error getting real-time rates: ${error}`);
   }
-];
+  
+  return result;
+}
+
+// This will be filled with real-time rates at runtime
+let screenshotData: ScreenshotData[] = [];
 
 /**
  * Updates rates for all providers based on screenshot data

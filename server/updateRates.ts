@@ -11,18 +11,13 @@ export default async function updatePreciseRates() {
   try {
     log('Starting to update verified exchange rates for providers...');
     
-    // These rates are directly sourced from provider websites
-    // and verified with screenshots - no estimated or generated values
-    const verifiedRates: Record<string, number> = {
-      // Core providers with verified rates
-      'WorldRemit': 2112.49,  // From provider website (verified with screenshot)
-      'Remitly': 2157.13,     // From provider website (verified with screenshot)
-      'Western Union': 2113.70, // From provider website (verified with screenshot)
-      'Wise': 2092.52,        // From provider website (verified with screenshot)
-      'MoneyGram': 2105.84,   // From provider website (verified with screenshot)
-      'Lemfi': 2139.00,       // From provider website (verified with screenshot)
-      'Nala': 2140.93         // From provider website (verified with screenshot)
-    };
+    // Instead of using hardcoded rates, we'll use the actual scraped rates
+    // We'll get these directly from provider websites or APIs
+    // This way we're always using authentic data directly from the source
+    log('Getting live rates from providers via API or scraping...');
+    
+    // We'll store the rates we get from scraping/APIs
+    const verifiedRates: Record<string, number> = {};
     
     // Get all the active providers
     const providers = await storage.getProviders();
