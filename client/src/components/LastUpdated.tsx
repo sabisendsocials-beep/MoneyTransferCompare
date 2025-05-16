@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Clock, CheckCircle2, Globe, ShieldCheck } from 'lucide-react';
-import { useRateSource, RateSource } from '@/hooks/useRateSource';
+import { useRateSource } from '@/hooks/useRateSource';
+import { RateSource } from './RateSourceBadge';
 
 interface ExchangeRate {
   id: number;
