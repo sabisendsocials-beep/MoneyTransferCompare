@@ -80,12 +80,18 @@ const RateTrends = () => {
 
   const selectedPeriod = periodOptions.find(option => option.value === periodOption) || periodOptions[1];
 
-  const { data: trends, isLoading: trendsLoading } = useQuery<RateTrend[]>({
+  const { data: trends, isLoading: trendsLoading, error: trendsError } = useQuery<RateTrend[]>({
     queryKey: [`/api/rate-trends?from=${currencyPair.from}&to=${currencyPair.to}&days=${selectedPeriod.days}`],
+    retry: 2, // Retry failed requests a couple of times
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
-  const { data: stats, isLoading: statsLoading } = useQuery<RateStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<RateStats>({
     queryKey: [`/api/rate-stats?from=${currencyPair.from}&to=${currencyPair.to}`],
+    retry: 2,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const handleRateAlert = () => {
@@ -281,7 +287,7 @@ const RateTrends = () => {
                         <ArrowUp className="h-3 w-3 text-white" />
                       </span>
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        30-day high: 1 {currencyPair.fromSymbol} = {stats.thirtyDayHigh.toLocaleString()} {currencyPair.toSymbol} ({formatDateString(stats.thirtyDayHighDate)})
+                        30-day high: 1 {currencyPair.fromSymbol} = {stats.thirtyDayHigh?.toLocaleString() || 'N/A'} {currencyPair.toSymbol} {stats.thirtyDayHighDate ? `(${formatDateString(stats.thirtyDayHighDate)})` : ''}
                       </span>
                     </li>
                     <li className="flex items-start">
@@ -289,7 +295,7 @@ const RateTrends = () => {
                         <ArrowDown className="h-3 w-3 text-white" />
                       </span>
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        30-day low: 1 {currencyPair.fromSymbol} = {stats.thirtyDayLow.toLocaleString()} {currencyPair.toSymbol} ({formatDateString(stats.thirtyDayLowDate)})
+                        30-day low: 1 {currencyPair.fromSymbol} = {stats.thirtyDayLow?.toLocaleString() || 'N/A'} {currencyPair.toSymbol} {stats.thirtyDayLowDate ? `(${formatDateString(stats.thirtyDayLowDate)})` : ''}
                       </span>
                     </li>
                     <li className="flex items-start">
@@ -297,7 +303,7 @@ const RateTrends = () => {
                         <span className="text-primary text-xs font-bold">=</span>
                       </span>
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        30-day average: 1 {currencyPair.fromSymbol} = {stats.thirtyDayAverage.toLocaleString()} {currencyPair.toSymbol}
+                        30-day average: 1 {currencyPair.fromSymbol} = {stats.thirtyDayAverage?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
                       </span>
                     </li>
                     <li className="flex items-start">
@@ -305,7 +311,7 @@ const RateTrends = () => {
                         <BarChart2 className="h-3 w-3 text-white" />
                       </span>
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Trend: {stats.oneMonthChange > 0 ? 'Upward' : stats.oneMonthChange < 0 ? 'Downward' : 'Stable'} trend ({stats.oneMonthChange}% over 30 days)
+                        Trend: {(stats.oneMonthChange ?? 0) > 0 ? 'Upward' : (stats.oneMonthChange ?? 0) < 0 ? 'Downward' : 'Stable'} trend ({stats.oneMonthChange ?? 0}% over 30 days)
                       </span>
                     </li>
                   </ul>
@@ -352,12 +358,12 @@ const RateTrends = () => {
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm">
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">1 Month Change</h4>
                     <div className="flex items-center">
-                      <span className={`text-lg font-semibold ${stats.oneMonthChange > 0 ? 'text-green-500' : stats.oneMonthChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                        {stats.oneMonthChange > 0 ? '+' : ''}{stats.oneMonthChange}%
+                      <span className={`text-lg font-semibold ${(stats.oneMonthChange ?? 0) > 0 ? 'text-green-500' : (stats.oneMonthChange ?? 0) < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                        {(stats.oneMonthChange ?? 0) > 0 ? '+' : ''}{stats.oneMonthChange ?? 0}%
                       </span>
-                      {stats.oneMonthChange > 0 ? (
+                      {(stats.oneMonthChange ?? 0) > 0 ? (
                         <ArrowUp className="ml-2 h-4 w-4 text-green-500" />
-                      ) : stats.oneMonthChange < 0 ? (
+                      ) : (stats.oneMonthChange ?? 0) < 0 ? (
                         <ArrowDown className="ml-2 h-4 w-4 text-red-500" />
                       ) : null}
                     </div>
@@ -365,12 +371,12 @@ const RateTrends = () => {
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm">
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">3 Month Change</h4>
                     <div className="flex items-center">
-                      <span className={`text-lg font-semibold ${stats.threeMonthChange > 0 ? 'text-green-500' : stats.threeMonthChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                        {stats.threeMonthChange > 0 ? '+' : ''}{stats.threeMonthChange}%
+                      <span className={`text-lg font-semibold ${(stats.threeMonthChange ?? 0) > 0 ? 'text-green-500' : (stats.threeMonthChange ?? 0) < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                        {(stats.threeMonthChange ?? 0) > 0 ? '+' : ''}{stats.threeMonthChange ?? 0}%
                       </span>
-                      {stats.threeMonthChange > 0 ? (
+                      {(stats.threeMonthChange ?? 0) > 0 ? (
                         <ArrowUp className="ml-2 h-4 w-4 text-green-500" />
-                      ) : stats.threeMonthChange < 0 ? (
+                      ) : (stats.threeMonthChange ?? 0) < 0 ? (
                         <ArrowDown className="ml-2 h-4 w-4 text-red-500" />
                       ) : null}
                     </div>
@@ -378,12 +384,12 @@ const RateTrends = () => {
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm">
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">1 Year Change</h4>
                     <div className="flex items-center">
-                      <span className={`text-lg font-semibold ${stats.oneYearChange > 0 ? 'text-green-500' : stats.oneYearChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                        {stats.oneYearChange > 0 ? '+' : ''}{stats.oneYearChange}%
+                      <span className={`text-lg font-semibold ${(stats.oneYearChange ?? 0) > 0 ? 'text-green-500' : (stats.oneYearChange ?? 0) < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                        {(stats.oneYearChange ?? 0) > 0 ? '+' : ''}{stats.oneYearChange ?? 0}%
                       </span>
-                      {stats.oneYearChange > 0 ? (
+                      {(stats.oneYearChange ?? 0) > 0 ? (
                         <ArrowUp className="ml-2 h-4 w-4 text-green-500" />
-                      ) : stats.oneYearChange < 0 ? (
+                      ) : (stats.oneYearChange ?? 0) < 0 ? (
                         <ArrowDown className="ml-2 h-4 w-4 text-red-500" />
                       ) : null}
                     </div>

@@ -101,6 +101,16 @@ app.use((req, res, next) => {
       await updateExchangeRates();
       log("Exchange rates updated with scraped data");
       
+      // Initialize rate trends data if needed
+      try {
+        const { initializeRateTrends } = await import('./initializeRateTrends');
+        log("Ensuring rate trend data is initialized...");
+        await initializeRateTrends();
+        log("Rate trend data initialization complete");
+      } catch (trendsError) {
+        log(`Error initializing rate trends: ${trendsError}`);
+      }
+      
       // Import and apply any verified rates
       try {
         const updatePreciseRates = (await import('./updateRates.js')).default;

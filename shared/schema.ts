@@ -135,7 +135,7 @@ export const rateCache = pgTable("rate_cache", {
   id: serial("id").primaryKey(),
   from_currency: text("from_currency").notNull(),
   to_currency: text("to_currency").notNull(),
-  last_fetch_time: timestamp("last_fetch_time").defaultNow().notNull()
+  last_updated: timestamp("last_updated").defaultNow().notNull()
 });
 
 export const insertRateCacheSchema = createInsertSchema(rateCache).omit({

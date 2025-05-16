@@ -84,7 +84,8 @@ async function main() {
         "id" SERIAL PRIMARY KEY,
         "from_currency" TEXT NOT NULL,
         "to_currency" TEXT NOT NULL,
-        "last_updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        "last_updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "last_fetch_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
     

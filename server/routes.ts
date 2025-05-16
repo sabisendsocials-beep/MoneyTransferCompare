@@ -72,11 +72,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const toCurrency = (req.query.to as string) || "NGN";
       const days = parseInt(req.query.days as string) || 30;
       
+      console.log(`[API] Fetching rate trends for ${fromCurrency}/${toCurrency} (${days} days)`);
+      
+      // Get trends from storage
       const trends = await storage.getRateTrends(fromCurrency, toCurrency, days);
-      res.json(trends);
+      
+      if (!trends || trends.length === 0) {
+        console.log(`[API] No trend data found for ${fromCurrency}/${toCurrency}, forcing update`);
+        
+        // If no trends, try to directly pull from the database
+        const { db } = await import('./db');
+        const { rateTrends } = await import('@shared/schema');
+        const { eq, and, sql } = await import('drizzle-orm');
+        
+        // Query trends directly from database
+        const trendData = await db.select()
+          .from(rateTrends)
+          .where(
+            and(
+              eq(rateTrends.from_currency, fromCurrency),
+              eq(rateTrends.to_currency, toCurrency)
+            )
+          )
+          .orderBy(rateTrends.date);
+        
+        console.log(`[API] Direct DB query found ${trendData.length} trend points`);
+        
+        // Map database records to API response format
+        const formattedTrends = trendData.map(trend => ({
+          date: trend.date,
+          rate: trend.rate,
+          from_currency: trend.from_currency,
+          to_currency: trend.to_currency
+        }));
+        
+        console.log(`[API] Returning ${formattedTrends.length} trend points`);
+        res.json(formattedTrends);
+      } else {
+        console.log(`[API] Found ${trends.length} trend points for ${fromCurrency}/${toCurrency}`);
+        res.json(trends);
+      }
     } catch (error) {
       console.error("Error fetching rate trends:", error);
-      res.status(500).json({ message: "Failed to fetch rate trends" });
+      res.status(500).json({ 
+        message: "Failed to fetch rate trends",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -240,6 +281,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: "Failed to update news", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Special endpoint to force update rate trends with the API key
+  apiRouter.get("/api/update-rate-trends", async (req: Request, res: Response) => {
+    try {
+      const { updateRateTrends } = await import('./api/exchangeRateApi');
+      await updateRateTrends();
+      
+      res.json({ 
+        success: true, 
+        message: "Rate trends updated successfully",
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error("Error updating rate trends:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to update rate trends", 
         error: error instanceof Error ? error.message : String(error)
       });
     }
