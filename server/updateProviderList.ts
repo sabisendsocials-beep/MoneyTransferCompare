@@ -17,42 +17,16 @@ async function updateProviderList() {
     // Add our core providers first - these are the ones that we have special scrapers for
     const coreProviders: InsertProvider[] = [
       {
-        name: "Wise",
-        website_url: "https://wise.com",
-        logo: "https://wise.com/public-resources/assets/logos/wise.svg",
-        rating: 4.8,
-        scraping_url: "https://wise.com/gb/currency-converter/gbp-to-ngn-rate",
-        scraping_selector: ".cc__source-to-target, .rate-value",
-        transfer_time: "1-2 hours",
-        has_fixed_fee: true,
-        fixed_fee: 3.56,
-        percentage_fee: 0.52,
-        active: true
-      },
-      {
-        name: "Western Union",
-        website_url: "https://www.westernunion.com",
-        logo: "https://www.westernunion.com/content/dam/wu/logo/logo.svg",
-        rating: 4.2,
-        scraping_url: "https://www.westernunion.com/gb/en/currency-converter/gbp-to-ngn-rate.html",
-        scraping_selector: ".exchange-rate, .wu-calc-rate",
-        transfer_time: "0-2 days",
+        name: "WorldRemit",
+        website_url: "https://www.worldremit.com",
+        logo: "https://www.worldremit.com/favicon.ico",
+        rating: 4.5,
+        scraping_url: "https://www.worldremit.com/en/gbp-to-ngn-exchange-rate",
+        scraping_selector: ".exchange-rate, .rate-value",
+        transfer_time: "1 hour or less",
         has_fixed_fee: true,
         fixed_fee: 2.99,
         percentage_fee: 0.8,
-        active: true
-      },
-      {
-        name: "MoneyGram",
-        website_url: "https://www.moneygram.com",
-        logo: "https://www.moneygram.com/mgo/assets/images/mg-logo.svg",
-        rating: 4.0,
-        scraping_url: "https://www.moneygram.com/mgo/gb/en/exchange-rate-calculator",
-        scraping_selector: ".exchange-rate-value, .calc-rate",
-        transfer_time: "Minutes (cash pickup)",
-        has_fixed_fee: true,
-        fixed_fee: 2.99,
-        percentage_fee: 1.2,
         active: true
       },
       {
@@ -69,16 +43,55 @@ async function updateProviderList() {
         active: true
       },
       {
-        name: "WorldRemit",
-        website_url: "https://www.worldremit.com",
-        logo: "https://www.worldremit.com/favicon.ico",
-        rating: 4.4,
-        scraping_url: "https://www.worldremit.com/en/gbp-to-ngn-exchange-rate",
-        scraping_selector: ".exchange-rate, .rate-value",
-        transfer_time: "1 hour or less",
+        name: "TransferGo",
+        website_url: "https://www.transfergo.com",
+        logo: null,
+        rating: 4.7,
+        scraping_url: "https://www.transfergo.com/en",
+        scraping_selector: ".exchange-rate, .converter__rate",
+        transfer_time: "0-2 business days",
+        has_fixed_fee: true,
+        fixed_fee: 0.99,
+        percentage_fee: 0.5,
+        active: true
+      },
+      {
+        name: "Western Union",
+        website_url: "https://www.westernunion.com",
+        logo: "https://www.westernunion.com/content/dam/wu/logo/logo.svg",
+        rating: 4.2,
+        scraping_url: "https://www.westernunion.com/gb/en/currency-converter/gbp-to-ngn-rate.html",
+        scraping_selector: ".exchange-rate, .wu-calc-rate",
+        transfer_time: "0-2 days",
         has_fixed_fee: true,
         fixed_fee: 2.99,
         percentage_fee: 0.8,
+        active: true
+      },
+      {
+        name: "Wise",
+        website_url: "https://wise.com",
+        logo: "https://wise.com/public-resources/assets/logos/wise.svg",
+        rating: 4.8,
+        scraping_url: "https://wise.com/gb/currency-converter/gbp-to-ngn-rate",
+        scraping_selector: ".cc__source-to-target, .rate-value",
+        transfer_time: "1-2 hours",
+        has_fixed_fee: true,
+        fixed_fee: 3.56,
+        percentage_fee: 0.52,
+        active: true
+      },
+      {
+        name: "MoneyGram",
+        website_url: "https://www.moneygram.com",
+        logo: "https://www.moneygram.com/mgo/assets/images/mg-logo.svg",
+        rating: 4.0,
+        scraping_url: "https://www.moneygram.com/mgo/gb/en/exchange-rate-calculator",
+        scraping_selector: ".exchange-rate-value, .calc-rate",
+        transfer_time: "Minutes (cash pickup)",
+        has_fixed_fee: true,
+        fixed_fee: 2.99,
+        percentage_fee: 1.2,
         active: true
       },
       {
@@ -118,8 +131,8 @@ async function updateProviderList() {
           scraping_url: provider.scraping_url || '',
           scraping_selector: provider.scraping_selector || '',
           transfer_time: provider.transfer_time || '',
-          has_fixed_fee: provider.fixed_fee !== undefined && provider.fixed_fee > 0,
-          fixed_fee: provider.fixed_fee || 0,
+          has_fixed_fee: typeof provider.fixed_fee === 'number' && provider.fixed_fee > 0,
+          fixed_fee: typeof provider.fixed_fee === 'number' ? provider.fixed_fee : 0,
           percentage_fee: provider.percentage_fee || 0,
           active: provider.active !== undefined ? provider.active : true
         };
@@ -139,17 +152,7 @@ async function updateProviderList() {
   }
 }
 
-// Run the update if this script is executed directly
-if (require.main === module) {
-  updateProviderList()
-    .then(() => {
-      console.log('Provider update complete');
-      process.exit(0);
-    })
-    .catch(err => {
-      console.error('Error during provider update:', err);
-      process.exit(1);
-    });
-}
+// ESM doesn't have direct require.main === module equivalent
+// Instead, we'll export the function for use in other modules
 
 export default updateProviderList;

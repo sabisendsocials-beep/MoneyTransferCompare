@@ -1,27 +1,13 @@
 import { InsertProvider } from '@shared/schema';
 
 /**
- * Updated providers list based on latest requirements
- * These are the primary money transfer providers for our comparison platform
+ * Updated providers list based on the specific list provided for Nigerian transfers
+ * These are the exact providers requested for the money transfer comparison platform
  */
 export const additionalProviders: Partial<InsertProvider>[] = [
-  // Our primary providers that are already in the core database
-  // WorldRemit, Remitly, Western Union, Wise, MoneyGram, and Lemfi
-  // are managed separately in the main system
+  // The main providers are managed in updateProviderList.ts
+  // These are the additional providers from the specified list
   
-  // Additional providers from the updated list
-  {
-    name: 'TransferGo',
-    website_url: 'https://www.transfergo.com',
-    logo: null,
-    active: true,
-    fixed_fee: 0.99,
-    percentage_fee: 0.5,
-    transfer_time: '0-2 business days',
-    rating: 4.7,
-    scraping_url: 'https://www.transfergo.com/en',
-    scraping_selector: '.exchange-rate, .converter__rate'
-  },
   {
     name: 'Paysend',
     website_url: 'https://paysend.com',
@@ -29,7 +15,7 @@ export const additionalProviders: Partial<InsertProvider>[] = [
     active: true,
     fixed_fee: 1.00,
     percentage_fee: 0.8,
-    transfer_time: 'minutes - 1 day',
+    transfer_time: 'Minutes - 1 day',
     rating: 4.4,
     scraping_url: 'https://paysend.com',
     scraping_selector: '.exchange-rate-display, .rate-info'
@@ -89,7 +75,7 @@ export const additionalProviders: Partial<InsertProvider>[] = [
     active: true,
     fixed_fee: 1.50,
     percentage_fee: 0.5,
-    transfer_time: 'minutes',
+    transfer_time: 'Minutes',
     rating: 4.5,
     scraping_url: 'https://nala.money',
     scraping_selector: '.exchange-rate, .rate-display'
@@ -101,7 +87,7 @@ export const additionalProviders: Partial<InsertProvider>[] = [
     active: true,
     fixed_fee: 0,
     percentage_fee: 0.5,
-    transfer_time: 'minutes',
+    transfer_time: 'Minutes',
     rating: 4.6,
     scraping_url: 'https://www.sendwave.com',
     scraping_selector: '.exchange-rate, .rate-text'
@@ -113,7 +99,7 @@ export const additionalProviders: Partial<InsertProvider>[] = [
     active: true,
     fixed_fee: 0,
     percentage_fee: 0.8,
-    transfer_time: 'minutes',
+    transfer_time: 'Minutes',
     rating: 4.4,
     scraping_url: 'https://taptapsend.com',
     scraping_selector: '.exchange-rate, .rate-amount'

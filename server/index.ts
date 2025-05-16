@@ -50,14 +50,34 @@ app.use((req, res, next) => {
     await initializeDatabase();
     log("Database initialized successfully");
     
-    // Ensure all providers exist (including Lemfi and Nala)
-    await ensureProvidersExist();
-    log("Provider initialization completed");
+    // Update the provider list with the latest providers
+    await updateProviderList();
+    log("Provider list updated with latest providers");
     
     // Try to update exchange rates with real data from providers
     try {
+      // First refresh our provider list with latest providers
+      try {
+        log("Updating provider list with latest transfer providers...");
+        await updateProviderList();
+        log("Provider list updated successfully");
+      } catch (providerError) {
+        log(`Error updating provider list: ${providerError}`);
+      }
+      
+      // Then update exchange rates
       await updateExchangeRates();
       log("Exchange rates updated with real data");
+      
+      // Import and apply the precise rates
+      try {
+        const updatePreciseRates = (await import('./updateRates.js')).default;
+        log("Updating exchange rates with precise values...");
+        await updatePreciseRates();
+        log("Exchange rates updated with precise values");
+      } catch (rateError) {
+        log(`Error updating precise rates: ${rateError}`);
+      }
     } catch (error) {
       log(`Error updating exchange rates via scraping: ${error}`);
     }
