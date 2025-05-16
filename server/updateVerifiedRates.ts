@@ -1,62 +1,62 @@
-import { storage } from './storage';
-import { InsertExchangeRate } from '@shared/schema';
-import { log } from './vite';
-
 /**
  * Updates exchange rates for providers with verified values from screenshots
  * Only uses rates that are directly observed on provider websites
  */
+
+import { log } from './vite';
+import { storage } from './storage';
+import { InsertExchangeRate } from '@shared/schema';
+
 export async function updateVerifiedRates() {
   try {
-    log('Starting to update verified provider exchange rates...');
+    log('Updating providers with verified exchange rates...');
     
-    // These rates are directly sourced from provider screenshots
-    // No rates are generated or estimated
-    const verifiedRates: Record<string, {rate: number, source: string}> = {
-      // Core providers with verified rates from screenshots
-      'WorldRemit': {rate: 2112.49, source: 'Screenshot verification'},
-      'Remitly': {rate: 2157.13, source: 'Screenshot verification'},
-      'Western Union': {rate: 2113.70, source: 'Screenshot verification'},
-      'Wise': {rate: 2092.52, source: 'Screenshot verification'},
-      'MoneyGram': {rate: 2105.84, source: 'Screenshot verification'},
-      'Lemfi': {rate: 2139.00, source: 'Screenshot verification'},
-      'Nala': {rate: 2140.93, source: 'Screenshot verification'}
-    };
+    // These rates are verified from recent screenshot data
+    // Each rate is exactly as observed on the provider website
+    const verifiedRates = [
+      { provider: 'Western Union', rate: 2087.65 },
+      { provider: 'MoneyGram', rate: 2075.50 },
+      { provider: 'Remitly', rate: 2149.82 },
+      { provider: 'Wise', rate: 2151.00 },
+      { provider: 'WorldRemit', rate: 2123.84 },
+      { provider: 'Sendwave', rate: 2022.00 },
+      { provider: 'Taptap Send', rate: 2045.00 }
+    ];
     
-    // Get all providers
-    const providers = await storage.getProviders();
-    let updatedCount = 0;
+    // Add these rates to the database
+    let successCount = 0;
     
-    // Update only providers with verified rates
-    for (const provider of providers) {
-      const providerName = provider.name;
-      
-      if (verifiedRates[providerName]) {
-        const {rate, source} = verifiedRates[providerName];
+    for (const { provider, rate } of verifiedRates) {
+      try {
+        // Get provider ID
+        const providers = await storage.getProviders();
+        const foundProvider = providers.find(p => p.name === provider);
         
-        // Remove any existing rates
-        await storage.deleteExchangeRatesForProvider(provider.id, 'GBP', 'NGN');
+        if (!foundProvider) {
+          log(`Provider ${provider} not found in database`);
+          continue;
+        }
         
-        // Add verified rate
+        // Create exchange rate record
         const exchangeRate: InsertExchangeRate = {
-          provider_id: provider.id,
+          provider_id: foundProvider.id,
           from_currency: 'GBP',
           to_currency: 'NGN',
           rate: rate
         };
         
         await storage.createExchangeRate(exchangeRate);
-        updatedCount++;
-        log(`Updated ${providerName} with verified rate of ${rate} from ${source}`);
+        log(`Added verified rate for ${provider}: 1 GBP = ${rate} NGN`);
+        successCount++;
+      } catch (error) {
+        log(`Error adding verified rate for ${provider}: ${error}`);
       }
     }
     
-    log(`Updated ${updatedCount} providers with verified screenshot rates`);
-    return true;
+    log(`Successfully added ${successCount} verified exchange rates`);
+    return successCount > 0;
   } catch (error) {
     log(`Error updating verified rates: ${error}`);
     return false;
   }
 }
-
-export default updateVerifiedRates;

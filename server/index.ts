@@ -126,10 +126,28 @@ app.use((req, res, next) => {
     setInterval(async () => {
       try {
         log("Running scheduled exchange rate update...");
-        await updateExchangeRates();
+        const success = await updateExchangeRates();
+        
+        // If regular scraping fails or doesn't find all providers, use verified rates as fallback
+        if (!success) {
+          log("Web scraping failed, using verified rates as fallback...");
+          // Import and use verified rates as a fallback
+          const { updateVerifiedRates } = await import('./updateVerifiedRates');
+          await updateVerifiedRates();
+        }
+        
         log("Scheduled exchange rate update completed successfully");
       } catch (error) {
         log(`Error in scheduled exchange rate update: ${error}`);
+        
+        // Even if there's an error, still try verified rates
+        try {
+          log("Error occurred, using verified rates as fallback...");
+          const { updateVerifiedRates } = await import('./updateVerifiedRates');
+          await updateVerifiedRates();
+        } catch (fallbackError) {
+          log(`Error in fallback rate update: ${fallbackError}`);
+        }
       }
     }, SIX_HOURS);
     

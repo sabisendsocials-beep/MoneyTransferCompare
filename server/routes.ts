@@ -358,6 +358,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, error: String(error) });
     }
   });
+  
+  // Endpoint to run Puppeteer scraper for better exchange rate extraction
+  apiRouter.get("/api/run-puppeteer-scraper", async (req: Request, res: Response) => {
+    try {
+      const { puppeteerScrapeProviders } = await import('./scrapers/puppeteerScraper');
+      console.log('Running Puppeteer-based scraper for exchange rates...');
+      const success = await puppeteerScrapeProviders();
+      
+      res.json({ 
+        success: success, 
+        message: success ? 'Successfully updated providers with Puppeteer scraper' : 'Failed to update providers with Puppeteer'
+      });
+    } catch (error) {
+      console.error('Error running Puppeteer scraper:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+  
+  // Endpoint to update rates with verified values from screenshots
+  apiRouter.get("/api/update-verified-rates", async (req: Request, res: Response) => {
+    try {
+      const { updateVerifiedRates } = await import('./updateVerifiedRates');
+      console.log('Updating rates with verified values from screenshots...');
+      const success = await updateVerifiedRates();
+      
+      res.json({ 
+        success: success, 
+        message: success ? 'Successfully updated providers with verified rates' : 'Failed to update providers with verified rates'
+      });
+    } catch (error) {
+      console.error('Error updating verified rates:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
 
   // Add endpoint to update all rates from screenshots
   apiRouter.post("/api/update-from-screenshots", async (req: Request, res: Response) => {
