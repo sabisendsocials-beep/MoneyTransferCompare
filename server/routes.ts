@@ -341,6 +341,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, error: String(error) });
     }
   });
+  
+  // Endpoint to update more providers using values from logs
+  apiRouter.get("/api/update-more-providers", async (req: Request, res: Response) => {
+    try {
+      const { updateMoreProviders } = await import('./updateMoreProviders');
+      console.log('Updating more providers with values from logs...');
+      const success = await updateMoreProviders();
+      
+      res.json({ 
+        success: success, 
+        message: success ? 'Successfully updated more providers with scraped values' : 'Failed to update more providers'
+      });
+    } catch (error) {
+      console.error('Error updating more providers:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
 
   // Add endpoint to update all rates from screenshots
   apiRouter.post("/api/update-from-screenshots", async (req: Request, res: Response) => {
