@@ -8,6 +8,7 @@ import { storage } from '../storage';
 import { Provider, InsertExchangeRate } from '@shared/schema';
 import { updateSendwaveRate } from './sendwaveScraper';
 import { updateTapTapRate } from './taptapScraper';
+import { updateWesternUnionRate } from './westernUnionScraper';
 
 /**
  * Updates exchange rates for additional providers using specialized scrapers
@@ -37,6 +38,16 @@ export async function updateAdditionalProviders(): Promise<boolean> {
       updateCount++;
     } else {
       log('TapTap Send scraper failed to find rate');
+    }
+    
+    // Run Western Union scraper
+    log('Running specialized Western Union scraper...');
+    const westernUnionSuccess = await updateWesternUnionRate();
+    if (westernUnionSuccess) {
+      log('Successfully updated Western Union rate');
+      updateCount++;
+    } else {
+      log('Western Union scraper failed to find rate');
     }
     
     // Add more specialized scrapers here

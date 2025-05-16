@@ -326,6 +326,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Test endpoint for specialized scrapers
+  apiRouter.get("/api/test-specialized-scrapers", async (req: Request, res: Response) => {
+    try {
+      console.log('Testing specialized scrapers for more providers...');
+      const success = await updateAdditionalProviders();
+      
+      res.json({ 
+        success: success, 
+        message: success ? 'Successfully updated additional providers' : 'Failed to update additional providers'
+      });
+    } catch (error) {
+      console.error('Error testing specialized scrapers:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
   // Add endpoint to update all rates from screenshots
   apiRouter.post("/api/update-from-screenshots", async (req: Request, res: Response) => {
     try {
