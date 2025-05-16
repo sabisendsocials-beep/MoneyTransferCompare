@@ -329,8 +329,19 @@ export class DatabaseStorage implements IStorage {
           };
         });
         
-        console.log(`Retrieved ${trends.length} trend data points from database`);
-        return trends;
+        // Sort trends by date to ensure they appear chronologically in chart
+        const sortedTrends = trends.sort((a, b) => {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+        
+        // Log some debug information
+        if (sortedTrends.length > 0) {
+          console.log(`First data point: ${JSON.stringify(sortedTrends[0])}`);
+          console.log(`Last data point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
+        }
+        
+        console.log(`Retrieved ${sortedTrends.length} trend data points from database (sorted by date)`);
+        return sortedTrends;
       }
       
       // If no data in database, fetch from API directly
@@ -339,9 +350,20 @@ export class DatabaseStorage implements IStorage {
       const apiTrends = await fetchHistoricalRates(fromCurrency, toCurrency, days);
       
       if (apiTrends && apiTrends.length > 0) {
+        // Sort trends by date to ensure chronological order
+        const sortedApiTrends = [...apiTrends].sort((a, b) => {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+        
+        // Log some debug information
+        if (sortedApiTrends.length > 0) {
+          console.log(`API data - First point: ${JSON.stringify(sortedApiTrends[0])}`);
+          console.log(`API data - Last point: ${JSON.stringify(sortedApiTrends[sortedApiTrends.length-1])}`);
+        }
+        
         // Store the trends for future use
-        await this.updateRateTrends(fromCurrency, toCurrency, apiTrends);
-        return apiTrends;
+        await this.updateRateTrends(fromCurrency, toCurrency, sortedApiTrends);
+        return sortedApiTrends;
       }
       
       // If all else fails, return empty array (no synthetic data generation)

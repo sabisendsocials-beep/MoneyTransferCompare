@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RateTrend, RateStats } from "@shared/schema";
+import { RateTrend, RateStats, RateTrendResponse } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -80,12 +80,39 @@ const RateTrends = () => {
 
   const selectedPeriod = periodOptions.find(option => option.value === periodOption) || periodOptions[1];
 
-  const { data: trends, isLoading: trendsLoading, error: trendsError } = useQuery<RateTrend[]>({
+  const { data: trendData, isLoading: trendsLoading, error: trendsError } = useQuery<RateTrendResponse[]>({
     queryKey: [`/api/rate-trends?from=${currencyPair.from}&to=${currencyPair.to}&days=${selectedPeriod.days}`],
     retry: 2, // Retry failed requests a couple of times
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
+  
+  // Convert the API response format for the chart
+  const [trends, setTrends] = useState<RateTrendResponse[]>([]);
+  
+  // Process the trend data when it changes
+  useEffect(() => {
+    if (trendData && trendData.length > 0) {
+      console.log(`Processing ${trendData.length} trend data points`);
+      console.log(`Sample data point: ${JSON.stringify(trendData[0])}`);
+      
+      // Make a deep copy to ensure we don't modify the original data
+      let processedData = trendData.map(point => ({...point}));
+      
+      // Sort the data by date to ensure proper chart display
+      processedData = processedData.sort((a, b) => {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
+      
+      console.log(`Processed and sorted ${processedData.length} data points`);
+      console.log(`First date: ${processedData[0]?.date}, Last date: ${processedData[processedData.length-1]?.date}`);
+      
+      setTrends(processedData);
+    } else {
+      console.log('No trend data available or empty array received');
+      setTrends([]);
+    }
+  }, [trendData]);
 
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<RateStats>({
     queryKey: [`/api/rate-stats?from=${currencyPair.from}&to=${currencyPair.to}`],
@@ -196,9 +223,27 @@ const RateTrends = () => {
                 </div>
               ) : !trends || trends.length === 0 ? (
                 <div className="h-[400px] flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-center">
-                    <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">No trend data available</p>
+                  <div className="text-center max-w-md px-4">
+                    <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400 font-medium">
+                      {trendsError ? `Error loading trend data: ${trendsError}` : "No trend data available"}
+                    </p>
+                    {trendData ? (
+                      <div className="mt-4 text-left bg-gray-100 dark:bg-gray-700 p-3 rounded text-xs">
+                        <p className="font-semibold mb-1">Debug Information:</p>
+                        <p>• Received {trendData.length} data points</p>
+                        {trendData.length > 0 && (
+                          <>
+                            <p>• First point: {JSON.stringify(trendData[0])}</p>
+                            <p>• Last point: {JSON.stringify(trendData[trendData.length-1])}</p>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500 mt-2">
+                        No data was returned from the API
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -207,12 +252,27 @@ const RateTrends = () => {
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                       {currencyPair.from} to {currencyPair.to} Rate Chart
                     </h3>
-                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      <span>Past {selectedPeriod.label}</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        <span>Past {selectedPeriod.label}</span>
+                      </div>
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        • {trends.length} data points
+                      </div>
                     </div>
                   </div>
-                  <ResponsiveContainer width="100%" height="90%">
+                  {/* Debug info */}
+                  {trends.length > 0 && (
+                    <div className="text-xs text-gray-500 mb-2 italic">
+                      <span>Points: {trends.length} | </span>
+                      <span>Range: {trends[0].date} to {trends[trends.length-1].date} | </span>
+                      <span>Min: {Math.min(...trends.map(d => d.rate)).toFixed(2)} | </span>
+                      <span>Max: {Math.max(...trends.map(d => d.rate)).toFixed(2)} | </span>
+                      <span>Spread: {(Math.max(...trends.map(d => d.rate)) - Math.min(...trends.map(d => d.rate))).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <ResponsiveContainer width="100%" height="85%">
                     <LineChart
                       data={trends}
                       margin={{
@@ -225,11 +285,21 @@ const RateTrends = () => {
                       <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                       <XAxis
                         dataKey="date"
-                        tickFormatter={(date) => {
-                          const d = new Date(date);
-                          return selectedPeriod.days > 30 
-                            ? `${d.getDate()}/${d.getMonth() + 1}`
-                            : `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
+                        tickFormatter={(dateStr) => {
+                          try {
+                            const d = new Date(dateStr);
+                            // Check if date is valid
+                            if (isNaN(d.getTime())) {
+                              console.error(`Invalid date: ${dateStr}`);
+                              return dateStr;
+                            }
+                            return selectedPeriod.days > 30 
+                              ? `${d.getDate()}/${d.getMonth() + 1}`
+                              : `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
+                          } catch (e) {
+                            console.error(`Error formatting date: ${dateStr}`, e);
+                            return dateStr;
+                          }
                         }}
                         tick={{ fontSize: 12 }}
                       />
@@ -244,12 +314,22 @@ const RateTrends = () => {
                           `Exchange Rate`
                         ]}
                         labelFormatter={(label) => {
-                          const date = new Date(label);
-                          return date.toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          });
+                          try {
+                            const date = new Date(label);
+                            // Check if date is valid
+                            if (isNaN(date.getTime())) {
+                              console.error(`Invalid tooltip date: ${label}`);
+                              return String(label);
+                            }
+                            return date.toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            });
+                          } catch (e) {
+                            console.error(`Error formatting tooltip date: ${label}`, e);
+                            return String(label);
+                          }
                         }}
                       />
                       <Legend />
@@ -259,9 +339,10 @@ const RateTrends = () => {
                         name={`${currencyPair.from} to ${currencyPair.to}`}
                         stroke="#3b82f6"
                         strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 6 }}
-                        isAnimationActive={true}
+                        dot={{ r: 2 }}
+                        activeDot={{ r: 5 }}
+                        connectNulls={true}
+                        isAnimationActive={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>

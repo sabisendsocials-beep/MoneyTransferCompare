@@ -106,11 +106,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
           to_currency: trend.to_currency
         }));
         
-        console.log(`[API] Returning ${formattedTrends.length} trend points`);
-        res.json(formattedTrends);
+        // Ensure the data is sorted chronologically by date
+        const sortedTrends = formattedTrends.sort((a, b) => {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+        
+        console.log(`[API] Returning ${sortedTrends.length} trend points (sorted by date)`);
+        
+        // Log a sample of the data being returned
+        if (sortedTrends.length > 0) {
+          console.log(`[API] First point: ${JSON.stringify(sortedTrends[0])}`);
+          console.log(`[API] Last point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
+        }
+        
+        res.json(sortedTrends);
       } else {
         console.log(`[API] Found ${trends.length} trend points for ${fromCurrency}/${toCurrency}`);
-        res.json(trends);
+        
+        // Ensure the data is sorted chronologically by date before returning
+        const sortedTrends = [...trends].sort((a, b) => {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+        
+        // Log a sample of the data being returned
+        if (sortedTrends.length > 0) {
+          console.log(`[API] First point: ${JSON.stringify(sortedTrends[0])}`);
+          console.log(`[API] Last point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
+        }
+        
+        res.json(sortedTrends);
       }
     } catch (error) {
       console.error("Error fetching rate trends:", error);
