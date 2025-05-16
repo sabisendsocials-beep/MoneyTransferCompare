@@ -17,8 +17,8 @@ export async function scrapeSendwaveRate(): Promise<number | null> {
   try {
     log('=== Starting dedicated Sendwave scraper ===');
     
-    // Sendwave calculator URL
-    const url = 'https://www.sendwave.com/en-us/send-money-to-nigeria';
+    // Sendwave calculator URL - using their main Nigeria transfer page
+    const url = 'https://www.sendwave.com/en-gb/send-money-to-nigeria';
     
     // Try with direct fetch first
     const response = await fetch(url, {

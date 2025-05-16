@@ -17,7 +17,7 @@ export async function scrapeWesternUnionRate(): Promise<number | null> {
     log('=== Starting Western Union scraper ===');
     
     // Western Union exchange rate URL (using direct URL to their rate calculator)
-    const url = 'https://www.westernunion.com/gb/en/web/send-money/start?SendMoneyApp=FXCALCULATOR';
+    const url = 'https://www.westernunion.com/gb/en/currency-converter';
     
     // Try with direct fetch using browser-like headers
     const response = await fetch(url, {
@@ -37,14 +37,23 @@ export async function scrapeWesternUnionRate(): Promise<number | null> {
     const $ = cheerio.load(html);
     
     // Try various selectors that might contain the exchange rate
+    // Based on analysis of the Western Union website structure
     const selectors = [
       '.exchange-rate-value', 
       '.wu-text--rate',
+      '.wu-calculator__rate',
+      '.wu-calculator-result',
+      '.js-calculator-rate',
+      '.wu-result-row--rate',
+      '.wu-header__rate',
+      '[data-test="exchangeRate"]',
       '.fxcalculator-rate',
-      '.calculator-field-rate',
+      '.currency-converter-result',
       '.result-exchange-rate',
+      '.send-money-calculator__rate-value',
       'span:contains("exchange rate")',
-      'div:contains("1 GBP = ")'
+      'span:contains("1 GBP =")',
+      'div:contains("1 GBP =")'
     ];
     
     for (const selector of selectors) {

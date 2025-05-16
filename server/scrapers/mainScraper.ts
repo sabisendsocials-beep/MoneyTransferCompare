@@ -9,6 +9,8 @@ import { Provider, InsertExchangeRate } from '@shared/schema';
 import { updateSendwaveRate } from './sendwaveScraper';
 import { updateTapTapRate } from './taptapScraper';
 import { updateWesternUnionRate } from './westernUnionScraper';
+import { updateMoneyGramRate } from './moneygramScraper';
+import { updateRemitlyRate } from './remitlyScraper';
 
 /**
  * Updates exchange rates for additional providers using specialized scrapers
@@ -48,6 +50,26 @@ export async function updateAdditionalProviders(): Promise<boolean> {
       updateCount++;
     } else {
       log('Western Union scraper failed to find rate');
+    }
+    
+    // Run MoneyGram scraper
+    log('Running specialized MoneyGram scraper...');
+    const moneyGramSuccess = await updateMoneyGramRate();
+    if (moneyGramSuccess) {
+      log('Successfully updated MoneyGram rate');
+      updateCount++;
+    } else {
+      log('MoneyGram scraper failed to find rate');
+    }
+    
+    // Run Remitly scraper
+    log('Running specialized Remitly scraper...');
+    const remitlySuccess = await updateRemitlyRate();
+    if (remitlySuccess) {
+      log('Successfully updated Remitly rate');
+      updateCount++;
+    } else {
+      log('Remitly scraper failed to find rate');
     }
     
     // Add more specialized scrapers here
