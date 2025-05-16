@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProviderCard } from "./ProviderCard";
 import { ProviderBadge } from "./ProviderBadge";
+import { RateSourceBadge } from "./RateSourceBadge";
 
 type ComparisonResultsProps = {
   results: TransferResult[];
@@ -276,9 +277,12 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
                           <div className="text-right">
-                            <span className="font-medium text-gray-800 dark:text-gray-200">
-                              1 {fromCurrency} = {bestProvider.exchangeRate?.toFixed(2) || '-'} {toCurrency}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                                1 {fromCurrency} = {bestProvider.exchangeRate?.toFixed(2) || '-'} {toCurrency}
+                              </span>
+                              <RateSourceBadge source={bestProvider.rateSource || 'scraping'} />
+                            </div>
                             <div className="text-xs flex items-center justify-end mt-1 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
                               <Clock className="h-3 w-3 mr-1" />
                               <span className="font-medium">
