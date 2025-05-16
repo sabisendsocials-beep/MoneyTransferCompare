@@ -8,6 +8,7 @@ import { initializeDatabase } from "./db";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { realProviderRates } from "./scrapers/realRates";
 import { updateLemfiRate } from "./scrapers/lemfiScraper";
+import apiKeysRouter from "./routes/apiKeys";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api

@@ -66,18 +66,39 @@ app.use((req, res, next) => {
         log(`Error updating provider list: ${providerError}`);
       }
       
-      // Then update exchange rates
-      await updateExchangeRates();
-      log("Exchange rates updated with real data");
+      // First try to update rates directly from provider APIs
+      try {
+        // Specifically try Wise API first since we have the key
+        try {
+          const updateWiseRates = (await import('./api/wiseApi.js')).default;
+          log("Fetching exchange rates directly from Wise API...");
+          await updateWiseRates();
+          log("Wise API rate update completed");
+        } catch (wiseError) {
+          log(`Error updating rates from Wise API: ${wiseError}`);
+        }
+        
+        // Try other provider APIs
+        const updateRatesFromApis = (await import('./api/providerApis.js')).default;
+        log("Attempting to update rates from other provider APIs...");
+        await updateRatesFromApis();
+        log("API-based rate updates completed");
+      } catch (apiError) {
+        log(`Error updating rates from provider APIs: ${apiError}`);
+      }
       
-      // Import and apply the precise rates
+      // Then fall back to web scraping for any missing rates
+      await updateExchangeRates();
+      log("Exchange rates updated with scraped data");
+      
+      // Import and apply any verified rates
       try {
         const updatePreciseRates = (await import('./updateRates.js')).default;
-        log("Updating exchange rates with precise values...");
+        log("Updating exchange rates with verified values...");
         await updatePreciseRates();
-        log("Exchange rates updated with precise values");
+        log("Exchange rates updated with verified values");
       } catch (rateError) {
-        log(`Error updating precise rates: ${rateError}`);
+        log(`Error updating verified rates: ${rateError}`);
       }
     } catch (error) {
       log(`Error updating exchange rates via scraping: ${error}`);
