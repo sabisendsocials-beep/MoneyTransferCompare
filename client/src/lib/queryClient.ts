@@ -8,32 +8,32 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  url: string,
-  options?: {
-    method?: string;
-    body?: string | FormData;
-    headers?: Record<string, string>;
+  method: string,
+  endpoint: string,
+  data?: any
+): Promise<Response> {
+  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const headers: Record<string, string> = {};
+  let body: string | FormData | undefined = undefined;
+  
+  if (data) {
+    if (data instanceof FormData) {
+      body = data;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(data);
+    }
   }
-): Promise<any> {
-  const method = options?.method || 'GET';
-  const headers = options?.headers || (options?.body && !(options.body instanceof FormData) ? { "Content-Type": "application/json" } : {});
   
   const res = await fetch(url, {
     method,
     headers,
-    body: options?.body,
+    body,
     credentials: "include",
   });
 
   await throwIfResNotOk(res);
-  
-  // Try to parse JSON response
-  try {
-    return await res.json();
-  } catch (error) {
-    // Return raw response if not JSON
-    return res;
-  }
+  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

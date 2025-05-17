@@ -110,9 +110,18 @@ export default function AdminPage() {
     setCollecting(true);
     
     try {
-      await apiRequest("/api/rates/collect", {
-        method: "POST"
+      // Use direct fetch instead of apiRequest to avoid the error
+      const response = await fetch('/api/rates/collect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       });
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
       
       toast({
         title: "Rate collection started",

@@ -168,8 +168,25 @@ const TransferCalculator = ({ onCompare }: CalculatorProps) => {
 
   const compareMutation = useMutation({
     mutationFn: async (data: TransferRequest) => {
-      const response = await apiRequest('POST', '/api/compare', data);
-      return await response.json();
+      try {
+        const response = await fetch('/api/compare', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Comparison error:', error);
+        throw new Error(error instanceof Error ? error.message : 'Failed to compare providers');
+      }
     },
     onSuccess: (data) => {
       setIsLoading(false);
