@@ -10,6 +10,120 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Spinner } from "@/components/Spinner";
+import { format } from "date-fns";
+
+// LatestRatesTable component to display the latest rates for each provider
+const LatestRatesTable = () => {
+  const { data: rates, isLoading, error } = useQuery({
+    queryKey: ['/api/rates/latest'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Spinner className="w-8 h-8" />
+        <span className="ml-2">Loading latest rates...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mt-4">
+        <AlertTitle>Error loading rates</AlertTitle>
+        <AlertDescription>
+          Unable to fetch the latest rates. Please try again.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Group rates by provider
+  const ratesByProvider: Record<string, any[]> = {};
+  if (rates && Array.isArray(rates) && rates.length > 0) {
+    rates.forEach((rate: any) => {
+      if (!ratesByProvider[rate.providerName]) {
+        ratesByProvider[rate.providerName] = [];
+      }
+      ratesByProvider[rate.providerName].push(rate);
+    });
+  }
+
+  const formatSourceBadge = (source: string | null | undefined) => {
+    if (!source) return null;
+    
+    let color = "bg-gray-200 text-gray-700";
+    let label = "Unknown";
+    
+    if (source.toUpperCase() === "API") {
+      color = "bg-emerald-100 text-emerald-700";
+      label = "API";
+    } else if (source.toUpperCase() === "MANUAL") {
+      color = "bg-blue-100 text-blue-700";
+      label = "Manual";
+    } else if (source.toUpperCase() === "SCRAPER" || source.toUpperCase() === "SCREENSHOT") {
+      color = "bg-amber-100 text-amber-700";
+      label = "Web";
+    }
+    
+    return (
+      <Badge className={`${color} border-0`}>{label}</Badge>
+    );
+  };
+
+  const formatDate = (dateString: string | Date | null | undefined) => {
+    if (!dateString) return "Unknown";
+    try {
+      const date = new Date(dateString);
+      return format(date, "MMM d, yyyy HH:mm");
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
+  return (
+    <div className="mt-8">
+      <h3 className="text-lg font-semibold mb-4">Latest Provider Rates</h3>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Provider</TableHead>
+              <TableHead>Currency Pair</TableHead>
+              <TableHead>Rate</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Last Updated</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Object.keys(ratesByProvider).length > 0 ? (
+              Object.entries(ratesByProvider).map(([providerName, providerRates]) => (
+                providerRates.map((rate, index) => (
+                  <TableRow key={`${providerName}-${index}`}>
+                    <TableCell className="font-medium">{providerName}</TableCell>
+                    <TableCell>{rate.fromCurrency} → {rate.toCurrency}</TableCell>
+                    <TableCell>{rate.rate ? rate.rate.toFixed(4) : "N/A"}</TableCell>
+                    <TableCell>{formatSourceBadge(rate.source)}</TableCell>
+                    <TableCell>{formatDate(rate.lastUpdated || rate.timestamp)}</TableCell>
+                  </TableRow>
+                ))
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  No rates available. Try collecting rates first.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
 
 // Currency options
 const currencies = [
@@ -366,12 +480,14 @@ export default function AdminPage() {
               
               <div className="mt-6">
                 <h3 className="text-lg font-medium mb-2">Freshness Rules</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-4">
                   All rate data older than 24 hours is considered stale and will not be used
                   in comparisons. The system automatically refreshes data from all sources
                   three times daily to ensure freshness.
                 </p>
               </div>
+              
+              <LatestRatesTable />
             </CardContent>
           </Card>
         </TabsContent>

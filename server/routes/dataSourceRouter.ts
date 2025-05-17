@@ -193,4 +193,65 @@ router.post('/api/rates/collect', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/rates/latest
+ * Fetch the latest rates for all providers
+ */
+router.get('/api/rates/latest', async (_req: Request, res: Response) => {
+  try {
+    // Get all active providers
+    const providers = await storage.getActiveProviders();
+    
+    // Common currency pairs we support
+    const currencyPairs = [
+      { from: 'GBP', to: 'NGN' },
+      { from: 'EUR', to: 'NGN' },
+      { from: 'GBP', to: 'GHS' },
+      { from: 'EUR', to: 'GHS' },
+      { from: 'USD', to: 'NGN' }
+    ];
+    
+    // Result array for all the latest rates
+    const latestRates = [];
+    
+    // For each provider and currency pair, get the latest rate
+    for (const provider of providers) {
+      for (const pair of currencyPairs) {
+        // Fetch the latest rate for this provider and currency pair
+        const rates = await storage.getRatesByProvider(
+          provider.id,
+          pair.from,
+          pair.to,
+          1 // Only get the most recent rate
+        );
+        
+        // If we have a rate, add it to our results
+        if (rates && rates.length > 0) {
+          const rate = rates[0];
+          latestRates.push({
+            providerId: provider.id,
+            providerName: provider.name,
+            fromCurrency: rate.from_currency,
+            toCurrency: rate.to_currency,
+            rate: rate.rate,
+            source: rate.source,
+            sourceUrl: rate.source_url,
+            verified: rate.verified,
+            timestamp: rate.timestamp,
+          });
+        }
+      }
+    }
+    
+    return res.json(latestRates);
+  } catch (error) {
+    log(`Error fetching latest rates: ${error}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch latest rates',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 export default router;
