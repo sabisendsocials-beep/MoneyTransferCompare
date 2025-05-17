@@ -1,141 +1,144 @@
 /**
- * Wise (TransferWise) API Integration
- * 
- * This module handles fetching real-time exchange rates directly 
- * from the Wise API for the most accurate data.
+ * Wise API Integration
+ * This module handles direct integration with the Wise Transfer API
+ * to get real-time exchange rates.
  */
 
-import axios from 'axios';
 import { log } from '../vite';
-import { storage } from '../storage';
-import { InsertExchangeRate } from '@shared/schema';
+import axios from 'axios';
 
-// API endpoints
-const WISE_API_BASE = 'https://api.wise.com';
-const WISE_EXCHANGE_RATES_ENDPOINT = '/v1/rates';
+// Interface for Wise API rate response
+interface WiseRate {
+  source: string; // Currency code (e.g., "GBP")
+  target: string; // Currency code (e.g., "NGN")
+  rate: number;   // Exchange rate value
+  time: string;   // Timestamp
+}
 
-/**
- * Fetch the latest exchange rate from Wise API
- * @param fromCurrency Source currency (e.g., 'GBP')
- * @param toCurrency Target currency (e.g., 'NGN')
- * @returns Exchange rate or null if not available
- */
-export async function getWiseExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  try {
-    const apiKey = process.env.WISE_API_KEY;
-    
-    if (!apiKey) {
-      log('Wise API key not found in environment variables');
-      return null;
-    }
-    
-    log(`Fetching ${fromCurrency} to ${toCurrency} exchange rate from Wise API...`);
-    
-    const url = `${WISE_API_BASE}${WISE_EXCHANGE_RATES_ENDPOINT}?source=${fromCurrency}&target=${toCurrency}`;
-    
-    const response = await axios.get(url, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (response.status === 200 && Array.isArray(response.data) && response.data.length > 0) {
-      const rateData = response.data[0];
-      
-      if (rateData && typeof rateData.rate === 'number') {
-        log(`Successfully fetched Wise exchange rate: 1 ${fromCurrency} = ${rateData.rate} ${toCurrency}`);
-        return rateData.rate;
-      }
-    }
-    
-    log(`Unexpected response format from Wise API: ${JSON.stringify(response.data)}`);
-    return null;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      log(`Wise API request failed: ${error.message}`);
-      if (error.response) {
-        log(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
-      }
-    } else {
-      log(`Error fetching Wise exchange rate: ${error}`);
-    }
-    return null;
-  }
+// Interface for our standardized rate format
+interface StandardizedRate {
+  fromCurrency: string;
+  toCurrency: string;
+  rate: number;
+  timestamp: Date;
 }
 
 /**
- * Update the Wise exchange rate in our database using the official API
- * @param providerId The database ID of the Wise provider
- * @param fromCurrency Source currency (e.g., 'GBP')
- * @param toCurrency Target currency (e.g., 'NGN')
- * @returns Success status
+ * Fetches current exchange rates from the Wise API
+ * @returns Array of standardized exchange rates
  */
-export async function updateWiseRate(
-  providerId: number, 
-  fromCurrency: string = 'GBP', 
-  toCurrency: string = 'NGN'
-): Promise<boolean> {
+export async function fetchWiseRates(): Promise<StandardizedRate[]> {
   try {
-    // Get rate from Wise API
-    const rate = await getWiseExchangeRate(fromCurrency, toCurrency);
-    
-    if (!rate) {
-      log('Failed to get exchange rate from Wise API');
-      return false;
-    }
-    
-    // Remove any existing rates for this provider and currency pair
-    await storage.deleteExchangeRatesForProvider(providerId, fromCurrency, toCurrency);
-    
-    // Insert the new rate
-    const exchangeRate: InsertExchangeRate = {
-      provider_id: providerId,
-      from_currency: fromCurrency,
-      to_currency: toCurrency,
-      rate: rate
-    };
-    
-    const result = await storage.createExchangeRate(exchangeRate);
-    log(`Updated Wise exchange rate via official API: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
-    
-    return !!result;
-  } catch (error) {
-    log(`Error updating Wise rate: ${error}`);
-    return false;
-  }
-}
-
-/**
- * Updates exchange rates for Wise if the API key is available
- */
-export async function updateWiseRates(): Promise<void> {
-  try {
+    // Check if API key is available
     if (!process.env.WISE_API_KEY) {
-      log('Wise API key not configured, skipping API-based rate update');
-      return;
+      log('WISE_API_KEY environment variable not set');
+      return [];
     }
     
-    // Get the Wise provider from our database
-    const providers = await storage.getProviders();
-    const wiseProvider = providers.find(p => p.name === 'Wise');
+    log('Fetching exchange rates from Wise API...');
+    
+    // Currency pairs we're interested in
+    const currencyPairs = [
+      { from: 'GBP', to: 'NGN' },
+      { from: 'GBP', to: 'GHS' },
+      { from: 'EUR', to: 'NGN' },
+      { from: 'USD', to: 'NGN' },
+    ];
+    
+    const rates: StandardizedRate[] = [];
+    
+    // Fetch rates for each currency pair
+    for (const pair of currencyPairs) {
+      try {
+        const { from, to } = pair;
+        
+        // Make API request
+        const response = await axios.get(
+          `https://api.wise.com/v1/rates`, {
+            params: {
+              source: from,
+              target: to
+            },
+            headers: {
+              'Authorization': `Bearer ${process.env.WISE_API_KEY}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        // Check if we got valid rates
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          // Get the most recent rate
+          const latestRate = response.data[0] as WiseRate;
+          
+          // Add to our rates array
+          rates.push({
+            fromCurrency: from,
+            toCurrency: to,
+            rate: latestRate.rate,
+            timestamp: new Date(latestRate.time)
+          });
+          
+          log(`Successfully fetched Wise rate for ${from} to ${to}: ${latestRate.rate}`);
+        } else {
+          log(`No rate data returned from Wise API for ${from} to ${to}`);
+        }
+      } catch (error) {
+        log(`Error fetching Wise rate for ${pair.from} to ${pair.to}: ${error}`);
+      }
+    }
+    
+    log(`Successfully fetched ${rates.length} exchange rates from Wise API`);
+    return rates;
+  } catch (error) {
+    log(`Error in Wise API integration: ${error}`);
+    return [];
+  }
+}
+
+/**
+ * Updates exchange rates from Wise API and saves to database
+ */
+export default async function updateWiseRates(): Promise<boolean> {
+  try {
+    // Import dependencies
+    const { storage } = await import('../storage');
+    const { DataSourceType } = await import('../routes/dataSourceRouter');
+    
+    // Get wise provider from database
+    const wiseProvider = (await storage.getProviders()).find(p => 
+      p.name.toLowerCase().includes('wise'));
     
     if (!wiseProvider) {
       log('Wise provider not found in database');
-      return;
+      return false;
     }
     
-    // Update primary currency pair (GBP to NGN)
-    const success = await updateWiseRate(wiseProvider.id, 'GBP', 'NGN');
+    // Fetch rates from API
+    const rates = await fetchWiseRates();
     
-    if (success) {
-      log('Wise rates successfully updated via official API');
-    } else {
-      log('Failed to update Wise rates via API');
+    if (rates.length === 0) {
+      log('No rates returned from Wise API');
+      return false;
     }
+    
+    // Save rates to database
+    for (const rate of rates) {
+      await storage.createExchangeRate({
+        provider_id: wiseProvider.id,
+        from_currency: rate.fromCurrency,
+        to_currency: rate.toCurrency,
+        rate: rate.rate,
+        source: DataSourceType.API,
+        source_url: 'Wise API',
+        verified: true
+      });
+    }
+    
+    log(`Successfully updated ${rates.length} Wise rates in database`);
+    return true;
   } catch (error) {
-    log(`Error in Wise API rate update process: ${error}`);
+    log(`Error updating Wise rates: ${error}`);
+    return false;
   }
 }
-
-export default updateWiseRates;

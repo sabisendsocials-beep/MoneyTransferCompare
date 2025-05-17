@@ -9,6 +9,7 @@ import Compare from "@/pages/Compare";
 import Trends from "@/pages/Trends";
 import News from "@/pages/News";
 import HowItWorks from "@/pages/HowItWorks";
+import AdminPage from "@/pages/AdminPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/trends" component={Trends} />
           <Route path="/news" component={News} />
           <Route path="/how-it-works" component={HowItWorks} />
+          <Route path="/admin" component={AdminPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

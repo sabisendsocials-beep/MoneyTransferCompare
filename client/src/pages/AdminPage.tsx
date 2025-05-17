@@ -1,316 +1,372 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { queryClient } from "@/lib/queryClient";
-import { apiRequest } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Supported currency pairs
-const CURRENCY_PAIRS = [
-  { from: "GBP", to: "NGN", label: "British Pound to Nigerian Naira" },
-  { from: "EUR", to: "NGN", label: "Euro to Nigerian Naira" },
-  { from: "GBP", to: "GHS", label: "British Pound to Ghanaian Cedi" },
-  { from: "EUR", to: "GHS", label: "Euro to Ghanaian Cedi" },
+// Currency options
+const currencies = [
+  { value: "GBP", label: "British Pound (GBP)" },
+  { value: "USD", label: "US Dollar (USD)" },
+  { value: "EUR", label: "Euro (EUR)" },
+  { value: "NGN", label: "Nigerian Naira (NGN)" },
+  { value: "GHS", label: "Ghanaian Cedi (GHS)" },
+  { value: "KES", label: "Kenyan Shilling (KES)" },
+  { value: "UGX", label: "Ugandan Shilling (UGX)" },
 ];
 
-// Admin page for managing exchange rates
-const AdminPage: React.FC = () => {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("manual-rates");
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [selectedCurrencyPair, setSelectedCurrencyPair] = useState<string>("");
-  const [rate, setRate] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
-
-  // Fetch providers
-  const { data: providers, isLoading: providersLoading } = useQuery({
+export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState("manual-entry");
+  
+  // Form state
+  const [providerId, setProviderId] = useState("");
+  const [fromCurrency, setFromCurrency] = useState("GBP");
+  const [toCurrency, setToCurrency] = useState("NGN");
+  const [rate, setRate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [collecting, setCollecting] = useState(false);
+  
+  // Get providers for the dropdown
+  const { data: providers, isLoading: loadingProviders } = useQuery({
     queryKey: ["/api/providers"],
+    enabled: true,
   });
-
-  // Mutation for adding manual rates
-  const addManualRateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest("/api/rates/manual", "POST", data);
-    },
-    onSuccess: () => {
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Manual rate added successfully",
-        variant: "default",
-      });
-      
-      // Clear the form
-      setRate("");
-      setNotes("");
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
-    },
-    onError: (error: any) => {
-      // Show error message
-      toast({
-        title: "Error",
-        description: `Failed to add manual rate: ${error.message || "Unknown error"}`,
-        variant: "destructive",
-      });
-    },
-  });
-
+  
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
-    if (!selectedProviderId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a provider",
-        variant: "destructive",
-      });
+    if (!providerId) {
+      toast({ title: "Provider is required", variant: "destructive" });
       return;
     }
-
-    if (!selectedCurrencyPair) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a currency pair",
-        variant: "destructive",
-      });
+    
+    if (!fromCurrency) {
+      toast({ title: "From currency is required", variant: "destructive" });
       return;
     }
-
-    const rateValue = parseFloat(rate);
-    if (isNaN(rateValue) || rateValue <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid positive rate",
-        variant: "destructive",
-      });
+    
+    if (!toCurrency) {
+      toast({ title: "To currency is required", variant: "destructive" });
       return;
     }
-
-    // Get the currency pair details
-    const [fromCurrency, toCurrency] = selectedCurrencyPair.split("-");
-
-    // Submit the manual rate
-    addManualRateMutation.mutate({
-      providerId: parseInt(selectedProviderId),
-      fromCurrency,
-      toCurrency,
-      rate: rateValue,
-      notes,
-    });
-  };
-
-  return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+    
+    if (!rate || isNaN(parseFloat(rate)) || parseFloat(rate) <= 0) {
+      toast({ title: "Rate must be a positive number", variant: "destructive" });
+      return;
+    }
+    
+    setSubmitting(true);
+    
+    try {
+      // Submit the form data
+      await apiRequest("/api/rates/manual", {
+        method: "POST",
+        body: JSON.stringify({
+          providerId: parseInt(providerId),
+          fromCurrency,
+          toCurrency,
+          rate: parseFloat(rate),
+          notes
+        }),
+      });
       
-      <Tabs defaultValue="manual-rates" onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="manual-rates">Manual Rates</TabsTrigger>
-          <TabsTrigger value="rate-sources">Rate Sources</TabsTrigger>
-          <TabsTrigger value="scheduled-collection">Scheduled Collection</TabsTrigger>
+      // Success message
+      toast({
+        title: "Rate added successfully",
+        description: "The manual rate has been added to the database",
+      });
+      
+      // Reset form
+      setProviderId("");
+      setRate("");
+      setNotes("");
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/compare"] });
+    } catch (error) {
+      toast({
+        title: "Error adding rate",
+        description: error instanceof Error ? error.message : "Failed to add rate",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
+  // Trigger rate collection
+  const triggerCollection = async () => {
+    setCollecting(true);
+    
+    try {
+      await apiRequest("/api/rates/collect", {
+        method: "POST"
+      });
+      
+      toast({
+        title: "Rate collection started",
+        description: "The system is collecting rates from all sources. This may take a few minutes.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error starting collection",
+        description: error instanceof Error ? error.message : "Failed to start rate collection",
+        variant: "destructive",
+      });
+    } finally {
+      setCollecting(false);
+    }
+  };
+  
+  return (
+    <div className="container py-10">
+      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      
+      <Tabs defaultValue="manual-entry" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-8">
+          <TabsTrigger value="manual-entry">Manual Rate Entry</TabsTrigger>
+          <TabsTrigger value="collection">Data Collection</TabsTrigger>
+          <TabsTrigger value="sources">Data Sources</TabsTrigger>
         </TabsList>
         
-        {/* Manual Rates Entry Tab */}
-        <TabsContent value="manual-rates">
-          <Card>
+        {/* Manual Entry Tab */}
+        <TabsContent value="manual-entry">
+          <Card className="max-w-2xl">
             <CardHeader>
               <CardTitle>Add Manual Exchange Rate</CardTitle>
               <CardDescription>
-                Enter verified exchange rates from official sources. These rates will be given priority over
-                scraped rates when comparing transfer options.
+                Enter verified exchange rates from provider websites or customer service.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Provider Selection */}
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="provider">Provider</Label>
+                  <label className="text-sm font-medium">Provider</label>
                   <Select
-                    value={selectedProviderId}
-                    onValueChange={setSelectedProviderId}
+                    value={providerId}
+                    onValueChange={setProviderId}
+                    disabled={loadingProviders || submitting}
                   >
-                    <SelectTrigger id="provider">
-                      <SelectValue placeholder="Select a provider" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select provider" />
                     </SelectTrigger>
                     <SelectContent>
-                      {providersLoading ? (
-                        <SelectItem value="loading" disabled>
-                          Loading providers...
-                        </SelectItem>
-                      ) : (
-                        providers?.map((provider: any) => (
-                          <SelectItem key={provider.id} value={provider.id.toString()}>
-                            {provider.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Currency Pair Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="currencyPair">Currency Pair</Label>
-                  <Select
-                    value={selectedCurrencyPair}
-                    onValueChange={setSelectedCurrencyPair}
-                  >
-                    <SelectTrigger id="currencyPair">
-                      <SelectValue placeholder="Select a currency pair" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCY_PAIRS.map((pair) => (
-                        <SelectItem
-                          key={`${pair.from}-${pair.to}`}
-                          value={`${pair.from}-${pair.to}`}
-                        >
-                          {pair.label}
+                      {providers?.map((provider: any) => (
+                        <SelectItem key={provider.id} value={provider.id.toString()}>
+                          {provider.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* Rate Input */}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">From Currency</label>
+                    <Select
+                      value={fromCurrency}
+                      onValueChange={setFromCurrency}
+                      disabled={submitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            {currency.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">To Currency</label>
+                    <Select
+                      value={toCurrency}
+                      onValueChange={setToCurrency}
+                      disabled={submitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            {currency.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="rate">Exchange Rate</Label>
+                  <label className="text-sm font-medium">Exchange Rate</label>
                   <Input
-                    id="rate"
                     type="number"
                     step="0.0001"
-                    min="0"
+                    placeholder="Enter rate (e.g., 1583.45)"
                     value={rate}
                     onChange={(e) => setRate(e.target.value)}
-                    placeholder="e.g., 2150.78"
+                    disabled={submitting}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Enter the exact rate as shown on the provider's website
+                  </p>
                 </div>
-
-                {/* Notes Input */}
+                
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Source / Notes</Label>
+                  <label className="text-sm font-medium">Source Notes</label>
                   <Textarea
-                    id="notes"
+                    placeholder="Enter source information (e.g., URL, customer service call reference)"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g., Official rate from provider website as of today"
-                    rows={3}
+                    disabled={submitting}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Document where this rate was obtained for verification
+                  </p>
                 </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={addManualRateMutation.isPending}
-                >
-                  {addManualRateMutation.isPending
-                    ? "Adding rate..."
-                    : "Add Manual Rate"}
+                
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Adding Rate..." : "Add Rate"}
                 </Button>
               </form>
             </CardContent>
-            <CardFooter className="flex flex-col items-start text-sm text-gray-500">
-              <p>
-                <strong>Note:</strong> Manual rates will be marked as verified and
-                given priority over scraped rates for 24 hours.
-              </p>
-            </CardFooter>
           </Card>
         </TabsContent>
         
-        {/* Rate Sources Tab */}
-        <TabsContent value="rate-sources">
+        {/* Data Collection Tab */}
+        <TabsContent value="collection">
           <Card>
             <CardHeader>
-              <CardTitle>Rate Sources</CardTitle>
+              <CardTitle>Data Collection Controls</CardTitle>
               <CardDescription>
-                View all available rate sources and their priority order
+                Manage the automatic collection of rates from various sources
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p>
-                  Rate sources are prioritized in the following order when comparing transfer options:
-                </p>
-                <ol className="list-decimal pl-5 space-y-2">
-                  <li>
-                    <span className="font-medium">API Rates</span> - Rates obtained directly from provider APIs.
-                    Highest priority and considered verified.
-                  </li>
-                  <li>
-                    <span className="font-medium">Manual Rates</span> - Rates manually entered by admin.
-                    Second priority and considered verified.
-                  </li>
-                  <li>
-                    <span className="font-medium">Scraped Rates</span> - Rates obtained from web scraping.
-                    Lowest priority unless verified.
-                  </li>
-                </ol>
-                <p className="text-sm text-gray-500 mt-4">
-                  All rates are considered valid for 24 hours. After that, the next available source
-                  will be used.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Scheduled Collection Tab */}
-        <TabsContent value="scheduled-collection">
-          <Card>
-            <CardHeader>
-              <CardTitle>Scheduled Rate Collection</CardTitle>
-              <CardDescription>
-                Configure and monitor the automatic rate collection system
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p>
-                  Rate collection is scheduled to run automatically 3 times per day:
-                </p>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>6:00 AM - Morning collection</li>
-                  <li>2:00 PM - Afternoon collection</li>
-                  <li>10:00 PM - Evening collection</li>
-                </ul>
-                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-4">
-                  <p className="font-medium">Collection Priority:</p>
-                  <ol className="list-decimal pl-5 space-y-1 mt-2">
-                    <li>Try to get rates from provider APIs when available</li>
-                    <li>Fall back to web scraping when APIs are unavailable</li>
-                    <li>Use manual rates when other methods fail</li>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Current Schedule</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Rates are automatically collected three times daily:
+                  </p>
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="bg-secondary p-4 rounded-lg text-center">
+                      <p className="font-bold text-xl">6:00 AM</p>
+                      <p className="text-muted-foreground">Morning Update</p>
+                    </div>
+                    <div className="bg-secondary p-4 rounded-lg text-center">
+                      <p className="font-bold text-xl">2:00 PM</p>
+                      <p className="text-muted-foreground">Afternoon Update</p>
+                    </div>
+                    <div className="bg-secondary p-4 rounded-lg text-center">
+                      <p className="font-bold text-xl">10:00 PM</p>
+                      <p className="text-muted-foreground">Evening Update</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Manual Collection</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Manually trigger rate collection from all data sources
+                  </p>
+                  <Button 
+                    onClick={triggerCollection} 
+                    disabled={collecting}
+                    variant="default"
+                  >
+                    {collecting ? "Collecting Rates..." : "Collect Rates Now"}
+                  </Button>
+                </div>
+                
+                <div className="mt-8">
+                  <h3 className="text-lg font-medium mb-2">Data Source Priority</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Rate data is used in the following priority order:
+                  </p>
+                  <ol className="space-y-2">
+                    <li className="flex items-center">
+                      <Badge className="mr-2 bg-emerald-500">1</Badge>
+                      <span><strong>API Data</strong> - Direct from provider APIs (most reliable)</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Badge className="mr-2 bg-blue-500">2</Badge>
+                      <span><strong>Manual Entry</strong> - Verified rates entered through this interface</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Badge className="mr-2 bg-amber-500">3</Badge>
+                      <span><strong>Web Scrapers</strong> - Automatically collected from provider websites</span>
+                    </li>
                   </ol>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button
-                onClick={() => {
-                  toast({
-                    title: "Collection Triggered",
-                    description: "Manual rate collection has been triggered",
-                  });
-                }}
-              >
-                Trigger Manual Collection
-              </Button>
-            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Data Sources Tab */}
+        <TabsContent value="sources">
+          <Card>
+            <CardHeader>
+              <CardTitle>Data Source Overview</CardTitle>
+              <CardDescription>
+                View the distribution of data sources currently being used
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <AlertTitle>Data Sources Enabled</AlertTitle>
+                <AlertDescription>
+                  The following data sources are currently being used to collect exchange rates:
+                  <ul className="mt-2 list-disc pl-5">
+                    <li><strong>APIs:</strong> Wise</li>
+                    <li><strong>Web Scrapers:</strong> WorldRemit, Lemfi, Nala, Western Union</li>
+                    <li><strong>Manual Entry:</strong> Available through the Admin interface</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+              
+              <div className="mt-6">
+                <h3 className="text-lg font-medium mb-2">Source Prioritization</h3>
+                <p className="text-muted-foreground mb-4">
+                  When multiple sources have data for the same currency pair and provider,
+                  the system prioritizes as follows:
+                </p>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li>API data is used first (direct from provider, most accurate)</li>
+                  <li>Manually entered data is used second (verified by staff)</li>
+                  <li>Web scraped data is used third (automated collection)</li>
+                </ol>
+              </div>
+              
+              <div className="mt-6">
+                <h3 className="text-lg font-medium mb-2">Freshness Rules</h3>
+                <p className="text-muted-foreground">
+                  All rate data older than 24 hours is considered stale and will not be used
+                  in comparisons. The system automatically refreshes data from all sources
+                  three times daily to ensure freshness.
+                </p>
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
-};
-
-export default AdminPage;
+}

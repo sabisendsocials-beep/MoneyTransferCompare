@@ -1,154 +1,97 @@
 /**
- * Routes for managing data sources and manual rate entry
+ * Data Source API Routes
+ * Handles routes for manual rate entry and data collection
  */
 
-import express, { Request, Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
-import { DataSourceType } from '../services/dataSourceService';
-import { storage } from '../storage';
+import { addManualRate, collectRatesFromAllSources, ManualRateEntry } from '../services/dataSourceService';
 
-// Create a router
-const router = express.Router();
+// Create router
+const router = Router();
 
-// Schema for manually adding exchange rates
+// Validation schema for manual rate entry
 const manualRateSchema = z.object({
-  providerId: z.number(),
-  fromCurrency: z.string(),
-  toCurrency: z.string(),
+  providerId: z.number().int().positive(),
+  fromCurrency: z.string().min(3).max(3),
+  toCurrency: z.string().min(3).max(3),
   rate: z.number().positive(),
-  notes: z.string().optional(),
+  notes: z.string().optional()
 });
 
 /**
- * POST /api/rates/manual - Add a manual exchange rate
- * This endpoint allows admins to manually enter rates
+ * POST /api/rates/manual
+ * Adds a manually verified exchange rate
  */
-router.post('/api/rates/manual', async (req: Request, res: Response) => {
+router.post('/rates/manual', async (req, res) => {
   try {
     // Validate request body
-    const validation = manualRateSchema.safeParse(req.body);
-    if (!validation.success) {
+    const validationResult = manualRateSchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
       return res.status(400).json({
         success: false,
         message: 'Invalid request data',
-        errors: validation.error.format()
+        errors: validationResult.error.errors
       });
     }
     
-    const { providerId, fromCurrency, toCurrency, rate, notes = '' } = validation.data;
+    // Extract validated data
+    const manualRate: ManualRateEntry = validationResult.data;
     
-    // Get the provider to ensure it exists
-    const provider = await storage.getProvider(providerId);
-    if (!provider) {
-      return res.status(404).json({
+    // Add the manual rate
+    const success = await addManualRate(manualRate);
+    
+    if (success) {
+      return res.json({
+        success: true,
+        message: 'Manual rate added successfully'
+      });
+    } else {
+      return res.status(500).json({
         success: false,
-        message: `Provider with ID ${providerId} not found`
+        message: 'Failed to add manual rate'
       });
     }
-    
-    // Create the exchange rate with MANUAL source
-    const exchangeRate = await storage.createExchangeRate({
-      provider_id: providerId,
-      from_currency: fromCurrency,
-      to_currency: toCurrency,
-      rate,
-      source: DataSourceType.MANUAL,
-      source_url: notes,
-      verified: true
-    });
-    
-    // Return success response
-    return res.status(201).json({
-      success: true,
-      message: `Manual rate added successfully for ${provider.name}`,
-      data: {
-        provider: provider.name,
-        fromCurrency,
-        toCurrency,
-        rate,
-        timestamp: exchangeRate.timestamp,
-        source: DataSourceType.MANUAL
-      }
-    });
   } catch (error) {
-    console.error('Error adding manual rate:', error);
+    console.error('Error in manual rate endpoint:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to add manual rate',
-      error: error instanceof Error ? error.message : String(error)
+      message: 'Internal server error'
     });
   }
 });
 
 /**
- * GET /api/rates/sources
- * Get all exchange rates organized by source type
+ * POST /api/rates/collect
+ * Triggers collection of rates from all sources
  */
-router.get('/api/rates/sources', async (req: Request, res: Response) => {
+router.post('/rates/collect', async (req, res) => {
   try {
-    const { providerId, fromCurrency, toCurrency } = req.query;
+    // Start the collection process
+    const collectionStarted = true;
     
-    // Validate query parameters
-    if (!providerId || !fromCurrency || !toCurrency) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required query parameters: providerId, fromCurrency, toCurrency'
+    // Start collection in background
+    collectRatesFromAllSources()
+      .then(success => {
+        console.log('Rate collection completed:', success ? 'successfully' : 'with errors');
+      })
+      .catch(err => {
+        console.error('Error in background rate collection:', err);
       });
-    }
     
-    // Get all rates for this provider and currency pair
-    const { db } = await import('../db');
-    const { exchangeRates } = await import('@shared/schema');
-    const { eq, and, desc } = await import('drizzle-orm');
-    
-    const rates = await db.select()
-      .from(exchangeRates)
-      .where(
-        and(
-          eq(exchangeRates.provider_id, Number(providerId)),
-          eq(exchangeRates.from_currency, String(fromCurrency)),
-          eq(exchangeRates.to_currency, String(toCurrency))
-        )
-      )
-      .orderBy(desc(exchangeRates.timestamp));
-    
-    // Organize rates by source
-    const ratesBySource = {
-      [DataSourceType.API]: rates.filter(r => r.source === DataSourceType.API),
-      [DataSourceType.MANUAL]: rates.filter(r => r.source === DataSourceType.MANUAL),
-      [DataSourceType.SCRAPER]: rates.filter(r => r.source === DataSourceType.SCRAPER),
-      [DataSourceType.FALLBACK]: rates.filter(r => 
-        r.source !== DataSourceType.API && 
-        r.source !== DataSourceType.MANUAL && 
-        r.source !== DataSourceType.SCRAPER
-      )
-    };
-    
-    // Get the provider name
-    const provider = await storage.getProvider(Number(providerId));
-    
-    return res.status(200).json({
+    // Return immediate response to client
+    return res.json({
       success: true,
-      provider: provider?.name || `Provider ${providerId}`,
-      fromCurrency,
-      toCurrency,
-      sources: ratesBySource,
-      counts: {
-        api: ratesBySource[DataSourceType.API].length,
-        manual: ratesBySource[DataSourceType.MANUAL].length,
-        scraper: ratesBySource[DataSourceType.SCRAPER].length,
-        fallback: ratesBySource[DataSourceType.FALLBACK].length,
-        total: rates.length
-      }
+      message: 'Rate collection started'
     });
   } catch (error) {
-    console.error('Error fetching rate sources:', error);
+    console.error('Error in rate collection endpoint:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch rate sources',
-      error: error instanceof Error ? error.message : String(error)
+      message: 'Failed to start rate collection'
     });
   }
 });
 
-export const dataSourceRouter = router;
+export default router;

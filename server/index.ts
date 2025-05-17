@@ -9,10 +9,15 @@ import updateRealRateTrends from "./api/exchangeRateService";
 import { storage } from "./storage";
 import updateProviderList from "./updateProviderList";
 import updateProviderInfo from "./scrapers/providerInfo";
+import dataSourceRoutes from "./routes/dataSourceRoutes";
+import { initializeRateCollectionScheduler } from "./scheduler/rateCollectionScheduler";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Register data collection API routes
+app.use('/api', dataSourceRoutes);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -51,6 +56,16 @@ app.use((req, res, next) => {
     await initializeDatabase();
     log("Database initialized successfully");
     
+    // Run the provider schema migration to ensure all required columns exist
+    try {
+      log("Running provider schema migration...");
+      const { updateProviderSchema } = await import('./migrations/updateProviderSchema');
+      await updateProviderSchema();
+      log("Provider schema migration completed");
+    } catch (migrationError) {
+      log(`Error in provider schema migration: ${migrationError}`);
+    }
+    
     // Update the provider list with the latest providers
     await updateProviderList();
     log("Provider list updated with latest providers");
@@ -63,6 +78,15 @@ app.use((req, res, next) => {
       log("Provider ratings updated with TrustPilot values");
     } catch (ratingError) {
       log(`Error updating provider ratings: ${ratingError}`);
+    }
+    
+    // Initialize the rate collection scheduler (runs 3x daily)
+    try {
+      log("Initializing rate collection scheduler...");
+      initializeRateCollectionScheduler();
+      log("Rate collection scheduler initialized (runs at 6 AM, 2 PM, and 10 PM)");
+    } catch (schedulerError) {
+      log(`Error initializing rate collection scheduler: ${schedulerError}`);
     }
     
     // Try to update exchange rates with real data from providers

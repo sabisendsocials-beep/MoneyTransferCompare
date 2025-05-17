@@ -11,6 +11,7 @@ import { updateLemfiRate } from "./scrapers/lemfiScraper";
 import { updateAdditionalProviders } from "./scrapers/mainScraper";
 import apiKeysRouter from "./routes/apiKeys";
 import { rateSourceRouter } from "./routes/rateSource";
+import dataSourceRouter from "./routes/dataSourceRouter";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api
@@ -18,6 +19,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register rate source router
   app.use(rateSourceRouter);
+  
+  // Register data source router for the new collection strategy
+  app.use(dataSourceRouter);
 
   // Get all providers
   apiRouter.get("/api/providers", async (req: Request, res: Response) => {

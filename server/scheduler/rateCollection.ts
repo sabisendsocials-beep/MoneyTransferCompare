@@ -1,134 +1,206 @@
 /**
- * Scheduled Rate Collection System
- * Runs 3 times daily to collect exchange rates from all sources
+ * Rate Collection Scheduler
+ * Implements the scheduled collection of exchange rates from multiple sources
+ * Running three times daily: 6 AM, 2 PM, and 10 PM
  */
 
 import { log } from '../vite';
 import { storage } from '../storage';
-import { db } from '../db';
-import { exchangeRates } from '@shared/schema';
-import { sql } from 'drizzle-orm';
 
-// Schedule times (in hours, 24-hour format)
-const COLLECTION_TIMES = [6, 14, 22]; // 6 AM, 2 PM, 10 PM
-
-// Data source types
+// Data source types (matches the enum in dataSourceRouter.ts)
 export enum DataSourceType {
   API = 'API',
   MANUAL = 'MANUAL',
-  SCRAPER = 'SCRAPER'
+  SCRAPER = 'SCRAPER',
+  FALLBACK = 'FALLBACK'
 }
 
-/**
- * Check if it's time to run a collection based on the current hour
- */
-function shouldRunCollection(): boolean {
-  const currentHour = new Date().getHours();
-  return COLLECTION_TIMES.includes(currentHour);
-}
+// Collection task intervals (in milliseconds)
+const COLLECTION_INTERVALS = {
+  MORNING: '0 6 * * *',    // 6:00 AM
+  AFTERNOON: '0 14 * * *', // 2:00 PM
+  EVENING: '0 22 * * *'    // 10:00 PM
+};
+
+// Active collection jobs
+let activeJobs: NodeJS.Timeout[] = [];
 
 /**
- * Collect exchange rates from various sources for all providers
+ * Collects rates from all available data sources with priority
+ * Order: API data first, then manual entries, then web scrapers
  */
-export async function collectAllRates(): Promise<void> {
+export async function collectAllRates(): Promise<boolean> {
   try {
-    log('Starting scheduled rate collection...');
+    log('Starting scheduled rate collection process...');
     
-    // Get all active providers
-    const providers = await storage.getActiveProviders();
-    log(`Found ${providers.length} active providers for rate collection`);
+    // Step 1: Collect from direct APIs (highest priority)
+    await collectFromAPIs();
     
-    // Define currency pairs to collect
-    const currencyPairs = [
-      { from: 'GBP', to: 'NGN' },
-      { from: 'EUR', to: 'NGN' },
-      { from: 'GBP', to: 'GHS' },
-      { from: 'EUR', to: 'GHS' }
-    ];
+    // Step 2: Collect from web scrapers (lower priority)
+    await collectFromScrapers();
     
-    let successCount = 0;
-    
-    // First try to collect from provider APIs
-    for (const provider of providers) {
-      if (provider.website_url && provider.website_url.includes('api')) {
-        log(`Attempting API collection for ${provider.name}`);
-        try {
-          for (const pair of currencyPairs) {
-            // API collection logic will be implemented in the future
-            // For now, we'll just log the attempt
-            log(`Would collect ${pair.from}/${pair.to} from API for ${provider.name}`);
-          }
-        } catch (error) {
-          log(`Error collecting rates from API for ${provider.name}: ${error}`);
-        }
-      }
-    }
-    
-    // Then collect from web scrapers
-    try {
-      log('Collecting rates from web scrapers...');
-      const { updateExchangeRates } = await import('../scrapers/providers');
-      
-      // Update the rates - this uses the existing scraping infrastructure
-      const results = await updateExchangeRates(false);
-      
-      // Try to update the sources of the newly collected rates
-      try {
-        // Update the source field to indicate these came from scrapers
-        for (const rate of results) {
-          try {
-            // First try to update using the new column structure
-            await db.execute(sql`
-              UPDATE exchange_rates 
-              SET source = ${DataSourceType.SCRAPER}
-              WHERE id = ${rate.id}
-            `).catch(() => {
-              // If the column doesn't exist, that's okay, we'll add it later
-              log(`Source column may not exist yet for rate ${rate.id}`);
-            });
-          } catch (updateError) {
-            log(`Error updating rate source: ${updateError}`);
-          }
-        }
-      } catch (sourceError) {
-        log(`Note: Source tracking will be available after schema update: ${sourceError}`);
-      }
-      
-      successCount += results.length;
-      log(`Collected ${results.length} rates from web scrapers`);
-    } catch (error) {
-      log(`Error collecting rates from scrapers: ${error}`);
-    }
-    
-    log(`Scheduled rate collection completed with ${successCount} new rates`);
+    log('Rate collection completed successfully');
+    return true;
   } catch (error) {
-    log(`Error in scheduled rate collection: ${error}`);
+    log(`Error in rate collection: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Collect rates from direct provider APIs
+ */
+async function collectFromAPIs(): Promise<void> {
+  try {
+    log('Collecting rates from provider APIs...');
+    
+    // Get API for Wise
+    const { fetchWiseRates } = await import('../api/wiseApi');
+    
+    // Collect Wise rates (if API key is available)
+    try {
+      const wiseProvider = (await storage.getProviders()).find(p => 
+        p.name.toLowerCase().includes('wise'));
+      
+      if (wiseProvider) {
+        log(`Collecting rates from Wise API for provider ID ${wiseProvider.id}...`);
+        const wiseRates = await fetchWiseRates();
+        
+        // Save each rate to the database with API source type
+        for (const rate of wiseRates) {
+          await storage.createExchangeRate({
+            provider_id: wiseProvider.id,
+            from_currency: rate.fromCurrency,
+            to_currency: rate.toCurrency,
+            rate: rate.rate,
+            source: DataSourceType.API,
+            source_url: 'Wise API',
+            verified: true
+          });
+        }
+        
+        log(`Saved ${wiseRates.length} rates from Wise API`);
+      } else {
+        log('Wise provider not found in database, skipping API collection');
+      }
+    } catch (error) {
+      log(`Error collecting rates from Wise API: ${error}`);
+    }
+    
+    // Here we would add more API integrations as they become available
+    // E.g., for WorldRemit, Lemfi, etc.
+    
+    log('API rate collection completed');
+  } catch (error) {
+    log(`Error in API rate collection: ${error}`);
+  }
+}
+
+/**
+ * Collect rates from web scrapers
+ */
+async function collectFromScrapers(): Promise<void> {
+  try {
+    log('Collecting rates from web scrapers...');
+    
+    // Import scrapers
+    const { updateExchangeRates } = await import('../scrapers/providers');
+    const { updateWorldRemitRate } = await import('../scrapers/worldRemitScraper');
+    const { updateLemfiRate } = await import('../scrapers/lemfiScraper');
+    
+    // Run scrapers one by one to avoid overloading
+    try {
+      log('Running general exchange rate scraper...');
+      await updateExchangeRates();
+    } catch (error) {
+      log(`Error in general exchange rate scraper: ${error}`);
+    }
+    
+    try {
+      log('Running WorldRemit scraper...');
+      await updateWorldRemitRate();
+    } catch (error) {
+      log(`Error in WorldRemit scraper: ${error}`);
+    }
+    
+    try {
+      log('Running Lemfi scraper...');
+      await updateLemfiRate();
+    } catch (error) {
+      log(`Error in Lemfi scraper: ${error}`);
+    }
+    
+    log('Web scraper rate collection completed');
+  } catch (error) {
+    log(`Error in web scraper rate collection: ${error}`);
   }
 }
 
 /**
  * Initialize the rate collection scheduler
- * Checks every hour if it's time to run a collection
+ * Sets up jobs to run at specified intervals
  */
 export function initializeRateCollectionScheduler(): void {
-  log('Initializing rate collection scheduler');
+  // Clear any existing jobs
+  stopRateCollectionScheduler();
   
-  // Run the first collection immediately
-  collectAllRates();
+  log('Initializing rate collection scheduler...');
   
-  // Set up hourly checks
-  setInterval(() => {
-    if (shouldRunCollection()) {
-      log(`Scheduled collection time reached (${new Date().getHours()}:00)`);
-      collectAllRates();
+  // Setup initial collection
+  setTimeout(() => {
+    collectAllRates()
+      .then(() => log('Initial rate collection completed'))
+      .catch(error => log(`Error in initial rate collection: ${error}`));
+  }, 60000); // Wait a minute after startup to allow the app to initialize
+  
+  // Setup scheduled collections using simple scheduling (since we don't have node-cron)
+  // Morning collection - 6 AM
+  const morningJob = setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 6 && now.getMinutes() === 0) {
+      log('Running scheduled morning rate collection (6 AM)...');
+      collectAllRates()
+        .then(() => log('Morning rate collection completed'))
+        .catch(error => log(`Error in morning rate collection: ${error}`));
     }
-  }, 60 * 60 * 1000); // Check every hour
+  }, 60000); // Check every minute
   
-  log(`Rate collection scheduled for ${COLLECTION_TIMES.join(', ')} hours daily`);
+  // Afternoon collection - 2 PM
+  const afternoonJob = setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 14 && now.getMinutes() === 0) {
+      log('Running scheduled afternoon rate collection (2 PM)...');
+      collectAllRates()
+        .then(() => log('Afternoon rate collection completed'))
+        .catch(error => log(`Error in afternoon rate collection: ${error}`));
+    }
+  }, 60000); // Check every minute
+  
+  // Evening collection - 10 PM
+  const eveningJob = setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 22 && now.getMinutes() === 0) {
+      log('Running scheduled evening rate collection (10 PM)...');
+      collectAllRates()
+        .then(() => log('Evening rate collection completed'))
+        .catch(error => log(`Error in evening rate collection: ${error}`));
+    }
+  }, 60000); // Check every minute
+  
+  // Store active jobs
+  activeJobs = [morningJob, afternoonJob, eveningJob];
+  
+  log('Rate collection scheduler initialized with 3 daily collection periods');
 }
 
-// Export for manual triggering
-export default {
-  collectAllRates,
-  initializeRateCollectionScheduler
-};
+/**
+ * Stop the rate collection scheduler
+ */
+export function stopRateCollectionScheduler(): void {
+  if (activeJobs.length > 0) {
+    log('Stopping rate collection scheduler...');
+    activeJobs.forEach(job => clearInterval(job));
+    activeJobs = [];
+    log('Rate collection scheduler stopped');
+  }
+}

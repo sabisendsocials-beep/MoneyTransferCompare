@@ -79,6 +79,11 @@ async function updateProviderList() {
         has_fixed_fee: true,
         fixed_fee: 3.56,
         percentage_fee: 0.52,
+        has_api: true,
+        api_url: "https://api.wise.com/v1/rates",
+        api_key_required: true,
+        api_response_path: "rate",
+        preferred_collection: "API",
         active: true
       },
       {
@@ -134,6 +139,11 @@ async function updateProviderList() {
           has_fixed_fee: typeof provider.fixed_fee === 'number' && provider.fixed_fee > 0,
           fixed_fee: typeof provider.fixed_fee === 'number' ? provider.fixed_fee : 0,
           percentage_fee: provider.percentage_fee || 0,
+          has_api: provider.has_api || false,
+          api_url: provider.api_url || null,
+          api_key_required: provider.api_key_required || false,
+          api_response_path: provider.api_response_path || null,
+          preferred_collection: provider.preferred_collection || 'SCRAPER',
           active: provider.active !== undefined ? provider.active : true
         };
         
