@@ -25,13 +25,23 @@ export const providers = pgTable("providers", {
   logo: text("logo"),
   rating: real("rating"),
   website_url: text("website_url"),
+  // Scraping configuration
   scraping_url: text("scraping_url"),
   scraping_selector: text("scraping_selector"),
+  // API integration configuration
+  has_api: boolean("has_api").default(false),
+  api_url: text("api_url"),
+  api_key_required: boolean("api_key_required").default(false),
+  api_response_path: text("api_response_path"), // JSON path to extract rate from API response
+  // Provider details
   transfer_time: text("transfer_time"),
   has_fixed_fee: boolean("has_fixed_fee").default(false),
   fixed_fee: real("fixed_fee"),
   percentage_fee: real("percentage_fee"),
+  // Collection strategy preference (API, SCRAPER, or MANUAL)
+  preferred_collection: text("preferred_collection").default('SCRAPER'),
   active: boolean("active").default(true),
+  last_successful_collection: timestamp("last_successful_collection"),
 });
 
 export const insertProviderSchema = createInsertSchema(providers).omit({
@@ -41,13 +51,24 @@ export const insertProviderSchema = createInsertSchema(providers).omit({
 export type InsertProvider = z.infer<typeof insertProviderSchema>;
 export type Provider = typeof providers.$inferSelect;
 
-// Exchange rate schema
+// Data source enum for rate collection
+export enum RateSourceType {
+  API = 'API',
+  SCRAPER = 'SCRAPER',
+  MANUAL = 'MANUAL',
+  FALLBACK = 'FALLBACK'
+}
+
+// Exchange rate schema with source tracking
 export const exchangeRates = pgTable("exchange_rates", {
   id: serial("id").primaryKey(),
   provider_id: integer("provider_id").notNull(),
   from_currency: text("from_currency").notNull(),
   to_currency: text("to_currency").notNull(),
   rate: real("rate").notNull(),
+  source: text("source").default('SCRAPER').notNull(), // API, SCRAPER, MANUAL, FALLBACK
+  source_url: text("source_url"), // URL or identifier of the data source
+  verified: boolean("verified").default(false), // Whether this rate has been verified
   timestamp: timestamp("timestamp").defaultNow().notNull()
 });
 
