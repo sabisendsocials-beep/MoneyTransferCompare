@@ -4,10 +4,7 @@ import { CheckCircle2 } from "lucide-react";
 
 /**
  * Component to display verification status badge
- * 
- * @param {object} props
- * @param {boolean} props.verified - Whether the item is verified
- * @param {string} props.className - Additional CSS classes
+ * Shows a green checkmark badge when a rate has been manually verified
  */
 export const VerificationBadge = ({ verified, className = "" }) => {
   if (!verified) return null;

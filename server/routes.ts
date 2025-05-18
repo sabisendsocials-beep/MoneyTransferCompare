@@ -22,6 +22,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register data source router for the new collection strategy
   app.use(dataSourceRouter);
+  
+  // Rate verification endpoint
+  apiRouter.post("/api/rate-verify", async (req: Request, res: Response) => {
+    try {
+      const { id, verified } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Rate ID is required'
+        });
+      }
+      
+      if (typeof verified !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: 'Verified status must be a boolean'
+        });
+      }
+      
+      try {
+        // Import needed dependencies
+        const { db } = await import('./db');
+        const { exchangeRates } = await import('@shared/schema');
+        const { eq } = await import('drizzle-orm');
+        
+        // Update the rate verification status
+        const [updatedRate] = await db
+          .update(exchangeRates)
+          .set({ 
+            verified,
+            timestamp: new Date()
+          })
+          .where(eq(exchangeRates.id, id))
+          .returning();
+        
+        if (!updatedRate) {
+          return res.status(404).json({
+            success: false,
+            message: 'Rate not found'
+          });
+        }
+        
+        console.log(`Rate ${id} ${verified ? 'verified' : 'unverified'} successfully`);
+        
+        return res.json({
+          success: true,
+          message: `Rate ${verified ? 'verified' : 'unverified'} successfully`,
+          rate: updatedRate
+        });
+      } catch (error) {
+        throw new Error(`Failed to update rate: ${error}`);
+      }
+    } catch (error) {
+      console.error(`Error verifying rate: ${error}`);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update rate verification status',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get all verified rates
+  apiRouter.get("/api/verified-rates", async (_req: Request, res: Response) => {
+    try {
+      // Import needed dependencies
+      const { db } = await import('./db');
+      const { exchangeRates } = await import('@shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      
+      const verifiedRates = await db
+        .select()
+        .from(exchangeRates)
+        .where(eq(exchangeRates.verified, true))
+        .orderBy(desc(exchangeRates.timestamp));
+      
+      return res.json(verifiedRates);
+    } catch (error) {
+      console.error(`Error fetching verified rates: ${error}`);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch verified rates',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Get all providers
   apiRouter.get("/api/providers", async (req: Request, res: Response) => {
