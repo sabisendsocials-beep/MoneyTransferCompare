@@ -35,7 +35,7 @@ router.post('/api/direct-verify', async (req, res) => {
       const result = await db.execute(
         `UPDATE exchange_rates 
          SET verified = $1, timestamp = NOW() 
-         WHERE id = $2 
+         WHERE provider_id = $2 
          RETURNING *`,
         [verified, id]
       );
