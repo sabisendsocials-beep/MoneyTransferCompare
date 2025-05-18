@@ -26,8 +26,8 @@ const LatestRatesTable = () => {
     mutationFn: async ({ rateId, verified, fromCurrency, toCurrency }: { rateId: number, verified: boolean, fromCurrency: string, toCurrency: string }) => {
       console.log(`Verifying rate ID ${rateId} as ${verified ? 'verified' : 'unverified'}`);
       
-      // Use the new simplified verification endpoint
-      const response = await fetch('/api/simple-verify', {
+      // Use the new API endpoint for verification
+      const response = await fetch('/api/verify-rate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

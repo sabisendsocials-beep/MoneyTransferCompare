@@ -20,8 +20,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api', dataSourceRoutes);
 
 // Register rate verification endpoint
-import simpleVerifyRouter from './routes/simple-direct-verify.js';
-app.use(simpleVerifyRouter);
+import verifyApiRouter from './routes/verify-api.js';
+app.use(verifyApiRouter);
 
 app.use((req, res, next) => {
   const start = Date.now();
