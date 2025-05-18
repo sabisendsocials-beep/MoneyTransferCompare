@@ -50,7 +50,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize database tables
+  // OPTIMIZED STARTUP - Only initialize essential database tables
   try {
     log("Initializing database...");
     await initializeDatabase();
@@ -66,20 +66,6 @@ app.use((req, res, next) => {
       log(`Error in provider schema migration: ${migrationError}`);
     }
     
-    // Update the provider list with the latest providers
-    await updateProviderList();
-    log("Provider list updated with latest providers");
-    
-    // Update provider ratings with verified TrustPilot values
-    try {
-      const { updateVerifiedRatings } = await import('./updateVerifiedRatings');
-      log("Updating provider ratings with verified TrustPilot values...");
-      await updateVerifiedRatings();
-      log("Provider ratings updated with TrustPilot values");
-    } catch (ratingError) {
-      log(`Error updating provider ratings: ${ratingError}`);
-    }
-    
     // Initialize the rate collection scheduler (runs 3x daily)
     try {
       log("Initializing rate collection scheduler...");
@@ -89,73 +75,9 @@ app.use((req, res, next) => {
       log(`Error initializing rate collection scheduler: ${schedulerError}`);
     }
     
-    // Try to update exchange rates with real data from providers
-    try {
-      // First refresh our provider list with latest providers
-      try {
-        log("Updating provider list with latest transfer providers...");
-        await updateProviderList();
-        log("Provider list updated successfully");
-      } catch (providerError) {
-        log(`Error updating provider list: ${providerError}`);
-      }
-      
-      // First try to update rates directly from provider APIs
-      try {
-        // Specifically try Wise API first since we have the key
-        try {
-          const updateWiseRates = (await import('./api/wiseApi.js')).default;
-          log("Fetching exchange rates directly from Wise API...");
-          await updateWiseRates();
-          log("Wise API rate update completed");
-        } catch (wiseError) {
-          log(`Error updating rates from Wise API: ${wiseError}`);
-        }
-        
-        // Try other provider APIs
-        const updateRatesFromApis = (await import('./api/providerApis.js')).default;
-        log("Attempting to update rates from other provider APIs...");
-        await updateRatesFromApis();
-        log("API-based rate updates completed");
-      } catch (apiError) {
-        log(`Error updating rates from provider APIs: ${apiError}`);
-      }
-      
-      // Then fall back to web scraping for any missing rates
-      await updateExchangeRates();
-      log("Exchange rates updated with scraped data");
-      
-      // Initialize rate trends data if needed
-      try {
-        const { initializeRateTrends } = await import('./initializeRateTrends');
-        log("Ensuring rate trend data is initialized...");
-        await initializeRateTrends();
-        log("Rate trend data initialization complete");
-      } catch (trendsError) {
-        log(`Error initializing rate trends: ${trendsError}`);
-      }
-      
-      // Import and apply any verified rates
-      try {
-        const updatePreciseRates = (await import('./updateRates.js')).default;
-        log("Updating exchange rates with verified values...");
-        await updatePreciseRates();
-        log("Exchange rates updated with verified values");
-      } catch (rateError) {
-        log(`Error updating verified rates: ${rateError}`);
-      }
-    } catch (error) {
-      log(`Error updating exchange rates via scraping: ${error}`);
-    }
+    // We'll defer all other operations until after server startup
+    log("Deferring heavy operations until after server startup for faster loading...");
     
-    // Update all provider rates from verified screenshot data
-    try {
-      // This will update rates for all providers in the screenshots
-      await updateRatesFromScreenshots();
-      log("Provider rates updated from verified screenshot data");
-    } catch (error) {
-      log(`Error updating rates from screenshots: ${error}`);
-    }
   } catch (error) {
     log(`Failed to initialize database: ${error}`);
   }
@@ -226,6 +148,86 @@ app.use((req, res, next) => {
   
   // Set up automatic update intervals for data
   setupAutomaticUpdates();
+  
+  // Run deferred operations AFTER server has started (with delay)
+  setTimeout(async () => {
+    log("Server started, now running deferred operations...");
+    
+    try {
+      // Update the provider list with the latest providers
+      log("Updating provider list with latest providers...");
+      await updateProviderList();
+      log("Provider list updated with latest providers");
+      
+      // Initialize rate trends data if needed
+      try {
+        const { initializeRateTrends } = await import('./initializeRateTrends');
+        log("Ensuring rate trend data is initialized...");
+        await initializeRateTrends();
+        log("Rate trend data initialization complete");
+      } catch (trendsError) {
+        log(`Error initializing rate trends: ${trendsError}`);
+      }
+      
+      // Update provider ratings (but don't block startup)
+      setTimeout(async () => {
+        try {
+          const { updateVerifiedRatings } = await import('./updateVerifiedRatings');
+          log("Updating provider ratings with verified TrustPilot values...");
+          await updateVerifiedRatings();
+          log("Provider ratings updated with TrustPilot values");
+        } catch (ratingError) {
+          log(`Error updating provider ratings: ${ratingError}`);
+        }
+      }, 10000); // Run after 10 seconds
+      
+      // Check if rates exist, only fetch if we don't have recent data
+      const checkAndUpdateRates = async () => {
+        try {
+          // Check for recent rates in the database
+          const fromCurrency = "GBP";
+          const toCurrency = "NGN";
+          const recentRates = await storage.getLatestRates(fromCurrency, toCurrency);
+          
+          // Only update if we don't have recent rates
+          if (!recentRates || recentRates.length === 0) {
+            log("No recent exchange rates found, fetching current rates...");
+            
+            // Try API-based updates first
+            try {
+              // Specifically try Wise API since we have the key
+              const updateWiseRates = (await import('./api/wiseApi.js')).default;
+              log("Fetching exchange rates from Wise API...");
+              await updateWiseRates();
+              log("Wise API rate update completed");
+            } catch (wiseError) {
+              log(`Error updating rates from Wise API: ${wiseError}`);
+            }
+            
+            // Then try other provider APIs
+            try {
+              const updateRatesFromApis = (await import('./api/providerApis.js')).default;
+              log("Attempting to update rates from other provider APIs...");
+              await updateRatesFromApis();
+              log("API-based rate updates completed");
+            } catch (apiError) {
+              log(`Error updating rates from provider APIs: ${apiError}`);
+            }
+          } else {
+            log(`Found ${recentRates.length} recent exchange rates, skipping fresh fetch`);
+          }
+        } catch (error) {
+          log(`Error checking and updating rates: ${error}`);
+        }
+      };
+      
+      // Schedule rate checks to run after 20 seconds
+      setTimeout(checkAndUpdateRates, 20000);
+      
+    } catch (error) {
+      log(`Error in deferred operations: ${error}`);
+    }
+  }, 5000); // Wait 5 seconds after server startup
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
