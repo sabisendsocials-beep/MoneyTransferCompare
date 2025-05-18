@@ -23,7 +23,7 @@ const LatestRatesTable = () => {
   
   // Mutation for verifying a rate
   const verifyRateMutation = useMutation({
-    mutationFn: async ({ rateId, verified }: { rateId: number, verified: boolean }) => {
+    mutationFn: async ({ rateId, verified, fromCurrency, toCurrency }: { rateId: number, verified: boolean, fromCurrency: string, toCurrency: string }) => {
       console.log(`Verifying rate ID ${rateId} as ${verified ? 'verified' : 'unverified'}`);
       
       // Use the sql tool directly to guarantee this works without TypeScript issues
@@ -34,7 +34,9 @@ const LatestRatesTable = () => {
         },
         body: JSON.stringify({ 
           id: rateId,
-          verified: verified 
+          verified: verified,
+          fromCurrency: fromCurrency,
+          toCurrency: toCurrency
         })
       });
       
@@ -163,7 +165,12 @@ const LatestRatesTable = () => {
                           variant="outline" 
                           size="sm"
                           className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                          onClick={() => verifyRateMutation.mutate({ rateId: rate.providerId, verified: false })}
+                          onClick={() => verifyRateMutation.mutate({ 
+                            rateId: rate.providerId, 
+                            verified: false,
+                            fromCurrency: rate.fromCurrency,
+                            toCurrency: rate.toCurrency 
+                          })}
                           disabled={verifyRateMutation.isPending}
                         >
                           Unverify
@@ -173,7 +180,12 @@ const LatestRatesTable = () => {
                           variant="outline" 
                           size="sm"
                           className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-                          onClick={() => verifyRateMutation.mutate({ rateId: rate.providerId, verified: true })}
+                          onClick={() => verifyRateMutation.mutate({ 
+                            rateId: rate.providerId, 
+                            verified: true,
+                            fromCurrency: rate.fromCurrency,
+                            toCurrency: rate.toCurrency 
+                          })}
                           disabled={verifyRateMutation.isPending}
                         >
                           Verify

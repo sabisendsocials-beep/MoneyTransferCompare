@@ -32,12 +32,15 @@ router.post('/api/direct-verify', async (req, res) => {
     
     // Execute direct SQL for maximum reliability
     try {
+      // We need to add additional parameters to identify the specific rate
       const result = await db.execute(
         `UPDATE exchange_rates 
          SET verified = $1, timestamp = NOW() 
          WHERE provider_id = $2 
+           AND from_currency = $3
+           AND to_currency = $4
          RETURNING *`,
-        [verified, id]
+        [verified, id, req.body.fromCurrency, req.body.toCurrency]
       );
       
       if (!result.rows || result.rows.length === 0) {
