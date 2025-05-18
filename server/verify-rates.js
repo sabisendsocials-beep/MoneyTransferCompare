@@ -5,10 +5,11 @@ export async function verifyRate(providerId, fromCurrency, toCurrency, verified)
   console.log(`Verifying rate: provider=${providerId}, from=${fromCurrency}, to=${toCurrency}, verified=${verified}`);
   
   // Direct raw SQL update for maximum reliability
+  // IMPORTANT: We've removed the "timestamp = NOW()" to prevent updating timestamps during verification
   try {
     const query = `
       UPDATE exchange_rates 
-      SET verified = $1, timestamp = NOW() 
+      SET verified = $1
       WHERE provider_id = $2 
         AND from_currency = $3 
         AND to_currency = $4
