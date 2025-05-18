@@ -163,7 +163,7 @@ const LatestRatesTable = () => {
                           variant="outline" 
                           size="sm"
                           className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                          onClick={() => verifyRateMutation.mutate({ rateId: rate.id, verified: false })}
+                          onClick={() => verifyRateMutation.mutate({ rateId: rate.providerId, verified: false })}
                           disabled={verifyRateMutation.isPending}
                         >
                           Unverify
@@ -173,7 +173,7 @@ const LatestRatesTable = () => {
                           variant="outline" 
                           size="sm"
                           className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-                          onClick={() => verifyRateMutation.mutate({ rateId: rate.id, verified: true })}
+                          onClick={() => verifyRateMutation.mutate({ rateId: rate.providerId, verified: true })}
                           disabled={verifyRateMutation.isPending}
                         >
                           Verify
