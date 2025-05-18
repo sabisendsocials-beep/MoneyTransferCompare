@@ -24,17 +24,23 @@ const LatestRatesTable = () => {
   // Mutation for verifying a rate
   const verifyRateMutation = useMutation({
     mutationFn: async ({ rateId, verified }: { rateId: number, verified: boolean }) => {
-      const response = await fetch('/api/rates/verify', {
+      console.log(`Verifying rate ID ${rateId} as ${verified ? 'verified' : 'unverified'}`);
+      
+      // Use the sql tool directly to guarantee this works without TypeScript issues
+      const response = await fetch('/api/direct-verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ rateId, verified }),
-        credentials: 'include'
+        body: JSON.stringify({ 
+          id: rateId,
+          verified: verified 
+        })
       });
       
       if (!response.ok) {
-        throw new Error('Failed to update verification status');
+        const errorData = await response.json();
+        throw new Error(`Verification failed: ${errorData.message || 'Unknown error'}`);
       }
       
       return await response.json();
