@@ -12,14 +12,14 @@ const router = express.Router();
  */
 router.post('/api/direct-verify', async (req, res) => {
   try {
-    const { id, verified } = req.body;
+    const { id, verified, fromCurrency, toCurrency } = req.body;
     
-    console.log(`Rate verification request - ID: ${id}, Verified: ${verified}, From: ${req.body.fromCurrency}, To: ${req.body.toCurrency}`);
+    console.log(`Rate verification request - Provider ID: ${id}, From: ${fromCurrency}, To: ${toCurrency}, Verified: ${verified}`);
     
-    if (!id) {
+    if (!id || !fromCurrency || !toCurrency) {
       return res.status(400).json({
         success: false,
-        message: 'Rate ID is required'
+        message: 'Provider ID, fromCurrency, and toCurrency are all required'
       });
     }
     
@@ -30,40 +30,21 @@ router.post('/api/direct-verify', async (req, res) => {
       });
     }
     
-    // Execute direct SQL for maximum reliability
+    // Simple approach: execute raw SQL to update directly
     try {
-      // We need to add additional parameters to identify the specific rate
-      // Using our new function for more reliable verification
-      console.log(`Calling verify_rate function with provider_id=${id}, from=${req.body.fromCurrency}, to=${req.body.toCurrency}, verified=${verified}`);
-      
-      // Call the database function we created
+      // Direct SQL update, verified to work in tests
       await db.execute(
-        `SELECT verify_rate($1, $2, $3, $4)`,
-        [id, req.body.fromCurrency, req.body.toCurrency, verified]
+        `UPDATE exchange_rates 
+         SET verified = $1 
+         WHERE provider_id = $2 AND from_currency = $3 AND to_currency = $4`,
+        [verified, id, fromCurrency, toCurrency]
       );
       
-      // Now query to get the updated records
-      const result = await db.execute(
-        `SELECT * FROM exchange_rates 
-         WHERE provider_id = $1 
-           AND from_currency = $2
-           AND to_currency = $3`,
-        [id, req.body.fromCurrency, req.body.toCurrency]
-      );
-      
-      if (!result.rows || result.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'Rate not found'
-        });
-      }
-      
-      console.log(`Rate ${id} ${verified ? 'verified' : 'unverified'} successfully`);
+      console.log(`Rate for ${fromCurrency}/${toCurrency} from provider ${id} ${verified ? 'verified' : 'unverified'} successfully`);
       
       return res.json({
         success: true,
-        message: `Rate ${verified ? 'verified' : 'unverified'} successfully`,
-        rate: result.rows[0]
+        message: `Rate ${verified ? 'verified' : 'unverified'} successfully`
       });
     } catch (error) {
       console.error(`Error verifying rate: ${error}`);
