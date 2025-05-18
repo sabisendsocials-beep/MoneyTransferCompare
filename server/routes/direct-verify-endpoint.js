@@ -14,7 +14,7 @@ router.post('/api/direct-verify', async (req, res) => {
   try {
     const { id, verified } = req.body;
     
-    console.log(`Rate verification request - ID: ${id}, Verified: ${verified}`);
+    console.log(`Rate verification request - ID: ${id}, Verified: ${verified}, From: ${req.body.fromCurrency}, To: ${req.body.toCurrency}`);
     
     if (!id) {
       return res.status(400).json({
@@ -33,6 +33,10 @@ router.post('/api/direct-verify', async (req, res) => {
     // Execute direct SQL for maximum reliability
     try {
       // We need to add additional parameters to identify the specific rate
+      // Debug information to help troubleshoot
+      console.log(`Executing SQL: UPDATE exchange_rates SET verified = ${verified} WHERE provider_id = ${id} AND from_currency = '${req.body.fromCurrency}' AND to_currency = '${req.body.toCurrency}'`);
+      
+      // Case sensitive match for currency codes
       const result = await db.execute(
         `UPDATE exchange_rates 
          SET verified = $1, timestamp = NOW() 
