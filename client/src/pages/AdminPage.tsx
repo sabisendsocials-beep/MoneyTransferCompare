@@ -27,7 +27,7 @@ const LatestRatesTable = () => {
       console.log(`Verifying rate ID ${rateId} as ${verified ? 'verified' : 'unverified'}`);
       
       // Use the new simplified verification endpoint
-      const response = await fetch('/api/verify-rate', {
+      const response = await fetch('/api/simple-verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
