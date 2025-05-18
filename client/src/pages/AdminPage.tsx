@@ -26,14 +26,14 @@ const LatestRatesTable = () => {
     mutationFn: async ({ rateId, verified, fromCurrency, toCurrency }: { rateId: number, verified: boolean, fromCurrency: string, toCurrency: string }) => {
       console.log(`Verifying rate ID ${rateId} as ${verified ? 'verified' : 'unverified'}`);
       
-      // Use the sql tool directly to guarantee this works without TypeScript issues
-      const response = await fetch('/api/direct-verify', {
+      // Use the new simplified verification endpoint
+      const response = await fetch('/api/verify-rate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
-          id: rateId,
+          providerId: rateId,
           verified: verified,
           fromCurrency: fromCurrency,
           toCurrency: toCurrency

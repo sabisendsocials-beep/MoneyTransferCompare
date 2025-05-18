@@ -19,6 +19,10 @@ app.use(express.urlencoded({ extended: false }));
 // Register data collection API routes
 app.use('/api', dataSourceRoutes);
 
+// Register rate verification endpoint
+import verifyRateRouter from './routes/verify-rate-endpoint.js';
+app.use(verifyRateRouter);
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
