@@ -13,6 +13,8 @@ import apiKeysRouter from "./routes/apiKeys";
 import { rateSourceRouter } from "./routes/rateSource";
 import dataSourceRouter from "./routes/dataSourceRouter";
 
+
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // prefix all routes with /api
   const apiRouter = app;
@@ -22,6 +24,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register data source router for the new collection strategy
   app.use(dataSourceRouter);
+  
+  // Direct verification endpoint
+  apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {
+    try {
+      const { id, verified } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Rate ID is required'
+        });
+      }
+      
+      if (typeof verified !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: 'Verified status must be a boolean'
+        });
+      }
+      
+      try {
+        // Import needed dependencies
+        const { db } = await import('./db');
+        const { exchangeRates } = await import('@shared/schema');
+        const { eq } = await import('drizzle-orm');
+        
+        // Update the rate verification status
+        const [updatedRate] = await db
+          .update(exchangeRates)
+          .set({ 
+            verified,
+            timestamp: new Date()
+          })
+          .where(eq(exchangeRates.id, id))
+          .returning();
+        
+        if (!updatedRate) {
+          return res.status(404).json({
+            success: false,
+            message: 'Rate not found'
+          });
+        }
+        
+        console.log(`Rate ${id} ${verified ? 'verified' : 'unverified'} successfully`);
+        
+        return res.json({
+          success: true,
+          message: `Rate ${verified ? 'verified' : 'unverified'} successfully`,
+          rate: updatedRate
+        });
+      } catch (error) {
+        throw new Error(`Failed to update rate: ${error}`);
+      }
+    } catch (error) {
+      console.error(`Error verifying rate: ${error}`);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update rate verification status',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
   
   // Rate verification endpoint
   apiRouter.post("/api/rate-verify", async (req: Request, res: Response) => {
