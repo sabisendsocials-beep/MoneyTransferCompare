@@ -8,7 +8,7 @@ export async function directVerify(providerId, fromCurrency, toCurrency, verifie
   console.log(`Direct verify request: provider=${providerId}, from=${fromCurrency}, to=${toCurrency}, verified=${verified}`);
   
   try {
-    // Use the pool directly with parameterized query
+    // Use the pool directly with parameterized query - explicitly DO NOT update timestamp
     const result = await pool.query(
       `UPDATE exchange_rates 
        SET verified = $1

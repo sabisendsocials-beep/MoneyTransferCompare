@@ -41,11 +41,25 @@ const LatestRatesTable = () => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Verification failed: ${errorData.message || 'Unknown error'}`);
+        // Check content type to properly handle different response formats
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(`Verification failed: ${errorData.message || 'Unknown error'}`);
+        } else {
+          // Handle non-JSON responses
+          const text = await response.text();
+          throw new Error(`Server error: ${response.status}`);
+        }
       }
       
-      return await response.json();
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        return { success: true };
+      }
     },
     onSuccess: () => {
       toast({
