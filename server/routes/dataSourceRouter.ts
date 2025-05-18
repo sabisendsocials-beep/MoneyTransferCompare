@@ -254,4 +254,51 @@ router.get('/api/rates/latest', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/rates/verify
+ * Verify or unverify a rate entry
+ */
+router.post('/api/rates/verify', async (req: Request, res: Response) => {
+  try {
+    const { rateId, verified } = req.body;
+    
+    if (!rateId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rate ID is required'
+      });
+    }
+    
+    if (typeof verified !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Verified status must be a boolean'
+      });
+    }
+    
+    // Update the verification status in the database
+    const updated = await storage.updateRateVerification(rateId, verified);
+    
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rate not found'
+      });
+    }
+    
+    return res.json({
+      success: true,
+      message: `Rate ${verified ? 'verified' : 'unverified'} successfully`,
+      rate: updated
+    });
+  } catch (error) {
+    log(`Error verifying rate: ${error}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update rate verification status',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 export default router;

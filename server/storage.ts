@@ -43,6 +43,9 @@ export interface IStorage {
   getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats>;
   updateRateTrends(fromCurrency: string, toCurrency: string, trends: RateTrendResponse[]): Promise<void>;
   shouldRefreshRateTrends(fromCurrency: string, toCurrency: string): Promise<boolean>;
+  
+  // Rate verification methods
+  updateRateVerification(rateId: number, verified: boolean): Promise<ExchangeRate | undefined>;
 }
 
 export class MemStorage implements IStorage {

@@ -16,9 +16,43 @@ import { format } from "date-fns";
 
 // LatestRatesTable component to display the latest rates for each provider
 const LatestRatesTable = () => {
-  const { data: rates, isLoading, error } = useQuery({
+  const { data: rates, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/rates/latest'],
     refetchInterval: 30000, // Refresh every 30 seconds
+  });
+  
+  // Mutation for verifying a rate
+  const verifyRateMutation = useMutation({
+    mutationFn: async ({ rateId, verified }: { rateId: number, verified: boolean }) => {
+      const response = await fetch('/api/rates/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rateId, verified }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update verification status');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Verification status updated",
+        description: "The rate verification status has been updated",
+      });
+      refetch(); // Refresh the rates data
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating verification",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    }
   });
 
   if (isLoading) {
@@ -96,6 +130,8 @@ const LatestRatesTable = () => {
               <TableHead>Rate</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Last Updated</TableHead>
+              <TableHead>Verified</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,6 +144,36 @@ const LatestRatesTable = () => {
                     <TableCell>{rate.rate ? rate.rate.toFixed(4) : "N/A"}</TableCell>
                     <TableCell>{formatSourceBadge(rate.source)}</TableCell>
                     <TableCell>{formatDate(rate.lastUpdated || rate.timestamp)}</TableCell>
+                    <TableCell>
+                      {rate.verified ? (
+                        <Badge className="bg-green-100 text-green-800 border-0">Verified</Badge>
+                      ) : (
+                        <Badge className="bg-gray-100 text-gray-800 border-0">Unverified</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {rate.verified ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                          onClick={() => verifyRateMutation.mutate({ rateId: rate.id, verified: false })}
+                          disabled={verifyRateMutation.isPending}
+                        >
+                          Unverify
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
+                          onClick={() => verifyRateMutation.mutate({ rateId: rate.id, verified: true })}
+                          disabled={verifyRateMutation.isPending}
+                        >
+                          Verify
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               ))
