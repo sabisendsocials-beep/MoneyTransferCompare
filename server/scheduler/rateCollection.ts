@@ -101,33 +101,59 @@ async function collectFromAPIs(): Promise<void> {
  */
 async function collectFromScrapers(): Promise<void> {
   try {
-    log('Collecting rates from web scrapers...');
+    log('Collecting rates from web scrapers with enhanced system...');
     
-    // Import scrapers
-    const { updateExchangeRates } = await import('../scrapers/providers');
-    const { updateWorldRemitRate } = await import('../scrapers/worldRemitScraper');
-    const { updateLemfiRate } = await import('../scrapers/lemfiScraper');
+    // Import our enhanced scraper system
+    const scrapeAllProviderRates = (await import('../scrapers/enhancedScraperSystem.js')).default;
     
-    // Run scrapers one by one to avoid overloading
+    // Try the robust enhanced scraper first
     try {
-      log('Running general exchange rate scraper...');
-      await updateExchangeRates();
+      log('Running enhanced exchange rate scraper system...');
+      // Scrape GBP to NGN
+      const gbpToNgnResults = await scrapeAllProviderRates('GBP', 'NGN');
+      log(`Enhanced scraper collected ${gbpToNgnResults.length} GBP→NGN rates`);
+      
+      // Scrape EUR to NGN
+      const eurToNgnResults = await scrapeAllProviderRates('EUR', 'NGN');
+      log(`Enhanced scraper collected ${eurToNgnResults.length} EUR→NGN rates`);
+      
+      // Scrape GBP to GHS
+      const gbpToGhsResults = await scrapeAllProviderRates('GBP', 'GHS');
+      log(`Enhanced scraper collected ${gbpToGhsResults.length} GBP→GHS rates`);
+      
+      const totalResults = gbpToNgnResults.length + eurToNgnResults.length + gbpToGhsResults.length;
+      log(`Enhanced scraper system collected a total of ${totalResults} rates`);
     } catch (error) {
-      log(`Error in general exchange rate scraper: ${error}`);
+      log(`Error in enhanced scraper system: ${error}`);
     }
     
-    try {
-      log('Running WorldRemit scraper...');
-      await updateWorldRemitRate();
-    } catch (error) {
-      log(`Error in WorldRemit scraper: ${error}`);
-    }
-    
-    try {
-      log('Running Lemfi scraper...');
-      await updateLemfiRate();
-    } catch (error) {
-      log(`Error in Lemfi scraper: ${error}`);
+    // Fallback to the original scrapers if enhanced system fails
+    if (process.env.USE_LEGACY_SCRAPERS === 'true') {
+      log('Also running legacy scrapers as backup...');
+      
+      try {
+        const { updateExchangeRates } = await import('../scrapers/providers');
+        log('Running general exchange rate scraper...');
+        await updateExchangeRates();
+      } catch (error) {
+        log(`Error in general exchange rate scraper: ${error}`);
+      }
+      
+      try {
+        const { updateWorldRemitRate } = await import('../scrapers/worldRemitScraper');
+        log('Running WorldRemit scraper...');
+        await updateWorldRemitRate();
+      } catch (error) {
+        log(`Error in WorldRemit scraper: ${error}`);
+      }
+      
+      try {
+        const { updateLemfiRate } = await import('../scrapers/lemfiScraper');
+        log('Running Lemfi scraper...');
+        await updateLemfiRate();
+      } catch (error) {
+        log(`Error in Lemfi scraper: ${error}`);
+      }
     }
     
     log('Web scraper rate collection completed');
