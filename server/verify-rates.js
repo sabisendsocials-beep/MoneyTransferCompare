@@ -14,7 +14,7 @@ export async function verifyRate(providerId, fromCurrency, toCurrency, verified)
         AND to_currency = $4
     `;
     
-    const result = await db.query(query, [verified, providerId, fromCurrency, toCurrency]);
+    const result = await db.execute(query, [verified, providerId, fromCurrency, toCurrency]);
     console.log(`Updated ${result.rowCount} rows`);
     
     return {
