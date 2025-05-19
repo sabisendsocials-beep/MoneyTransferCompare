@@ -516,54 +516,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Special route to update WorldRemit rate with accurate data from screenshot
+  // Endpoint to force update WorldRemit rate using its admin-configured scraper
   apiRouter.post("/api/update-worldremit", async (req: Request, res: Response) => {
     try {
-      console.log('Manually updating WorldRemit rate from screenshot data...');
+      console.log('Triggering WorldRemit rate update using admin-configured URL and selector...');
       
-      // Find WorldRemit provider
-      const providers = await storage.getProviders();
-      const worldRemit = providers.find(p => p.name === 'WorldRemit');
+      // Import the scraper function
+      const { updateWorldRemitRate } = await import('./scrapers/worldRemitScraper');
       
-      if (!worldRemit) {
-        return res.status(404).json({ success: false, error: 'WorldRemit provider not found' });
+      // Run the scraper
+      const success = await updateWorldRemitRate();
+      
+      if (success) {
+        // Find WorldRemit provider to get the latest rate
+        const providers = await storage.getProviders();
+        const worldRemit = providers.find(p => p.name === 'WorldRemit');
+        
+        if (!worldRemit) {
+          return res.status(404).json({ success: false, error: 'WorldRemit provider not found' });
+        }
+        
+        // Get the latest rate to show in the response
+        const latestRates = await storage.getLatestRates('GBP', 'NGN');
+        const latestRate = latestRates.find(r => r.provider_id === worldRemit.id);
+        
+        res.json({ 
+          success: true, 
+          message: 'WorldRemit rate updated successfully using admin-configured settings',
+          provider: worldRemit.name,
+          oldRate: req.body?.oldRate || 'unknown',
+          newRate: latestRate?.rate || 'unknown',
+          timestamp: latestRate?.timestamp || new Date()
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Failed to update WorldRemit rate. Please check the URL and CSS selector in admin panel.',
+        });
       }
-      
-      // Calculate rate based on screenshot data
-      const sendAmount = 100; // GBP (from screenshot)
-      const receiveAmount = 211288; // NGN (from screenshot)
-      const rate = receiveAmount / sendAmount; // This gives us 2112.88
-      
-      console.log(`Setting WorldRemit rate to ${rate} based on verified screenshot data`);
-      
-      // Remove old rates first
-      try {
-        await storage.deleteExchangeRatesForProvider(worldRemit.id, 'GBP', 'NGN');
-        console.log('Deleted old WorldRemit rates');
-      } catch (error) {
-        console.warn('Could not delete old rates, continuing with update');
-      }
-      
-      // Add the new rate with all required fields
-      const exchangeRate = await storage.createExchangeRate({
-        provider_id: worldRemit.id,
-        from_currency: 'GBP',
-        to_currency: 'NGN',
-        rate: rate
-      });
-      
-      console.log(`Successfully added new WorldRemit rate: ${rate}`);
-      console.log(`Rate ID: ${exchangeRate.id}, timestamp: ${exchangeRate.timestamp}`);
-      
-      // Return success
-      res.json({ 
-        success: true, 
-        message: 'WorldRemit rate updated successfully',
-        provider: worldRemit.name,
-        oldRate: req.body?.oldRate || 'unknown',
-        newRate: rate,
-        timestamp: exchangeRate.timestamp
-      });
     } catch (error) {
       console.error('Error updating WorldRemit rate:', error);
       res.status(500).json({ success: false, error: String(error) });
