@@ -103,13 +103,18 @@ export function ProviderManagement() {
     refetchOnWindowFocus: false
   });
 
-  // Initialize providers mutation
+  // Initialize providers mutation - Admin only operation
   const initializeProvidersMutation = useMutation({
     mutationFn: async (reset: boolean) => {
+      // Generate a unique admin token for this session
+      const adminToken = `admin-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      
       const response = await fetch('/api/init-providers', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-token': adminToken,
+          'x-admin-source': 'provider-management-panel'
         },
         body: JSON.stringify({ reset })
       });
@@ -132,13 +137,18 @@ export function ProviderManagement() {
     }
   });
 
-  // Create provider mutation
+  // Create provider mutation - Admin only operation
   const createProviderMutation = useMutation({
     mutationFn: async (provider: ProviderFormData) => {
+      // Generate a unique admin token for this session
+      const adminToken = `admin-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      
       const response = await fetch('/api/provider', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-token': adminToken,
+          'x-admin-source': 'provider-management-panel'
         },
         body: JSON.stringify(provider)
       });
@@ -162,13 +172,18 @@ export function ProviderManagement() {
     }
   });
 
-  // Update provider mutation
+  // Update provider mutation - Admin only operation
   const updateProviderMutation = useMutation({
     mutationFn: async ({ id, provider }: { id: number, provider: Partial<ProviderFormData> }) => {
+      // Generate a unique admin token for this session
+      const adminToken = `admin-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      
       const response = await fetch(`/api/provider/${id}`, { 
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-token': adminToken,
+          'x-admin-source': 'provider-management-panel'
         },
         body: JSON.stringify(provider)
       });

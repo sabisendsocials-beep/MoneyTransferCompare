@@ -162,14 +162,29 @@ router.delete('/api/provider/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Initialize providers endpoint
+// Initialize providers endpoint - ADMIN-ONLY
 router.post('/api/init-providers', async (req: Request, res: Response) => {
   try {
     const { reset = false } = req.body;
     
+    // Only allow initialization from the admin panel - add a specific token/header
+    // that is only generated in the frontend admin component
+    const adminToken = req.headers['x-admin-token'];
+    const isAdminPanel = req.headers['x-admin-source'] === 'provider-management-panel';
+    
+    if (!adminToken || !isAdminPanel) {
+      console.error('Unauthorized attempt to initialize providers outside admin panel');
+      return res.status(403).json({
+        success: false,
+        message: 'Provider initialization is restricted to the admin panel only'
+      });
+    }
+    
     // Import the initialization script
     const { default: initializeProviders } = await import('../initialize-providers');
     const result = await initializeProviders(reset);
+    
+    console.log(`Provider initialization completed via admin panel. Reset: ${reset}`);
     
     res.json({
       success: true,

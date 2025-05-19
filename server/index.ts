@@ -160,10 +160,10 @@ app.use((req, res, next) => {
     log("Server started, now running deferred operations...");
     
     try {
-      // DISABLED: Update the provider list with the latest providers
-      log("DISABLED: Provider list update skipped to prevent duplicates");
-      // await updateProviderList();
-      log("Provider list remains unchanged - no new records added");
+      // PERMANENTLY DISABLED: Provider list updates can only happen through admin panel
+      log("PROVIDER SECURITY: Automatic provider updates are permanently disabled");
+      log("PROVIDER SECURITY: Providers can only be modified through the admin panel");
+      // Provider list remains locked unless explicitly changed through admin interface
       
       // Initialize rate trends data if needed
       try {
