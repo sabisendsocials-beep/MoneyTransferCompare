@@ -399,38 +399,16 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             }
           }
           
-          // Special handling for Wise with robust scraper
+          // Skip Wise since it's configured to use API only
           if (provider.name === 'Wise') {
-            console.log('=== Using robust scraper for Wise... ===');
-            try {
-              const wiseUrl = 'https://wise.com/gb/currency-converter/gbp-to-ngn-rate';
-              const rate = await scrapeExchangeRate(wiseUrl, 'GBP', 'NGN');
-              
-              if (rate !== null) {
-                console.log(`=== Successfully scraped Wise rate with robust scraper: ${rate} ===`);
-                
-                // Add the rate to database
-                const rateData: InsertExchangeRate = {
-                  provider_id: provider.id,
-                  from_currency: 'GBP',
-                  to_currency: 'NGN',
-                  rate
-                };
-                
-                await storage.createExchangeRate(rateData);
-                results.push({ provider: provider.name, success: true });
-                continue; // Skip to next provider
-              } else {
-                console.log('=== Robust scraper failed for Wise, trying enhanced scraping... ===');
-              }
-            } catch (error) {
-              console.error('Error using robust scraper for Wise:', error);
-              console.log('=== Robust scraper for Wise failed with error, trying enhanced scraping... ===');
-            }
+            console.log('=== Skipping Wise in scraper - configured to use API only ===');
+            results.push({ provider: provider.name, success: true });
+            continue; // Skip to next provider
           }
           
           // Determine if we should use enhanced scraping for this provider
-          const needsEnhancedScraping = ['Lemfi', 'Nala', 'WorldRemit', 'Wise'].includes(provider.name);
+          // Exclude Wise since it's configured to use API only
+          const needsEnhancedScraping = ['Lemfi', 'Nala', 'WorldRemit'].includes(provider.name);
           
           if (needsEnhancedScraping) {
             // Use enhanced scraping for JavaScript-heavy sites
