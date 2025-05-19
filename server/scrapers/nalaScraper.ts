@@ -175,7 +175,9 @@ export async function scrapeNalaRate(): Promise<number | null> {
           const specificSelectors = [
             '.inner__3tuwB', // Class from screenshot
             '.fxRateSummaryContainer__b4tl1', // Class from screenshot
+            'div.inner__3tuwB', // More specific class from screenshot
             'div:contains("1 GBP =")',
+            'span:contains("1 GBP =")',
             '.exchange-rate',
             '.rate-display',
             '.currency-rate'
