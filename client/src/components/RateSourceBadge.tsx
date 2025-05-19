@@ -4,8 +4,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 // Define rate source types directly in this component for simplicity
-// We only use 'api' for direct API connections and 'scraping' for web-scraped data
-export type RateSource = 'api' | 'scraping' | 'unavailable';
+// We use 'api' for direct API connections, 'scraping' for web-scraped data,
+// and 'screenshot' for rates that have been verified via screenshots
+export type RateSource = 'api' | 'scraping' | 'screenshot' | 'unavailable';
 
 interface RateSourceBadgeProps {
   source: RateSource;
@@ -23,6 +24,8 @@ export function RateSourceBadge({ source, className, showLabel = true }: RateSou
     switch (source) {
       case 'api':
         return <ShieldCheck className="h-3.5 w-3.5" />;
+      case 'screenshot':
+        return <CheckCircle2 className="h-3.5 w-3.5" />;
       case 'scraping':
         return <Globe className="h-3.5 w-3.5" />;
       default:
@@ -35,6 +38,8 @@ export function RateSourceBadge({ source, className, showLabel = true }: RateSou
     switch (source) {
       case 'api':
         return 'API Verified';
+      case 'screenshot':
+        return 'Verified Rate';
       case 'scraping':
         return 'Web Sourced';
       default:
@@ -47,6 +52,8 @@ export function RateSourceBadge({ source, className, showLabel = true }: RateSou
     switch (source) {
       case 'api':
         return "This rate comes directly from the provider's official API";
+      case 'screenshot':
+        return "This rate has been manually verified from the provider's website";
       case 'scraping':
         return "This rate was collected from the provider's website";
       default:

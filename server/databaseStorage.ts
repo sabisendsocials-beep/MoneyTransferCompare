@@ -286,7 +286,8 @@ export class DatabaseStorage implements IStorage {
           websiteUrl: provider.website_url,
           lastUpdated: rate.timestamp.toISOString(),
           lastChecked: new Date().toISOString(),
-          rateSource: rateSource
+          rateSource: rateSource,
+          comment: provider.comment || null // Include provider comment if available
         });
       }
     }
