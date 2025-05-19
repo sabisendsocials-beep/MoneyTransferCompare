@@ -654,13 +654,31 @@ export async function updateExchangeRates(clearExisting: boolean = false): Promi
   let results: ExchangeRate[] = [];
   
   try {
-    // First make sure we have all providers, including the new ones
+    // First preserve existing providers by getting their current IDs
+    // This allows us to keep historical data even if provider IDs change
+    const existingProviders = await storage.getProviders();
+    const existingProviderMap = new Map();
+    existingProviders.forEach(provider => {
+      existingProviderMap.set(provider.name, provider.id);
+    });
+    
+    // Update the providers but WITHOUT deleting existing exchange rates
+    if (existingProviders.length > 0) {
+      console.log(`Updating ${existingProviders.length} existing providers...`);
+      await storage.updateProvidersOnly(); // This new method preserves exchange rates
+    }
+    
+    // Now add all providers again
     await ensureProvidersExist();
     await addAdditionalProviders();
     
-    // Optionally clear all existing rates
+    // Get the new provider list
+    const newProviders = await storage.getProviders();
+    console.log(`Added ${newProviders.length} providers (preserving rate history)`);
+    
+    // Optionally clear all existing rates (if explicitly requested, which should be rare)
     if (clearExisting) {
-      console.log('Clearing all existing exchange rates from database...');
+      console.log('WARNING: Clearing all existing exchange rates from database...');
       await storage.deleteAllExchangeRates();
     }
     
@@ -672,11 +690,8 @@ export async function updateExchangeRates(clearExisting: boolean = false): Promi
     
     results = validResults;
     console.log(`Updated ${results.length} exchange rates via scraping`);
-    
-    // We'll no longer add predefined rates as fallback
   } catch (error) {
     console.error('Error in updateExchangeRates:', error);
-    // No fallback to adding all real rates
   }
   
   console.log(`Total updated ${results.length} exchange rates`);

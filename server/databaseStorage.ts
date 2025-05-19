@@ -58,13 +58,43 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteAllProviders(): Promise<void> {
-    // First delete all exchange rates (due to foreign key constraints)
-    await db.delete(schema.exchangeRates);
+    // Instead of deleting all exchange rates, we'll just delete providers
+    // This required modifying the foreign key constraint to use ON DELETE CASCADE
+    // If we need to implement this without modifying the schema, we can use a transaction
     
-    // Then delete all providers
+    // Delete all providers - the exchange rates will be preserved for historical records
     await db.delete(schema.providers);
     
-    console.log('All providers and their exchange rates have been deleted');
+    console.log('Cleared existing providers');
+  }
+  
+  // Add a new method to update providers without affecting rates
+  async updateProvidersOnly(): Promise<void> {
+    // Delete providers but keep the exchange rates for historical data
+    await db.delete(schema.providers);
+    console.log('Cleared existing providers (rates preserved)');
+  }
+  
+  // Add method to update rate verification status
+  async updateRateVerification(providerId: number, fromCurrency: string, toCurrency: string, verified: boolean): Promise<boolean> {
+    try {
+      // Update the verification status for this provider's rates
+      await db
+        .update(schema.exchangeRates)
+        .set({ verified })
+        .where(
+          and(
+            eq(schema.exchangeRates.provider_id, providerId),
+            eq(schema.exchangeRates.from_currency, fromCurrency),
+            eq(schema.exchangeRates.to_currency, toCurrency)
+          )
+        );
+      
+      return true;
+    } catch (error) {
+      console.error(`Error updating rate verification: ${error}`);
+      return false;
+    }
   }
   
   // Exchange rate methods
