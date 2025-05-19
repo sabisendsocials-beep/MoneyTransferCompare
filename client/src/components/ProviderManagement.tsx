@@ -380,16 +380,16 @@ export function ProviderManagement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {providers && providers.length > 0 ? (
+                    {providers && Array.isArray(providers) && providers.length > 0 ? (
                       providers.map((provider: Provider) => (
                         <TableRow key={provider.id}>
                           <TableCell className="font-medium">{provider.name}</TableCell>
                           <TableCell>{formatCollectionMethod(provider.preferred_collection)}</TableCell>
                           <TableCell>
                             {provider.has_fixed_fee ? (
-                              <>Fixed: {provider.fixed_fee.toFixed(2)}</>
+                              <>Fixed: {provider.fixed_fee?.toFixed(2) || '0.00'}</>
                             ) : (
-                              <>%: {provider.percentage_fee.toFixed(2)}%</>
+                              <>%: {provider.percentage_fee?.toFixed(2) || '0.00'}%</>
                             )}
                           </TableCell>
                           <TableCell>{provider.rating?.toFixed(1)} ⭐</TableCell>
