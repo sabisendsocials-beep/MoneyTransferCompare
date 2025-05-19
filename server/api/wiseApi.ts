@@ -138,6 +138,28 @@ export default async function updateWiseRates(): Promise<boolean> {
       return false;
     }
     
+    // First, delete any existing non-API Wise rates to clean up old web-scraped entries
+    try {
+      // Import needed modules
+      const { db } = await import('../db');
+      const { exchangeRates } = await import('@shared/schema');
+      const { eq, and, ne } = await import('drizzle-orm');
+      
+      // Delete all Wise rates that are NOT from API source
+      const deleteResult = await db.delete(exchangeRates)
+        .where(
+          and(
+            eq(exchangeRates.provider_id, wiseProvider.id),
+            ne(exchangeRates.source, DataSourceType.API)
+          )
+        );
+      
+      log(`Cleaned up old non-API Wise rates from database`);
+    } catch (cleanupError) {
+      log(`Warning: Error cleaning up old Wise rates: ${cleanupError}`);
+      // Continue with adding new rates regardless
+    }
+    
     // Save rates to database
     for (const rate of rates) {
       await storage.createExchangeRate({

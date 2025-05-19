@@ -567,6 +567,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Special endpoint to update Wise rates via API only
+  apiRouter.get("/api/update-wise-rates", async (req: Request, res: Response) => {
+    try {
+      console.log('Updating Wise rates via API only and cleaning up old web-scraped data...');
+      
+      // First, find the Wise provider
+      const providers = await storage.getProviders();
+      const wiseProvider = providers.find(p => p.name === 'Wise');
+      
+      if (!wiseProvider) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Wise provider not found in database'
+        });
+      }
+      
+      // Delete all non-API Wise rates to clean up old web-scraped entries
+      try {
+        // Import needed modules
+        const { db } = await import('./db');
+        const { exchangeRates } = await import('@shared/schema');
+        const { eq, and, ne } = await import('drizzle-orm');
+        
+        // Delete all Wise rates that are NOT from API source
+        await db.delete(exchangeRates)
+          .where(
+            and(
+              eq(exchangeRates.provider_id, wiseProvider.id),
+              ne(exchangeRates.source, 'API')
+            )
+          );
+        
+        console.log('Cleaned up old non-API Wise rates from database');
+      } catch (cleanupError) {
+        console.error(`Error cleaning up old Wise rates: ${cleanupError}`);
+        // Continue with adding new rates regardless
+      }
+      
+      // Now update with fresh API rates
+      const { default: updateWiseRates } = await import('./api/wiseApi');
+      const success = await updateWiseRates();
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Successfully updated Wise rates via API and cleaned up old data',
+          provider: wiseProvider.name
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to update Wise rates via API'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating Wise rates:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
   // Test endpoint for specialized scrapers
   apiRouter.get("/api/test-specialized-scrapers", async (req: Request, res: Response) => {
     try {
