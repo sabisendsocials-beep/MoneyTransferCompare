@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Spinner } from "@/components/Spinner";
 import { format } from "date-fns";
+import { ProviderManagement } from "@/components/ProviderManagement";
 
 // LatestRatesTable component to display the latest rates for each provider
 const LatestRatesTable = () => {
@@ -359,6 +360,7 @@ export default function AdminPage() {
           <TabsTrigger value="manual-entry">Manual Rate Entry</TabsTrigger>
           <TabsTrigger value="collection">Data Collection</TabsTrigger>
           <TabsTrigger value="sources">Data Sources</TabsTrigger>
+          <TabsTrigger value="providers">Provider Management</TabsTrigger>
         </TabsList>
         
         {/* Manual Entry Tab */}
