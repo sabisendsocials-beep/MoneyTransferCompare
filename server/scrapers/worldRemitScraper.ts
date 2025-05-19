@@ -8,103 +8,88 @@ import type { InsertExchangeRate } from '@shared/schema';
 
 /**
  * Scrape the current exchange rate from WorldRemit for GBP to NGN
- * Implements multiple strategies to get the most accurate rate
+ * Uses ONLY the URL and selector from the admin panel configuration
  * @returns The extracted rate or null if not found
  */
 export async function scrapeWorldRemitRate(): Promise<number | null> {
   try {
     console.log('=== WORLDREMIT DEDICATED SCRAPER RUNNING ===');
-    console.log('This scraper will try multiple approaches to get the WorldRemit rate:');
-    console.log('1. Try the direct URL for GBP to NGN rates');
-    console.log('2. Try to parse the HTML page for rate information');
-    console.log('3. Look for common rate patterns in the page');
+    console.log('This scraper will ONLY use the URL and CSS selector from the admin panel');
     
-    const urls = [
-      'https://www.worldremit.com/en/gbp-to-ngn-exchange-rate',
-      'https://www.worldremit.com/en/united-kingdom/nigeria',
-      'https://www.worldremit.com/en/currency-converter'
-    ];
+    // Get the WorldRemit provider from database to use its configured URL and selector
+    const providers = await storage.getActiveProviders();
+    const worldRemit = providers.find(p => p.name === 'WorldRemit');
     
-    // Try each URL
-    for (const url of urls) {
-      console.log(`Trying to fetch WorldRemit rate from ${url}...`);
-      
-      try {
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) {
-          console.log(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
-          continue;
-        }
-        
-        const html = await response.text();
-        const $ = cheerio.load(html);
-        console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
-        
-        // Try specific selectors for WorldRemit
-        const selectors = [
-          '[data-testid="rateValue"]',
-          '.exchange-rate-value',
-          '.exchange-rate',
-          'span.font-bold',
-          'h1',
-          'h2'
-        ];
-        
-        for (const selector of selectors) {
-          const elements = $(selector);
-          if (elements.length > 0) {
-            for (let i = 0; i < elements.length; i++) {
-              const text = $(elements[i]).text().trim();
-              console.log(`Found text with selector "${selector}": "${text}"`);
-              
-              // Try to extract rate from the text
-              const rate = extractWorldRemitRate(text);
-              if (rate !== null) {
-                console.log(`Found valid WorldRemit rate: ${rate}`);
-                return rate;
-              }
-            }
-          }
-        }
-        
-        // If selectors didn't work, try to find any text mentioning exchange rates
-        const bodyText = $('body').text();
-        console.log(`Looking for rate in body text (first 1000 chars): ${bodyText.substring(0, 1000)}`);
-        
-        // Try to extract any numbers that look like rates
-        const numbers = bodyText.match(/[\d,]+\.?\d*/g);
-        if (numbers) {
-          console.log('Found numbers in body text:');
-          numbers.forEach(num => {
-            // Clean the number and try to convert to a float
-            const cleanNum = num.replace(/,/g, '');
-            const floatNum = parseFloat(cleanNum);
-            if (!isNaN(floatNum) && floatNum > 1000 && floatNum < 3000) {
-              console.log(`Found possible GBP/NGN rate: ${floatNum}`);
-            }
-          });
-        }
-        
-        const rate = findRateInText(bodyText);
-        if (rate !== null) {
-          console.log(`Found WorldRemit rate in body text: ${rate}`);
-          return rate;
-        }
-      } catch (error) {
-        console.error(`Error fetching from ${url}:`, error);
-      }
+    if (!worldRemit) {
+      console.error('WorldRemit provider not found in database');
+      return null;
     }
     
-    console.log('Failed to find a valid WorldRemit rate');
-    return null;
+    if (!worldRemit.scraping_url) {
+      console.error('No scraping URL configured for WorldRemit in admin panel');
+      return null;
+    }
+    
+    if (!worldRemit.scraping_selector) {
+      console.error('No CSS selector configured for WorldRemit in admin panel');
+      return null;
+    }
+    
+    const url = worldRemit.scraping_url;
+    console.log(`Using admin-configured URL for WorldRemit: ${url}`);
+    
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
+        return null;
+      }
+      
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
+      
+      // Use the selectors from the admin panel configuration
+      // Split by comma in case multiple selectors are provided
+      const selectors = worldRemit.scraping_selector.split(',').map(s => s.trim());
+      console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
+      
+      for (const selector of selectors) {
+        const elements = $(selector);
+        if (elements.length > 0) {
+          console.log(`Found ${elements.length} elements with selector "${selector}"`);
+          
+          for (let i = 0; i < elements.length; i++) {
+            const text = $(elements[i]).text().trim();
+            console.log(`Element ${i+1} text: "${text}"`);
+            
+            // Try to extract rate from the text
+            const rate = extractWorldRemitRate(text);
+            if (rate !== null) {
+              console.log(`Successfully extracted rate from admin-configured selector: ${rate}`);
+              return rate;
+            }
+          }
+        } else {
+          console.log(`No elements found with selector "${selector}"`);
+        }
+      }
+      
+      console.error('Could not extract rate using the admin-configured selector');
+      return null;
+      
+    } catch (error) {
+      console.error(`Error fetching from ${url}:`, error);
+      return null;
+    }
   } catch (error) {
     console.error('Error in WorldRemit scraper:', error);
     return null;
