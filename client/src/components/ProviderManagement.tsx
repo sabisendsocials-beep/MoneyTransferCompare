@@ -67,6 +67,7 @@ interface ProviderFormData {
   api_url: string;
   api_key_required: boolean;
   api_response_path: string;
+  comment?: string; // Optional provider comment to show on results page
 }
 
 const defaultProvider: ProviderFormData = {
@@ -85,7 +86,8 @@ const defaultProvider: ProviderFormData = {
   has_api: false,
   api_url: "",
   api_key_required: false,
-  api_response_path: ""
+  api_response_path: "",
+  comment: ""
 };
 
 export function ProviderManagement() {

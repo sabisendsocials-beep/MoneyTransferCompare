@@ -42,6 +42,8 @@ export const providers = pgTable("providers", {
   preferred_collection: text("preferred_collection").default('SCRAPER'),
   active: boolean("active").default(true),
   last_successful_collection: timestamp("last_successful_collection"),
+  // Provider comments - for additional information displayed on results page
+  comment: text("comment"),
 });
 
 export const insertProviderSchema = createInsertSchema(providers).omit({
