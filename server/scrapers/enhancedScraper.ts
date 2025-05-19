@@ -29,7 +29,13 @@ export async function enhancedScrape(
       scrapingUrl = 'https://www.worldremit.com/en/gbp-to-ngn-exchange-rate';
     }
     
-    console.log(`Enhanced scraping of ${scrapingUrl}...`);
+    // Add detailed debugging for WorldRemit
+    if (scrapingUrl.includes('worldremit.com')) {
+      console.log(`=== WORLDREMIT DEBUG: Scraping URL: ${scrapingUrl} ===`);
+      console.log(`=== WORLDREMIT DEBUG: Using selectors: ${JSON.stringify(selectors)} ===`);
+    } else {
+      console.log(`Enhanced scraping of ${scrapingUrl}...`);
+    }
     
     // Use fetch with browser-like headers to avoid being blocked
     const response = await fetch(scrapingUrl, {
@@ -57,7 +63,20 @@ export async function enhancedScrape(
       if (element.length > 0) {
         const text = element.text().trim();
         if (text) {
-          console.log(`Found content with selector "${selector}": ${text}`);
+          if (url.includes('worldremit')) {
+            console.log(`=== WORLDREMIT DEBUG: SUCCESS with selector "${selector}" ===`);
+            console.log(`=== WORLDREMIT DEBUG: Found text: "${text}" ===`);
+            
+            // Try to extract rate from this text
+            const rate = findExchangeRatePattern(text);
+            if (rate) {
+              console.log(`=== WORLDREMIT DEBUG: Successfully extracted rate: ${rate} ===`);
+            } else {
+              console.log(`=== WORLDREMIT DEBUG: Failed to extract rate from text ===`);
+            }
+          } else {
+            console.log(`Found content with selector "${selector}": ${text}`);
+          }
           return text;
         }
       }
