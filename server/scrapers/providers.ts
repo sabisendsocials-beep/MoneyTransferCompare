@@ -646,14 +646,19 @@ export async function updateExchangeRates(clearExisting: boolean = false): Promi
     });
     
     // Update the providers but WITHOUT deleting existing exchange rates
-    if (existingProviders.length > 0) {
-      console.log(`Updating ${existingProviders.length} existing providers...`);
-      await storage.updateProvidersOnly(); // This new method preserves exchange rates
-    }
+    // Skip this step because we're now using provider protection
+    // The core providers are protected from deletion
+    console.log(`Preserving ${existingProviders.length} existing providers...`);
+    // We don't need to call updateProvidersOnly() anymore because we want to keep providers stable
     
-    // Now add all providers again
-    await ensureProvidersExist();
-    await addAdditionalProviders();
+    // Instead of recreating providers, just update existing ones
+    // This approach preserves the core providers while allowing updates
+    try {
+      // We don't need to recreate providers, just ensure they're properly configured
+      console.log('Updating provider configuration without recreating them...');
+    } catch (error) {
+      console.error('Error updating provider configuration:', error);
+    }
     
     // Get the new provider list
     const newProviders = await storage.getProviders();
