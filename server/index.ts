@@ -73,6 +73,8 @@ app.use((req, res, next) => {
     // Initialize the rate collection scheduler (runs 3x daily)
     try {
       log("Initializing rate collection scheduler...");
+      // Use our fixed rate collection implementation
+      const { initializeRateCollectionScheduler } = await import('./scheduler/fixedRateCollection');
       initializeRateCollectionScheduler();
       log("Rate collection scheduler initialized (runs at 6 AM, 2 PM, and 10 PM)");
     } catch (schedulerError) {

@@ -25,13 +25,19 @@ const COLLECTION_INTERVALS = {
 // Active collection jobs
 let activeJobs: NodeJS.Timeout[] = [];
 
+// Store which providers have been collected via API to avoid duplication
+const providersCollectedViaAPI = new Set<number>();
+
 /**
  * Collects rates from all available data sources with priority
  * Order: API data first, then manual entries, then web scrapers
  */
 export async function collectAllRates(): Promise<boolean> {
   try {
-    log('Starting scheduled rate collection process...');
+    log('Starting rate collection from all sources...');
+    
+    // Clear the tracking of API-collected providers
+    providersCollectedViaAPI.clear();
     
     // Step 1: Collect from direct APIs (highest priority)
     await collectFromAPIs();
@@ -39,34 +45,31 @@ export async function collectAllRates(): Promise<boolean> {
     // Step 2: Collect from web scrapers (lower priority)
     await collectFromScrapers();
     
-    log('Rate collection completed successfully');
+    log('Rate collection completed: successfully');
     return true;
   } catch (error) {
-    log(`Error in rate collection: ${error}`);
+    log(`Rate collection error: ${error}`);
     return false;
   }
 }
 
 /**
- * Collect rates from direct provider APIs based on provider configuration
+ * Collect rates from direct provider APIs
  */
 async function collectFromAPIs(): Promise<void> {
   try {
-    log('Collecting rates from provider APIs based on provider configuration...');
+    log('Collecting rates from provider APIs...');
     
     // Get all providers that prefer API collection
-    const apiProviders = await storage.getProviders({
-      preferred_collection: 'API',
-      active: true
-    });
+    const apiProviders = await storage.getProviders();
+    const preferApiProviders = apiProviders.filter(p => 
+      p.active && p.preferred_collection === 'API'
+    );
     
-    log(`Found ${apiProviders.length} providers configured for API collection`);
-    
-    // Track which providers we've successfully collected via API
-    const providersCollected = new Set<number>();
+    log(`Found ${preferApiProviders.length} providers configured for API collection`);
     
     // Process each API provider
-    for (const provider of apiProviders) {
+    for (const provider of preferApiProviders) {
       log(`Processing API collection for ${provider.name} (ID: ${provider.id})...`);
       
       // Handle each provider based on its name
@@ -81,7 +84,7 @@ async function collectFromAPIs(): Promise<void> {
             
             if (success) {
               log(`✓ Successfully collected rates via API for ${provider.name}`);
-              providersCollected.add(provider.id);
+              providersCollectedViaAPI.add(provider.id);
             } else {
               log(`⚠ API collection failed for ${provider.name} - STRICT POLICY: not falling back to scraping`);
             }
@@ -92,28 +95,15 @@ async function collectFromAPIs(): Promise<void> {
           break;
           
         // Add more API integrations as they become available
-        // case 'worldremit':
-        //   // Handle WorldRemit API
-        //   break;
-          
         default:
           log(`⚠ No API implementation available for ${provider.name} despite having API preference`);
       }
     }
     
-    // For tracking purposes, store the collected providers globally
-    // This prevents duplicate collection during the scraping phase
-    global.providersCollectedViaAPI = global.providersCollectedViaAPI || {};
-    providersCollected.forEach(id => {
-      global.providersCollectedViaAPI[id] = true;
-    });
-    
-    log(`Successfully collected rates via API for ${providersCollected.size} providers`);
+    log(`API rate collection completed successfully for ${providersCollectedViaAPI.size} providers`);
   } catch (error) {
     log(`Error in API rate collection: ${error}`);
   }
-  
-  log('API rate collection completed');
 }
 
 /**
@@ -121,14 +111,23 @@ async function collectFromAPIs(): Promise<void> {
  */
 async function collectFromScrapers(): Promise<void> {
   try {
-    log('Collecting rates from web scrapers with enhanced system...');
+    log('Collecting rates from web scrapers...');
+    
+    // Get active providers that prefer scraper collection or have no preference specified
+    const allProviders = await storage.getProviders();
+    const scraperProviders = allProviders.filter(p => 
+      p.active && 
+      (p.preferred_collection === 'SCRAPER' || !p.preferred_collection) && 
+      !providersCollectedViaAPI.has(p.id)
+    );
+    
+    log(`Found ${scraperProviders.length} providers for scraper collection`);
     
     // Import our enhanced scraper system
     const scrapeAllProviderRates = (await import('../scrapers/enhancedScraperSystem.js')).default;
     
-    // Try the robust enhanced scraper first
+    // Try the robust enhanced scraper
     try {
-      log('Running enhanced exchange rate scraper system...');
       // Scrape GBP to NGN
       const gbpToNgnResults = await scrapeAllProviderRates('GBP', 'NGN');
       log(`Enhanced scraper collected ${gbpToNgnResults.length} GBP→NGN rates`);
@@ -140,45 +139,13 @@ async function collectFromScrapers(): Promise<void> {
       // Scrape GBP to GHS
       const gbpToGhsResults = await scrapeAllProviderRates('GBP', 'GHS');
       log(`Enhanced scraper collected ${gbpToGhsResults.length} GBP→GHS rates`);
-      
-      const totalResults = gbpToNgnResults.length + eurToNgnResults.length + gbpToGhsResults.length;
-      log(`Enhanced scraper system collected a total of ${totalResults} rates`);
     } catch (error) {
       log(`Error in enhanced scraper system: ${error}`);
     }
     
-    // Fallback to the original scrapers if enhanced system fails
-    if (process.env.USE_LEGACY_SCRAPERS === 'true') {
-      log('Also running legacy scrapers as backup...');
-      
-      try {
-        const { updateExchangeRates } = await import('../scrapers/providers');
-        log('Running general exchange rate scraper...');
-        await updateExchangeRates();
-      } catch (error) {
-        log(`Error in general exchange rate scraper: ${error}`);
-      }
-      
-      try {
-        const { updateWorldRemitRate } = await import('../scrapers/worldRemitScraper');
-        log('Running WorldRemit scraper...');
-        await updateWorldRemitRate();
-      } catch (error) {
-        log(`Error in WorldRemit scraper: ${error}`);
-      }
-      
-      try {
-        const { updateLemfiRate } = await import('../scrapers/lemfiScraper');
-        log('Running Lemfi scraper...');
-        await updateLemfiRate();
-      } catch (error) {
-        log(`Error in Lemfi scraper: ${error}`);
-      }
-    }
-    
-    log('Web scraper rate collection completed');
+    log('Scraper collection complete');
   } catch (error) {
-    log(`Error in web scraper rate collection: ${error}`);
+    log(`Error in web scraper collection: ${error}`);
   }
 }
 
@@ -192,26 +159,19 @@ export function initializeRateCollectionScheduler(): void {
   
   log('Initializing rate collection scheduler...');
   
-  // Setup initial collection
-  setTimeout(() => {
-    collectAllRates()
-      .then(() => log('Initial rate collection completed'))
-      .catch(error => log(`Error in initial rate collection: ${error}`));
-  }, 60000); // Wait a minute after startup to allow the app to initialize
-  
-  // More robust scheduling implementation
-  // Instead of just checking once per minute, calculate the exact time until next run
-  // This ensures we don't miss schedules due to timing or precision issues
+  // Setup collection times
+  const collectionTimes = [6, 14, 22]; // 6 AM, 2 PM, 10 PM
+  log(`Collection times scheduled for:\n- ${collectionTimes.join(' UTC\n- ')} UTC`);
   
   // Track the last run times to avoid duplicate runs
-  const lastRunTimes = {
-    morning: null,
-    afternoon: null,
-    evening: null
+  const lastRunTimes: Record<number, string | null> = {
+    6: null,  // 6 AM
+    14: null, // 2 PM
+    22: null  // 10 PM
   };
   
   // Helper function to determine if a collection should run
-  function shouldRunCollection(targetHour, lastRunTime) {
+  function shouldRunCollection(targetHour: number, lastRunTime: string | null): boolean {
     const now = new Date();
     const today = now.toDateString();
     
@@ -236,49 +196,28 @@ export function initializeRateCollectionScheduler(): void {
     return false;
   }
   
-  // Check every 5 minutes instead of every minute
+  // Check every 5 minutes
   const schedulerJob = setInterval(() => {
     const now = new Date();
-    log(`Scheduler check at ${now.toISOString()} (Hour: ${now.getHours()}, Minute: ${now.getMinutes()})`);
     
-    // Morning collection - 6 AM
-    if (shouldRunCollection(6, lastRunTimes.morning)) {
-      log('Running scheduled morning rate collection (6 AM)...');
-      collectAllRates()
-        .then(() => {
-          lastRunTimes.morning = new Date().toISOString();
-          log(`Morning rate collection completed at ${lastRunTimes.morning}`);
-        })
-        .catch(error => log(`Error in morning rate collection: ${error}`));
-    }
-    
-    // Afternoon collection - 2 PM
-    if (shouldRunCollection(14, lastRunTimes.afternoon)) {
-      log('Running scheduled afternoon rate collection (2 PM)...');
-      collectAllRates()
-        .then(() => {
-          lastRunTimes.afternoon = new Date().toISOString();
-          log(`Afternoon rate collection completed at ${lastRunTimes.afternoon}`);
-        })
-        .catch(error => log(`Error in afternoon rate collection: ${error}`));
-    }
-    
-    // Evening collection - 10 PM
-    if (shouldRunCollection(22, lastRunTimes.evening)) {
-      log('Running scheduled evening rate collection (10 PM)...');
-      collectAllRates()
-        .then(() => {
-          lastRunTimes.evening = new Date().toISOString();
-          log(`Evening rate collection completed at ${lastRunTimes.evening}`);
-        })
-        .catch(error => log(`Error in evening rate collection: ${error}`));
+    // Check each collection time
+    for (const hour of collectionTimes) {
+      if (shouldRunCollection(hour, lastRunTimes[hour])) {
+        log(`Running scheduled rate collection (${hour}:00 UTC)...`);
+        collectAllRates()
+          .then(() => {
+            lastRunTimes[hour] = new Date().toISOString();
+            log(`Rate collection at ${hour}:00 UTC completed successfully`);
+          })
+          .catch(error => log(`Error in rate collection at ${hour}:00 UTC: ${error}`));
+      }
     }
   }, 300000); // Check every 5 minutes
   
   // Store active jobs
   activeJobs = [schedulerJob];
   
-  log('Rate collection scheduler initialized with 3 daily collection periods');
+  log('Rate collection scheduler initialized (checking every 5 minutes)');
 }
 
 /**
