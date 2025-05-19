@@ -160,10 +160,10 @@ app.use((req, res, next) => {
     log("Server started, now running deferred operations...");
     
     try {
-      // Update the provider list with the latest providers
-      log("Updating provider list with latest providers...");
-      await updateProviderList();
-      log("Provider list updated with latest providers");
+      // DISABLED: Update the provider list with the latest providers
+      log("DISABLED: Provider list update skipped to prevent duplicates");
+      // await updateProviderList();
+      log("Provider list remains unchanged - no new records added");
       
       // Initialize rate trends data if needed
       try {

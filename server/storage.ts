@@ -68,10 +68,11 @@ export class MemStorage implements IStorage {
     this.currentExchangeRateId = 1;
     this.currentNewsId = 1;
     
-    // Initialize with sample providers - using a self-executing async function
-    (async () => {
-      await this.initializeProviders();
-    })().catch(err => console.error("Error initializing data:", err));
+    // DISABLED: Initialize with sample providers
+    // This was causing duplicate provider records on every server restart
+    // (async () => {
+    //   await this.initializeProviders();
+    // })().catch(err => console.error("Error initializing data:", err));
   }
 
   private async initializeProviders() {
