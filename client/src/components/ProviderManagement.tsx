@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RefreshCw, PlusIcon, Pencil, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -294,7 +295,7 @@ export function ProviderManagement() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!editingProvider) return;
     
     const { name, value, type } = e.target;
@@ -731,6 +732,19 @@ export function ProviderManagement() {
                     onChange={handleInputChange}
                     placeholder="https://example.com/logo.png"
                   />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="comment">Provider Comment</Label>
+                  <Textarea 
+                    id="comment"
+                    name="comment"
+                    value={editingProvider?.comment || ""}
+                    onChange={handleInputChange}
+                    placeholder="Enter additional information about this provider to display on results page"
+                    className="h-20"
+                  />
+                  <p className="text-sm text-gray-500">This comment will be displayed on the results page when users compare providers</p>
                 </div>
               </div>
             </div>
