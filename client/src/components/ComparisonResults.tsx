@@ -399,6 +399,17 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Provider Comment */}
+                      {provider.comment && (
+                        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
+                          <div className="flex items-start">
+                            <InfoIcon className="h-4 w-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                            <p className="text-sm text-gray-700 dark:text-gray-300">{provider.comment}</p>
+                          </div>
+                        </div>
+                      )}
+                      
                       <Button 
                         variant="outline" 
                         className="w-full"
