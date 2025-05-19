@@ -280,8 +280,24 @@ router.post('/api/rates/verify', async (req: Request, res: Response) => {
       });
     }
     
-    // Update the verification status in the database
-    const updated = await storage.updateRateVerification(rateId, verified);
+    // Get the rate to find provider and currency details
+    const { getExchangeRateById } = await import('../queries/rateQueries');
+    const rate = await getExchangeRateById(rateId);
+    
+    if (!rate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rate not found'
+      });
+    }
+    
+    // Update the verification status in the database using provider and currency info
+    const updated = await storage.updateRateVerification(
+      rate.provider_id, 
+      rate.from_currency, 
+      rate.to_currency, 
+      verified
+    );
     
     if (!updated) {
       return res.status(404).json({

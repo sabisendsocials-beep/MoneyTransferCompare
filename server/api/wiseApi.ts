@@ -32,17 +32,18 @@ export async function fetchWiseRates(): Promise<StandardizedRate[]> {
     // Check if API key is available
     if (!process.env.WISE_API_KEY) {
       log('WISE_API_KEY environment variable not set');
-      return [];
+      throw new Error('Wise API key not found. Cannot use API integration.');
     }
     
     log('Fetching exchange rates from Wise API...');
+    log(`Using API key: ${process.env.WISE_API_KEY.substring(0, 3)}...${process.env.WISE_API_KEY.substring(process.env.WISE_API_KEY.length - 3)}`);
     
     // Currency pairs we're interested in
     const currencyPairs = [
       { from: 'GBP', to: 'NGN' },
       { from: 'GBP', to: 'GHS' },
       { from: 'EUR', to: 'NGN' },
-      { from: 'USD', to: 'NGN' },
+      { from: 'EUR', to: 'GHS' },
     ];
     
     const rates: StandardizedRate[] = [];
@@ -51,6 +52,8 @@ export async function fetchWiseRates(): Promise<StandardizedRate[]> {
     for (const pair of currencyPairs) {
       try {
         const { from, to } = pair;
+        
+        log(`Requesting Wise API rate for ${from} to ${to}...`);
         
         // Make API request
         const response = await axios.get(
@@ -62,9 +65,13 @@ export async function fetchWiseRates(): Promise<StandardizedRate[]> {
             headers: {
               'Authorization': `Bearer ${process.env.WISE_API_KEY}`,
               'Content-Type': 'application/json'
-            }
+            },
+            timeout: 5000 // 5 second timeout to prevent hanging
           }
         );
+        
+        // Log the response for debugging
+        log(`Wise API response status: ${response.status}`);
         
         // Check if we got valid rates
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {
@@ -79,20 +86,29 @@ export async function fetchWiseRates(): Promise<StandardizedRate[]> {
             timestamp: new Date(latestRate.time)
           });
           
-          log(`Successfully fetched Wise rate for ${from} to ${to}: ${latestRate.rate}`);
+          log(`✓ Successfully fetched Wise rate for ${from} to ${to}: ${latestRate.rate}`);
         } else {
-          log(`No rate data returned from Wise API for ${from} to ${to}`);
+          log(`⚠ No rate data returned from Wise API for ${from} to ${to}`);
         }
-      } catch (error) {
-        log(`Error fetching Wise rate for ${pair.from} to ${pair.to}: ${error}`);
+      } catch (error: any) {
+        log(`⚠ Error fetching Wise rate for ${pair.from} to ${pair.to}: ${error.message}`);
+        if (error.response) {
+          log(`  Status: ${error.response.status}`);
+          log(`  Data: ${JSON.stringify(error.response.data)}`);
+        }
       }
     }
     
-    log(`Successfully fetched ${rates.length} exchange rates from Wise API`);
+    if (rates.length === 0) {
+      throw new Error('No rates retrieved from Wise API');
+    }
+    
+    log(`✓ Successfully fetched ${rates.length} exchange rates from Wise API`);
     return rates;
-  } catch (error) {
-    log(`Error in Wise API integration: ${error}`);
-    return [];
+  } catch (error: any) {
+    log(`❌ Error in Wise API integration: ${error.message}`);
+    // Re-throw the error to be handled by the caller
+    throw error;
   }
 }
 

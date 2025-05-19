@@ -54,37 +54,25 @@ async function collectFromAPIs(): Promise<void> {
   try {
     log('Collecting rates from provider APIs...');
     
-    // Get API for Wise
-    const { fetchWiseRates } = await import('../api/wiseApi');
+    // Get direct API implementations
+    const { default: updateWiseRates } = await import('../api/wiseApi');
     
-    // Collect Wise rates (if API key is available)
+    // First, try the Wise API directly with full error handling
     try {
-      const wiseProvider = (await storage.getProviders()).find(p => 
-        p.name.toLowerCase().includes('wise'));
+      log('Attempting to collect rates directly from Wise API...');
+      const wiseSuccess = await updateWiseRates();
       
-      if (wiseProvider) {
-        log(`Collecting rates from Wise API for provider ID ${wiseProvider.id}...`);
-        const wiseRates = await fetchWiseRates();
-        
-        // Save each rate to the database with API source type
-        for (const rate of wiseRates) {
-          await storage.createExchangeRate({
-            provider_id: wiseProvider.id,
-            from_currency: rate.fromCurrency,
-            to_currency: rate.toCurrency,
-            rate: rate.rate,
-            source: DataSourceType.API,
-            source_url: 'Wise API',
-            verified: true
-          });
-        }
-        
-        log(`Saved ${wiseRates.length} rates from Wise API`);
+      if (wiseSuccess) {
+        log('✓ Successfully collected and saved Wise rates via API');
+        // Track which providers we've already collected via API to avoid duplicates
+        global.providersCollectedViaAPI = global.providersCollectedViaAPI || {};
+        global.providersCollectedViaAPI['wise'] = true;
       } else {
-        log('Wise provider not found in database, skipping API collection');
+        log('⚠ Failed to collect rates via Wise API - will try web scraping as fallback');
       }
     } catch (error) {
-      log(`Error collecting rates from Wise API: ${error}`);
+      log(`❌ Error collecting rates from Wise API: ${error}`);
+      log('Will attempt to use web scraping as fallback for Wise');
     }
     
     // Here we would add more API integrations as they become available
