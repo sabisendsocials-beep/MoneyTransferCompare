@@ -182,21 +182,20 @@ async function scrapeNalaWebsite(url: string, cssSelector?: string | null): Prom
       // If admin selectors didn't work, look for specific class pattern shown in screenshots
       console.log('Trying specific Nala CSS classes from the screenshot...');
       const specificSelectors = [
-        '.ExchangeRateValue__Value-sc-6ob57k-1', // Class from screenshot
-        '.inner__3tuwB', // Class from screenshot
-        '.fxRateSummaryContainer__b4tl1', // Class from screenshot
-        '.ExchangeRateValue', // Base class from screenshot
-        'p.ExchangeRateValue__Value-sc-6ob57k-1', // More specific selector
-        'div.inner__3tuwB span', // Child elements
-        'div.fxRateSummaryContainer__b4tl1 span', // Child elements
-        'div:contains("1 GBP =")',
-        'span:contains("1 GBP =")',
-        'div:contains("exchange rate")',
-        'span:contains("exchange rate")',
-        'div:contains("= NGN")', // Pattern shown in screenshot
+        // Primary selectors from the screenshot
+        'div.inner__3tuwB', // Exact container class from screenshot
+        'span.arrows__LQ65F', // Arrow span from screenshot
+        'div:contains("1 GBP = 2148.74 NGN")', // Exact text from screenshot
+        
+        // Backup selectors to find similar elements
+        '.inner__3tuwB', // Base class
+        '.fxRateSummaryContainer__b4tl1', // Parent container from screenshot
+        'div.inner__3tuwB span', // Child span elements
+        'div:contains("1 GBP =")', // Text pattern
         'div:contains("GBP =")', // Alternative format
-        '.GBP', // Class that might contain the rate
-        '*:contains("1893")' // Known rate pattern from screenshot
+        'div:contains("= NGN")', // Text ending
+        'div.inner__3tuwB:contains("GBP")', // Combined selector 
+        '*:contains("2148.74")' // Known rate pattern from screenshot
       ];
       
       for (const specificSelector of specificSelectors) {

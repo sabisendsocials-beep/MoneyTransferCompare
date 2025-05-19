@@ -22,9 +22,9 @@ export async function updateNalaRate(): Promise<boolean> {
     }
     
     console.log('Using direct implementation for Nala with value from your screenshot');
-    // Use the rate value from the screenshot you provided (1893.0)
+    // Use the rate value from the screenshot you provided (2148.74)
     // This ensures we're getting accurate rates matching what's visible on the site
-    const rate = 1893.0;
+    const rate = 2148.74;
     
     // Format the rate data for the database
     const rateData: InsertExchangeRate = {
