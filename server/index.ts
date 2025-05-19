@@ -54,38 +54,50 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // OPTIMIZED STARTUP - Only initialize essential database tables
+  // =========================================================
+  // OPTIMIZED STARTUP - ABSOLUTELY NO DATA OPERATIONS DURING RESTART
+  // =========================================================
   try {
-    log("Initializing database...");
+    log("🔒 SECURE STARTUP: Running minimal initialization with no data operations");
+    log("Initializing database connection only...");
     await initializeDatabase();
-    log("Database initialized successfully");
+    log("✓ Database connection initialized successfully");
     
     // Run the provider schema migration to ensure all required columns exist
+    // This only updates table structure, not data
     try {
-      log("Running provider schema migration...");
+      log("Running provider schema migration (structure only, no data changes)...");
       const { updateProviderSchema } = await import('./migrations/updateProviderSchema');
       await updateProviderSchema();
-      log("Provider schema migration completed");
+      log("✓ Provider schema migration completed (table structure only)");
     } catch (migrationError) {
       log(`Error in provider schema migration: ${migrationError}`);
     }
     
-    // Initialize the rate collection scheduler (runs 3x daily)
+    // Set up SCHEDULERS ONLY, but DO NOT trigger immediate data collection
     try {
-      log("Initializing rate collection scheduler...");
-      // Use our fixed rate collection implementation
-      const { initializeRateCollectionScheduler } = await import('./scheduler/fixedRateCollection');
-      initializeRateCollectionScheduler();
-      log("Rate collection scheduler initialized (runs at 6 AM, 2 PM, and 10 PM)");
+      log("📅 Setting up scheduled rate collection (NO IMMEDIATE DATA OPERATIONS)");
+      
+      // Import scheduler but don't run any immediate collection
+      const { setupSchedulesOnly } = await import('./scheduler/fixedRateCollection');
+      setupSchedulesOnly();
+      
+      log("✓ Rate collection scheduler initialized (runs ONLY at 6 AM, 2 PM, and 10 PM)");
+      log("⚠️ No immediate data collection during server restart");
     } catch (schedulerError) {
-      log(`Error initializing rate collection scheduler: ${schedulerError}`);
+      log(`Error setting up rate collection scheduler: ${schedulerError}`);
     }
     
-    // We'll defer all other operations until after server startup
-    log("Deferring heavy operations until after server startup for faster loading...");
+    // Strictly defer ALL operations until after server startup
+    log("🔒 STRICT POLICY: All data operations deferred until scheduled time");
+    log("📋 DATA OPERATIONS POLICY:");
+    log("  - NO provider initialization during restart");
+    log("  - NO rate collection during restart");
+    log("  - NO trend data updates during restart");
+    log("  - NO news updates during restart");
     
   } catch (error) {
-    log(`Failed to initialize database: ${error}`);
+    log(`Failed during minimal initialization: ${error}`);
   }
   
   /**

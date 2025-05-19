@@ -311,8 +311,8 @@ export async function ensureProvidersExist() {
           console.log('✅ POLICY ENFORCED: Wise provider set to use API collection with full configuration');
           
           // Log full provider details to confirm update
-          const [updatedWise] = await db.select().from(providers).where(eq(providers.id, wiseProvider.id));
-          console.log(`Wise provider config: preferred_collection=${updatedWise.preferred_collection}, has_api=${updatedWise.has_api}`);
+          const updatedWise = await storage.getProvider(wiseProvider.id);
+          console.log(`Wise provider config: preferred_collection=${updatedWise?.preferred_collection}, has_api=${updatedWise?.has_api}`);
         } catch (error) {
           console.error('❌ POLICY VIOLATION: Failed to enforce Wise API collection policy:', error);
         }

@@ -150,14 +150,100 @@ async function collectFromScrapers(): Promise<void> {
 }
 
 /**
+ * Sets up ONLY the schedulers without triggering immediate data collection
+ * This is used for server restart to prevent automatic data operations
+ */
+export function setupSchedulesOnly(): void {
+  // Clear any existing jobs
+  stopRateCollectionScheduler();
+  
+  log('🔒 SECURITY: Setting up rate collection schedules ONLY (no immediate data collection)');
+  
+  // Setup collection times
+  const collectionTimes = [6, 14, 22]; // 6 AM, 2 PM, 10 PM
+  log(`Collection times scheduled for:\n- ${collectionTimes.join(' UTC\n- ')} UTC`);
+  
+  // Track the last run times to avoid duplicate runs
+  const lastRunTimes: Record<number, string | null> = {
+    6: null,  // 6 AM
+    14: null, // 2 PM
+    22: null  // 10 PM
+  };
+  
+  // Intentionally mark "now" as having already run to prevent immediate collection
+  const now = new Date();
+  const currentHour = now.getHours();
+  
+  // Mark all collection times in the past as already run for today
+  for (const hour of collectionTimes) {
+    if (currentHour >= hour) {
+      lastRunTimes[hour] = now.toISOString();
+      log(`⚠️ Marked ${hour}:00 UTC collection as already run for today to prevent immediate execution`);
+    }
+  }
+  
+  // Helper function to determine if a collection should run
+  function shouldRunCollection(targetHour: number, lastRunTime: string | null): boolean {
+    const now = new Date();
+    const today = now.toDateString();
+    
+    // If it's already past the target hour today and we haven't run today
+    if (now.getHours() >= targetHour && 
+        (!lastRunTime || new Date(lastRunTime).toDateString() !== today)) {
+      return true;
+    }
+    
+    // If we've already passed 30 minutes past the target hour, wait for tomorrow
+    if (now.getHours() > targetHour || 
+        (now.getHours() === targetHour && now.getMinutes() >= 30)) {
+      return false;
+    }
+    
+    // If we're within the target hour window (first 30 minutes) and haven't run today
+    if (now.getHours() === targetHour && 
+        (!lastRunTime || new Date(lastRunTime).toDateString() !== today)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Check every 5 minutes
+  const schedulerJob = setInterval(() => {
+    const now = new Date();
+    
+    // Check each collection time
+    for (const hour of collectionTimes) {
+      if (shouldRunCollection(hour, lastRunTimes[hour])) {
+        log(`Running SCHEDULED rate collection (${hour}:00 UTC)...`);
+        collectAllRates()
+          .then(() => {
+            lastRunTimes[hour] = new Date().toISOString();
+            log(`Rate collection at ${hour}:00 UTC completed successfully`);
+          })
+          .catch(error => log(`Error in rate collection at ${hour}:00 UTC: ${error}`));
+      }
+    }
+  }, 300000); // Check every 5 minutes
+  
+  // Store active jobs
+  activeJobs = [schedulerJob];
+  
+  log('✓ Rate collection scheduler initialized (checking every 5 minutes)');
+  log('🔒 No immediate data collection will run during server restart');
+}
+
+/**
  * Initialize the rate collection scheduler
  * Sets up jobs to run at specified intervals
+ * @deprecated Use setupSchedulesOnly() instead to prevent immediate collection on restart
  */
 export function initializeRateCollectionScheduler(): void {
   // Clear any existing jobs
   stopRateCollectionScheduler();
   
-  log('Initializing rate collection scheduler...');
+  log('⚠️ WARNING: Using deprecated scheduler with immediate collection');
+  log('⚠️ RECOMMENDED: Use setupSchedulesOnly() instead to comply with data policy');
   
   // Setup collection times
   const collectionTimes = [6, 14, 22]; // 6 AM, 2 PM, 10 PM
@@ -218,6 +304,14 @@ export function initializeRateCollectionScheduler(): void {
   activeJobs = [schedulerJob];
   
   log('Rate collection scheduler initialized (checking every 5 minutes)');
+  
+  // DEPRECATED: Immediate run
+  log('⚠️ DEPRECATED: Triggering immediate data collection during server restart');
+  collectAllRates().then(() => {
+    log('⚠️ DEPRECATED: Immediate rate collection completed after server restart');
+  }).catch(error => {
+    log(`Error in immediate rate collection: ${error}`);
+  });
 }
 
 /**
