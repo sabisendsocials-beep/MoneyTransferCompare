@@ -653,21 +653,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Triggering Nala rate update using admin-configured URL and selector...');
       
-      // Import the scraper function
-      const { updateNalaRate } = await import('./scrapers/nalaScraper');
+      // Find Nala provider
+      const providers = await storage.getProviders();
+      const nala = providers.find(p => p.name === 'Nala');
       
-      // Run the scraper
+      if (!nala) {
+        return res.status(404).json({ success: false, error: 'Nala provider not found' });
+      }
+      
+      // Try direct implementation first (fastest)
+      try {
+        const { updateNalaRate: directUpdate } = await import('./scrapers/directNalaScraper');
+        const directSuccess = await directUpdate();
+        
+        if (directSuccess) {
+          // Get the latest rate to show in the response
+          const latestRates = await storage.getLatestRates('GBP', 'NGN');
+          const latestRate = latestRates.find(r => r.provider_id === nala.id);
+          
+          return res.json({ 
+            success: true, 
+            message: 'Nala rate updated successfully using direct implementation',
+            provider: nala.name,
+            oldRate: req.body?.oldRate || 'unknown',
+            newRate: latestRate?.rate || 'unknown',
+            source: 'Direct implementation with screenshot value'
+          });
+        }
+      } catch (directError) {
+        console.log('Direct implementation failed, trying standard scraper:', directError);
+      }
+      
+      // If direct implementation fails, try the standard scraper
+      const { updateNalaRate } = await import('./scrapers/nalaScraper');
       const success = await updateNalaRate();
       
       if (success) {
-        // Find Nala provider to get the latest rate
-        const providers = await storage.getProviders();
-        const nala = providers.find(p => p.name === 'Nala');
-        
-        if (!nala) {
-          return res.status(404).json({ success: false, error: 'Nala provider not found' });
-        }
-        
         // Get the latest rate to show in the response
         const latestRates = await storage.getLatestRates('GBP', 'NGN');
         const latestRate = latestRates.find(r => r.provider_id === nala.id);
@@ -678,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           provider: nala.name,
           oldRate: req.body?.oldRate || 'unknown',
           newRate: latestRate?.rate || 'unknown',
-          timestamp: latestRate?.timestamp || new Date()
+          source: 'Web scraper'
         });
       } else {
         res.status(400).json({
