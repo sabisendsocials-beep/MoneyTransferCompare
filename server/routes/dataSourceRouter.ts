@@ -244,8 +244,74 @@ router.get('/api/rates/latest', async (_req: Request, res: Response) => {
       }
     }
     
-    // Add log to help debug issues
+    // Add log to help debug issues with detailed provider information
     log(`Found ${latestRates.length} latest rates from providers`);
+    
+    // Get detailed information about which providers were found
+    const providerNames = latestRates.map(r => `${r.providerName} (${r.source || 'unknown source'})`);
+    log(`Providers in response: ${providerNames.join(', ')}`);
+    
+    // Check if Wise is missing and directly look for it if needed
+    const hasWise = latestRates.some(r => r.providerName.toLowerCase().includes('wise'));
+    
+    if (!hasWise) {
+      log('Wise provider missing from results, checking directly in database...');
+      
+      try {
+        // Import required modules
+        const { db } = await import('../db');
+        const { exchangeRates, providers } = await import('@shared/schema');
+        const { eq, and, desc } = await import('drizzle-orm');
+        
+        // Find the Wise provider
+        const wiseProviders = await db.select()
+          .from(providers)
+          .where(eq(providers.name, 'Wise'));
+        
+        if (wiseProviders.length > 0) {
+          const wiseProvider = wiseProviders[0];
+          log(`Found Wise provider with ID ${wiseProvider.id}`);
+          
+          // Look for Wise rates from API source
+          for (const pair of currencyPairs) {
+            const wiseRates = await db.select()
+              .from(exchangeRates)
+              .where(
+                and(
+                  eq(exchangeRates.provider_id, wiseProvider.id),
+                  eq(exchangeRates.from_currency, pair.from),
+                  eq(exchangeRates.to_currency, pair.to),
+                  eq(exchangeRates.source, DataSourceType.API)
+                )
+              )
+              .orderBy(desc(exchangeRates.timestamp))
+              .limit(1);
+              
+            if (wiseRates.length > 0) {
+              const wiseRate = wiseRates[0];
+              log(`Found Wise API rate for ${pair.from}/${pair.to}: ${wiseRate.rate}`);
+              
+              // Add to results
+              latestRates.push({
+                providerId: wiseProvider.id,
+                providerName: wiseProvider.name,
+                fromCurrency: wiseRate.from_currency,
+                toCurrency: wiseRate.to_currency,
+                rate: wiseRate.rate,
+                source: wiseRate.source,
+                sourceUrl: wiseRate.source_url,
+                verified: wiseRate.verified,
+                timestamp: wiseRate.timestamp,
+              });
+            }
+          }
+        } else {
+          log('No Wise provider found in database');
+        }
+      } catch (wiseError) {
+        log(`Error trying to find Wise rates directly: ${wiseError}`);
+      }
+    }
     
     return res.json(latestRates);
   } catch (error) {
