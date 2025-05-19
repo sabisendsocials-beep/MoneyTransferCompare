@@ -637,32 +637,13 @@ export async function updateExchangeRates(clearExisting: boolean = false): Promi
   let results: ExchangeRate[] = [];
   
   try {
-    // First preserve existing providers by getting their current IDs
-    // This allows us to keep historical data even if provider IDs change
+    // Get existing providers to use their IDs for rate updates
+    // We're NOT modifying provider information, just reading it
     const existingProviders = await storage.getProviders();
-    const existingProviderMap = new Map();
-    existingProviders.forEach(provider => {
-      existingProviderMap.set(provider.name, provider.id);
-    });
+    console.log(`Found ${existingProviders.length} providers in database`);
     
-    // Update the providers but WITHOUT deleting existing exchange rates
-    // Skip this step because we're now using provider protection
-    // The core providers are protected from deletion
-    console.log(`Preserving ${existingProviders.length} existing providers...`);
-    // We don't need to call updateProvidersOnly() anymore because we want to keep providers stable
-    
-    // Instead of recreating providers, just update existing ones
-    // This approach preserves the core providers while allowing updates
-    try {
-      // We don't need to recreate providers, just ensure they're properly configured
-      console.log('Updating provider configuration without recreating them...');
-    } catch (error) {
-      console.error('Error updating provider configuration:', error);
-    }
-    
-    // Get the new provider list
-    const newProviders = await storage.getProviders();
-    console.log(`Added ${newProviders.length} providers (preserving rate history)`);
+    // No provider modification at all - only access provider data for reference
+    // This ensures the provider management remains strictly through the admin panel
     
     // Optionally clear all existing rates (if explicitly requested, which should be rare)
     if (clearExisting) {
