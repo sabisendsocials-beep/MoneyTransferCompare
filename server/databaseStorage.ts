@@ -1,5 +1,4 @@
 import { db } from './db';
-import { IStorage } from './storage';
 import { 
   User, InsertUser, 
   Provider, InsertProvider, 
@@ -11,6 +10,9 @@ import {
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
+
+// Import the storage interface
+import { IStorage } from './storage';
 
 export class DatabaseStorage implements IStorage {
   // User methods
@@ -44,11 +46,39 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createProvider(provider: InsertProvider): Promise<Provider> {
+    // Special handling for Wise provider
+    if (provider.name === 'Wise') {
+      // Force Wise to always use API collection method
+      provider.preferred_collection = 'API';
+      provider.has_api = true;
+      provider.api_url = provider.api_url || 'https://api.wise.com/v1/rates';
+      provider.api_key_required = true;
+      provider.api_response_path = provider.api_response_path || 'rate';
+      console.log('🔒 Enforcing API collection policy for Wise provider');
+    }
+    
     const [newProvider] = await db.insert(schema.providers).values(provider).returning();
     return newProvider;
   }
   
   async updateProvider(id: number, providerUpdate: Partial<InsertProvider>): Promise<Provider | undefined> {
+    // Get existing provider to check if it's Wise
+    const [existingProvider] = await db
+      .select()
+      .from(schema.providers)
+      .where(eq(schema.providers.id, id));
+      
+    // Special handling for Wise provider
+    if (existingProvider && (existingProvider.name === 'Wise' || providerUpdate.name === 'Wise')) {
+      // Force Wise to always use API collection method
+      providerUpdate.preferred_collection = 'API';
+      providerUpdate.has_api = true;
+      providerUpdate.api_url = providerUpdate.api_url || 'https://api.wise.com/v1/rates';
+      providerUpdate.api_key_required = true;
+      providerUpdate.api_response_path = providerUpdate.api_response_path || 'rate';
+      console.log('🔒 Enforcing API collection policy for Wise provider');
+    }
+    
     const [updatedProvider] = await db
       .update(schema.providers)
       .set(providerUpdate)
@@ -58,14 +88,31 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteAllProviders(): Promise<void> {
-    // Instead of deleting all exchange rates, we'll just delete providers
-    // This required modifying the foreign key constraint to use ON DELETE CASCADE
-    // If we need to implement this without modifying the schema, we can use a transaction
+    // Core providers that should never be deleted
+    const PROTECTED_CORE_PROVIDERS = [
+      'Wise',
+      'Western Union',
+      'MoneyGram',
+      'WorldRemit',
+      'Lemfi'
+    ];
     
-    // Delete all providers - the exchange rates will be preserved for historical records
-    await db.delete(schema.providers);
+    console.log('🔒 Protecting core providers from deletion');
     
-    console.log('Cleared existing providers');
+    // Get all current providers
+    const allProviders = await this.getProviders();
+    
+    // Delete all non-protected providers individually
+    for (const provider of allProviders) {
+      if (!PROTECTED_CORE_PROVIDERS.includes(provider.name)) {
+        await db.delete(schema.providers).where(eq(schema.providers.id, provider.id));
+        console.log(`Deleted provider: ${provider.name}`);
+      } else {
+        console.log(`Protected core provider preserved: ${provider.name}`);
+      }
+    }
+    
+    console.log('✅ Provider deletion operation completed (core providers preserved)');
   }
   
   // Add a new method to update providers without affecting rates
