@@ -284,20 +284,40 @@ export async function ensureProvidersExist() {
     // Skip provider initialization completely - we now manage providers manually via admin
     console.log('Provider initialization skipped - using existing providers only');
     
-    // Check for Wise provider to ensure it has API collection policy
+    // PERMANENT ENFORCEMENT: Ensure Wise provider always uses API collection
     const providers = await storage.getProviders();
     const wiseProvider = providers.find(p => p.name === 'Wise');
     
-    if (wiseProvider && (wiseProvider.preferred_collection !== 'API' || !wiseProvider.has_api)) {
-      console.log('Updating Wise provider to use API collection...');
-      try {
-        await storage.updateProvider(wiseProvider.id, {
-          preferred_collection: 'API',
-          has_api: true
-        });
-        console.log('✓ Successfully updated Wise provider to use API collection');
-      } catch (error) {
-        console.error('Failed to update Wise provider collection policy:', error);
+    if (wiseProvider) {
+      // Check if any Wise API settings are incorrect or missing
+      const needsUpdate = 
+        wiseProvider.preferred_collection !== 'API' || 
+        !wiseProvider.has_api ||
+        !wiseProvider.api_url ||
+        !wiseProvider.api_response_path ||
+        !wiseProvider.api_key_required;
+      
+      if (needsUpdate) {
+        console.log('🔒 ENFORCING API POLICY: Updating Wise provider to use API collection...');
+        try {
+          // Set complete API configuration to prevent partial updates
+          await storage.updateProvider(wiseProvider.id, {
+            preferred_collection: 'API',
+            has_api: true,
+            api_url: 'https://api.wise.com/v1/rates',
+            api_key_required: true,
+            api_response_path: 'rate'
+          });
+          console.log('✅ POLICY ENFORCED: Wise provider set to use API collection with full configuration');
+          
+          // Log full provider details to confirm update
+          const [updatedWise] = await db.select().from(providers).where(eq(providers.id, wiseProvider.id));
+          console.log(`Wise provider config: preferred_collection=${updatedWise.preferred_collection}, has_api=${updatedWise.has_api}`);
+        } catch (error) {
+          console.error('❌ POLICY VIOLATION: Failed to enforce Wise API collection policy:', error);
+        }
+      } else {
+        console.log('✓ Wise provider correctly configured to use API collection');
       }
     }
   } catch (error) {
