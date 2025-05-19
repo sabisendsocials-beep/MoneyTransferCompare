@@ -131,6 +131,17 @@ router.patch('/api/provider/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Provider not found' });
     }
     
+    // Special handling for Wise provider
+    if (existingProvider.name === 'Wise' || providerData.name === 'Wise') {
+      // Force Wise to always use API collection method
+      providerData.preferred_collection = 'API';
+      providerData.has_api = true;
+      providerData.api_url = providerData.api_url || 'https://api.wise.com/v1/rates';
+      providerData.api_key_required = true;
+      providerData.api_response_path = providerData.api_response_path || 'rate';
+      console.log('🔒 Enforcing API collection policy for Wise provider');
+    }
+    
     // Update the provider
     const [updatedProvider] = await db
       .update(providers)
