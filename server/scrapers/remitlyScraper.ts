@@ -132,6 +132,10 @@ export async function scrapeRemitlyRate(): Promise<number | null> {
           
           // If we got the page content successfully, process it
           if (html.length > 1000) {
+            // Add a delay to simulate waiting for JavaScript to load dynamic content
+            console.log(`Waiting 2 seconds for JavaScript to finish loading dynamic content...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
             const $ = cheerio.load(html);
             console.log(`Retrieved HTML content (${html.length} characters) from ${currentUrl}`);
             
@@ -140,25 +144,33 @@ export async function scrapeRemitlyRate(): Promise<number | null> {
               const selectors = remitly.scraping_selector.split(',').map(s => s.trim());
               console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
               
-              for (const selector of selectors) {
-                const elements = $(selector);
-                if (elements.length > 0) {
-                  console.log(`Found ${elements.length} elements with selector "${selector}"`);
-                  
-                  for (let i = 0; i < elements.length; i++) {
-                    const text = $(elements[i]).text().trim();
-                    console.log(`Element ${i+1} text: "${text}"`);
+              // Try multiple times with delays to catch dynamically loaded content
+              for (let attempt = 0; attempt < 3; attempt++) {
+                if (attempt > 0) {
+                  const delayTime = attempt * 1500; // Increasing delay times: 1.5s, 3s
+                  console.log(`Attempt ${attempt+1}/3: Waiting ${delayTime}ms for dynamic content...`);
+                  await new Promise(resolve => setTimeout(resolve, delayTime));
+                }
+                
+                for (const selector of selectors) {
+                  const elements = $(selector);
+                  if (elements.length > 0) {
+                    console.log(`Found ${elements.length} elements with selector "${selector}"`);
                     
-                    // Try to extract rate from the text
-                    const rate = extractRemitlyRate(text);
-                    if (rate !== null) {
-                      console.log(`Successfully extracted rate from selector "${selector}": ${rate}`);
-                      return rate;
+                    for (let i = 0; i < elements.length; i++) {
+                      const text = $(elements[i]).text().trim();
+                      console.log(`Element ${i+1} text: "${text}"`);
+                      
+                      // Try to extract rate from the text
+                      const rate = extractRemitlyRate(text);
+                      if (rate !== null) {
+                        console.log(`Successfully extracted rate from selector "${selector}" on attempt ${attempt+1}: ${rate}`);
+                        return rate;
+                      }
                     }
                   }
                 }
               }
-            }
             
             // If selectors didn't work, try to find the rate in the page text
             console.log('Trying to find rate in the whole page text...');
