@@ -48,32 +48,70 @@ export async function collectAllRates(): Promise<boolean> {
 }
 
 /**
- * Collect rates from direct provider APIs
+ * Collect rates from direct provider APIs based on provider configuration
  */
 async function collectFromAPIs(): Promise<void> {
   try {
-    log('Collecting rates from provider APIs...');
+    log('Collecting rates from provider APIs based on provider configuration...');
     
-    // Get direct API implementations
-    const { default: updateWiseRates } = await import('../api/wiseApi');
+    // Get all providers that prefer API collection
+    const apiProviders = await storage.getProviders({
+      preferred_collection: 'API',
+      active: true
+    });
     
-    // First, try the Wise API directly with full error handling
-    try {
-      log('Attempting to collect rates directly from Wise API...');
-      const wiseSuccess = await updateWiseRates();
+    log(`Found ${apiProviders.length} providers configured for API collection`);
+    
+    // Track which providers we've successfully collected via API
+    const providersCollected = new Set<number>();
+    
+    // Process each API provider
+    for (const provider of apiProviders) {
+      log(`Processing API collection for ${provider.name} (ID: ${provider.id})...`);
       
-      if (wiseSuccess) {
-        log('✓ Successfully collected and saved Wise rates via API');
-        // Track which providers we've already collected via API to avoid duplicates
-        global.providersCollectedViaAPI = global.providersCollectedViaAPI || {};
-        global.providersCollectedViaAPI['wise'] = true;
-      } else {
-        log('⚠ Failed to collect rates via Wise API - will try web scraping as fallback');
+      // Handle each provider based on its name
+      switch (provider.name.toLowerCase()) {
+        case 'wise':
+          // Import the Wise API implementation
+          const { default: updateWiseRates } = await import('../api/wiseApi');
+          
+          try {
+            log(`Collecting rates via API for ${provider.name} (ID: ${provider.id})...`);
+            const success = await updateWiseRates();
+            
+            if (success) {
+              log(`✓ Successfully collected rates via API for ${provider.name}`);
+              providersCollected.add(provider.id);
+            } else {
+              log(`⚠ API collection failed for ${provider.name} - STRICT POLICY: not falling back to scraping`);
+            }
+          } catch (error) {
+            log(`❌ Error in API collection for ${provider.name}: ${error}`);
+            log(`STRICT POLICY: Not attempting fallback scraping for ${provider.name} as it's configured for API only`);
+          }
+          break;
+          
+        // Add more API integrations as they become available
+        // case 'worldremit':
+        //   // Handle WorldRemit API
+        //   break;
+          
+        default:
+          log(`⚠ No API implementation available for ${provider.name} despite having API preference`);
       }
-    } catch (error) {
-      log(`❌ Error collecting rates from Wise API: ${error}`);
-      log('Will attempt to use web scraping as fallback for Wise');
     }
+    
+    // For tracking purposes, store the collected providers globally
+    // This prevents duplicate collection during the scraping phase
+    global.providersCollectedViaAPI = global.providersCollectedViaAPI || {};
+    providersCollected.forEach(id => {
+      global.providersCollectedViaAPI[id] = true;
+    });
+    
+    log(`Successfully collected rates via API for ${providersCollected.size} providers`);
+  } catch (error) {
+    log(`Error in API rate collection: ${error}`);
+  }
     
     // Here we would add more API integrations as they become available
     // E.g., for WorldRemit, Lemfi, etc.
