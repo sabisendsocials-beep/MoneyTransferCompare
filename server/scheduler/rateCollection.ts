@@ -6,6 +6,7 @@
 
 import { log } from '../vite';
 import { storage } from '../storage';
+import { db } from '../db';
 
 // Data source types (matches the enum in dataSourceRouter.ts)
 export enum DataSourceType {
@@ -39,11 +40,36 @@ export async function collectAllRates(): Promise<boolean> {
     // Step 2: Collect from web scrapers (lower priority)
     await collectFromScrapers();
     
+    // Step 3: Apply policy to fix any Wise records showing incorrect source
+    await fixWiseRateSource();
+    
     log('Rate collection completed successfully');
     return true;
   } catch (error) {
     log(`Error in rate collection: ${error}`);
     return false;
+  }
+}
+
+/**
+ * Ensures all Wise records use API as source
+ * This is a policy enforcement function that runs after collection
+ */
+async function fixWiseRateSource(): Promise<void> {
+  try {
+    log('Enforcing Wise API source policy...');
+    
+    // Simple direct SQL to fix any Wise records
+    const result = await db.execute(
+      `UPDATE exchange_rates SET source = 'API' WHERE provider_id = 10001 AND source != 'API'`
+    );
+    
+    const count = result.rowCount || 0;
+    if (count > 0) {
+      log(`Fixed ${count} Wise rates to use API source`);
+    }
+  } catch (error) {
+    log(`Error fixing Wise rate sources: ${error}`);
   }
 }
 
