@@ -74,6 +74,16 @@ app.use((req, res, next) => {
       log(`Error in provider schema migration: ${migrationError}`);
     }
     
+    // EMERGENCY RESTORATION: Restore missing core providers
+    try {
+      log("🚨 EMERGENCY: Checking for missing core providers...");
+      const { restoreMissingCoreProviders } = await import('./scripts/restoreCoreProviders');
+      await restoreMissingCoreProviders();
+      log("✓ Core providers restored if any were missing");
+    } catch (restorationError) {
+      log(`Error in core provider restoration: ${restorationError}`);
+    }
+    
     // Run provider configuration validation to ensure Wise uses API
     try {
       log("🔒 Validating critical provider configurations...");
