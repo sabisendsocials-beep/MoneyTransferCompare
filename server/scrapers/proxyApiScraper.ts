@@ -159,15 +159,10 @@ export async function getWorldRemitRate(): Promise<number | null> {
       }
     }
     
-    // If direct scraping failed, calculate the rate from the screenshot data
-    // From screenshot: "You send 100 GBP" and "They get 211288 NGN"
-    const screenshotSendAmount = 100;
-    const screenshotGetAmount = 211288;
-    const calculatedScreenshotRate = screenshotGetAmount / screenshotSendAmount;
-    
-    console.log(`Using calculated rate from verified screenshot data: ${calculatedScreenshotRate} NGN per GBP`);
-    console.log(`Based on "You send ${screenshotSendAmount} GBP" and "They get ${screenshotGetAmount} NGN"`);
-    return calculatedScreenshotRate;
+    // No fallback to screenshot data - return null to indicate failure
+    console.log('Direct scraping failed and no fallback to screenshot data is allowed.');
+    console.log('Please check the WorldRemit URL and CSS selector in the admin panel.');
+    return null;
     
     // If we can't use the verified rate, calculate a realistic one
     // This is a last resort if we don't have current data

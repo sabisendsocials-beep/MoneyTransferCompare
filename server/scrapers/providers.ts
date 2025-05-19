@@ -358,49 +358,17 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               console.log('=== Dedicated Lemfi scraper failed, trying enhanced scraping... ===');
             }
           } else if (provider.name === 'WorldRemit') {
-            console.log('=== Using dedicated WorldRemit scraper... ===');
+            console.log('=== Using dedicated WorldRemit scraper with admin-configured URL and selectors ONLY... ===');
             let success = await updateWorldRemitRate();
             if (success) {
               console.log('=== Successfully updated WorldRemit rate with dedicated scraper ===');
               results.push({ provider: provider.name, success: true });
               continue; // Skip to next provider
             } else {
-              console.log('=== Dedicated WorldRemit scraper failed, trying proxy API scraper... ===');
-              
-              // Try with our proxy API scraper (more reliable)
-              success = await updateWorldRemitRateViaApi();
-              if (success) {
-                console.log('=== Successfully updated WorldRemit rate with proxy API ===');
-                results.push({ provider: provider.name, success: true });
-                continue; // Skip to next provider
-              } else {
-                console.log('=== Proxy API scraper also failed, trying robust browser scraper... ===');
-                
-                // Try with robust browser-based scraping approach
-                try {
-                  const rate = await robustScrapeWorldRemitRate();
-                  if (rate !== null) {
-                    console.log(`=== Successfully scraped WorldRemit rate with robust scraper: ${rate} ===`);
-                    
-                    // Add the rate to database
-                    const rateData: InsertExchangeRate = {
-                      provider_id: provider.id,
-                      from_currency: 'GBP',
-                      to_currency: 'NGN',
-                      rate
-                    };
-                    
-                    await storage.createExchangeRate(rateData);
-                    results.push({ provider: provider.name, success: true });
-                    continue; // Skip to next provider
-                  } else {
-                    console.log('=== Robust scraper also failed, trying enhanced scraping... ===');
-                  }
-                } catch (error) {
-                  console.error('Error using robust scraper for WorldRemit:', error);
-                  console.log('=== Robust scraper failed with error, trying enhanced scraping... ===');
-                }
-              }
+              console.log('=== Dedicated WorldRemit scraper failed. No fallback will be used. ===');
+              console.log('=== Please check the WorldRemit URL and CSS selector in the admin panel ===');
+              results.push({ provider: provider.name, success: false });
+              continue; // Skip to next provider without fallbacks
             }
           }
           
