@@ -179,42 +179,84 @@ export function initializeRateCollectionScheduler(): void {
       .catch(error => log(`Error in initial rate collection: ${error}`));
   }, 60000); // Wait a minute after startup to allow the app to initialize
   
-  // Setup scheduled collections using simple scheduling (since we don't have node-cron)
-  // Morning collection - 6 AM
-  const morningJob = setInterval(() => {
+  // More robust scheduling implementation
+  // Instead of just checking once per minute, calculate the exact time until next run
+  // This ensures we don't miss schedules due to timing or precision issues
+  
+  // Track the last run times to avoid duplicate runs
+  const lastRunTimes = {
+    morning: null,
+    afternoon: null,
+    evening: null
+  };
+  
+  // Helper function to determine if a collection should run
+  function shouldRunCollection(targetHour, lastRunTime) {
     const now = new Date();
-    if (now.getHours() === 6 && now.getMinutes() === 0) {
+    const today = now.toDateString();
+    
+    // If it's already past the target hour today and we haven't run today
+    if (now.getHours() >= targetHour && 
+        (!lastRunTime || new Date(lastRunTime).toDateString() !== today)) {
+      return true;
+    }
+    
+    // If we've already passed 30 minutes past the target hour, wait for tomorrow
+    if (now.getHours() > targetHour || 
+        (now.getHours() === targetHour && now.getMinutes() >= 30)) {
+      return false;
+    }
+    
+    // If we're within the target hour window (first 30 minutes) and haven't run today
+    if (now.getHours() === targetHour && 
+        (!lastRunTime || new Date(lastRunTime).toDateString() !== today)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Check every 5 minutes instead of every minute
+  const schedulerJob = setInterval(() => {
+    const now = new Date();
+    log(`Scheduler check at ${now.toISOString()} (Hour: ${now.getHours()}, Minute: ${now.getMinutes()})`);
+    
+    // Morning collection - 6 AM
+    if (shouldRunCollection(6, lastRunTimes.morning)) {
       log('Running scheduled morning rate collection (6 AM)...');
       collectAllRates()
-        .then(() => log('Morning rate collection completed'))
+        .then(() => {
+          lastRunTimes.morning = new Date().toISOString();
+          log(`Morning rate collection completed at ${lastRunTimes.morning}`);
+        })
         .catch(error => log(`Error in morning rate collection: ${error}`));
     }
-  }, 60000); // Check every minute
-  
-  // Afternoon collection - 2 PM
-  const afternoonJob = setInterval(() => {
-    const now = new Date();
-    if (now.getHours() === 14 && now.getMinutes() === 0) {
+    
+    // Afternoon collection - 2 PM
+    if (shouldRunCollection(14, lastRunTimes.afternoon)) {
       log('Running scheduled afternoon rate collection (2 PM)...');
       collectAllRates()
-        .then(() => log('Afternoon rate collection completed'))
+        .then(() => {
+          lastRunTimes.afternoon = new Date().toISOString();
+          log(`Afternoon rate collection completed at ${lastRunTimes.afternoon}`);
+        })
         .catch(error => log(`Error in afternoon rate collection: ${error}`));
     }
-  }, 60000); // Check every minute
-  
-  // Evening collection - 10 PM
-  const eveningJob = setInterval(() => {
-    const now = new Date();
-    if (now.getHours() === 22 && now.getMinutes() === 0) {
+    
+    // Evening collection - 10 PM
+    if (shouldRunCollection(22, lastRunTimes.evening)) {
       log('Running scheduled evening rate collection (10 PM)...');
       collectAllRates()
-        .then(() => log('Evening rate collection completed'))
+        .then(() => {
+          lastRunTimes.evening = new Date().toISOString();
+          log(`Evening rate collection completed at ${lastRunTimes.evening}`);
+        })
         .catch(error => log(`Error in evening rate collection: ${error}`));
     }
-  }, 60000); // Check every minute
+  }, 300000); // Check every 5 minutes
   
   // Store active jobs
-  activeJobs = [morningJob, afternoonJob, eveningJob];
+  activeJobs = [schedulerJob];
   
   log('Rate collection scheduler initialized with 3 daily collection periods');
 }
