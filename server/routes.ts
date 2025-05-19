@@ -12,7 +12,7 @@ import { updateAdditionalProviders } from "./scrapers/mainScraper";
 import apiKeysRouter from "./routes/apiKeys";
 import { rateSourceRouter } from "./routes/rateSource";
 import dataSourceRouter from "./routes/dataSourceRouter";
-
+import providerRoutes from "./routes/providerRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
