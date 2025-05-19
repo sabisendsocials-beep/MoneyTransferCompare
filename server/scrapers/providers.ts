@@ -282,23 +282,22 @@ function extractExchangeRate(text: string, providerName: string): number | null 
 export async function ensureProvidersExist() {
   try {
     const existingProviders = await storage.getProviders();
-
-    if (existingProviders.length < providerList.length) {
-      console.log('Missing providers, initializing complete provider list...');
+    const existingProviderNames = new Set(existingProviders.map(p => p.name));
+    
+    // Check if we need to add any new providers
+    const missingProviders = providerList.filter(p => !existingProviderNames.has(p.name));
+    
+    if (missingProviders.length > 0) {
+      console.log(`Found ${missingProviders.length} missing providers, adding them...`);
       
-      // Delete all existing providers to avoid duplicates
-      // In a real production system, we would use a more sophisticated approach
-      // Remove existing providers if needed (for demonstration purposes)
-      try {
-        await storage.deleteAllProviders();
-        console.log('Cleared existing providers');
-      } catch (error) {
-        console.error('Failed to clear providers, will attempt to continue:', error);
-      }
-      
-      // Add all providers
-      for (const provider of providerList) {
+      // Only add providers that don't exist yet
+      for (const provider of missingProviders) {
         const providerName = provider.name;
+        
+        // Special handling for Wise - ensure it's always set with API collection
+        const preferred_collection = providerName === 'Wise' ? 'API' : 'SCRAPER';
+        const has_api = providerName === 'Wise' ? true : false;
+        
         const insertProvider: InsertProvider = {
           name: providerName,
           website_url: provider.website,
@@ -307,6 +306,8 @@ export async function ensureProvidersExist() {
           fixed_fee: provider.fee,
           transfer_time: provider.transferTime,
           rating: provider.rating,
+          preferred_collection,
+          has_api,
           // Add actual URLs and selectors for scraping exchange rates
           scraping_url: getScrapingUrl(providerName),
           scraping_selector: getScrapingSelector(providerName)
@@ -314,13 +315,15 @@ export async function ensureProvidersExist() {
         
         try {
           await storage.createProvider(insertProvider);
-          console.log(`Added provider: ${providerName}`);
+          console.log(`Added provider: ${providerName} with collection policy: ${preferred_collection}`);
         } catch (error) {
           console.error(`Failed to add provider ${providerName}:`, error);
         }
       }
       
       console.log('Provider initialization complete');
+    } else {
+      console.log('All providers already exist, no initialization needed');
     }
   } catch (error) {
     console.error('Error ensuring providers exist:', error);
