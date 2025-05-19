@@ -397,6 +397,22 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             }
           } else if (provider.name === 'Nala') {
             console.log('=== Using dedicated Nala scraper with admin-configured URL and selectors ONLY... ===');
+            
+            try {
+              // First try with the direct implementation
+              let { updateNalaRate } = await import('./directNalaScraper');
+              let success = await updateNalaRate();
+              
+              if (success) {
+                console.log('=== Successfully updated Nala rate with simplified direct scraper ===');
+                results.push({ provider: provider.name, success: true });
+                continue; // Skip to next provider
+              }
+            } catch (error) {
+              console.log('Direct Nala scraper failed, trying standard scraper:', error);
+            }
+            
+            // Try the more comprehensive implementation
             let success = await updateNalaRate();
             if (success) {
               console.log('=== Successfully updated Nala rate with dedicated scraper ===');
