@@ -196,7 +196,24 @@ async function initializeProviders(reset: boolean = false): Promise<{ success: b
   console.log(`Running provider initialization (reset mode: ${reset ? 'YES' : 'NO'})`);
   
   try {
-    // Optionally clear existing providers if reset mode is enabled
+    // MANUAL OPERATION ONLY - Check if this was called from the API endpoint
+    const callStack = new Error().stack || '';
+    const isCalledFromAPI = callStack.includes('providerApi.ts');
+    
+    // SAFETY CHECK: Only allow reset if explicitly called from the API
+    if (reset && !isCalledFromAPI) {
+      console.error('CRITICAL SAFETY: Attempted automatic provider reset outside of admin API - BLOCKED');
+      console.log('Provider data is preserved - no changes made');
+      return { success: false, addedCount: 0 };
+    }
+    
+    // SAFETY CHECK: Don't modify providers unless explicitly requested via API
+    if (!isCalledFromAPI) {
+      console.log('SAFETY: Provider initialization skipped - must be triggered manually from admin panel');
+      return { success: false, addedCount: 0 };
+    }
+    
+    // Optionally clear existing providers if reset mode is enabled (and called from API)
     if (reset) {
       console.log('Deleting all existing providers...');
       await db.delete(providers);
