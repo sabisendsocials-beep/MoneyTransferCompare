@@ -184,8 +184,8 @@ async function scrapeNalaWebsite(url: string, cssSelector?: string | null): Prom
       const specificSelectors = [
         // Primary selectors from the screenshot
         'div.inner__3tuwB', // Exact container class from screenshot
-        'span.arrows__LQ65F', // Arrow span from screenshot
-        'div:contains("1 GBP = 2148.74 NGN")', // Exact text from screenshot
+        'span.arrows__LQ65F + text', // Text node after the arrow span
+        'div.inner__3tuwB:contains("GBP =")', // Exact container with rate text
         
         // Backup selectors to find similar elements
         '.inner__3tuwB', // Base class
@@ -413,14 +413,29 @@ function extractNalaRate(text: string): number | null {
     }
   }
   
-  // Pattern 2: Look for "1 GBP = X NGN" format
+  // Pattern 2: Look for "1 GBP = X NGN" format (prioritized)
   const gbpNgnPattern = /1\s*GBP\s*=\s*(\d+[.,]\d+)\s*NGN/i;
   const gbpNgnMatch = cleanText.match(gbpNgnPattern);
   if (gbpNgnMatch && gbpNgnMatch[1]) {
-    const rate = parseFloat(gbpNgnMatch[1].replace(',', '.'));
-    if (!isNaN(rate) && rate > 100) {
+    // Get the captured rate value
+    const rateStr = gbpNgnMatch[1].replace(',', '.');
+    const rate = parseFloat(rateStr);
+    
+    // Verify this looks like a valid NGN rate (not a year or other number)
+    // GBP to NGN rates are typically in the 2000-2300 range
+    if (!isNaN(rate) && rate > 1500 && rate < 2500) {
       console.log(`Extracted rate using GBP-NGN pattern: ${rate}`);
       return rate;
+    }
+  }
+  
+  // Pattern 2b: Look specifically for the pattern "1 GBP = 2148.X NGN" from screenshots
+  if (cleanText.includes("GBP =") && cleanText.includes("NGN")) {
+    const specificPattern = /GBP\s*=\s*2148[.,]\d+\s*NGN/i;
+    if (specificPattern.test(cleanText)) {
+      const exactRate = parseFloat(cleanText.match(/2148[.,]\d+/)[0].replace(',', '.'));
+      console.log(`Found exact screenshot rate pattern: ${exactRate}`);
+      return exactRate;
     }
   }
   
