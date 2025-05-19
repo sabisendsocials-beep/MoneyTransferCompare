@@ -12,7 +12,7 @@ import { updateAdditionalProviders } from "./scrapers/mainScraper";
 import apiKeysRouter from "./routes/apiKeys";
 import { rateSourceRouter } from "./routes/rateSource";
 import dataSourceRouter from "./routes/dataSourceRouter";
-import providerRoutes from "./routes/providerRoutes";
+import providerApiRouter from "./routes/providerApi";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -24,6 +24,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register data source router for the new collection strategy
   app.use(dataSourceRouter);
+  
+  // Register provider management API
+  app.use(providerApiRouter);
   
   // Direct verification endpoint
   apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {
