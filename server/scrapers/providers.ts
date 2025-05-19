@@ -5,6 +5,7 @@ import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
 import { updateLemfiRate } from './lemfiScraper';
 import { updateWorldRemitRate } from './worldRemitScraper';
+import { updateRemitlyRate } from './remitlyScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
