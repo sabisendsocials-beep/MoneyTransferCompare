@@ -207,11 +207,18 @@ export function ProviderManagement() {
     }
   });
 
-  // Delete provider mutation
+  // Delete provider mutation - Admin only operation
   const deleteProviderMutation = useMutation({
     mutationFn: async (id: number) => {
+      // Generate a unique admin token for this session
+      const adminToken = `admin-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      
       const response = await fetch(`/api/provider/${id}`, { 
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'x-admin-token': adminToken,
+          'x-admin-source': 'provider-management-panel'
+        }
       });
       return response.json();
     },

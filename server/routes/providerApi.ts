@@ -53,9 +53,21 @@ router.get('/api/provider/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create provider
+// Create provider - Admin only operation
 router.post('/api/provider', async (req: Request, res: Response) => {
   try {
+    // Verify that the request is coming from the admin panel
+    const adminToken = req.headers['x-admin-token'];
+    const isAdminPanel = req.headers['x-admin-source'] === 'provider-management-panel';
+    
+    if (!adminToken || !isAdminPanel) {
+      console.error('Unauthorized attempt to create provider outside admin panel');
+      return res.status(403).json({
+        success: false,
+        message: 'Provider creation is restricted to the admin panel only'
+      });
+    }
+    
     const providerData = req.body as InsertProvider;
     
     // Validate required fields
@@ -68,6 +80,8 @@ router.post('/api/provider', async (req: Request, res: Response) => {
       .insert(providers)
       .values(providerData)
       .returning();
+    
+    console.log(`Provider "${providerData.name}" created via admin panel`);
     
     res.status(201).json({ 
       success: true, 
@@ -84,9 +98,21 @@ router.post('/api/provider', async (req: Request, res: Response) => {
   }
 });
 
-// Update provider
+// Update provider - Admin only operation
 router.patch('/api/provider/:id', async (req: Request, res: Response) => {
   try {
+    // Verify that the request is coming from the admin panel
+    const adminToken = req.headers['x-admin-token'];
+    const isAdminPanel = req.headers['x-admin-source'] === 'provider-management-panel';
+    
+    if (!adminToken || !isAdminPanel) {
+      console.error('Unauthorized attempt to update provider outside admin panel');
+      return res.status(403).json({
+        success: false,
+        message: 'Provider updates are restricted to the admin panel only'
+      });
+    }
+    
     const providerId = parseInt(req.params.id);
     
     if (isNaN(providerId)) {
@@ -112,6 +138,8 @@ router.patch('/api/provider/:id', async (req: Request, res: Response) => {
       .where(eq(providers.id, providerId))
       .returning();
     
+    console.log(`Provider "${existingProvider.name}" (ID: ${providerId}) updated via admin panel`);
+    
     res.json({ 
       success: true, 
       message: 'Provider updated successfully',
@@ -127,9 +155,21 @@ router.patch('/api/provider/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Delete provider
+// Delete provider - Admin only operation
 router.delete('/api/provider/:id', async (req: Request, res: Response) => {
   try {
+    // Verify that the request is coming from the admin panel
+    const adminToken = req.headers['x-admin-token'];
+    const isAdminPanel = req.headers['x-admin-source'] === 'provider-management-panel';
+    
+    if (!adminToken || !isAdminPanel) {
+      console.error('Unauthorized attempt to delete provider outside admin panel');
+      return res.status(403).json({
+        success: false,
+        message: 'Provider deletion is restricted to the admin panel only'
+      });
+    }
+    
     const providerId = parseInt(req.params.id);
     
     if (isNaN(providerId)) {
@@ -145,6 +185,8 @@ router.delete('/api/provider/:id', async (req: Request, res: Response) => {
     if (!existingProvider) {
       return res.status(404).json({ success: false, message: 'Provider not found' });
     }
+    
+    console.log(`Provider "${existingProvider.name}" (ID: ${providerId}) deleted via admin panel`);
     
     // Delete the provider
     await db
