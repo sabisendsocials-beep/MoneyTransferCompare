@@ -560,6 +560,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint to force update Remitly rate using its admin-configured scraper
+  apiRouter.post("/api/update-remitly", async (req: Request, res: Response) => {
+    try {
+      console.log('Triggering Remitly rate update using admin-configured URL and selector...');
+      
+      // Import the scraper function
+      const { updateRemitlyRate } = await import('./scrapers/remitlyScraper');
+      
+      // Run the scraper
+      const success = await updateRemitlyRate();
+      
+      if (success) {
+        // Find Remitly provider to get the latest rate
+        const providers = await storage.getProviders();
+        const remitly = providers.find(p => p.name === 'Remitly');
+        
+        if (!remitly) {
+          return res.status(404).json({ success: false, error: 'Remitly provider not found' });
+        }
+        
+        // Get the latest rate to show in the response
+        const latestRates = await storage.getLatestRates('GBP', 'NGN');
+        const latestRate = latestRates.find(r => r.provider_id === remitly.id);
+        
+        res.json({ 
+          success: true, 
+          message: 'Remitly rate updated successfully using admin-configured settings',
+          provider: remitly.name,
+          oldRate: req.body?.oldRate || 'unknown',
+          newRate: latestRate?.rate || 'unknown',
+          timestamp: latestRate?.timestamp || new Date()
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Failed to update Remitly rate. Please check the URL and CSS selector in admin panel.',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating Remitly rate:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+  
   // Special endpoint to update Wise rates via API only
   apiRouter.get("/api/update-wise-rates", async (req: Request, res: Response) => {
     try {

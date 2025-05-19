@@ -371,6 +371,17 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               results.push({ provider: provider.name, success: false });
               continue; // Skip to next provider without fallbacks
             }
+          } else if (provider.name === 'Remitly') {
+            console.log('=== Using dedicated Remitly scraper with admin-configured URL and selectors ONLY... ===');
+            let success = await updateRemitlyRate();
+            if (success) {
+              console.log('=== Successfully updated Remitly rate with dedicated scraper ===');
+              results.push({ provider: provider.name, success: true });
+              continue; // Skip to next provider
+            } else {
+              console.log('=== Dedicated Remitly scraper failed. Trying enhanced scraping as fallback... ===');
+              // Will continue to standard scraping as fallback
+            }
           }
           
           // Skip Wise since it's configured to use API only
