@@ -5,7 +5,8 @@ import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
 import { updateLemfiRate } from './lemfiScraper';
 import { updateWorldRemitRate } from './worldRemitScraper';
-import { updateRemitlyRate } from './remitlyScraper';
+import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
+import { updateTransferGoRate } from './transferGoScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
@@ -380,6 +381,17 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               continue; // Skip to next provider
             } else {
               console.log('=== Dedicated Remitly scraper failed. Trying enhanced scraping as fallback... ===');
+              // Will continue to standard scraping as fallback
+            }
+          } else if (provider.name === 'TransferGo') {
+            console.log('=== Using dedicated TransferGo scraper with admin-configured URL and selectors ONLY... ===');
+            let success = await updateTransferGoRate();
+            if (success) {
+              console.log('=== Successfully updated TransferGo rate with dedicated scraper ===');
+              results.push({ provider: provider.name, success: true });
+              continue; // Skip to next provider
+            } else {
+              console.log('=== Dedicated TransferGo scraper failed. Trying enhanced scraping as fallback... ===');
               // Will continue to standard scraping as fallback
             }
           }

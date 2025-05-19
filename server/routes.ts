@@ -604,6 +604,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint to force update TransferGo rate using its admin-configured scraper
+  apiRouter.post("/api/update-transfergo", async (req: Request, res: Response) => {
+    try {
+      console.log('Triggering TransferGo rate update using admin-configured URL and selector...');
+      
+      // Import the scraper function
+      const { updateTransferGoRate } = await import('./scrapers/transferGoScraper');
+      
+      // Run the scraper
+      const success = await updateTransferGoRate();
+      
+      if (success) {
+        // Find TransferGo provider to get the latest rate
+        const providers = await storage.getProviders();
+        const transferGo = providers.find(p => p.name === 'TransferGo');
+        
+        if (!transferGo) {
+          return res.status(404).json({ success: false, error: 'TransferGo provider not found' });
+        }
+        
+        // Get the latest rate to show in the response
+        const latestRates = await storage.getLatestRates('GBP', 'NGN');
+        const latestRate = latestRates.find(r => r.provider_id === transferGo.id);
+        
+        res.json({ 
+          success: true, 
+          message: 'TransferGo rate updated successfully using admin-configured settings',
+          provider: transferGo.name,
+          oldRate: req.body?.oldRate || 'unknown',
+          newRate: latestRate?.rate || 'unknown',
+          timestamp: latestRate?.timestamp || new Date()
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Failed to update TransferGo rate. Please check the URL and CSS selector in admin panel.',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating TransferGo rate:', error);
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+  
   // Special endpoint to update Wise rates via API only
   apiRouter.get("/api/update-wise-rates", async (req: Request, res: Response) => {
     try {
