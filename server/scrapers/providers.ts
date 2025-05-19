@@ -281,49 +281,24 @@ function extractExchangeRate(text: string, providerName: string): number | null 
 
 export async function ensureProvidersExist() {
   try {
-    const existingProviders = await storage.getProviders();
-    const existingProviderNames = new Set(existingProviders.map(p => p.name));
+    // Skip provider initialization completely - we now manage providers manually via admin
+    console.log('Provider initialization skipped - using existing providers only');
     
-    // Check if we need to add any new providers
-    const missingProviders = providerList.filter(p => !existingProviderNames.has(p.name));
+    // Check for Wise provider to ensure it has API collection policy
+    const providers = await storage.getProviders();
+    const wiseProvider = providers.find(p => p.name === 'Wise');
     
-    if (missingProviders.length > 0) {
-      console.log(`Found ${missingProviders.length} missing providers, adding them...`);
-      
-      // Only add providers that don't exist yet
-      for (const provider of missingProviders) {
-        const providerName = provider.name;
-        
-        // Special handling for Wise - ensure it's always set with API collection
-        const preferred_collection = providerName === 'Wise' ? 'API' : 'SCRAPER';
-        const has_api = providerName === 'Wise' ? true : false;
-        
-        const insertProvider: InsertProvider = {
-          name: providerName,
-          website_url: provider.website,
-          logo: null,
-          active: true,
-          fixed_fee: provider.fee,
-          transfer_time: provider.transferTime,
-          rating: provider.rating,
-          preferred_collection,
-          has_api,
-          // Add actual URLs and selectors for scraping exchange rates
-          scraping_url: getScrapingUrl(providerName),
-          scraping_selector: getScrapingSelector(providerName)
-        };
-        
-        try {
-          await storage.createProvider(insertProvider);
-          console.log(`Added provider: ${providerName} with collection policy: ${preferred_collection}`);
-        } catch (error) {
-          console.error(`Failed to add provider ${providerName}:`, error);
-        }
+    if (wiseProvider && (wiseProvider.preferred_collection !== 'API' || !wiseProvider.has_api)) {
+      console.log('Updating Wise provider to use API collection...');
+      try {
+        await storage.updateProvider(wiseProvider.id, {
+          preferred_collection: 'API',
+          has_api: true
+        });
+        console.log('✓ Successfully updated Wise provider to use API collection');
+      } catch (error) {
+        console.error('Failed to update Wise provider collection policy:', error);
       }
-      
-      console.log('Provider initialization complete');
-    } else {
-      console.log('All providers already exist, no initialization needed');
     }
   } catch (error) {
     console.error('Error ensuring providers exist:', error);
