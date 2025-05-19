@@ -199,49 +199,57 @@ router.post('/api/rates/collect', async (_req: Request, res: Response) => {
  */
 router.get('/api/rates/latest', async (_req: Request, res: Response) => {
   try {
-    // Get all active providers
-    const providers = await storage.getActiveProviders();
+    // Get the latest exchange rates directly from the database
+    // This ensures we don't miss any rates regardless of provider ID mismatches
+    const query = `
+      SELECT 
+        e.id, 
+        e.provider_id, 
+        p.name as provider_name, 
+        e.from_currency, 
+        e.to_currency, 
+        e.rate, 
+        e.source, 
+        e.source_url, 
+        e.verified, 
+        e.timestamp
+      FROM 
+        exchange_rates e
+      JOIN 
+        providers p ON e.provider_id = p.id
+      WHERE 
+        (e.from_currency, e.to_currency, e.provider_id, e.timestamp) IN (
+          SELECT 
+            from_currency, 
+            to_currency, 
+            provider_id, 
+            MAX(timestamp) as max_timestamp
+          FROM 
+            exchange_rates
+          GROUP BY 
+            from_currency, to_currency, provider_id
+        )
+      ORDER BY 
+        e.from_currency, e.to_currency, p.name
+    `;
     
-    // Common currency pairs we support
-    const currencyPairs = [
-      { from: 'GBP', to: 'NGN' },
-      { from: 'EUR', to: 'NGN' },
-      { from: 'GBP', to: 'GHS' },
-      { from: 'EUR', to: 'GHS' },
-      { from: 'USD', to: 'NGN' }
-    ];
+    const result = await db.execute(query);
+    const rates = result.rows;
     
-    // Result array for all the latest rates
-    const latestRates = [];
+    log(`Found ${rates.length} latest rates from all providers`);
     
-    // For each provider and currency pair, get the latest rate
-    for (const provider of providers) {
-      for (const pair of currencyPairs) {
-        // Fetch the latest rate for this provider and currency pair
-        const rates = await storage.getRatesByProvider(
-          provider.id,
-          pair.from,
-          pair.to,
-          1 // Only get the most recent rate
-        );
-        
-        // If we have a rate, add it to our results
-        if (rates && rates.length > 0) {
-          const rate = rates[0];
-          latestRates.push({
-            providerId: provider.id,
-            providerName: provider.name,
-            fromCurrency: rate.from_currency,
-            toCurrency: rate.to_currency,
-            rate: rate.rate,
-            source: rate.source,
-            sourceUrl: rate.source_url,
-            verified: rate.verified,
-            timestamp: rate.timestamp,
-          });
-        }
-      }
-    }
+    // Transform to the expected format
+    const latestRates = rates.map(rate => ({
+      providerId: rate.provider_id,
+      providerName: rate.provider_name,
+      fromCurrency: rate.from_currency,
+      toCurrency: rate.to_currency,
+      rate: rate.rate,
+      source: rate.source,
+      sourceUrl: rate.source_url,
+      verified: rate.verified,
+      timestamp: rate.timestamp,
+    }));
     
     return res.json(latestRates);
   } catch (error) {
