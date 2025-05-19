@@ -91,13 +91,16 @@ app.use((req, res, next) => {
   /**
    * Sets up automatic interval-based updates for various data sources
    * This ensures our data stays fresh without manual intervention
+   * OPTIMIZED: Only scheduled tasks, no automatic runs during server restart
    */
   function setupAutomaticUpdates(): void {
-    // Update exchange rates every 6 hours
+    log("Setting up scheduled data updates (NO automatic runs during server restart)");
+    
+    // Update exchange rates every 6 hours - SCHEDULED ONLY, not on restart
     const SIX_HOURS = 6 * 60 * 60 * 1000; 
     setInterval(async () => {
       try {
-        log("Running scheduled exchange rate update...");
+        log("Running SCHEDULED exchange rate update (6-hour interval)...");
         const success = await updateExchangeRates();
         
         // If regular scraping fails or doesn't find all providers, use verified rates as fallback
@@ -123,11 +126,11 @@ app.use((req, res, next) => {
       }
     }, SIX_HOURS);
     
-    // Update exchange rate trends 3 times per day (every 8 hours)
+    // Update exchange rate trends 3 times per day - SCHEDULED ONLY, not on restart
     const EIGHT_HOURS = 8 * 60 * 60 * 1000;
     setInterval(async () => {
       try {
-        log("Running scheduled exchange rate trends update...");
+        log("Running SCHEDULED exchange rate trends update (8-hour interval)...");
         await updateRealRateTrends();
         log("Exchange rate trends updated from real APIs");
       } catch (error) {
@@ -135,10 +138,10 @@ app.use((req, res, next) => {
       }
     }, EIGHT_HOURS);
     
-    // Update news every 8 hours
+    // Update news every 8 hours - SCHEDULED ONLY, not on restart
     setInterval(async () => {
       try {
-        log("Running scheduled news update...");
+        log("Running SCHEDULED news update (8-hour interval)...");
         await storage.deleteAllNews();
         const results = await updateFinancialNews();
         log(`Scheduled news update completed with ${results.length} news items added`);
@@ -147,7 +150,7 @@ app.use((req, res, next) => {
       }
     }, EIGHT_HOURS);
     
-    log("Automatic update intervals have been set up");
+    log("✓ Automatic update intervals have been set up (scheduled only, not during restart)");
   }
 
   const server = await registerRoutes(app);
@@ -155,86 +158,26 @@ app.use((req, res, next) => {
   // Set up automatic update intervals for data
   setupAutomaticUpdates();
   
-  // Run deferred operations AFTER server has started (with delay)
-  setTimeout(async () => {
-    log("Server started, now running deferred operations...");
-    
-    try {
-      // PROVIDER MODIFICATION LOCKDOWN
-      log("⛔ PROVIDER SECURITY: Provider modifications completely locked down");
-      log("⛔ PROVIDER SECURITY: Provider data can ONLY be modified via Admin Panel");
-      log("⚠️ WARNING: Any automation attempting to modify providers will be blocked");
-      // All provider data is now completely protected from automatic changes
-      
-      // Initialize rate trends data if needed
-      try {
-        const { initializeRateTrends } = await import('./initializeRateTrends');
-        log("Ensuring rate trend data is initialized...");
-        await initializeRateTrends();
-        log("Rate trend data initialization complete");
-      } catch (trendsError) {
-        log(`Error initializing rate trends: ${trendsError}`);
-      }
-      
-      // Update provider ratings (but don't block startup)
-      setTimeout(async () => {
-        try {
-          const { updateVerifiedRatings } = await import('./updateVerifiedRatings');
-          log("Updating provider ratings with verified TrustPilot values...");
-          await updateVerifiedRatings();
-          log("Provider ratings updated with TrustPilot values");
-        } catch (ratingError) {
-          log(`Error updating provider ratings: ${ratingError}`);
-        }
-      }, 10000); // Run after 10 seconds
-      
-      // Check if rates exist, only fetch if we don't have recent data
-      const checkAndUpdateRates = async () => {
-        try {
-          // Check for recent rates in the database
-          const fromCurrency = "GBP";
-          const toCurrency = "NGN";
-          const recentRates = await storage.getLatestRates(fromCurrency, toCurrency);
-          
-          // Only update if we don't have recent rates
-          if (!recentRates || recentRates.length === 0) {
-            log("No recent exchange rates found, fetching current rates...");
-            
-            // Try API-based updates first
-            try {
-              // Specifically try Wise API since we have the key
-              const updateWiseRates = (await import('./api/wiseApi.js')).default;
-              log("Fetching exchange rates from Wise API...");
-              await updateWiseRates();
-              log("Wise API rate update completed");
-            } catch (wiseError) {
-              log(`Error updating rates from Wise API: ${wiseError}`);
-            }
-            
-            // Then try other provider APIs
-            try {
-              const updateRatesFromApis = (await import('./api/providerApis.js')).default;
-              log("Attempting to update rates from other provider APIs...");
-              await updateRatesFromApis();
-              log("API-based rate updates completed");
-            } catch (apiError) {
-              log(`Error updating rates from provider APIs: ${apiError}`);
-            }
-          } else {
-            log(`Found ${recentRates.length} recent exchange rates, skipping fresh fetch`);
-          }
-        } catch (error) {
-          log(`Error checking and updating rates: ${error}`);
-        }
-      };
-      
-      // Schedule rate checks to run after 20 seconds
-      setTimeout(checkAndUpdateRates, 20000);
-      
-    } catch (error) {
-      log(`Error in deferred operations: ${error}`);
-    }
-  }, 5000); // Wait 5 seconds after server startup
+  // OPTIMIZED SERVER STARTUP - NO DATA OPERATIONS
+  // Log security status only, avoid all data operations during restart
+  log("Server started - running in optimized startup mode");
+  
+  // Display security status
+  log("⛔ PROVIDER SECURITY: Provider modifications completely locked down");
+  log("⛔ PROVIDER SECURITY: Provider data can ONLY be modified via Admin Panel");
+  log("⚠️ WARNING: Any automation attempting to modify providers will be blocked");
+  
+  // STARTUP POLICY: No data operations during server restart
+  log("📊 DATA OPERATIONS POLICY: No web scraping during server restart");
+  log("📊 DATA OPERATIONS POLICY: No rate history updates during server restart");
+  log("📊 DATA OPERATIONS POLICY: No news updates during server restart");
+  log("📊 DATA OPERATIONS POLICY: Using existing database data only");
+  
+  // Log that operations will only run at scheduled times
+  log("⏱️ All data operations will ONLY run at scheduled intervals");
+  log("⏱️ Web scraping: Every 6 hours via scheduler");
+  log("⏱️ Rate trends: Every 8 hours via scheduler");
+  log("⏱️ News updates: Every 8 hours via scheduler");
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
