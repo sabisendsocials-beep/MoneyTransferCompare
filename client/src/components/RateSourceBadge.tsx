@@ -66,6 +66,8 @@ export function RateSourceBadge({ source, className, showLabel = true }: RateSou
     switch (source) {
       case 'api':
         return 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/50';
+      case 'screenshot':
+        return 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50';
       case 'scraping':
         return 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800/50';
       default:
