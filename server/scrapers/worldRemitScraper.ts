@@ -38,72 +38,178 @@ export async function scrapeWorldRemitRate(): Promise<number | null> {
     const url = worldRemit.scraping_url;
     console.log(`Using admin-configured URL for WorldRemit: ${url}`);
     
+    // Try to get the rate using multiple approaches
     try {
-      // Modern financial websites have sophisticated anti-scraping measures
-      // We'll use a more comprehensive set of headers to appear as a legitimate browser
+      // First try the WorldRemit API (most reliable method)
+      console.log('Attempting to use the WorldRemit API...');
+      try {
+        const apiUrl = 'https://www.worldremit.com/api/foreign-exchange/rate?sourceCurrency=GBP&targetCurrency=NGN';
+        console.log(`Trying WorldRemit API: ${apiUrl}`);
+        
+        const apiResponse = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Origin': 'https://www.worldremit.com',
+            'Referer': 'https://www.worldremit.com/en/gb/nigeria'
+          }
+        });
+        
+        if (apiResponse.ok) {
+          const apiData = await apiResponse.json();
+          console.log('WorldRemit API response:', JSON.stringify(apiData));
+          
+          if (apiData && apiData.rate) {
+            console.log(`Successfully got rate from WorldRemit API: ${apiData.rate}`);
+            return apiData.rate;
+          }
+        }
+      } catch (apiError) {
+        console.log(`Error using WorldRemit API: ${apiError}`);
+      }
+      
+      // If API approach failed, try web scraping with the admin-configured URL
+      console.log('API approach failed, trying web scraping with admin-configured URL...');
+      
+      // Try to fetch the admin-configured URL with enhanced headers
       const response = await fetch(url, {
         headers: {
-          // Modern Chrome browser with specific version
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
           'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
           'Accept-Encoding': 'gzip, deflate, br',
-          'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-          'Sec-Ch-Ua-Mobile': '?0',
-          'Sec-Ch-Ua-Platform': '"Windows"',
           'Sec-Fetch-Dest': 'document',
           'Sec-Fetch-Mode': 'navigate',
           'Sec-Fetch-Site': 'none',
           'Sec-Fetch-User': '?1',
+          'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+          'Sec-Ch-Ua-Mobile': '?0',
+          'Sec-Ch-Ua-Platform': '"Windows"',
           'Upgrade-Insecure-Requests': '1',
           'Cache-Control': 'max-age=0',
-          // Add a referer to make it look like we came from a search engine
-          'Referer': 'https://www.google.com/',
-          // Random client IP header (some sites check for this)
-          'X-Forwarded-For': `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+          'Referer': 'https://www.google.com/search?q=worldremit+exchange+rates'
         }
       });
       
       if (!response.ok) {
-        console.error(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
+        console.log(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
+        
+        // Try alternative URLs if the admin-configured one doesn't work
+        const alternativeUrls = [
+          'https://www.worldremit.com/en/gb/nigeria',
+          'https://www.worldremit.com/en/gbp-to-ngn-exchange-rate',
+          'https://www.worldremit.com/en/nigeria'
+        ];
+        
+        for (const altUrl of alternativeUrls) {
+          console.log(`Trying alternative URL: ${altUrl}`);
+          
+          try {
+            const altResponse = await fetch(altUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                'Cache-Control': 'max-age=0',
+                'Referer': 'https://www.google.com/'
+              }
+            });
+            
+            if (altResponse.ok) {
+              const html = await altResponse.text();
+              const $ = cheerio.load(html);
+              
+              // Look for the exchange rate pattern in the page text
+              const bodyText = $('body').text();
+              const rateMatch = bodyText.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
+              
+              if (rateMatch && rateMatch[1]) {
+                const rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+                if (rate > 1000) { // Valid rate for GBP to NGN should be in thousands
+                  console.log(`Found exchange rate in alternative URL: ${rate}`);
+                  return rate;
+                }
+              }
+              
+              // Try the admin-configured selector with this alternative URL
+              if (worldRemit.scraping_selector) {
+                const selectors = worldRemit.scraping_selector.split(',').map(s => s.trim());
+                
+                for (const selector of selectors) {
+                  const elements = $(selector);
+                  if (elements.length > 0) {
+                    for (let i = 0; i < elements.length; i++) {
+                      const text = $(elements[i]).text().trim();
+                      const rate = extractWorldRemitRate(text);
+                      if (rate !== null) {
+                        console.log(`Found rate using selector "${selector}" on alternative URL: ${rate}`);
+                        return rate;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch (altError) {
+            console.log(`Error fetching alternative URL ${altUrl}: ${altError}`);
+          }
+        }
+        
+        // If we've tried all URLs and still don't have a rate, log the failure
+        console.log('Failed to scrape WorldRemit rate from any URL');
         return null;
       }
       
+      // If the main URL worked, parse it
       const html = await response.text();
       const $ = cheerio.load(html);
       console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
       
       // Use the selectors from the admin panel configuration
-      // Split by comma in case multiple selectors are provided
-      const selectors = worldRemit.scraping_selector.split(',').map(s => s.trim());
-      console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
-      
-      for (const selector of selectors) {
-        const elements = $(selector);
-        if (elements.length > 0) {
-          console.log(`Found ${elements.length} elements with selector "${selector}"`);
-          
-          for (let i = 0; i < elements.length; i++) {
-            const text = $(elements[i]).text().trim();
-            console.log(`Element ${i+1} text: "${text}"`);
+      if (worldRemit.scraping_selector) {
+        const selectors = worldRemit.scraping_selector.split(',').map(s => s.trim());
+        console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
+        
+        for (const selector of selectors) {
+          const elements = $(selector);
+          if (elements.length > 0) {
+            console.log(`Found ${elements.length} elements with selector "${selector}"`);
             
-            // Try to extract rate from the text
-            const rate = extractWorldRemitRate(text);
-            if (rate !== null) {
-              console.log(`Successfully extracted rate from admin-configured selector: ${rate}`);
-              return rate;
+            for (let i = 0; i < elements.length; i++) {
+              const text = $(elements[i]).text().trim();
+              console.log(`Element ${i+1} text: "${text}"`);
+              
+              // Try to extract rate from the text
+              const rate = extractWorldRemitRate(text);
+              if (rate !== null) {
+                console.log(`Successfully extracted rate from admin-configured selector: ${rate}`);
+                return rate;
+              }
             }
+          } else {
+            console.log(`No elements found with selector "${selector}"`);
           }
-        } else {
-          console.log(`No elements found with selector "${selector}"`);
         }
       }
       
-      console.error('Could not extract rate using the admin-configured selector');
+      // If selectors didn't work, try to find the rate in the page text
+      const bodyText = $('body').text();
+      const rateMatch = bodyText.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
+      
+      if (rateMatch && rateMatch[1]) {
+        const rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+        if (rate > 1000) {
+          console.log(`Found exchange rate in page text: ${rate}`);
+          return rate;
+        }
+      }
+      
+      console.log('Failed to extract rate from the page');
       return null;
       
     } catch (error) {
-      console.error(`Error fetching from ${url}:`, error);
+      console.error(`Error in WorldRemit scraper:`, error);
       return null;
     }
   } catch (error) {
@@ -134,35 +240,6 @@ function extractWorldRemitRate(text: string): number | null {
       // WorldRemit rates for GBP to NGN should be in a reasonable range
       if (!isNaN(rate) && rate > 0) {
         return rate;
-      }
-    }
-  }
-  
-  return null;
-}
-
-/**
- * Look for exchange rate patterns in a larger text
- */
-function findRateInText(text: string): number | null {
-  // Look for paragraphs or sections that mention both GBP and NGN
-  const gbpNgnSections = text.match(/[^.!?]*(?:GBP|£).*?(?:NGN|naira)[^.!?]*/gi);
-  
-  if (gbpNgnSections && gbpNgnSections.length > 0) {
-    for (const section of gbpNgnSections) {
-      // Extract numbers from the section
-      const numbers = section.match(/[\d,]+\.?\d*/g);
-      if (numbers && numbers.length > 0) {
-        // Convert to numbers and find the ones in the right range for GBP to NGN
-        const rates = numbers
-          .map(n => parseFloat(n.replace(/,/g, '')))
-          .filter(n => !isNaN(n) && n > 0);
-        
-        // Look for numbers that are likely GBP to NGN rates (typically in the hundreds or thousands)
-        const likelyRates = rates.filter(r => r > 100);
-        if (likelyRates.length > 0) {
-          return Math.max(...likelyRates);  // Return the highest rate found
-        }
       }
     }
   }
