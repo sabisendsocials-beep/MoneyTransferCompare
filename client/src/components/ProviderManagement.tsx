@@ -106,10 +106,14 @@ export function ProviderManagement() {
   // Initialize providers mutation
   const initializeProvidersMutation = useMutation({
     mutationFn: async (reset: boolean) => {
-      return apiRequest('/api/init-providers', { 
+      const response = await fetch('/api/init-providers', { 
         method: 'POST',
-        data: { reset }
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reset })
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/providers'] });
@@ -131,10 +135,14 @@ export function ProviderManagement() {
   // Create provider mutation
   const createProviderMutation = useMutation({
     mutationFn: async (provider: ProviderFormData) => {
-      return apiRequest('/api/provider', { 
+      const response = await fetch('/api/provider', { 
         method: 'POST',
-        data: provider
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(provider)
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/providers'] });
@@ -157,10 +165,14 @@ export function ProviderManagement() {
   // Update provider mutation
   const updateProviderMutation = useMutation({
     mutationFn: async ({ id, provider }: { id: number, provider: Partial<ProviderFormData> }) => {
-      return apiRequest(`/api/provider/${id}`, { 
+      const response = await fetch(`/api/provider/${id}`, { 
         method: 'PATCH',
-        data: provider
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(provider)
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/providers'] });
@@ -183,7 +195,10 @@ export function ProviderManagement() {
   // Delete provider mutation
   const deleteProviderMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/provider/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/provider/${id}`, { 
+        method: 'DELETE'
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/providers'] });
@@ -345,7 +360,7 @@ export function ProviderManagement() {
           <TabsContent value="list">
             {isLoading ? (
               <div className="flex justify-center items-center h-40">
-                <ReloadIcon className="h-8 w-8 animate-spin text-gray-500" />
+                <RefreshCw className="h-8 w-8 animate-spin text-gray-500" />
               </div>
             ) : error ? (
               <div className="text-center p-4 text-red-500">
@@ -431,7 +446,7 @@ export function ProviderManagement() {
                     disabled={initializeProvidersMutation.isPending}
                   >
                     {initializeProvidersMutation.isPending && !confirmResetOpen && (
-                      <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     Add Missing Providers
                   </Button>
@@ -709,7 +724,7 @@ export function ProviderManagement() {
                 disabled={createProviderMutation.isPending || updateProviderMutation.isPending}
               >
                 {(createProviderMutation.isPending || updateProviderMutation.isPending) && (
-                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 {selectedProviderId ? "Update Provider" : "Add Provider"}
               </Button>
@@ -746,7 +761,7 @@ export function ProviderManagement() {
               disabled={initializeProvidersMutation.isPending}
             >
               {initializeProvidersMutation.isPending && (
-                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               )}
               Reset & Initialize
             </Button>
