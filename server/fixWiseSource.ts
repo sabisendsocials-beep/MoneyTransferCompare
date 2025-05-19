@@ -18,18 +18,9 @@ export async function fixWiseSource(): Promise<number> {
   try {
     console.log('Fixing Wise exchange rate sources...');
     
-    // Find Wise provider ID
-    const [wiseProvider] = await db.execute<{ id: number }>(
-      `SELECT id FROM providers WHERE name = 'Wise' LIMIT 1`
-    );
-    
-    if (!wiseProvider || !wiseProvider.rows.length) {
-      console.error('Wise provider not found in database');
-      return 0;
-    }
-    
-    const wiseProviderId = wiseProvider.rows[0].id;
-    console.log(`Found Wise provider with ID: ${wiseProviderId}`);
+    // Use the known Wise provider ID (10001)
+    const wiseProviderId = 10001;
+    console.log(`Using Wise provider with ID: ${wiseProviderId}`);
     
     // Update all Wise exchange rates to use API as source
     const result = await db

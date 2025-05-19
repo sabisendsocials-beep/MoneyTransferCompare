@@ -305,13 +305,9 @@ export function initializeRateCollectionScheduler(): void {
   
   log('Rate collection scheduler initialized (checking every 5 minutes)');
   
-  // DEPRECATED: Immediate run
-  log('⚠️ DEPRECATED: Triggering immediate data collection during server restart');
-  collectAllRates().then(() => {
-    log('⚠️ DEPRECATED: Immediate rate collection completed after server restart');
-  }).catch(error => {
-    log(`Error in immediate rate collection: ${error}`);
-  });
+  // Immediate collection disabled
+  log('🔒 Immediate data collection during server restart has been disabled');
+  // No collection is triggered to prevent unexpected updates
 }
 
 /**
