@@ -340,6 +340,13 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
       try {
         console.log(`Processing provider: ${provider.name}`);
         
+        // Skip providers that are configured to use API-only collection
+        if (provider.preferred_collection === 'API') {
+          console.log(`=== Skipping ${provider.name} - configured for API-only collection ===`);
+          results.push({ provider: provider.name, success: true });
+          continue; // Skip to next provider
+        }
+        
         if (provider.scraping_url && provider.scraping_selector) {
           // Special handling for Lemfi - use our dedicated scraper
           if (provider.name === 'Lemfi') {
