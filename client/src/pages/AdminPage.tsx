@@ -591,6 +591,11 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        
+        {/* Provider Management Tab */}
+        <TabsContent value="providers">
+          <ProviderManagement />
+        </TabsContent>
       </Tabs>
     </div>
   );
