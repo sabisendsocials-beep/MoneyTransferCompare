@@ -74,6 +74,16 @@ app.use((req, res, next) => {
       log(`Error in provider schema migration: ${migrationError}`);
     }
     
+    // Run provider configuration validation to ensure Wise uses API
+    try {
+      log("🔒 Validating critical provider configurations...");
+      const { validateProviderConfigurations } = await import('./scripts/validateProviderConfigurations');
+      await validateProviderConfigurations();
+      log("✓ Provider configurations validated and corrected if needed");
+    } catch (validationError) {
+      log(`Error validating provider configurations: ${validationError}`);
+    }
+    
     // Set up SCHEDULERS ONLY, but DO NOT trigger immediate data collection
     try {
       log("📅 Setting up scheduled rate collection (NO IMMEDIATE DATA OPERATIONS)");
