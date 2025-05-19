@@ -50,76 +50,135 @@ export async function scrapeRemitlyRate(): Promise<number | null> {
       
       const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
       
-      // Enhanced browser simulation headers
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': randomUserAgent,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-          'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Sec-Fetch-Dest': 'document',
-          'Sec-Fetch-Mode': 'navigate',
-          'Sec-Fetch-Site': 'none',
-          'Sec-Fetch-User': '?1',
-          'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-          'Sec-Ch-Ua-Mobile': '?0',
-          'Sec-Ch-Ua-Platform': '"Windows"',
-          'Upgrade-Insecure-Requests': '1',
-          'Referer': 'https://www.google.com/',
+      // First try Remitly's API endpoint directly
+      console.log('Trying Remitly API endpoint first...');
+      try {
+        const apiUrl = 'https://www.remitly.com/gb/en/api/exchange-rates/GBP/NGN';
+        console.log(`Trying Remitly API: ${apiUrl}`);
+        
+        const apiResponse = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': randomUserAgent,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Referer': 'https://www.remitly.com/gb/en/nigeria'
+          }
+        });
+        
+        if (apiResponse.ok) {
+          try {
+            const apiData = await apiResponse.json();
+            console.log('Remitly API response:', JSON.stringify(apiData));
+            
+            if (apiData && apiData.rate) {
+              console.log(`Successfully got rate from Remitly API: ${apiData.rate}`);
+              return apiData.rate;
+            } else if (apiData && apiData.exchangeRate) {
+              console.log(`Successfully got rate from Remitly API: ${apiData.exchangeRate}`);
+              return apiData.exchangeRate;
+            }
+          } catch (jsonError) {
+            console.log(`Error parsing Remitly API response: ${jsonError}`);
+          }
         }
-      });
-      
-      if (!response.ok) {
-        console.error(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
-        return null;
+      } catch (apiError) {
+        console.log(`Error using Remitly API: ${apiError}`);
       }
       
-      const html = await response.text();
-      const $ = cheerio.load(html);
-      console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
+      // If API approach failed, try the main URL first
+      console.log('API approach failed, trying multiple URLs...');
       
-      // Use the selectors from the admin panel configuration
-      // Split by comma in case multiple selectors are provided
-      const selectors = remitly.scraping_selector.split(',').map(s => s.trim());
-      console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
+      // Try multiple URLs in case the admin-configured one doesn't work
+      const urlVariations = [
+        url, // First try the admin-configured URL
+        'https://www.remitly.com/gb/en/nigeria', // UK to Nigeria
+        'https://www.remitly.com/gb/en/nigeria/rates', // UK to Nigeria rates
+        'https://www.remitly.com/gb/en/nigeria/pricing', // UK to Nigeria pricing
+        'https://www.remitly.com/gb/en', // UK homepage
+        'https://www.remitly.com' // Main homepage
+      ];
       
-      for (const selector of selectors) {
-        const elements = $(selector);
-        if (elements.length > 0) {
-          console.log(`Found ${elements.length} elements with selector "${selector}"`);
+      for (const currentUrl of urlVariations) {
+        console.log(`Trying URL variation: ${currentUrl}`);
+        
+        try {
+          // Enhanced browser simulation headers
+          const response = await fetch(currentUrl, {
+            headers: {
+              'User-Agent': randomUserAgent,
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+              'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+              'Sec-Fetch-Dest': 'document',
+              'Sec-Fetch-Mode': 'navigate',
+              'Sec-Fetch-Site': 'none',
+              'Sec-Fetch-User': '?1',
+              'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+              'Sec-Ch-Ua-Mobile': '?0',
+              'Sec-Ch-Ua-Platform': '"Windows"',
+              'Upgrade-Insecure-Requests': '1',
+              'Referer': 'https://www.google.com/',
+            }
+          });
           
-          for (let i = 0; i < elements.length; i++) {
-            const text = $(elements[i]).text().trim();
-            console.log(`Element ${i+1} text: "${text}"`);
+          if (!response.ok) {
+            console.error(`Failed to fetch from ${currentUrl}: ${response.status} ${response.statusText}`);
+            continue; // Try the next URL
+          }
+          
+          const html = await response.text();
+          
+          // If we got the page content successfully, process it
+          if (html.length > 1000) {
+            const $ = cheerio.load(html);
+            console.log(`Retrieved HTML content (${html.length} characters) from ${currentUrl}`);
             
-            // Try to extract rate from the text
-            const rate = extractRemitlyRate(text);
-            if (rate !== null) {
-              console.log(`Successfully extracted rate from selector "${selector}": ${rate}`);
+            // Use the admin-configured selectors with this URL
+            if (remitly.scraping_selector) {
+              const selectors = remitly.scraping_selector.split(',').map(s => s.trim());
+              console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
+              
+              for (const selector of selectors) {
+                const elements = $(selector);
+                if (elements.length > 0) {
+                  console.log(`Found ${elements.length} elements with selector "${selector}"`);
+                  
+                  for (let i = 0; i < elements.length; i++) {
+                    const text = $(elements[i]).text().trim();
+                    console.log(`Element ${i+1} text: "${text}"`);
+                    
+                    // Try to extract rate from the text
+                    const rate = extractRemitlyRate(text);
+                    if (rate !== null) {
+                      console.log(`Successfully extracted rate from selector "${selector}": ${rate}`);
+                      return rate;
+                    }
+                  }
+                }
+              }
+            }
+            
+            // If selectors didn't work, try to find the rate in the page text
+            console.log('Trying to find rate in the whole page text...');
+            const bodyText = $('body').text();
+            const rate = findRateInText(bodyText);
+            if (rate) {
+              console.log(`Found rate in page text from ${currentUrl}: ${rate}`);
               return rate;
             }
           }
-        } else {
-          console.log(`No elements found with selector "${selector}"`);
+        } catch (error) {
+          console.error(`Error fetching from ${currentUrl}:`, error);
+          // Continue with next URL
         }
       }
-      
-      // If we couldn't find the rate with the admin selector, try looking in the whole page
-      console.log('Trying to find rate in the whole page text...');
-      const bodyText = $('body').text();
-      const rate = findRateInText(bodyText);
-      if (rate) {
-        console.log(`Found rate in page text: ${rate}`);
-        return rate;
-      }
-      
-      console.error('Could not extract rate from Remitly page');
+      console.error('Could not extract rate from any Remitly URL');
       return null;
       
     } catch (error) {
-      console.error(`Error fetching from ${url}:`, error);
+      console.error(`Error in Remitly scraper:`, error);
       return null;
     }
   } catch (error) {
