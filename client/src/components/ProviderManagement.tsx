@@ -264,7 +264,8 @@ export function ProviderManagement() {
       has_api: provider.has_api,
       api_url: provider.api_url || "",
       api_key_required: provider.api_key_required,
-      api_response_path: provider.api_response_path || ""
+      api_response_path: provider.api_response_path || "",
+      comment: provider.comment || ""
     };
     
     setSelectedProviderId(provider.id);
