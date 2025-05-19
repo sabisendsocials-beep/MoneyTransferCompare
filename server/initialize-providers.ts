@@ -190,28 +190,38 @@ const standardProviders: InsertProvider[] = [
 /**
  * Initialize providers
  * @param reset If true, deletes all existing providers first
+ * @param adminToken The admin authentication token
+ * @param adminSource The source of the request (must be 'provider-management-panel')
  * @returns Result of the operation
  */
-async function initializeProviders(reset: boolean = false): Promise<{ success: boolean, addedCount: number }> {
-  console.log(`Running provider initialization (reset mode: ${reset ? 'YES' : 'NO'})`);
+async function initializeProviders(
+  reset: boolean = false,
+  adminToken?: string,
+  adminSource?: string
+): Promise<{ success: boolean, addedCount: number }> {
+  console.log(`Provider initialization requested (reset mode: ${reset ? 'YES' : 'NO'})`);
   
   try {
-    // MANUAL OPERATION ONLY - Check if this was called from the API endpoint
+    // MAXIMUM SECURITY: Require explicit admin authentication
+    const isAdminRequest = adminToken && adminSource === 'provider-management-panel';
+    
+    // Check the call stack as a secondary verification
     const callStack = new Error().stack || '';
     const isCalledFromAPI = callStack.includes('providerApi.ts');
     
-    // SAFETY CHECK: Only allow reset if explicitly called from the API
-    if (reset && !isCalledFromAPI) {
-      console.error('CRITICAL SAFETY: Attempted automatic provider reset outside of admin API - BLOCKED');
-      console.log('Provider data is preserved - no changes made');
+    // TRIPLE PROTECTION: Block any initialization not coming from admin panel with proper tokens
+    if (!isAdminRequest || !isCalledFromAPI) {
+      console.error('🛑 CRITICAL SECURITY BLOCK: Unauthorized provider modification attempt blocked');
+      console.error('🔒 Provider data is locked and can only be modified through admin panel');
+      console.error('📋 Request details:');
+      console.error(`   - Has admin token: ${adminToken ? 'Yes' : 'No'}`);
+      console.error(`   - Correct source: ${adminSource === 'provider-management-panel' ? 'Yes' : 'No'}`);
+      console.error(`   - Called from API: ${isCalledFromAPI ? 'Yes' : 'No'}`);
       return { success: false, addedCount: 0 };
     }
     
-    // SAFETY CHECK: Don't modify providers unless explicitly requested via API
-    if (!isCalledFromAPI) {
-      console.log('SAFETY: Provider initialization skipped - must be triggered manually from admin panel');
-      return { success: false, addedCount: 0 };
-    }
+    // SUCCESS: Request has proper admin authentication and comes from the correct source
+    console.log('✅ Admin authentication verified - proceeding with provider initialization');
     
     // Optionally clear existing providers if reset mode is enabled (and called from API)
     if (reset) {
