@@ -14,6 +14,7 @@ import { rateSourceRouter } from "./routes/rateSource";
 import dataSourceRouter from "./routes/dataSourceRouter";
 import providerApiRouter from "./routes/providerApi";
 import { lemfiRouter } from "./routes/lemfiRoutes";
+import scraperStatusRouter from "./routes/scraperStatus";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -31,6 +32,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register Lemfi scraper routes
   app.use(lemfiRouter);
+  
+  // Register scraper status routes
+  app.use(scraperStatusRouter);
   
   // Direct verification endpoint
   apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {

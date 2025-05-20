@@ -329,6 +329,8 @@ export async function ensureProvidersExist() {
   }
 }
 
+import { recordScraperRun, canScraperRun } from '../routes/scraperStatus';
+
 export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider: string, success: boolean })[]> {
   try {
     // First ensure we have providers
@@ -342,9 +344,18 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
       try {
         console.log(`Processing provider: ${provider.name}`);
         
+        // Check if this scraper can run based on time limitations
+        const canRun = canScraperRun(provider.name);
+        if (!canRun) {
+          console.log(`=== Skipping ${provider.name} - minimum time between runs not elapsed ===`);
+          results.push({ provider: provider.name, success: true });
+          continue; // Skip to next provider
+        }
+        
         // Skip providers that are configured to use API-only collection
         if (provider.preferred_collection === 'API') {
           console.log(`=== Skipping ${provider.name} - configured for API-only collection ===`);
+          recordScraperRun(provider.name, true, 'Skipped - configured for API-only collection');
           results.push({ provider: provider.name, success: true });
           continue; // Skip to next provider
         }
