@@ -10,40 +10,36 @@ const HeroSection = () => {
   return (
     <section className="relative overflow-hidden">
       {/* Hero background with gradient effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-purple-950">
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800">
         <div className="absolute inset-0 opacity-30" 
           style={{
             backgroundImage: "radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.15) 2%, transparent 0%), radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.15) 2%, transparent 0%)",
             backgroundSize: "100px 100px"
           }}>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-full overflow-hidden opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M0,95 L100,95 L100,100 Q50,60 0,100 Z" fill="white" />
-            <path d="M0,65 L100,75 L100,80 Q50,70 0,80 Z" fill="white" opacity="0.5" />
-          </svg>
-        </div>
+        {/* Lighter gradient overlay toward the calculator area */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-r from-transparent to-white/10"></div>
       </div>
 
-      <div className="container mx-auto px-4 pt-10 pb-12 md:pt-16 md:pb-20 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+      <div className="container mx-auto px-4 pt-8 pb-10 md:pt-12 md:pb-16 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
           {/* Left content */}
-          <div className="lg:w-1/2">
+          <div className="lg:w-2/5">
             <div className="inline-flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md rounded-full px-4 py-1.5 text-sm font-medium mb-4">
               <CheckCircle2 size={14} className="text-emerald-400" />
               <span>Verified rates from trusted providers</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-5">
               Find the <span className="bg-gradient-to-r from-emerald-400 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
             </h1>
             
-            <p className="text-lg text-blue-100 mb-6 max-w-xl">
+            <p className="text-lg text-blue-100 mb-5 max-w-xl">
               Our platform compares exchange rates from 12+ trusted providers in real-time, 
               helping you save on fees and get more value in every international transfer.
             </p>
             
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex items-center gap-3 text-white">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
                   <ArrowRightLeft size={20} />
@@ -101,11 +97,21 @@ const HeroSection = () => {
           </div>
           
           {/* Right content - Calculator */}
-          <div className="lg:w-1/2 w-full">
-            <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-[0_0_45px_rgba(8,107,230,0.15)]">
-              <h2 className="text-xl text-white font-semibold mb-4 text-center">Quick Rate Calculator</h2>
+          <div className="lg:w-3/5 w-full">
+            <div className="bg-white/15 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-white/20 shadow-[0_0_45px_rgba(8,107,230,0.15)]">
+              <h2 className="text-2xl text-white font-semibold mb-6 text-center">Quick Rate Calculator</h2>
               
               <CurrencyCalculator />
+              
+              {/* Call to action button */}
+              <div className="mt-6 text-center">
+                <Link href="/compare">
+                  <Button className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium px-6">
+                    Get Best Rate Now
+                    <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                </Link>
+              </div>
               
               {/* Last updated info */}
               <div className="mt-4 text-center text-sm text-blue-200">
@@ -116,7 +122,7 @@ const HeroSection = () => {
               </div>
               
               {/* Provider logos */}
-              <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="mt-6 pt-5 border-t border-white/10">
                 <div className="text-sm text-blue-200 mb-3 text-center">Trusted Providers</div>
                 <div className="flex flex-wrap gap-2 justify-center">
                   <div className="py-1.5 px-3 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Western Union</div>

@@ -54,16 +54,16 @@ const CurrencyCalculator = () => {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-5">
         {/* From currency */}
-        <div className="bg-white/10 rounded-lg p-4">
+        <div className="bg-white/10 rounded-lg p-5">
           <div className="flex justify-between items-center mb-2">
-            <label className="text-sm text-white/80">You send</label>
+            <label className="text-sm text-white/80 font-medium">You Send</label>
             <Select
               value={fromCurrency}
               onValueChange={setFromCurrency}
             >
-              <SelectTrigger className="w-[100px] bg-transparent border-0 text-white">
+              <SelectTrigger className="w-[110px] bg-transparent border-0 text-white">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>
@@ -77,32 +77,32 @@ const CurrencyCalculator = () => {
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="bg-transparent border-0 text-2xl font-semibold text-white h-12 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="bg-transparent border-0 text-3xl font-semibold text-white h-14 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               placeholder="1,000"
             />
           </div>
         </div>
 
         {/* Convert button */}
-        <div className="flex justify-center -my-2 z-10">
+        <div className="flex justify-center -my-3 z-10">
           <Button 
             onClick={calculateRate}
             size="sm" 
-            className="rounded-full h-10 w-10 bg-[#0fbbce] hover:bg-[#0fbbce]/80 flex items-center justify-center p-0 shadow-lg border-4 border-[#1a365d]"
+            className="rounded-full h-12 w-12 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 flex items-center justify-center p-0 shadow-lg border-4 border-indigo-900"
           >
-            <ArrowRight size={16} />
+            <ArrowRight size={18} />
           </Button>
         </div>
 
         {/* To currency */}
-        <div className="bg-white/10 rounded-lg p-4">
+        <div className="bg-white/10 rounded-lg p-5">
           <div className="flex justify-between items-center mb-2">
-            <label className="text-sm text-white/80">They receive</label>
+            <label className="text-sm text-white/80 font-medium">They Receive</label>
             <Select
               value={toCurrency}
               onValueChange={setToCurrency}
             >
-              <SelectTrigger className="w-[100px] bg-transparent border-0 text-white">
+              <SelectTrigger className="w-[110px] bg-transparent border-0 text-white">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>
@@ -112,13 +112,13 @@ const CurrencyCalculator = () => {
             </Select>
           </div>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-semibold text-white">
+            <div className="text-3xl font-semibold text-white">
               {result ? formatNumber(result) : "0.00"}
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-[#0fbbce] hover:text-[#0fbbce]/80 p-0"
+              className="text-emerald-400 hover:text-emerald-300 p-0"
               onClick={calculateRate}
             >
               <RefreshCcw size={16} />
@@ -129,8 +129,8 @@ const CurrencyCalculator = () => {
 
       {/* Exchange rate info */}
       <div className="mt-4 text-center">
-        <p className="text-sm text-white/60">
-          Exchange rate: <span className="text-white/90 font-medium">
+        <p className="text-sm text-white/80">
+          Exchange rate: <span className="text-white font-medium">
             {fromCurrency && toCurrency && exchangeRates[`${fromCurrency}-${toCurrency}`] ? 
               `1 ${fromCurrency} = ${formatNumber(exchangeRates[`${fromCurrency}-${toCurrency}`])} ${toCurrency}` : 
               "Select currencies"}
