@@ -99,6 +99,39 @@ const RateTrends = () => {
       // Make a deep copy to ensure we don't modify the original data
       let processedData = trendData.map(point => ({...point}));
       
+      // Fix future dates by shifting them to the past
+      const today = new Date();
+      const hasFutureDates = processedData.some(point => {
+        const pointDate = new Date(point.date);
+        return pointDate > today;
+      });
+      
+      if (hasFutureDates) {
+        console.log('Found future dates in trend data, correcting them...');
+        
+        processedData = processedData.map(point => {
+          const pointDate = new Date(point.date);
+          
+          // Only correct future dates
+          if (pointDate > today) {
+            const yearDiff = pointDate.getFullYear() - today.getFullYear() + 1;
+            
+            // Create a new date with adjusted year
+            const correctedDate = new Date(pointDate);
+            correctedDate.setFullYear(correctedDate.getFullYear() - yearDiff);
+            
+            // Format the date as YYYY-MM-DD
+            const formattedDate = correctedDate.toISOString().split('T')[0];
+            
+            return {
+              ...point,
+              date: formattedDate
+            };
+          }
+          return point;
+        });
+      }
+      
       // Sort the data by date to ensure proper chart display
       processedData = processedData.sort((a, b) => {
         return new Date(a.date).getTime() - new Date(b.date).getTime();
