@@ -422,6 +422,21 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               console.log('=== Dedicated Nala scraper failed. Trying enhanced scraping as fallback... ===');
               // Will continue to standard scraping as fallback
             }
+          } else if (provider.name === 'Sendwave') {
+            console.log('=== Using dedicated SendWave scraper with admin-configured URL and selectors... ===');
+            
+            try {
+              const { updateSendwaveRate } = await import('./sendwaveScraper');
+              const success = await updateSendwaveRate();
+              
+              if (success) {
+                console.log('=== Successfully updated SendWave rate with dedicated scraper ===');
+                results.push({ provider: provider.name, success: true });
+                continue; // Skip to next provider
+              }
+            } catch (error) {
+              console.log('SendWave scraper failed, falling back to standard scraper:', error);
+            }
           }
           
           // Skip Wise since it's configured to use API only

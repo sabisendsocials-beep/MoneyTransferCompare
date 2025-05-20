@@ -1,138 +1,145 @@
 /**
- * Dedicated scraper for Sendwave
- * Uses multiple approaches to reliably extract exchange rates
+ * Dedicated SendWave exchange rate scraper
+ * 
+ * This scraper is designed to reliably extract exchange rates from SendWave's website
+ * using the admin-configured URL and CSS selectors. It handles the specific structure
+ * of the SendWave exchange rate display.
  */
 
-import { InsertExchangeRate } from '@shared/schema';
-import { storage } from '../storage';
-import { log } from '../vite';
-import * as cheerio from 'cheerio';
-import { findExchangeRatePattern } from './enhancedScraper';
+import puppeteer from 'puppeteer';
+import type { ExchangeRate } from '@shared/schema';
+import { db } from '../db';
+import { providers } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { DatabaseStorage } from '../databaseStorage';
 
 /**
- * Scrape Sendwave exchange rate using multiple methods
- * Returns the rate if successful, null otherwise
- */
-export async function scrapeSendwaveRate(): Promise<number | null> {
-  try {
-    log('=== Starting dedicated Sendwave scraper ===');
-    
-    // Sendwave calculator URL - using their main Nigeria transfer page
-    const url = 'https://www.sendwave.com/en-gb/send-money-to-nigeria';
-    
-    // Try with direct fetch first
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
-    
-    if (!response.ok) {
-      log(`Failed to fetch Sendwave page: ${response.statusText}`);
-      return null;
-    }
-    
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    
-    // Try multiple selector patterns
-    const selectors = [
-      '.calculator-wrapper .exchange-rate',
-      '.calculator .rate-text',
-      '.calculator-result .rate',
-      '.send-money-calculator .rate',
-      '.sendwave-calculator .rate-value',
-      'span:contains("exchange rate")',
-      'div:contains("exchange rate")',
-      'p:contains("1 GBP =")',
-      'span:contains("1 GBP =")',
-      'div:contains("GBP to NGN")'
-    ];
-    
-    // Try each selector
-    for (const selector of selectors) {
-      const element = $(selector);
-      if (element.length > 0) {
-        const text = element.text().trim();
-        log(`Found text with selector ${selector}: ${text}`);
-        
-        // Extract the rate using regex
-        const extractedRate = findExchangeRatePattern(text);
-        if (extractedRate && typeof extractedRate === 'number' && extractedRate > 0) {
-          log(`Successfully extracted Sendwave rate: ${extractedRate}`);
-          return extractedRate;
-        }
-      }
-    }
-    
-    // If no selectors worked, try to find any text that mentions exchange rates
-    const pageText = $('body').text();
-    const extractedRate = findExchangeRatePattern(pageText);
-    if (extractedRate && typeof extractedRate === 'number' && extractedRate > 0) {
-      log(`Found Sendwave rate in page content: ${extractedRate}`);
-      return extractedRate;
-    }
-    
-    // If all else fails, analyze the entire HTML for rate patterns
-    const gbpNgnPattern = /(\d+(\.\d+)?)\s*NGN/i;
-    const matches = html.match(gbpNgnPattern);
-    if (matches && matches[1]) {
-      const possibleRate = parseFloat(matches[1]);
-      if (!isNaN(possibleRate) && possibleRate > 1000) { // Likely a valid GBP to NGN rate (should be >1000)
-        log(`Found potential Sendwave rate in HTML: ${possibleRate}`);
-        return possibleRate;
-      }
-    }
-    
-    log('=== Dedicated Sendwave scraper failed to find rate ===');
-    return null;
-  } catch (error) {
-    log(`Error in Sendwave scraper: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Update the Sendwave exchange rate in the database
- * Returns true if the update was successful, false otherwise
+ * Updates the SendWave exchange rate based on the admin-configured URL and selectors
+ * @returns Whether the update was successful
  */
 export async function updateSendwaveRate(): Promise<boolean> {
+  console.log('=== Starting dedicated SendWave rate update process ===');
+  
   try {
-    const rate = await scrapeSendwaveRate();
+    // Get the provider info from database
+    const providers = await storage.getProviders();
+    const sendwave = providers.find(p => p.name === 'Sendwave');
     
-    if (rate !== null) {
-      log(`Successfully scraped Sendwave rate: ${rate}`);
+    if (!sendwave) {
+      console.log('Sendwave provider not found in database');
+      return false;
+    }
+    
+    if (!sendwave.scraper_url || !sendwave.scraper_selector) {
+      console.log('Sendwave scraper URL or selector not configured in admin panel');
+      return false;
+    }
+    
+    console.log(`Using configured URL: ${sendwave.scraper_url}`);
+    console.log(`Using CSS selector: ${sendwave.scraper_selector}`);
+    
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: 'new'
+    });
+    
+    try {
+      const page = await browser.newPage();
       
-      // Get the Sendwave provider from the database
-      const providers = await storage.getProviders();
-      const sendwave = providers.find(p => p.name === 'Sendwave');
+      // Set viewport for consistency
+      await page.setViewport({ width: 1280, height: 800 });
       
-      if (!sendwave) {
-        log('Could not find Sendwave provider in database');
+      // Set user agent to avoid blocking
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+      
+      // Navigate to the page
+      await page.goto(sendwave.scraper_url, { waitUntil: 'networkidle2', timeout: 60000 });
+      
+      // Wait for content to load
+      await page.waitForTimeout(5000);
+      
+      // Try to extract the rate using the admin-configured selector
+      let rateText = await page.evaluate((selector) => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length === 0) return null;
+        
+        for (const el of elements) {
+          const text = el.textContent || '';
+          if (text.includes('NGN') || text.includes('Exchange Rate') || text.includes('GBP')) {
+            return text.trim();
+          }
+        }
+        
+        return elements[0].textContent?.trim() || null;
+      }, sendwave.scraper_selector);
+      
+      if (!rateText) {
+        console.log('No rate text found using the configured selector');
+        
+        // Try a more specific selector focused on data-testid attributes
+        rateText = await page.evaluate(() => {
+          // Try title first
+          const titleElement = document.querySelector('[data-testid="title-exchange-rate"]');
+          if (titleElement) {
+            return titleElement.textContent?.trim() || null;
+          }
+          
+          // Try the rate text
+          const rateElement = document.querySelector('[data-testid="exchangerate-text"]');
+          if (rateElement) {
+            return rateElement.textContent?.trim() || null;
+          }
+          
+          return null;
+        });
+      }
+      
+      if (!rateText) {
+        console.log('No rate text found using data-testid attributes');
         return false;
       }
       
-      // Add the rate to database
-      const rateData: InsertExchangeRate = {
+      console.log(`Extracted raw text: ${rateText}`);
+      
+      // Parse the rate from the text
+      const rateMatch = rateText.match(/(\d+[\.,]?\d*)\s*NGN/i) || 
+                        rateText.match(/(\d+[\.,]?\d*)/);
+      
+      if (!rateMatch) {
+        console.log('Could not parse rate from text');
+        return false;
+      }
+      
+      const rateValue = parseFloat(rateMatch[1].replace(',', '.'));
+      console.log(`Parsed rate: ${rateValue}`);
+      
+      if (isNaN(rateValue) || rateValue <= 0) {
+        console.log('Invalid rate value');
+        return false;
+      }
+      
+      // Create the exchange rate entry
+      const exchangeRate: ExchangeRate = {
+        id: 0, // Will be set by the database
         provider_id: sendwave.id,
         from_currency: 'GBP',
         to_currency: 'NGN',
-        rate: rate
+        rate: rateValue,
+        created_at: new Date(),
+        source: 'SCRAPER'
       };
       
-      await storage.createExchangeRate(rateData);
-      log(`Added real rate for Sendwave: 1 GBP = ${rate} NGN`);
+      // Store in the database
+      await storage.createExchangeRate(exchangeRate);
+      console.log(`Successfully updated SendWave GBP to NGN rate: ${rateValue}`);
+      
       return true;
+    } finally {
+      await browser.close();
     }
-    
-    log('No real rate data found for Sendwave');
-    return false;
   } catch (error) {
-    log(`Error updating Sendwave rate: ${error}`);
+    console.error('Error in SendWave scraper:', error);
     return false;
   }
 }
