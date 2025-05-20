@@ -308,6 +308,8 @@ export default function AdminPage() {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
       queryClient.invalidateQueries({ queryKey: ["/api/compare"] });
+      // Also refresh scraper status
+      queryClient.invalidateQueries({ queryKey: ["scraper-status"] });
     } catch (error) {
       toast({
         title: "Error adding rate",
