@@ -1,6 +1,5 @@
 import { useState } from "react";
 import HeroSection from "@/components/HeroSection";
-import TransferCalculator from "@/components/TransferCalculator";
 import ComparisonResults from "@/components/ComparisonResults";
 import RateTrends from "@/components/RateTrends";
 import NewsSection from "@/components/NewsSection";
@@ -17,14 +16,18 @@ const Home = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen">
+      {/* New improved Hero Section with integrated calculator */}
       <HeroSection />
-      <TransferCalculator onCompare={handleComparisonResults} />
+      
+      {/* Keep comparison results for when redirected from calculator */}
       <ComparisonResults results={comparisonResults} visible={showResults} />
+      
+      {/* Other sections remain unchanged */}
       <RateTrends />
       <NewsSection />
       <FeatureSection />
-    </>
+    </div>
   );
 };
 
