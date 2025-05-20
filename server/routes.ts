@@ -734,11 +734,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const oldRates = await storage.getLatestRates('GBP', 'NGN');
       const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
       
-      // Try the advanced multi-technique scraper first
+      // Try the screenshot-based scraper that targets all elements from screenshots
       try {
-        const { extractSendwaveRateAdvanced } = await import('./scrapers/advancedSendwaveScraper');
-        console.log('Running advanced multi-technique SendWave scraper...');
-        const success = await extractSendwaveRateAdvanced();
+        const { extractSendwaveRateFromScreenshots } = await import('./scrapers/screenshotBasedSendwaveScraper');
+        console.log('Running screenshot-based SendWave scraper...');
+        const success = await extractSendwaveRateFromScreenshots();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -747,17 +747,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using advanced scraper',
+            message: 'SendWave rate updated successfully using screenshot-based scraper',
             provider: sendwave.name,
             oldRate,
             newRate: latestRate?.rate || 'unknown',
             source: latestRate?.source || 'UNKNOWN'
           });
         } else {
-          console.log('Advanced SendWave scraper did not find a valid rate');
+          console.log('Screenshot-based SendWave scraper did not find a valid rate');
         }
       } catch (error) {
-        console.log('Advanced SendWave scraper failed:', error);
+        console.log('Screenshot-based SendWave scraper failed:', error);
       }
       
       // Then try the input field scraper as a backup
@@ -844,6 +844,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error testing specialized scrapers:', error);
       res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  // Test endpoint for SendWave screenshot-based scraper
+  apiRouter.get("/api/test-sendwave-screenshots", async (req: Request, res: Response) => {
+    try {
+      console.log("Testing SendWave screenshot-based scraper...");
+      
+      const providers = await storage.getProviders();
+      const sendwaveProvider = providers.find(p => p.name === 'Sendwave');
+      
+      if (!sendwaveProvider) {
+        return res.status(404).json({ error: "SendWave provider not found" });
+      }
+      
+      // Check current rate in database
+      const currentRates = await storage.getLatestRates('GBP', 'NGN');
+      const currentRate = currentRates.find(r => r.provider_id === sendwaveProvider.id);
+      
+      console.log("Running screenshot-based scraper test...");
+      const { extractSendwaveRateFromScreenshots } = await import('./scrapers/screenshotBasedSendwaveScraper');
+      const success = await extractSendwaveRateFromScreenshots();
+      
+      if (success) {
+        // Get updated rate
+        const updatedRates = await storage.getLatestRates('GBP', 'NGN');
+        const updatedRate = updatedRates.find(r => r.provider_id === sendwaveProvider.id);
+        
+        return res.json({
+          success: true,
+          message: "SendWave rate updated successfully with screenshot-based scraper",
+          oldRate: currentRate?.rate || "unknown",
+          newRate: updatedRate?.rate || "unknown",
+          source: updatedRate?.source || "unknown"
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: "Screenshot-based scraper failed to extract SendWave rate",
+          currentRate: currentRate?.rate || "unknown"
+        });
+      }
+    } catch (error) {
+      console.error("Error testing SendWave:", error);
+      return res.status(500).json({ error: "Failed to test SendWave rate extraction" });
     }
   });
   
