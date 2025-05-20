@@ -20,6 +20,24 @@ const CurrencyCalculator = () => {
   const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
   const [calculationMode, setCalculationMode] = useState<CalculationMode>("send");
   const [result, setResult] = useState<number | null>(null);
+  
+  // Format input with commas
+  const formatInputWithCommas = (value: string): string => {
+    // Remove non-numeric characters except decimal point
+    const numericValue = value.replace(/[^\d.]/g, '');
+    
+    // If empty after cleaning, return empty
+    if (numericValue === '') return '';
+    
+    // Split by decimal point
+    const parts = numericValue.split('.');
+    
+    // Format the integer part with commas
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Return with or without decimal part
+    return parts.length > 1 ? `${parts[0]}.${parts[1]}` : parts[0];
+  };
 
   // Sample current exchange rates showing highest rates from providers
   const exchangeRates: Record<RateKey, number> = {
@@ -65,32 +83,43 @@ const CurrencyCalculator = () => {
 
   // Toggle between send and receive calculation modes
   const toggleCalculationMode = () => {
-    // Store current values before changing mode
-    const currentAmount = parseFloat(amount.replace(/,/g, ""));
-    const currentResult = result;
+    // Get the current rate
     const key = `${fromCurrency}-${toCurrency}` as RateKey;
-    const rate = exchangeRates[key] || 1;
+    const rate = exchangeRates[key];
     
-    // Switch the mode
+    if (!rate) return; // Don't proceed if no rate is available
+    
+    // Get clean numeric amount
+    const numericAmount = parseFloat(amount.replace(/,/g, ""));
+    if (isNaN(numericAmount)) return;
+    
+    // Switch the calculation mode
     const newMode = calculationMode === "send" ? "receive" : "send";
-    setCalculationMode(newMode);
     
-    // When switching modes, make the current output the new input
-    if (currentResult !== null && !isNaN(currentAmount)) {
-      setAmount(Math.round(currentResult).toString());
-      
-      // Pre-calculate the new result based on the current input
-      if (newMode === "send") {
-        // If switching to send mode, calculate what you'd receive
-        setResult(currentAmount * rate);
-      } else {
-        // If switching to receive mode, calculate what you'd send
-        setResult(currentAmount / rate);
-      }
+    // Define a new input value based on the current state
+    let newInputValue;
+    
+    if (calculationMode === "send") {
+      // Switching from Send to Receive
+      // Current amount represents what they send, result is what they receive
+      // New input should be the result (what they receive)
+      newInputValue = result !== null ? Math.round(result) : numericAmount * rate;
     } else {
-      // Default values if calculation hasn't been done yet
-      setAmount("100");
-      calculateRate();
+      // Switching from Receive to Send
+      // Current amount represents what they receive, result is what they send
+      // New input should be the result (what they send)
+      newInputValue = result !== null ? Math.round(result) : numericAmount / rate;
+    }
+    
+    // Update the mode and input value
+    setCalculationMode(newMode);
+    setAmount(formatInputWithCommas(newInputValue.toString()));
+    
+    // Calculate and set the new result
+    if (newMode === "send") {
+      setResult(newInputValue * rate);
+    } else {
+      setResult(newInputValue / rate);
     }
   };
 
@@ -142,7 +171,9 @@ const CurrencyCalculator = () => {
             <Input
               value={amount}
               onChange={(e) => {
-                setAmount(e.target.value);
+                // Format with commas and update state
+                const formattedValue = formatInputWithCommas(e.target.value);
+                setAmount(formattedValue);
                 setTimeout(calculateRate, 0);
               }}
               className="bg-transparent border-0 text-4xl font-semibold text-white h-14 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
