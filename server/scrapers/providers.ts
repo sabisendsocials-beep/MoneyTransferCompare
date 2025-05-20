@@ -344,19 +344,14 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
       try {
         console.log(`Processing provider: ${provider.name}`);
         
-        // Check if this scraper can run based on time limitations
-        const canRun = canScraperRun(provider.name);
-        if (!canRun) {
-          console.log(`=== Skipping ${provider.name} - minimum time between runs not elapsed ===`);
-          // No need to record a run that's being skipped due to time limitations
-          results.push({ provider: provider.name, success: true });
-          continue; // Skip to next provider
-        }
+        // Since the status tracking is separate, continue with normal processing
+        // Will implement time-based limitations more carefully in a future update
+        console.log(`Processing ${provider.name} with normal scraping flow`);
         
         // Skip providers that are configured to use API-only collection
         if (provider.preferred_collection === 'API') {
           console.log(`=== Skipping ${provider.name} - configured for API-only collection ===`);
-          recordScraperRun(provider.name, true, 'Skipped - configured for API-only collection');
+          // Status tracking will be implemented separately
           results.push({ provider: provider.name, success: true });
           continue; // Skip to next provider
         }
