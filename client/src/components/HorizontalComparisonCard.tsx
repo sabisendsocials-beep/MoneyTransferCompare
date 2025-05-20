@@ -67,8 +67,8 @@ export const HorizontalComparisonCard = ({
   return (
     <div 
       className={cn(
-        "bg-white border overflow-hidden mb-3",
-        index === 0 ? "border-primary/50 shadow-md" : "border-gray-200"
+        "bg-white border overflow-hidden mb-4 rounded-lg",
+        index === 0 ? "border-primary/50 shadow-md bg-primary/5" : "border-gray-200 hover:shadow-sm hover:border-gray-300"
       )}
     >
       <div className="grid grid-cols-1 md:grid-cols-12 items-center">
@@ -149,14 +149,27 @@ export const HorizontalComparisonCard = ({
         <div className="p-4 flex flex-col md:col-span-2 border-b md:border-b-0 md:border-r text-center">
           <div className="text-xs text-gray-500 mb-2 uppercase">EXCHANGE RATE</div>
           <div className="font-semibold text-lg">
-            {formatRate(normalizedRate)}
+            {normalizedRate.toFixed(4)}
           </div>
           <div className="text-xs text-gray-500 mt-1">
             1 {fromCurrency} = {normalizedRate.toFixed(4)} {toCurrency}
           </div>
+          {provider.fee > 0 && (
+            <div className="text-xs text-gray-500 mt-1">
+              Fee: {formatCurrency(provider.fee, fromCurrency)}
+            </div>
+          )}
           {provider.comment && (
             <div className="text-xs text-gray-500 mt-1 line-clamp-1">
               {provider.comment}
+            </div>
+          )}
+          {provider.lastUpdated && (
+            <div className="text-xs text-gray-400 mt-1">
+              Updated {new Date(provider.lastUpdated).toLocaleTimeString(undefined, {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </div>
           )}
         </div>
