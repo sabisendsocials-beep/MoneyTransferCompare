@@ -112,16 +112,18 @@ export const HorizontalComparisonCard = ({
           )}
         </div>
         
-        {/* Rate & Fee Column */}
+        {/* Amount, Rate & Results Column */}
         <div className="p-4 flex items-center justify-between md:w-1/2 lg:w-3/5 border-b md:border-b-0 md:border-r">
           <div className="flex flex-col items-start">
-            <div className="text-xs text-gray-500 mb-1">FEE</div>
-            <div className={cn(
-              "font-medium",
-              hasFreeTransfer ? "text-green-600" : ""
-            )}>
-              {hasFreeTransfer ? "NONE" : formatCurrency(provider.fee, fromCurrency)}
+            <div className="text-xs text-gray-500 mb-1">YOU SEND</div>
+            <div className="font-medium">
+              {formatCurrency(provider.sendAmount, fromCurrency)}
             </div>
+            {provider.fee > 0 && (
+              <div className="text-xs text-gray-500 mt-1">
+                Fee: {formatCurrency(provider.fee, fromCurrency)}
+              </div>
+            )}
             {provider.transferTime && (
               <div className="flex items-center text-xs text-gray-500 mt-1">
                 <Clock className="w-3 h-3 mr-1" />
@@ -135,13 +137,20 @@ export const HorizontalComparisonCard = ({
             <div className="font-medium">
               {formatRate(normalizedRate)}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              1 {fromCurrency} = {normalizedRate.toFixed(4)} {toCurrency}
-            </div>
+            {provider.rating && (
+              <div className="flex items-center text-xs text-yellow-500 mt-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star 
+                    key={i}
+                    className={`w-3 h-3 ${i < Math.floor(provider.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col items-end">
-            <div className="text-xs text-gray-500 mb-1">YOU RECEIVE</div>
+            <div className="text-xs text-gray-500 mb-1">THEY RECEIVE</div>
             <div className="text-xl font-bold text-primary">
               {formatCurrency(normalizedReceivedAmount, toCurrency)}
             </div>
