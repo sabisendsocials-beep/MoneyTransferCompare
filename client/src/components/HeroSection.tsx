@@ -1,88 +1,119 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { Clock, TrendingUp, ShieldCheck, RefreshCw } from "lucide-react";
+import CurrencyCalculator from "@/components/CurrencyCalculator";
 
 const HeroSection = () => {
   return (
-    <section className="bg-gradient-to-br from-[#1a365d] via-[#2563eb] to-[#1e40af] text-white py-16 shadow-lg relative overflow-hidden">
-      {/* Background pattern overlay */}
-      <div className="absolute inset-0 bg-repeat opacity-10" style={{ 
-        backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
-      }} />
+    <section className="bg-[#1a365d] text-white py-12 lg:py-20 relative overflow-hidden">
+      {/* Modern geometric background */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-b from-[#0fbbce] to-transparent opacity-20"></div>
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-t from-[#22c55e] to-transparent opacity-20"></div>
+        <svg width="100%" height="100%" className="absolute inset-0 opacity-10">
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
       
-      {/* Light effect */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-      
+      {/* Content container */}
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between">
-          <div className="md:w-1/2 mb-8 md:mb-0">
-            <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-              Find the Best <span className="text-yellow-300">International Money Transfers</span>
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+          {/* Left content */}
+          <div className="lg:w-5/12 mb-8 lg:mb-0">
+            <div className="flex items-center mb-4 gap-2">
+              <div className="h-1.5 w-12 bg-[#0fbbce] rounded-full"></div>
+              <span className="text-[#0fbbce] font-semibold uppercase tracking-wider text-sm">Verified Rates</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+              Make Smarter <span className="bg-gradient-to-r from-[#22c55e] to-[#0fbbce] bg-clip-text text-transparent">Money Transfers</span>
             </h1>
             <p className="text-lg mb-8 text-blue-100 max-w-xl">
-              Compare rates, fees, and delivery times across multiple providers for transfers between UK, EU, US, Ghana, Nigeria and other countries.
+              Compare real-time, verified exchange rates from trusted providers. 
+              Save on fees and get more value in every international transfer.
             </p>
+            
+            {/* Trust indicators */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="flex items-start">
+                <div className="mr-3 mt-1 bg-[#0fbbce]/10 p-2 rounded-lg">
+                  <RefreshCw size={18} className="text-[#0fbbce]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Real-time Rates</h3>
+                  <p className="text-sm text-blue-200">Updated every 6 hours</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="mr-3 mt-1 bg-[#0fbbce]/10 p-2 rounded-lg">
+                  <ShieldCheck size={18} className="text-[#0fbbce]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Verified Data</h3>
+                  <p className="text-sm text-blue-200">From official sources</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="mr-3 mt-1 bg-[#0fbbce]/10 p-2 rounded-lg">
+                  <TrendingUp size={18} className="text-[#0fbbce]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Historical Trends</h3>
+                  <p className="text-sm text-blue-200">365-day analysis</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="mr-3 mt-1 bg-[#0fbbce]/10 p-2 rounded-lg">
+                  <Clock size={18} className="text-[#0fbbce]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Transfer Times</h3>
+                  <p className="text-sm text-blue-200">Accurate delivery estimates</p>
+                </div>
+              </div>
+            </div>
+            
             <div className="flex flex-wrap gap-4">
               <Link href="/compare">
-                <Button size="lg" className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-semibold shadow-lg hover:shadow-xl transition-all">
+                <Button size="lg" className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-medium shadow-lg hover:shadow-xl transition-all border-0">
                   Compare Rates Now
                 </Button>
               </Link>
               <Link href="/trends">
-                <Button size="lg" variant="outline" className="bg-transparent border-2 border-blue-100 text-white hover:bg-blue-800 hover:border-blue-200 shadow-lg">
+                <Button size="lg" variant="outline" className="bg-transparent border-2 border-[#0fbbce] text-white hover:bg-[#0fbbce]/10 shadow-lg">
                   View Rate Trends
                 </Button>
               </Link>
             </div>
           </div>
-          <div className="md:w-1/2 flex justify-center">
-            <svg
-              className="w-full max-w-md drop-shadow-2xl"
-              viewBox="0 0 600 400"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Main comparison illustration */}
-              <rect x="100" y="80" width="160" height="120" rx="15" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
-              <text x="180" y="140" textAnchor="middle" dominantBaseline="middle" fontSize="40" fontWeight="bold" fill="#2563eb">£</text>
-              
-              <rect x="340" y="80" width="160" height="120" rx="15" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
-              <text x="420" y="140" textAnchor="middle" dominantBaseline="middle" fontSize="40" fontWeight="bold" fill="#2563eb">₦</text>
-              
-              <path d="M260 140 L340 140" stroke="#94a3b8" strokeWidth="5" strokeDasharray="10,5" />
-              <path d="M285 115 L335 140 L285 165" fill="#94a3b8" />
-              
-              {/* Multiple currency badges */}
-              <g className="currency-badges">
-                {/* Row 1 */}
-                <rect x="80" y="240" width="60" height="40" rx="5" fill="#2563eb" />
-                <text x="110" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">GBP</text>
-                
-                <rect x="150" y="240" width="60" height="40" rx="5" fill="#3b82f6" />
-                <text x="180" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">EUR</text>
-                
-                <rect x="220" y="240" width="60" height="40" rx="5" fill="#2563eb" />
-                <text x="250" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">USD</text>
-
-                {/* Row 2 */}
-                <rect x="320" y="240" width="60" height="40" rx="5" fill="#3b82f6" />
-                <text x="350" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">NGN</text>
-                
-                <rect x="390" y="240" width="60" height="40" rx="5" fill="#2563eb" />
-                <text x="420" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">GHS</text>
-                
-                <rect x="460" y="240" width="60" height="40" rx="5" fill="#3b82f6" />
-                <text x="490" y="260" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="white" fontWeight="bold">KES</text>
-              </g>
-              
-              {/* Connection arrows */}
-              <path d="M180 190 L180 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,3" />
-              <path d="M420 190 L420 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,3" />
-              
-              {/* Add stars for highlighting */}
-              <path d="M300 30 L310 50 L330 55 L315 70 L320 90 L300 80 L280 90 L285 70 L270 55 L290 50 Z" fill="#ffd700" opacity="0.8" />
-              <path d="M80 170 L85 180 L95 182 L87 190 L90 200 L80 195 L70 200 L73 190 L65 182 L75 180 Z" fill="#ffd700" opacity="0.6" />
-              <path d="M520 170 L525 180 L535 182 L527 190 L530 200 L520 195 L510 200 L513 190 L505 182 L515 180 Z" fill="#ffd700" opacity="0.6" />
-            </svg>
+          
+          {/* Right content - Calculator widget */}
+          <div className="lg:w-7/12">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 shadow-2xl">
+              <h2 className="text-xl font-semibold mb-4 text-center">Quick Rate Calculator</h2>
+              <CurrencyCalculator />
+              <div className="mt-4 text-center text-sm text-blue-200">
+                <p className="flex items-center justify-center gap-1.5">
+                  <RefreshCw size={14} /> 
+                  <span>Rates last updated <span className="text-[#0fbbce] font-medium">today at 14:00 UTC</span></span>
+                </p>
+              </div>
+            </div>
+            
+            {/* Provider badges */}
+            <div className="mt-6 flex flex-wrap justify-center gap-2 opacity-70">
+              <div className="py-1.5 px-3 bg-white/5 rounded-full text-xs text-white/80">Western Union</div>
+              <div className="py-1.5 px-3 bg-white/5 rounded-full text-xs text-white/80">Wise</div>
+              <div className="py-1.5 px-3 bg-white/5 rounded-full text-xs text-white/80">MoneyGram</div>
+              <div className="py-1.5 px-3 bg-white/5 rounded-full text-xs text-white/80">Remitly</div>
+              <div className="py-1.5 px-3 bg-white/5 rounded-full text-xs text-white/80">WorldRemit</div>
+              <div className="py-1.5 px-3 bg-white/5 rounded-full text-xs text-white/80">+ 7 more</div>
+            </div>
           </div>
         </div>
       </div>
