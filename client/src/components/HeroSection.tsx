@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Clock, TrendingUp, ShieldCheck, RefreshCw } from "lucide-react";
-import CurrencyCalculator from "@/components/CurrencyCalculator";
+import CurrencyCalculator from "../components/CurrencyCalculator";
 
 const HeroSection = () => {
   return (

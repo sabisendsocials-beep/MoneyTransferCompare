@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -10,24 +10,32 @@ import {
 } from "@/components/ui/select";
 import { ArrowRight, RefreshCcw } from "lucide-react";
 
+type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
+type RateKey = `${CurrencyCode}-${CurrencyCode}`;
+
 const CurrencyCalculator = () => {
   const [amount, setAmount] = useState<string>("1000");
-  const [fromCurrency, setFromCurrency] = useState<string>("GBP");
-  const [toCurrency, setToCurrency] = useState<string>("NGN");
+  const [fromCurrency, setFromCurrency] = useState<CurrencyCode>("GBP");
+  const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
   const [result, setResult] = useState<number | null>(null);
 
   // Sample current exchange rates (would come from API in real implementation)
-  const exchangeRates = {
+  const exchangeRates: Record<RateKey, number> = {
     "GBP-NGN": 2166.87,
     "GBP-GHS": 16.85,
     "EUR-NGN": 1354.45,
     "EUR-GHS": 14.37,
     "USD-NGN": 1456.78,
     "USD-GHS": 15.40
-  };
+  } as Record<RateKey, number>;
+
+  useEffect(() => {
+    // Calculate on initial render
+    calculateRate();
+  }, []);
 
   const calculateRate = () => {
-    const key = `${fromCurrency}-${toCurrency}`;
+    const key = `${fromCurrency}-${toCurrency}` as RateKey;
     if (exchangeRates[key]) {
       const numericAmount = parseFloat(amount.replace(/,/g, ""));
       if (!isNaN(numericAmount)) {
