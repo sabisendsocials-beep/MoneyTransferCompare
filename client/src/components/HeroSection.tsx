@@ -42,13 +42,13 @@ const HeroSection = () => {
               helping you save on fees and get more value in every international transfer.
             </p>
             
-            <div className="grid md:grid-cols-2 gap-4 mb-6 mt-6">
+            <div className="grid md:grid-cols-2 gap-4 mb-6 mt-6 md:max-w-3xl">
               <div className="group bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3.5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg">
                 <div className="mb-2.5 flex items-center gap-2">
                   <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-600 flex items-center justify-center shadow-lg">
                     <RefreshCw size={26} className="text-white" />
                   </div>
-                  <div className="bg-blue-400/10 rounded-full px-2 py-0.5 text-xs text-blue-200">Updated every 6 hours</div>
+                  <div className="bg-blue-400/10 rounded-full px-2 py-0.5 text-xs text-blue-200">Updated multiple times daily</div>
                 </div>
                 <h3 className="font-semibold text-lg text-white mb-1">Real-Time Rates</h3>
                 <p className="text-sm text-blue-200">Get the most current exchange rates directly from provider sources</p>
