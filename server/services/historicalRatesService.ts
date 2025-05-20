@@ -160,10 +160,26 @@ async function initializeHistoricalRates(): Promise<void> {
       console.log('No historical rate data found, performing initial population...');
       
       // Import the API service
-      const { updateAllHistoricalRates } = await import('./exchangeRateApiService');
+      const { fetchHistoricalRates, storeHistoricalRates } = await import('./exchangeRateApiService');
       
-      // Perform initial data population for 30 days to keep initial load reasonable
-      await updateAllHistoricalRates(30);
+      // Populate 365 days of data for each currency pair
+      console.log('Populating a full year of historical rate data...');
+      
+      for (const pair of CURRENCY_PAIRS) {
+        try {
+          console.log(`Fetching historical data for ${pair.from}/${pair.to} (365 days)...`);
+          const historicalRates = await fetchHistoricalRates(pair.from, pair.to, 365);
+          
+          if (historicalRates && historicalRates.length > 0) {
+            await storeHistoricalRates(historicalRates);
+            console.log(`Stored ${historicalRates.length} historical rates for ${pair.from}/${pair.to}`);
+          } else {
+            console.error(`Failed to fetch historical data for ${pair.from}/${pair.to}`);
+          }
+        } catch (error) {
+          console.error(`Error populating data for ${pair.from}/${pair.to}: ${error}`);
+        }
+      }
     } else {
       console.log(`Found ${count} existing historical rate records, checking for updates...`);
       

@@ -30,7 +30,7 @@ type RateTrendPoint = {
 };
 
 /**
- * Fetches historical exchange rate data from ExchangeRate-API
+ * Fetches historical exchange rate data using multiple APIs to ensure we get a full year of data
  */
 async function fetchHistoricalRates(
   fromCurrency: string,
@@ -45,50 +45,94 @@ async function fetchHistoricalRates(
   try {
     console.log(`Fetching historical rates for ${fromCurrency}/${toCurrency} (${days} days) from API...`);
     
-    const results: RateTrendPoint[] = [];
+    // First try to use a timeseries API endpoint which can return multiple dates at once
+    const results: RateTrendPoint[] = await fetchTimeseriesData(fromCurrency, toCurrency, days);
+    
+    // If we got enough data from the timeseries API, return it
+    if (results.length >= Math.floor(days * 0.8)) { // If we got at least 80% of the requested days
+      console.log(`Successfully fetched ${results.length} historical rates from timeseries API`);
+      return results;
+    }
+    
+    // If timeseries API didn't provide enough data, try the day-by-day approach
+    console.log(`Timeseries API provided only ${results.length} days, trying day-by-day approach...`);
+    
     const today = new Date();
     
-    // Fetch data for each day individually to handle API limitations
-    for (let i = days; i >= 0; i--) {
-      const date = subDays(today, i);
-      const formattedDate = format(date, 'yyyy-MM-dd');
+    // Only get days we don't already have to avoid duplicate API calls
+    const existingDates = new Set(results.map(r => r.date));
+    
+    // We'll process days in weekly batches to better manage API rate limits
+    const batchSize = 7;
+    const totalBatches = Math.ceil(days / batchSize);
+    
+    for (let batch = 0; batch < totalBatches; batch++) {
+      console.log(`Processing batch ${batch + 1} of ${totalBatches}...`);
       
-      try {
-        const url = `${API_BASE_URL}/${formattedDate}?base=${fromCurrency}&symbols=${toCurrency}&access_key=${API_KEY}`;
-        console.log(`Fetching rate for ${formattedDate}...`);
+      const batchStart = batch * batchSize;
+      const batchEnd = Math.min((batch + 1) * batchSize, days);
+      
+      for (let i = batchStart; i < batchEnd; i++) {
+        const date = subDays(today, i);
+        const formattedDate = format(date, 'yyyy-MM-dd');
         
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          console.error(`API error: ${response.status} - ${await response.text()}`);
+        // Skip if we already have this date
+        if (existingDates.has(formattedDate)) {
           continue;
         }
         
-        const data = await response.json();
-        
-        if (!data.success) {
-          console.error(`API returned error: ${JSON.stringify(data)}`);
-          continue;
-        }
-        
-        if (data.rates && data.rates[toCurrency]) {
-          results.push({
-            date: formattedDate,
-            rate: data.rates[toCurrency],
-            from_currency: fromCurrency,
-            to_currency: toCurrency
-          });
+        try {
+          const url = `${API_BASE_URL}/${formattedDate}?base=${fromCurrency}&symbols=${toCurrency}&access_key=${API_KEY}`;
+          console.log(`Fetching rate for ${formattedDate}...`);
           
-          console.log(`Got rate for ${formattedDate}: ${data.rates[toCurrency]}`);
-        } else {
-          console.warn(`No rate found for ${toCurrency} on ${formattedDate}`);
+          const response = await fetch(url);
+          
+          if (!response.ok) {
+            console.error(`API error: ${response.status} - ${await response.text()}`);
+            // Try an alternative API endpoint if the primary one fails
+            const alternateRate = await fetchAlternativeRate(fromCurrency, toCurrency, formattedDate);
+            if (alternateRate !== null) {
+              results.push({
+                date: formattedDate,
+                rate: alternateRate,
+                from_currency: fromCurrency,
+                to_currency: toCurrency
+              });
+              existingDates.add(formattedDate);
+            }
+            continue;
+          }
+          
+          const data = await response.json();
+          
+          if (!data.success) {
+            console.error(`API returned error: ${JSON.stringify(data)}`);
+            continue;
+          }
+          
+          if (data.rates && data.rates[toCurrency]) {
+            results.push({
+              date: formattedDate,
+              rate: data.rates[toCurrency],
+              from_currency: fromCurrency,
+              to_currency: toCurrency
+            });
+            existingDates.add(formattedDate);
+            
+            console.log(`Got rate for ${formattedDate}: ${data.rates[toCurrency]}`);
+          } else {
+            console.warn(`No rate found for ${toCurrency} on ${formattedDate}`);
+          }
+          
+          // Add a delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 250));
+        } catch (error) {
+          console.error(`Error fetching rate for ${formattedDate}: ${error}`);
         }
-        
-        // Add a delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 250));
-      } catch (error) {
-        console.error(`Error fetching rate for ${formattedDate}: ${error}`);
       }
+      
+      // Add a longer delay between batches to avoid hitting API rate limits
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
     
     console.log(`Successfully fetched ${results.length} historical rates for ${fromCurrency}/${toCurrency}`);
@@ -96,6 +140,201 @@ async function fetchHistoricalRates(
   } catch (error) {
     console.error(`Error fetching historical rates: ${error}`);
     return [];
+  }
+}
+
+/**
+ * Fetch historical rates using a timeseries API endpoint that returns multiple dates at once
+ * This is more efficient for getting large date ranges
+ */
+async function fetchTimeseriesData(
+  fromCurrency: string,
+  toCurrency: string,
+  days: number
+): Promise<RateTrendPoint[]> {
+  try {
+    const results: RateTrendPoint[] = [];
+    
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const startDateStr = format(startDate, 'yyyy-MM-dd');
+    const endDateStr = format(endDate, 'yyyy-MM-dd');
+    
+    console.log(`Fetching timeseries data from ${startDateStr} to ${endDateStr}...`);
+    
+    // Try the first API endpoint (exchangerate.host)
+    try {
+      const url = `https://api.exchangerate.host/timeseries?start_date=${startDateStr}&end_date=${endDateStr}&base=${fromCurrency}&symbols=${toCurrency}`;
+      console.log(`Trying API: ${url}`);
+      
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.rates) {
+          for (const [date, rates] of Object.entries(data.rates)) {
+            const anyRates = rates as any;
+            if (anyRates[toCurrency]) {
+              results.push({
+                date: date,
+                rate: anyRates[toCurrency],
+                from_currency: fromCurrency,
+                to_currency: toCurrency
+              });
+            }
+          }
+          
+          console.log(`Got ${results.length} rates from timeseries API`);
+          return results;
+        }
+      } else {
+        console.error(`Timeseries API error: ${response.status}`);
+      }
+    } catch (apiError) {
+      console.error(`Error with timeseries API: ${apiError}`);
+    }
+    
+    // Try an alternative API if the first one fails
+    try {
+      // Breaking the dates into monthly chunks to avoid hitting API limits
+      let currentStartDate = new Date(startDate);
+      
+      while (currentStartDate < endDate) {
+        // Calculate end of current month or end date, whichever comes first
+        const currentEndDate = new Date(currentStartDate);
+        currentEndDate.setMonth(currentEndDate.getMonth() + 1);
+        
+        if (currentEndDate > endDate) {
+          currentEndDate.setTime(endDate.getTime());
+        }
+        
+        const currentStartStr = format(currentStartDate, 'yyyy-MM-dd');
+        const currentEndStr = format(currentEndDate, 'yyyy-MM-dd');
+        
+        console.log(`Fetching chunk from ${currentStartStr} to ${currentEndStr}...`);
+        
+        const url = `https://api.exchangerate.host/timeframe?start_date=${currentStartStr}&end_date=${currentEndStr}&base=${fromCurrency}&symbols=${toCurrency}`;
+        
+        const response = await fetch(url);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.rates) {
+            for (const [date, rates] of Object.entries(data.rates)) {
+              const anyRates = rates as any;
+              if (anyRates[toCurrency]) {
+                results.push({
+                  date: date,
+                  rate: anyRates[toCurrency],
+                  from_currency: fromCurrency,
+                  to_currency: toCurrency
+                });
+              }
+            }
+          }
+        }
+        
+        // Move to next month
+        currentStartDate = new Date(currentEndDate);
+        currentStartDate.setDate(currentStartDate.getDate() + 1);
+        
+        // Add a delay between chunks to avoid API rate limits
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      console.log(`Got ${results.length} rates from chunked API requests`);
+      return results;
+    } catch (apiError) {
+      console.error(`Error with chunked API requests: ${apiError}`);
+    }
+    
+    // If we still don't have any data, try another alternative API
+    if (results.length === 0) {
+      try {
+        const url = `https://open.er-api.com/v6/time-series/${fromCurrency}/${startDateStr}/${endDateStr}`;
+        console.log(`Trying open.er-api.com: ${url}`);
+        
+        const response = await fetch(url);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.rates) {
+            for (const [date, rates] of Object.entries(data.rates)) {
+              const rateForCurrency = (rates as any)[toCurrency];
+              if (rateForCurrency) {
+                results.push({
+                  date: date,
+                  rate: rateForCurrency,
+                  from_currency: fromCurrency,
+                  to_currency: toCurrency
+                });
+              }
+            }
+          }
+        }
+      } catch (apiError) {
+        console.error(`Error with open.er-api.com: ${apiError}`);
+      }
+    }
+    
+    return results;
+  } catch (error) {
+    console.error(`Error in fetchTimeseriesData: ${error}`);
+    return [];
+  }
+}
+
+/**
+ * Fetch a single day's exchange rate from alternative APIs
+ * Used as a fallback when the primary API fails
+ */
+async function fetchAlternativeRate(
+  fromCurrency: string,
+  toCurrency: string,
+  date: string
+): Promise<number | null> {
+  try {
+    // Try first alternative API
+    try {
+      const url = `https://api.exchangerate.host/${date}?base=${fromCurrency}&symbols=${toCurrency}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.rates && data.rates[toCurrency]) {
+          return data.rates[toCurrency];
+        }
+      }
+    } catch (error) {
+      console.error(`Alternative API error: ${error}`);
+    }
+    
+    // Try second alternative API
+    try {
+      const url = `https://open.er-api.com/v6/historical/${date}?base=${fromCurrency}&symbols=${toCurrency}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.rates && data.rates[toCurrency]) {
+          return data.rates[toCurrency];
+        }
+      }
+    } catch (error) {
+      console.error(`Second alternative API error: ${error}`);
+    }
+    
+    // No rate found
+    return null;
+  } catch (error) {
+    console.error(`Error in fetchAlternativeRate: ${error}`);
+    return null;
   }
 }
 
