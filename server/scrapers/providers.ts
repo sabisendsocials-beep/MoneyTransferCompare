@@ -8,6 +8,7 @@ import { updateWorldRemitRate } from './worldRemitScraper';
 import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
 import { updateNalaRate } from './nalaScraper';
+import { updateWesternUnionRates } from './westernUnionScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
