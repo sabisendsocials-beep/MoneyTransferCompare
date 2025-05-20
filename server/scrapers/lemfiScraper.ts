@@ -53,6 +53,16 @@ export async function extractLemfiRate(
       ];
     }
     
+    // Add additional variations of the selector to try
+    selectors = [
+      ...selectors,
+      'span.base-text.base-text--size-small--bold',
+      'span.base-text--size-small--bold',
+      '.base-text--size-small--bold',
+      '.molecule-conversion-box_details__item span',
+      'div.molecule-conversion-box_details__item span'
+    ];
+    
     console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
     
     // Fetch the HTML content
