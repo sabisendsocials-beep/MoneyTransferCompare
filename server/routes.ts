@@ -730,10 +730,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, error: 'SendWave provider not found' });
       }
       
-      // Try the improved scraper first (no hardcoded values)
+      // Get the current rate for comparison
+      const oldRates = await storage.getLatestRates('GBP', 'NGN');
+      const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
+      
+      // Try the accurate rate scraper that filters out false positives
       try {
-        const { scrapeSendwaveImproved } = await import('./scrapers/improvedSendwaveScraper');
-        const success = await scrapeSendwaveImproved();
+        const { updateSendwaveAccurateRate } = await import('./scrapers/sendwaveAccurateRateScraper');
+        const success = await updateSendwaveAccurateRate();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -742,42 +746,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using improved scraper',
+            message: 'SendWave rate updated successfully using accurate scraper',
             provider: sendwave.name,
-            oldRate: req.body?.oldRate || 'unknown',
+            oldRate,
             newRate: latestRate?.rate || 'unknown',
             source: 'SCRAPER'
           });
         }
       } catch (error) {
-        console.log('Improved SendWave scraper failed:', error);
-        
-        // Try the original scraper as fallback
-        try {
-          const { updateSendwaveRate } = await import('./scrapers/sendwaveScraper');
-          const success = await updateSendwaveRate();
-          
-          if (success) {
-            // Get the latest rate to show in the response
-            const latestRates = await storage.getLatestRates('GBP', 'NGN');
-            const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
-            
-            return res.json({ 
-              success: true, 
-              message: 'SendWave rate updated successfully using original scraper',
-              provider: sendwave.name,
-              oldRate: req.body?.oldRate || 'unknown',
-              newRate: latestRate?.rate || 'unknown',
-              source: 'SCRAPER'
-            });
-          }
-        } catch (fallbackError) {
-          console.log('Original SendWave scraper also failed:', fallbackError);
-        }
+        console.log('Accurate SendWave scraper failed:', error);
       }
       
-      // If all scraping methods failed, report error
-      console.log('All SendWave rate scraping methods failed');
+      // If scraping failed, report error without using hardcoded fallbacks
+      console.log('SendWave rate scraping failed');
       
       // Return error - no hardcoded fallbacks
       return res.status(404).json({
@@ -787,9 +768,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error updating SendWave rate:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       res.status(500).json({ 
         success: false, 
-        error: `Failed to update SendWave rate: ${error.message}` 
+        error: `Failed to update SendWave rate: ${errorMessage}` 
       });
     }
   });
