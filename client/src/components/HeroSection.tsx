@@ -24,8 +24,8 @@ const HeroSection = () => {
         <div className="absolute bottom-1/3 left-1/4 w-72 h-72 rounded-full bg-indigo-500/10 filter blur-3xl"></div>
       </div>
 
-      <div className="max-w-full w-[98%] mx-auto px-2 pt-6 pb-8 md:pt-8 md:pb-10 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-6">
+      <div className="max-w-full w-[94%] mx-auto px-2 pt-6 pb-8 md:pt-8 md:pb-10 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-2">
           {/* Left content - Value message section */}
           <div className="lg:w-2/3">
             <div className="inline-flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md rounded-full px-4 py-1.5 text-sm font-medium mb-3">
@@ -113,10 +113,17 @@ const HeroSection = () => {
               {/* CTA Button */}
               <div className="mt-5 text-center">
                 <Link href="/compare">
-                  <Button className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-6 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all text-lg group">
+                  <Button 
+                    className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-6 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all text-lg group"
+                    onClick={() => {
+                      // When clicked, this would perform a comparison and navigate to results page
+                      // Current implementation uses Link, but in a full implementation, 
+                      // we would send the form data to the comparison endpoint
+                    }}
+                  >
                     <span className="inline-flex items-center">
                       <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
-                      Find Your Best Rate
+                      Compare All Providers
                       <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </Button>

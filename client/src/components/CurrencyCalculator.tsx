@@ -53,8 +53,10 @@ const CurrencyCalculator = () => {
       const numericAmount = parseFloat(amount.replace(/,/g, ""));
       if (!isNaN(numericAmount)) {
         if (calculationMode === "send") {
+          // When sending, multiply by exchange rate to get received amount
           setResult(numericAmount * exchangeRates[key]);
         } else {
+          // When receiving, divide by exchange rate to get sent amount
           setResult(numericAmount / exchangeRates[key]);
         }
       }
@@ -65,9 +67,18 @@ const CurrencyCalculator = () => {
   const toggleCalculationMode = () => {
     const newMode = calculationMode === "send" ? "receive" : "send";
     setCalculationMode(newMode);
-    // Reset amount and recalculate
-    setAmount("100");
-    setTimeout(calculateRate, 0);
+    
+    // If we have a current result, we should use that as the new input
+    if (result !== null) {
+      setAmount(Math.round(result).toString());
+    } else {
+      setAmount("100");
+    }
+    
+    // Give the state a chance to update before recalculating
+    setTimeout(() => {
+      calculateRate();
+    }, 50);
   };
 
   // Format number with commas
@@ -127,20 +138,14 @@ const CurrencyCalculator = () => {
           </div>
         </div>
 
-        {/* Convert button and mode toggle */}
-        <div className="flex justify-center -my-2 z-10 gap-4">
+        {/* Mode toggle button */}
+        <div className="flex justify-center -my-2 z-10">
           <Button 
             onClick={toggleCalculationMode}
             className="rounded-full h-12 w-12 bg-purple-600 hover:bg-purple-500 flex items-center justify-center p-0 shadow-lg border-2 border-indigo-900 hover:scale-110 transition-all"
-            title="Switch calculation mode"
+            title="Switch between Send and Receive calculation modes"
           >
             <ArrowDownUp size={18} />
-          </Button>
-          <Button 
-            onClick={calculateRate}
-            className="rounded-full h-14 w-14 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 flex items-center justify-center p-0 shadow-lg border-2 border-indigo-900 hover:scale-110 transition-all"
-          >
-            <ArrowRight size={20} />
           </Button>
         </div>
 
