@@ -123,7 +123,7 @@ const HeroSection = () => {
                   >
                     <span className="inline-flex items-center">
                       <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
-                      Compare All Providers
+                      Get Best Rate Now
                       <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </Button>

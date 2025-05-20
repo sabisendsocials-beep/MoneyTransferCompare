@@ -65,20 +65,33 @@ const CurrencyCalculator = () => {
 
   // Toggle between send and receive calculation modes
   const toggleCalculationMode = () => {
+    // Store current values before changing mode
+    const currentAmount = parseFloat(amount.replace(/,/g, ""));
+    const currentResult = result;
+    const key = `${fromCurrency}-${toCurrency}` as RateKey;
+    const rate = exchangeRates[key] || 1;
+    
+    // Switch the mode
     const newMode = calculationMode === "send" ? "receive" : "send";
     setCalculationMode(newMode);
     
-    // If we have a current result, we should use that as the new input
-    if (result !== null) {
-      setAmount(Math.round(result).toString());
+    // When switching modes, make the current output the new input
+    if (currentResult !== null && !isNaN(currentAmount)) {
+      setAmount(Math.round(currentResult).toString());
+      
+      // Pre-calculate the new result based on the current input
+      if (newMode === "send") {
+        // If switching to send mode, calculate what you'd receive
+        setResult(currentAmount * rate);
+      } else {
+        // If switching to receive mode, calculate what you'd send
+        setResult(currentAmount / rate);
+      }
     } else {
+      // Default values if calculation hasn't been done yet
       setAmount("100");
-    }
-    
-    // Give the state a chance to update before recalculating
-    setTimeout(() => {
       calculateRate();
-    }, 50);
+    }
   };
 
   // Format number with commas
