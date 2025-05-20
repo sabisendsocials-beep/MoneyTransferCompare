@@ -1,336 +1,171 @@
 /**
- * Special scraper for Lemfi that extracts the exchange rate.
- * This will help us get accurate exchange rates directly from the source.
+ * Dedicated Lemfi scraper
+ * 
+ * This scraper is specifically designed to extract exchange rates from the Lemfi website
+ * using admin-configured URLs and CSS selectors only.
  */
-
+import fetch from 'node-fetch';
+import * as cheerio from 'cheerio';
 import { storage } from '../storage';
-import { insertExchangeRateSchema, InsertExchangeRate } from '@shared/schema';
 
 /**
- * Scrape the current exchange rate from Lemfi for GBP to NGN
- * Implements multiple strategies to get the most accurate rate
- * @returns The extracted rate or null if not found
+ * Extract the exchange rate from Lemfi website using admin-configured URL and selectors
+ * 
+ * @param providerId The ID of the Lemfi provider
+ * @param fromCurrency Source currency (e.g., GBP)
+ * @param toCurrency Target currency (e.g., NGN)
+ * @returns Whether the rate was successfully extracted and saved
  */
-export async function scrapeLemfiRate(): Promise<number | null> {
+export async function extractLemfiRate(
+  providerId: number,
+  fromCurrency: string,
+  toCurrency: string
+): Promise<boolean> {
   try {
+    console.log('=== Starting dedicated Lemfi rate update process ===');
     console.log('=== LEMFI DEDICATED SCRAPER RUNNING ===');
-    console.log('This scraper will try multiple approaches to get the Lemfi rate:');
-    console.log('1. Try the API endpoint (might be protected)');
-    console.log('2. Try to parse the HTML page for rate information');
-    console.log('3. Look for common rate patterns in the page');
+    console.log('This scraper will ONLY use the URL and CSS selector from the admin panel');
     
-    // Try first with a direct approach - fetch the current quote as if we're making a transfer
-    try {
-      console.log('Trying direct quote from Lemfi...');
-      const quoteResponse = await fetch('https://lemfi.com/en-gb/api/quotes', {
-        method: 'POST',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Accept-Language': 'en-GB,en;q=0.9',
-          'Origin': 'https://lemfi.com',
-          'Referer': 'https://lemfi.com/en-gb/international-money-transfer',
-          'X-Forwarded-For': '212.58.244.22',
-          'X-Country-Code': 'GB',
-          'CF-IPCountry': 'GB'
-        },
-        body: JSON.stringify({
-          amount: 100,
-          sourceCurrency: 'GBP',
-          targetCurrency: 'NGN',
-          type: 'SEND'
-        })
-      });
-      
-      if (quoteResponse.ok) {
-        const quoteData = await quoteResponse.json();
-        console.log('Quote response:', JSON.stringify(quoteData));
-        
-        if (quoteData && quoteData.exchangeRate) {
-          const exchangeRate = parseFloat(quoteData.exchangeRate);
-          if (exchangeRate > 1000) {
-            console.log(`Got direct Lemfi rate from quote API: ${exchangeRate}`);
-            return exchangeRate;
-          }
-        }
-      }
-    } catch (error) {
-      console.log('Failed to get direct quote:', error);
+    // Get the provider from the database to use admin-configured URL and selectors
+    const provider = await storage.getProvider(providerId);
+    if (!provider) {
+      console.error(`Provider with ID ${providerId} not found`);
+      return false;
     }
     
-    // Try multiple API endpoints for Lemfi with different amounts to get the most accurate rate
-    const apiUrls = [
-      'https://lemfi.com/api/calculator/rates?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
-      'https://lemfi.com/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
-      'https://lemfi.com/api/exchange-rates/GBP/NGN',
-      'https://lemfi.com/en-gb/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=100',
-      'https://lemfi.com/en-gb/api/calculator/calculate?sourceCurrency=GBP&targetCurrency=NGN&amount=1000',
-      'https://lemfi.com/en-gb/api/currency-converter?from=GBP&to=NGN&amount=1'
-    ];
+    // Use admin-configured URL
+    const url = provider.scraping_url;
+    console.log(`Using admin-configured URL for Lemfi: ${url}`);
     
-    for (const apiUrl of apiUrls) {
-      console.log(`Trying Lemfi API endpoint: ${apiUrl}`);
-      
-      try {
-        const response = await fetch(apiUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-GB,en;q=0.9',
-            'Origin': 'https://lemfi.com',
-            'Referer': 'https://lemfi.com/en-gb/international-money-transfer',
-            'X-Forwarded-For': '212.58.244.22',
-            'X-Forwarded-Proto': 'https',
-            'X-Country-Code': 'GB',
-            'CF-IPCountry': 'GB'
-          }
-        });
-        
-        if (!response.ok) {
-          console.error(`Failed to fetch from Lemfi API: ${response.status} ${response.statusText}`);
-        } else {
-          const data = await response.json();
-          console.log('Lemfi API response:', JSON.stringify(data));
-          
-          // Extract the rate from the response
-          if (data && data.rate) {
-            return parseFloat(data.rate);
-          } else if (data && data.exchangeRate) {
-            return parseFloat(data.exchangeRate);
-          } else if (data && data.result) {
-            // If we have the result for 100 GBP, divide by 100 to get the rate for 1 GBP
-            const result = parseFloat(data.result);
-            return result / 100;
-          } else if (data && data.targetAmount && data.sourceAmount) {
-            // Calculate the rate from target and source amounts
-            return parseFloat(data.targetAmount) / parseFloat(data.sourceAmount);
-          } else if (data && Array.isArray(data)) {
-            // If it's an array, look for rate object
-            for (const item of data) {
-              if (item && item.rate) {
-                return parseFloat(item.rate);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.log(`API fetch failed for ${apiUrl}:`, error);
-        // Continue to the next API endpoint
-      }
+    if (!url) {
+      console.error('No URL configured for Lemfi provider');
+      return false;
     }
     
-    // All API approaches failed, try using the enhanced scraper
-    console.log('API approach failed, trying enhanced scraper...');
+    // Get admin-configured selectors
+    let selectors = provider.scraping_selector?.split(',') || [];
     
-    // Import and use enhancedScrape function here
-    const { enhancedScrape, getEnhancedSelectors } = await import('./enhancedScraper');
-    
-    try {
-      console.log('Using enhanced scraper to get Lemfi rate');
-      const lemfiUrl = 'https://lemfi.com/en-gb/send-money-to-nigeria';
-      const selectors = getEnhancedSelectors('Lemfi');
-      const rateText = await enhancedScrape(lemfiUrl, selectors);
-      
-      if (rateText) {
-        console.log(`Enhanced scraper returned text: ${rateText}`);
-        
-        // Look for numbers in the text
-        const matches = rateText.match(/\b(\d{4}[\d,.]*)\b/);
-        if (matches && matches[1]) {
-          const rate = parseFloat(matches[1].replace(/,/g, ''));
-          console.log(`Found rate value from enhanced scraper: ${rate}`);
-          if (rate > 1000) {
-            return rate;
-          }
-        }
-        
-        // Try to extract from format "1 GBP = X NGN"
-        const formatMatch = rateText.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
-        if (formatMatch && formatMatch[1]) {
-          const rate = parseFloat(formatMatch[1].replace(/,/g, ''));
-          console.log(`Found formatted rate: ${rate}`);
-          if (rate > 1000) {
-            return rate;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Enhanced scraper failed:', error);
+    // Ensure we have at least the default selector
+    if (selectors.length === 0) {
+      selectors = [
+        '.molecule-conversion-box_details__item span.base-text.base-text--size-small--bold',
+        '.molecule-conversion-box_details__item span:nth-child(2)'
+      ];
     }
     
-    // Try one more approach: direct HTML scraping with multiple URLs
-    console.log('Enhanced scraper failed, trying direct HTML parsing...');
+    console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
     
-    // Use multiple URLs to increase chances of finding the rate
-    const urls = [
-      'https://lemfi.com/en-gb/send-money-to-nigeria',
-      'https://lemfi.com/en-gb/nigeria',
-      'https://lemfi.com/en-gb/send-money-online',
-      'https://lemfi.com/en-gb/'
-    ];
+    // Fetch the HTML content
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+    });
     
-    // Try each URL
-    for (const mainUrl of urls) {
-      console.log(`Fetching HTML from ${mainUrl}`);
+    if (!response.ok) {
+      console.error(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
+      return false;
+    }
+    
+    const html = await response.text();
+    console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
+    
+    // Wait for JavaScript to finish loading dynamic content
+    console.log('Waiting 2 seconds for JavaScript to finish loading dynamic content...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Parse HTML with cheerio
+    const $ = cheerio.load(html);
+    
+    // Try each selector until we find a valid rate
+    let rate: number | null = null;
+    
+    for (let i = 0; i < selectors.length; i++) {
+      const selector = selectors[i];
+      console.log(`Trying selector "${selector}"...`);
       
-      try {
-        const mainResponse = await fetch(mainUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-GB,en;q=0.9',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-    
-        if (mainResponse.ok) {
-          const html = await mainResponse.text();
-          console.log(`Retrieved HTML content (${html.length} characters)`);
+      const elements = $(selector);
+      console.log(`Found ${elements.length} elements with selector "${selector}"`);
+      
+      if (elements.length > 0) {
+        for (let j = 0; j < elements.length; j++) {
+          const element = elements.eq(j);
+          const text = element.text().trim();
+          console.log(`Element ${j+1} text: "${text}"`);
           
-          // Check for rate information in the HTML using various patterns
-          console.log('Trying to find rate information in the HTML');
+          // Look for a pattern like "1 GBP = 2,153 NGN"
+          const rateMatch = text.match(/\s*1\s*[A-Z]{3}\s*=\s*([\d,\.]+)\s*[A-Z]{3}/i);
           
-          // Looking for the exact format: "1 GBP = X NGN"
-          const exactRatePattern = /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
-          const exactMatch = html.match(exactRatePattern);
-          if (exactMatch && exactMatch[1]) {
-            const rateValue = parseFloat(exactMatch[1].replace(/,/g, ''));
-            console.log(`Found exact rate format: ${rateValue}`);
-            if (rateValue > 1000) {
-              return rateValue;
-            }
-          }
-          
-          // Exchange rate label format - looks for "Exchange rate" followed by a value
-          const exchangeRatePattern = /Exchange\s*rate[^]*?1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
-          const exchangeMatch = html.match(exchangeRatePattern);
-          if (exchangeMatch && exchangeMatch[1]) {
-            const rateValue = parseFloat(exchangeMatch[1].replace(/,/g, ''));
-            console.log(`Found exchange rate label format: ${rateValue}`);
-            if (rateValue > 1000) {
-              return rateValue;
-            }
-          }
-          
-          // Look for any 4-digit number that might be a rate (common for GBP to NGN)
-          const rateNumbers = html.match(/\b([\d,]{1,3}\.?\d{0,2}k?)\s*(?:NGN|naira)\b/gi);
-          if (rateNumbers && rateNumbers.length > 0) {
-            console.log(`Found potential rate values: ${rateNumbers.join(', ')}`);
+          if (rateMatch) {
+            const rateStr = rateMatch[1].replace(/,/g, '');
+            const parsedRate = parseFloat(rateStr);
             
-            // Extract the first valid rate
-            for (const rateText of rateNumbers) {
-              // Remove commas and convert from format like "2.1k" to 2100
-              let rateValue = rateText.replace(/,/g, '');
-              if (rateValue.includes('k')) {
-                rateValue = (parseFloat(rateValue.replace(/k/i, '')) * 1000).toString();
-              }
-              
-              const rate = parseFloat(rateValue);
-              if (rate > 1000) {
-                console.log(`Using rate: ${rate}`);
-                return rate;
-              }
-            }
-          }
-          
-          // Additional pattern: Look for Nigerian Naira amount with GBP
-          const ngnPattern = /(?:GBP|£).*?(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:NGN|naira)/i;
-          const ngnMatch = html.match(ngnPattern);
-          if (ngnMatch && ngnMatch[1]) {
-            const rate = parseFloat(ngnMatch[1].replace(/,/g, ''));
-            console.log(`Found NGN pattern rate: ${rate}`);
-            if (rate > 1000) {
-              return rate;
-            }
-          }
-          
-          // Try a broader pattern that looks for rates in a different format
-          const broadPattern = /rate.*?(\d{4,}).*?(?:NGN|naira)/i;
-          const broadMatch = html.match(broadPattern);
-          if (broadMatch && broadMatch[1]) {
-            const rate = parseFloat(broadMatch[1].replace(/,/g, ''));
-            console.log(`Found broad pattern rate: ${rate}`);
-            if (rate > 1000) {
-              return rate;
+            if (!isNaN(parsedRate) && parsedRate > 0) {
+              console.log(`Successfully extracted rate from selector "${selector}" on element ${j+1}: ${parsedRate}`);
+              rate = parsedRate;
+              break;
             }
           }
         }
-      } catch (error) {
-        console.log(`Error fetching ${mainUrl}: ${error}`);
-        // Continue to next URL
+      }
+      
+      if (rate !== null) {
+        break;
       }
     }
     
-    console.log('Failed to extract Lemfi rate using all available methods');
-    return null;
+    if (rate === null) {
+      console.error('Failed to extract a valid rate from any selectors');
+      return false;
+    }
+    
+    // Save the rate to the database
+    const result = await storage.createExchangeRate({
+      provider_id: providerId,
+      from_currency: fromCurrency,
+      to_currency: toCurrency,
+      rate,
+      source: 'SCRAPER',
+    });
+    
+    console.log(`Successfully updated Lemfi ${fromCurrency} to ${toCurrency} rate: ${rate}`);
+    console.log('=== Successfully updated Lemfi rate with dedicated scraper ===');
+    
+    return true;
   } catch (error) {
-    console.error('Error scraping Lemfi rate:', error);
-    return null;
+    console.error('Error in Lemfi scraper:', error);
+    return false;
   }
 }
 
 /**
- * Update the Lemfi exchange rate in the database
- * This function will be called from the main scraper
+ * Main function to update Lemfi exchange rates
+ * This is the entry point called by the rate update process
  */
-export async function updateLemfiRate(): Promise<boolean> {
+export async function updateLemfiRates(): Promise<boolean> {
   try {
-    // First try to get a real scraped rate
-    const rate = await scrapeLemfiRate();
-    
     // Get the Lemfi provider from the database
     const providers = await storage.getProviders();
     const lemfiProvider = providers.find(p => p.name === 'Lemfi');
     
     if (!lemfiProvider) {
-      console.error('Lemfi provider not found in database');
+      console.error('Lemfi provider not found in the database');
       return false;
     }
     
-    // If we got a valid rate, use it
-    if (rate && rate >= 1000 && rate <= 3000) {
-      console.log(`Using scraped Lemfi rate: ${rate}`);
-      
-      // Create a new exchange rate record
-      await storage.createExchangeRate({
-        provider_id: lemfiProvider.id,
-        from_currency: 'GBP',
-        to_currency: 'NGN',
-        rate: rate
-      });
-      
-      console.log(`Updated Lemfi exchange rate: 1 GBP = ${rate} NGN`);
-      return true;
+    // Update GBP to NGN rate
+    const success = await extractLemfiRate(lemfiProvider.id, 'GBP', 'NGN');
+    
+    if (!success) {
+      console.error('=== Dedicated Lemfi scraper failed. No fallback will be used. ===');
+      console.error('=== Please check the Lemfi URL and CSS selector in the admin panel ===');
     }
     
-    // Scraping failed, use a calculated rate based on market data
-    // Import the function to calculate rates
-    const { getProviderRate } = await import('./proxyApiScraper');
-    
-    // Get a calculated rate for Lemfi based on current market conditions
-    const calculatedRate = await getProviderRate('Lemfi');
-    
-    if (calculatedRate) {
-      console.log(`Using calculated Lemfi rate: ${calculatedRate} (based on current market data)`);
-      
-      // Create a new exchange rate record
-      await storage.createExchangeRate({
-        provider_id: lemfiProvider.id,
-        from_currency: 'GBP',
-        to_currency: 'NGN',
-        rate: calculatedRate
-      });
-      
-      console.log(`Updated Lemfi exchange rate with calculated value: 1 GBP = ${calculatedRate} NGN`);
-      return true;
-    }
-    
-    console.log('Failed to get any valid rate for Lemfi');
-    return false;
+    return success;
   } catch (error) {
-    console.error('Error updating Lemfi rate:', error);
+    console.error('Error updating Lemfi rates:', error);
     return false;
   }
 }

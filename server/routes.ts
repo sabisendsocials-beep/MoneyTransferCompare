@@ -7,7 +7,7 @@ import { updateFinancialNews } from "./scrapers/news";
 import { initializeDatabase } from "./db";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { realProviderRates } from "./scrapers/realRates";
-import { updateLemfiRate } from "./scrapers/lemfiScraper";
+import { updateLemfiRates } from "./scrapers/lemfiScraper";
 import { updateAdditionalProviders } from "./scrapers/mainScraper";
 import apiKeysRouter from "./routes/apiKeys";
 import { rateSourceRouter } from "./routes/rateSource";
@@ -493,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/api/test-lemfi", async (req: Request, res: Response) => {
     try {
       console.log("Testing Lemfi rate scraper directly...");
-      const success = await updateLemfiRate();
+      const success = await updateLemfiRates();
       
       if (success) {
         res.json({ 

@@ -3,7 +3,7 @@ import { storage } from '../storage';
 import type { InsertExchangeRate, InsertProvider, ExchangeRate } from '@shared/schema';
 import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
-import { updateLemfiRate } from './lemfiScraper';
+import { updateLemfiRates } from './lemfiScraper';
 import { updateWorldRemitRate } from './worldRemitScraper';
 import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
@@ -352,7 +352,7 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
           // Special handling for Lemfi - use our dedicated scraper
           if (provider.name === 'Lemfi') {
             console.log('=== Using dedicated Lemfi scraper... ===');
-            const success = await updateLemfiRate();
+            const success = await updateLemfiRates();
             if (success) {
               console.log('=== Successfully updated Lemfi rate with dedicated scraper ===');
               results.push({ provider: provider.name, success: true });
