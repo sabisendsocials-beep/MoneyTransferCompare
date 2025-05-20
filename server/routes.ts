@@ -730,10 +730,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, error: 'SendWave provider not found' });
       }
       
-      // Try the enhanced scraper first (this should work more reliably)
+      // Try the improved scraper first (no hardcoded values)
       try {
-        const { enhancedSendwaveRate } = await import('./scrapers/enhancedSendwaveScraper');
-        const success = await enhancedSendwaveRate();
+        const { scrapeSendwaveImproved } = await import('./scrapers/improvedSendwaveScraper');
+        const success = await scrapeSendwaveImproved();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -742,7 +742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using enhanced scraper',
+            message: 'SendWave rate updated successfully using improved scraper',
             provider: sendwave.name,
             oldRate: req.body?.oldRate || 'unknown',
             newRate: latestRate?.rate || 'unknown',
@@ -750,7 +750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (error) {
-        console.log('Enhanced SendWave scraper failed:', error);
+        console.log('Improved SendWave scraper failed:', error);
         
         // Try the original scraper as fallback
         try {
