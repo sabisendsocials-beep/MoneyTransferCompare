@@ -296,8 +296,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
             to_currency: trend.to_currency
           }));
           
+          // Fix any future dates in the data
+          const today = new Date();
+          const futureDates = formattedTrends.filter(trend => {
+            const trendDate = new Date(trend.date);
+            return trendDate > today;
+          });
+          
+          let processedTrends = formattedTrends;
+          
+          if (futureDates.length > 0) {
+            console.log(`[API] Found ${futureDates.length} future dates in trend data, correcting...`);
+            
+            // Fix dates by shifting years (keeping same month/day)
+            processedTrends = formattedTrends.map(trend => {
+              const trendDate = new Date(trend.date);
+              
+              // Only fix future dates
+              if (trendDate > today) {
+                // Calculate how many years to shift back to make it historical
+                const yearsToShift = trendDate.getFullYear() - today.getFullYear() + 1;
+                
+                // Adjust the date to be in the past
+                const adjustedDate = new Date(trendDate);
+                adjustedDate.setFullYear(adjustedDate.getFullYear() - yearsToShift);
+                
+                // Return trend with corrected date
+                return {
+                  ...trend,
+                  date: adjustedDate.toISOString().split('T')[0] // Format as YYYY-MM-DD
+                };
+              }
+              
+              return trend;
+            });
+          }
+          
           // Ensure the data is sorted chronologically by date
-          const sortedTrends = formattedTrends.sort((a, b) => {
+          const sortedTrends = processedTrends.sort((a, b) => {
             return new Date(a.date).getTime() - new Date(b.date).getTime();
           });
           
