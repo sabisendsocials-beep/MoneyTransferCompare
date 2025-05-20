@@ -362,6 +362,7 @@ export default function AdminPage() {
           <TabsTrigger value="collection">Data Collection</TabsTrigger>
           <TabsTrigger value="sources">Data Sources</TabsTrigger>
           <TabsTrigger value="providers">Provider Management</TabsTrigger>
+          <TabsTrigger value="scraper-status">Scraper Status</TabsTrigger>
         </TabsList>
         
         {/* Manual Entry Tab */}
@@ -596,6 +597,11 @@ export default function AdminPage() {
         {/* Provider Management Tab */}
         <TabsContent value="providers">
           <ProviderManagement />
+        </TabsContent>
+        
+        {/* Scraper Status Tab */}
+        <TabsContent value="scraper-status">
+          <ScraperStatusPanel />
         </TabsContent>
       </Tabs>
     </div>
