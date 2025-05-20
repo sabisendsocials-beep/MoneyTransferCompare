@@ -72,7 +72,7 @@ const ScraperStatusPanel = () => {
   // Reset timer for a scraper
   const handleResetTimer = async (id: number) => {
     try {
-      const response = await fetch(`/api/scrapers/reset-timer/${id}`, {
+      const response = await fetch(`/api/scrapers/reset/${id}`, {
         method: 'POST',
       });
       

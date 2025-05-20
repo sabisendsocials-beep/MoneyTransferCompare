@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { storage } from '../storage';
+// Remove incorrect import since it's causing the server crash
 import type { InsertExchangeRate, InsertProvider, ExchangeRate } from '@shared/schema';
 import { realProviderRates } from './realRates';
 import { enhancedScrape, getEnhancedSelectors } from './enhancedScraper';
@@ -12,7 +13,7 @@ import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './west
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
-import { recordScraperRun, canScraperRun } from '../routes/scraperStatus';
+// Remove problematic import line
 
 /**
  * Add the additional providers from additionalProviders.ts to the database
