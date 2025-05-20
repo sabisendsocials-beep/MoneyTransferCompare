@@ -111,44 +111,104 @@ export async function updateSendwaveMarketValidated(): Promise<boolean> {
         // Parse the HTML with cheerio
         const $ = cheerio.load(html);
         
-        // Try with the admin-configured selector first
-        const configuredSelectors = (sendwaveProvider.scraping_selector || '').split(',').map(s => s.trim()).filter(Boolean);
-        
-        if (configuredSelectors.length > 0) {
-          console.log(`Trying admin-configured selectors: ${configuredSelectors.join(', ')}`);
+        // Highly specific selectors based on SendWave screenshots
+        const universalSelectors = [
+          // Exact input field selector seen in first screenshot
+          'input[data-testid="exchange-calculator-receive-price"]',
+          'input[aria-label="exchange-calculator-receive-price-calculator-input"]',
+          'input[value="2143"]',
           
-          for (const selector of configuredSelectors) {
-            const elements = $(selector);
-            console.log(`Found ${elements.length} elements matching selector "${selector}"`);
-            
-            if (elements.length > 0) {
-              for (let i = 0; i < elements.length; i++) {
-                const text = $(elements[i]).text().trim();
-                console.log(`Element ${i+1} text: "${text}"`);
-                
-                // Try to extract a rate from the text
-                const rateMatch = text.match(/1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i);
-                if (rateMatch && rateMatch[1]) {
-                  const rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+          // Exact heading element seen in second screenshot
+          'h6[data-testid="title-exchange-rate"]',
+          
+          // Exact span element from third screenshot
+          'span[style*="standard_receive_amount"]',
+          
+          // Direct value selectors
+          'input[value="2143.06"]',
+          
+          // More general selectors as fallback
+          'input[aria-label*="exchange"]',
+          'input[aria-label*="calculator"]',
+          '[data-testid="exchange-rate-text"] span',
+          'span[style*="receive_amount"]',
+          '[data-testid*="exchange"]',
+          '[data-testid*="rate"]',
+          
+          // Fall back to any admin-configured selectors
+          ...(sendwaveProvider.scraping_selector || '').split(',').map(s => s.trim()).filter(Boolean)
+        ];
+        
+        console.log(`Trying ${universalSelectors.length} SendWave-specific selectors`);
+        
+        // Try each selector until we find a valid rate
+        for (const selector of universalSelectors) {
+          console.log(`Trying selector: "${selector}"`);
+          
+          const elements = $(selector);
+          console.log(`Found ${elements.length} elements matching selector "${selector}"`);
+          
+          if (elements.length > 0) {
+            for (let i = 0; i < Math.min(elements.length, 10); i++) { // Limit to first 10 matches
+              const element = elements[i];
+              
+              // Look for text content or value attribute
+              let extractedText = '';
+              
+              // For input elements, check value attribute
+              if ($(element).is('input')) {
+                extractedText = $(element).attr('value') || '';
+                console.log(`Input element ${i+1} value: "${extractedText}"`);
+              } else {
+                extractedText = $(element).text().trim();
+                console.log(`Element ${i+1} text: "${extractedText}"`);
+              }
+              
+              // Look for patterns in the extracted text
+              let rate: number | null = null;
+              
+              // Pattern 1: Full "1 GBP = X NGN" format
+              const gbpPattern = /1\s*GBP\s*=\s*([\d,]+\.?\d*)\s*NGN/i;
+              const gbpMatch = extractedText.match(gbpPattern);
+              if (gbpMatch && gbpMatch[1]) {
+                rate = parseFloat(gbpMatch[1].replace(/,/g, ''));
+              }
+              
+              // Pattern 2: Just the number (for input fields or spans with just the value)
+              if (!rate && /^\s*[\d,.]+\s*$/.test(extractedText)) {
+                rate = parseFloat(extractedText.replace(/,/g, ''));
+              }
+              
+              // Pattern 3: Look for NGN followed by a number
+              if (!rate) {
+                const ngnPattern = /(\d[\d,.]*)\s*(?:NGN|naira)/i;
+                const ngnMatch = extractedText.match(ngnPattern);
+                if (ngnMatch && ngnMatch[1]) {
+                  rate = parseFloat(ngnMatch[1].replace(/,/g, ''));
+                }
+              }
+              
+              // If we found a potential rate, validate it
+              if (rate !== null) {
+                console.log(`Extracted potential rate: ${rate}`);
                   
-                  // Validate the rate is NOT a known false positive and is in the valid range
-                  if (!isNaN(rate) && !knownFalsePositives.includes(rate) && rate >= minValidRate && rate <= maxValidRate) {
-                    console.log(`Found valid rate from configured selector: ${rate}`);
-                    
-                    // Update the database with the new rate
-                    await storage.createExchangeRate({
-                      provider_id: sendwaveProvider.id,
-                      from_currency: 'GBP',
-                      to_currency: 'NGN',
-                      rate: rate,
-                      source: 'SCRAPER'
-                    });
-                    
-                    console.log(`Successfully updated SendWave rate: ${rate}`);
-                    return true;
-                  } else if (!isNaN(rate)) {
-                    console.log(`Found rate ${rate} but it's either a known false positive or outside valid range`);
-                  }
+                // Validate the rate is NOT a known false positive and is in the valid range
+                if (!isNaN(rate) && !knownFalsePositives.includes(rate) && rate >= minValidRate && rate <= maxValidRate) {
+                  console.log(`Found valid rate from selector "${selector}": ${rate}`);
+                  
+                  // Update the database with the new rate
+                  await storage.createExchangeRate({
+                    provider_id: sendwaveProvider.id,
+                    from_currency: 'GBP',
+                    to_currency: 'NGN',
+                    rate: rate,
+                    source: 'SCRAPER'
+                  });
+                  
+                  console.log(`Successfully updated SendWave rate: ${rate}`);
+                  return true;
+                } else if (!isNaN(rate)) {
+                  console.log(`Found rate ${rate} but it's either a known false positive or outside valid range`);
                 }
               }
             }
