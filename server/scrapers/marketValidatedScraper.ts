@@ -111,33 +111,26 @@ export async function updateSendwaveMarketValidated(): Promise<boolean> {
         // Parse the HTML with cheerio
         const $ = cheerio.load(html);
         
-        // Highly specific selectors based on SendWave screenshots
-        const universalSelectors = [
-          // Exact input field selector seen in first screenshot
+        // First priority: use the admin-configured selectors
+        const adminSelectors = (sendwaveProvider.scraping_selector || '').split(',').map(s => s.trim()).filter(Boolean);
+        console.log(`Admin-configured selectors: ${adminSelectors.join(', ')}`);
+        
+        // Only use these fallbacks if no admin selectors are configured
+        const fallbackSelectors = [
+          // Elements that typically contain exchange rate information
           'input[data-testid="exchange-calculator-receive-price"]',
-          'input[aria-label="exchange-calculator-receive-price-calculator-input"]',
-          'input[value="2143"]',
-          
-          // Exact heading element seen in second screenshot
           'h6[data-testid="title-exchange-rate"]',
-          
-          // Exact span element from third screenshot
           'span[style*="standard_receive_amount"]',
-          
-          // Direct value selectors
-          'input[value="2143.06"]',
-          
-          // More general selectors as fallback
+          '[data-testid="exchange-rate-text"] span',
           'input[aria-label*="exchange"]',
           'input[aria-label*="calculator"]',
-          '[data-testid="exchange-rate-text"] span',
           'span[style*="receive_amount"]',
           '[data-testid*="exchange"]',
-          '[data-testid*="rate"]',
-          
-          // Fall back to any admin-configured selectors
-          ...(sendwaveProvider.scraping_selector || '').split(',').map(s => s.trim()).filter(Boolean)
+          '[data-testid*="rate"]'
         ];
+        
+        // Use admin selectors if available, otherwise fall back to our defaults
+        const universalSelectors = adminSelectors.length > 0 ? adminSelectors : fallbackSelectors;
         
         console.log(`Trying ${universalSelectors.length} SendWave-specific selectors`);
         
