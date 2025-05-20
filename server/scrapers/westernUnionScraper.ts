@@ -109,25 +109,18 @@ async function scrapeExchangeRate(
     // Parse the HTML with cheerio
     const $ = cheerio.load(html);
     
-    // Look for the exchange rate using the provided selector
+    // Try the primary selector first
     const elements = $(cssSelector);
     console.log(`Found ${elements.length} elements with selector "${cssSelector}"`);
     
-    if (elements.length === 0) {
-      console.log(`No elements found with selector "${cssSelector}"`);
-      return null;
-    }
-    
-    // Try each element that matches the selector
+    // Check primary selector elements
     for (let i = 0; i < elements.length; i++) {
       const element = elements.eq(i);
       const text = element.text().trim();
       
       console.log(`Element ${i+1} text: "${text}"`);
       
-      // Check if the text contains the target currency
-      if (text.includes(toCurrency)) {
-        // Extract the numeric value
+      if (text && text.includes(toCurrency)) {
         const rateMatch = text.match(/(\d+[\d,\.]+)/);
         if (rateMatch) {
           const rateStr = rateMatch[1].replace(/,/g, '');
@@ -136,6 +129,106 @@ async function scrapeExchangeRate(
           if (!isNaN(parsedRate) && parsedRate > 0) {
             console.log(`Successfully extracted ${fromCurrency} to ${toCurrency} rate: ${parsedRate}`);
             return parsedRate;
+          }
+        }
+      }
+    }
+    
+    // Check for the "FX:" pattern which contains the exchange rate
+    console.log('Trying FX pattern approach...');
+    const fxElements = $('span:contains("FX:")');
+    console.log(`Found ${fxElements.length} elements containing "FX:"`);
+    
+    for (let i = 0; i < fxElements.length; i++) {
+      const element = fxElements.eq(i);
+      const text = element.text().trim();
+      console.log(`FX element ${i+1} text: "${text}"`);
+      
+      // Look for siblings or parent that might contain the rate
+      if (text.includes(fromCurrency)) {
+        console.log('Found FX element with the correct currency');
+        
+        // Check the parent for the full text
+        const parentText = element.parent().text().trim();
+        console.log(`Parent text: "${parentText}"`);
+        
+        // Look for the next sibling which might contain the rate
+        const nextSibling = element.next();
+        if (nextSibling.length > 0) {
+          const siblingText = nextSibling.text().trim();
+          console.log(`Next sibling text: "${siblingText}"`);
+          
+          // Check if it contains a number in our expected range
+          const rateMatch = siblingText.match(/(\d+[\d,\.]+)/);
+          if (rateMatch) {
+            const rateStr = rateMatch[1].replace(/,/g, '');
+            const parsedRate = parseFloat(rateStr);
+            
+            if (!isNaN(parsedRate) && parsedRate > 0) {
+              console.log(`Successfully extracted rate from sibling: ${parsedRate}`);
+              return parsedRate;
+            }
+          }
+        }
+        
+        // Try to extract the rate from the full text if it includes both currencies
+        if (parentText.includes(fromCurrency) && parentText.includes(toCurrency)) {
+          const rateMatch = parentText.match(/(\d+[\d,\.]+)\s*NGN/i);
+          if (rateMatch) {
+            const rateStr = rateMatch[1].replace(/,/g, '');
+            const parsedRate = parseFloat(rateStr);
+            
+            if (!isNaN(parsedRate) && parsedRate > 1000) {
+              console.log(`Successfully extracted rate from parent: ${parsedRate}`);
+              return parsedRate;
+            }
+          }
+        }
+      }
+    }
+    
+    // Look for any elements containing both currency codes
+    console.log('Looking for elements containing both currency codes...');
+    const currencyElements = $(`*:contains("${fromCurrency}"):contains("${toCurrency}")`);
+    console.log(`Found ${currencyElements.length} elements containing both currencies`);
+    
+    for (let i = 0; i < currencyElements.length && i < 20; i++) { // Limit to 20 elements to avoid excessive processing
+      const element = currencyElements.eq(i);
+      const text = element.text().trim();
+      
+      // Only process reasonably sized text fragments
+      if (text.length > 5 && text.length < 300) {
+        // Look for specific patterns
+        const patterns = [
+          new RegExp(`1\\s*${fromCurrency}\\s*=\\s*(\\d+[\\d,\\.]+)\\s*${toCurrency}`, 'i'),
+          new RegExp(`(\\d+[\\d,\\.]+)\\s*${toCurrency}\\s+to\\s+1\\s*${fromCurrency}`, 'i'),
+          new RegExp(`${fromCurrency}\\s*/\\s*${toCurrency}\\s*:\\s*(\\d+[\\d,\\.]+)`, 'i')
+        ];
+        
+        for (const pattern of patterns) {
+          const match = text.match(pattern);
+          if (match) {
+            const rateStr = match[1].replace(/,/g, '');
+            const parsedRate = parseFloat(rateStr);
+            
+            if (!isNaN(parsedRate) && parsedRate > 1000) {
+              console.log(`Successfully extracted rate using pattern: ${parsedRate}`);
+              return parsedRate;
+            }
+          }
+        }
+        
+        // Look for any numbers in the appropriate range for this currency pair
+        const numbersMatch = text.match(/(\d+[\d,\.]+)/g);
+        if (numbersMatch) {
+          for (const numStr of numbersMatch) {
+            const parsedNum = parseFloat(numStr.replace(/,/g, ''));
+            
+            // For GBP to NGN, rates should be roughly in this range
+            if (!isNaN(parsedNum) && parsedNum > 1500 && parsedNum < 2500) {
+              console.log(`Found likely exchange rate: ${parsedNum}`);
+              return parsedNum;
+            }
           }
         }
       }
