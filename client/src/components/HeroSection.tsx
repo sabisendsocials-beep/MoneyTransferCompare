@@ -37,50 +37,50 @@ const HeroSection = () => {
               Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
             </h1>
             
-            <p className="text-lg text-blue-100 mb-6 max-w-2xl leading-relaxed">
+            <p className="text-xl text-blue-100 mb-5 max-w-2xl leading-relaxed">
               Our platform compares exchange rates from 12+ trusted providers in real-time, 
               helping you save on fees and get more value in every international transfer.
             </p>
             
-            <div className="h-px w-24 bg-gradient-to-r from-white/20 to-transparent mb-6"></div>
+            <div className="h-px w-24 bg-gradient-to-r from-white/20 to-transparent mb-5"></div>
             
-            <div className="grid md:grid-cols-2 gap-5 mb-6">
-              <div className="flex items-center gap-3.5 text-white group">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <ArrowRightLeft size={22} />
+            <div className="grid md:grid-cols-2 gap-3 mb-5">
+              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
+                  <ArrowRightLeft size={20} />
                 </div>
                 <div>
-                  <p className="font-medium">Real-time rates</p>
+                  <p className="font-medium text-base">Real-time rates</p>
                   <p className="text-sm text-blue-200">Updated every 6 hours</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3.5 text-white group">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <BarChart3 size={22} />
+              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
+                  <BarChart3 size={20} />
                 </div>
                 <div>
-                  <p className="font-medium">Historical data</p>
+                  <p className="font-medium text-base">Historical data</p>
                   <p className="text-sm text-blue-200">365-day analysis</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3.5 text-white group">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <ShieldCheck size={22} />
+              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
+                  <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <p className="font-medium">Verified sources</p>
+                  <p className="font-medium text-base">Verified sources</p>
                   <p className="text-sm text-blue-200">Direct from providers</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3.5 text-white group">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <Compass size={22} />
+              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
+                  <Compass size={20} />
                 </div>
                 <div>
-                  <p className="font-medium">Global coverage</p>
+                  <p className="font-medium text-base">Global coverage</p>
                   <p className="text-sm text-blue-200">Multi-country support</p>
                 </div>
               </div>
