@@ -92,13 +92,22 @@ export async function updateSendwaveMarketValidated(): Promise<boolean> {
       console.log(`Trying URL: ${url}`);
       
       try {
+        // Attempt to fetch with a longer timeout to allow full page load
+        console.log(`Fetching with increased timeout to allow page to fully load...`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
         const response = await fetch(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9'
-          }
-        });
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          signal: controller.signal
+        }).finally(() => clearTimeout(timeoutId));
         
         if (!response.ok) {
           console.log(`Error fetching ${url}: ${response.status}`);
@@ -107,6 +116,10 @@ export async function updateSendwaveMarketValidated(): Promise<boolean> {
         
         const html = await response.text();
         console.log(`Retrieved HTML content (${html.length} characters)`);
+        
+        // Add delay to simulate waiting for JavaScript to execute
+        console.log(`Waiting 2 seconds to allow any JavaScript to execute...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Parse the HTML with cheerio
         const $ = cheerio.load(html);

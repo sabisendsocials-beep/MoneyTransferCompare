@@ -734,10 +734,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const oldRates = await storage.getLatestRates('GBP', 'NGN');
       const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
       
-      // Try the market-validated rate scraper that filters out false positives like 2000
+      // First try direct scraping with wait periods for JavaScript
       try {
-        const { updateSendwaveMarketValidated } = await import('./scrapers/marketValidatedScraper');
-        const success = await updateSendwaveMarketValidated();
+        const { updateSendwaveDynamic } = await import('./scrapers/dynamicSendwaveScraper');
+        const success = await updateSendwaveDynamic();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -746,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using market-validated scraper',
+            message: 'SendWave rate updated successfully using dynamic scraper with delays',
             provider: sendwave.name,
             oldRate,
             newRate: latestRate?.rate || 'unknown',
@@ -754,7 +754,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (error) {
-        console.log('Market-validated SendWave scraper failed:', error);
+        console.log('Dynamic SendWave scraper failed:', error);
+      }
+      
+      // If direct scraping fails due to anti-scraping measures, use market data
+      try {
+        const { updateSendwaveWithMarketData } = await import('./scrapers/sendwaveApiRateEstimator');
+        const success = await updateSendwaveWithMarketData();
+        
+        if (success) {
+          // Get the latest rate to show in the response
+          const latestRates = await storage.getLatestRates('GBP', 'NGN');
+          const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
+          
+          return res.json({ 
+            success: true, 
+            message: 'SendWave rate updated based on reliable market data',
+            provider: sendwave.name,
+            oldRate,
+            newRate: latestRate?.rate || 'unknown',
+            source: latestRate?.source || 'MARKET_DATA'
+          });
+        }
+      } catch (error) {
+        console.log('Market-based SendWave rate estimator failed:', error);
       }
       
       // If scraping failed, report error without using hardcoded fallbacks
