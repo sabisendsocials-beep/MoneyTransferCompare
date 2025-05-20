@@ -42,47 +42,49 @@ const HeroSection = () => {
               helping you save on fees and get more value in every international transfer.
             </p>
             
-            <div className="h-px w-24 bg-gradient-to-r from-white/20 to-transparent mb-5"></div>
-            
-            <div className="grid md:grid-cols-2 gap-3 mb-5">
-              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <ArrowRightLeft size={20} />
+            <div className="grid md:grid-cols-2 gap-4 mb-6 mt-6">
+              <div className="group bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3.5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-600 flex items-center justify-center shadow-lg">
+                    <RefreshCw size={26} className="text-white" />
+                  </div>
+                  <div className="bg-blue-400/10 rounded-full px-2 py-0.5 text-xs text-blue-200">Updated every 6 hours</div>
                 </div>
-                <div>
-                  <p className="font-medium text-base">Real-time rates</p>
-                  <p className="text-sm text-blue-200">Updated every 6 hours</p>
-                </div>
+                <h3 className="font-semibold text-lg text-white mb-1">Real-Time Rates</h3>
+                <p className="text-sm text-blue-200">Get the most current exchange rates directly from provider sources</p>
               </div>
               
-              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <BarChart3 size={20} />
+              <div className="group bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3.5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-lg">
+                    <ShieldCheck size={26} className="text-white" />
+                  </div>
+                  <div className="bg-emerald-400/10 rounded-full px-2 py-0.5 text-xs text-emerald-200">12+ verified services</div>
                 </div>
-                <div>
-                  <p className="font-medium text-base">Historical data</p>
-                  <p className="text-sm text-blue-200">365-day analysis</p>
-                </div>
+                <h3 className="font-semibold text-lg text-white mb-1">Trusted Providers</h3>
+                <p className="text-sm text-blue-200">Compare rates from legitimate and verified money transfer services</p>
               </div>
               
-              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <ShieldCheck size={20} />
+              <div className="group bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3.5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <BarChart3 size={26} className="text-white" />
+                  </div>
+                  <div className="bg-purple-400/10 rounded-full px-2 py-0.5 text-xs text-purple-200">Full year analysis</div>
                 </div>
-                <div>
-                  <p className="font-medium text-base">Verified sources</p>
-                  <p className="text-sm text-blue-200">Direct from providers</p>
-                </div>
+                <h3 className="font-semibold text-lg text-white mb-1">Rate History & Trends</h3>
+                <p className="text-sm text-blue-200">Track historical rate patterns to time your transfers optimally</p>
               </div>
               
-              <div className="flex items-center gap-3 text-white group bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                  <Compass size={20} />
+              <div className="group bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3.5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg">
+                    <Globe size={26} className="text-white" />
+                  </div>
+                  <div className="bg-amber-400/10 rounded-full px-2 py-0.5 text-xs text-amber-200">Multiple destinations</div>
                 </div>
-                <div>
-                  <p className="font-medium text-base">Global coverage</p>
-                  <p className="text-sm text-blue-200">Multi-country support</p>
-                </div>
+                <h3 className="font-semibold text-lg text-white mb-1">Multi-Currency Support</h3>
+                <p className="text-sm text-blue-200">Send money to various countries and currencies worldwide</p>
               </div>
             </div>
             
