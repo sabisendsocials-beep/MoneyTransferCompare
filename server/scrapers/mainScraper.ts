@@ -8,7 +8,7 @@ import { storage } from '../storage';
 import { Provider, InsertExchangeRate } from '@shared/schema';
 import { updateSendwaveRate } from './sendwaveScraper';
 import { updateTapTapRate } from './taptapScraper';
-import { updateWesternUnionRates } from './westernUnionScraper';
+import { updateWesternUnionRateFromConfig } from './westernUnionScraper';
 import { updateMoneyGramRate } from './moneygramScraper';
 import { updateRemitlyRate } from './remitlyScraper';
 
@@ -44,7 +44,7 @@ export async function updateAdditionalProviders(): Promise<boolean> {
     
     // Run Western Union scraper
     log('Running specialized Western Union scraper...');
-    const westernUnionSuccess = await updateWesternUnionRates();
+    const westernUnionSuccess = await updateWesternUnionRateFromConfig();
     if (westernUnionSuccess) {
       log('Successfully updated Western Union rate');
       updateCount++;

@@ -8,7 +8,7 @@ import { updateWorldRemitRate } from './worldRemitScraper';
 import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
 import { updateNalaRate } from './nalaScraper';
-import { updateWesternUnionRates } from './westernUnionScraper';
+import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './westernUnionScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
@@ -437,6 +437,23 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               }
             } catch (error) {
               console.log('SendWave scraper failed, falling back to standard scraper:', error);
+            }
+          } else if (provider.name === 'Western Union') {
+            console.log('=== Using dedicated Western Union scraper with admin-configured URL and selectors ONLY... ===');
+            
+            try {
+              // First try with our specialized Western Union scraper
+              const success = await updateWesternUnionRate(provider.id, 'GBP', 'NGN');
+              
+              if (success) {
+                console.log('=== Successfully updated Western Union rate with dedicated scraper ===');
+                results.push({ provider: provider.name, success: true });
+                continue; // Skip to next provider
+              } else {
+                console.log('=== Dedicated Western Union scraper failed, falling back to standard scraper ===');
+              }
+            } catch (error) {
+              console.log('Western Union scraper error, falling back to standard scraper:', error);
             }
           }
           

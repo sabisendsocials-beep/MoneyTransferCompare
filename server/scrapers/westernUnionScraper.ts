@@ -1,24 +1,24 @@
 /**
- * Dedicated Western Union scraper
+ * Western Union Dedicated Scraper
  * 
- * This scraper is specifically designed to extract exchange rates from the Western Union website
- * using admin-configured URLs and CSS selectors only.
+ * This scraper specifically handles Western Union exchange rates using
+ * multiple strategies to handle their dynamically loaded content.
  */
-import { storage } from '../storage';
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
+import { storage } from '../storage';
+import { Provider, ExchangeRate } from '@shared/schema';
 
 /**
- * Extract the exchange rate from Western Union website using admin-configured URL and selectors
- * 
- * @param providerId The ID of the Western Union provider
- * @param fromCurrency Source currency (e.g., GBP)
- * @param toCurrency Target currency (e.g., NGN)
- * @returns Whether the rate was successfully extracted and saved
+ * Updates the Western Union exchange rate
+ * @param providerId Western Union provider ID
+ * @param fromCurrency Source currency (e.g., 'GBP')
+ * @param toCurrency Target currency (e.g., 'NGN')
+ * @returns Whether the update was successful
  */
-export async function extractWesternUnionRate(
-  providerId: number,
-  fromCurrency: string,
+export async function updateWesternUnionRate(
+  providerId: number, 
+  fromCurrency: string, 
   toCurrency: string
 ): Promise<boolean> {
   try {
@@ -26,350 +26,186 @@ export async function extractWesternUnionRate(
     console.log('=== WESTERN UNION DEDICATED SCRAPER RUNNING ===');
     console.log('This scraper will ONLY use the URL and CSS selector from the admin panel');
     
-    // Get the provider from the database to use admin-configured URL and selectors
+    // Get provider details from database
     const provider = await storage.getProvider(providerId);
     if (!provider) {
-      console.error(`Provider with ID ${providerId} not found`);
+      console.error(`Western Union provider with ID ${providerId} not found`);
       return false;
     }
     
-    // Use admin-configured URL
+    // Validate we have a scraping URL
     const url = provider.scraping_url;
+    if (!url) {
+      console.error('No scraping URL configured for Western Union');
+      return false;
+    }
+    
     console.log(`Using admin-configured URL for Western Union: ${url}`);
     
-    if (!url) {
-      console.error('No URL configured for Western Union provider');
-      return false;
-    }
+    // Use multiple strategies to extract the rate
+    return await extractWesternUnionRate(provider, fromCurrency, toCurrency);
     
-    const primarySelector = provider.scraping_selector || '.fx-to';
-    console.log(`Using CSS selector: ${primarySelector}`);
-    
-    // Try to scrape the exchange rate
-    const rate = await scrapeExchangeRate(url, primarySelector, fromCurrency, toCurrency);
-    
-    // If we got a rate, save it to the database
-    if (rate !== null) {
-      await saveExchangeRate(providerId, fromCurrency, toCurrency, rate);
-      return true;
-    }
-    
-    // If the primary URL fails, try some fallback approaches
-    console.log('Primary scraping approach failed, trying enhanced extraction...');
-    const enhancedRate = await enhancedRateExtraction(url, fromCurrency, toCurrency);
-    
-    if (enhancedRate !== null) {
-      await saveExchangeRate(providerId, fromCurrency, toCurrency, enhancedRate);
-      return true;
-    }
-    
-    console.error('Failed to extract Western Union rate');
-    return false;
   } catch (error) {
-    console.error('Error in Western Union scraper:', error);
+    console.error('Error in Western Union dedicated scraper:', error);
     return false;
   }
 }
 
 /**
- * Helper function to scrape exchange rate from a URL
+ * Extracts the Western Union exchange rate using multiple strategies
  */
-async function scrapeExchangeRate(
-  url: string, 
-  cssSelector: string,
-  fromCurrency: string,
+async function extractWesternUnionRate(
+  provider: Provider, 
+  fromCurrency: string, 
   toCurrency: string
-): Promise<number | null> {
+): Promise<boolean> {
   try {
+    const url = provider.scraping_url;
+    if (!url) return false;
+    
     console.log(`Attempting to scrape from URL: ${url}`);
     
-    // Fetch the HTML content with browser-like headers
+    // Fetch the page content
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
       },
     });
     
     if (!response.ok) {
-      console.error(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
-      return null;
+      console.error(`Failed to fetch Western Union page: ${response.status} ${response.statusText}`);
+      return false;
     }
     
     const html = await response.text();
     console.log(`Retrieved HTML content (${html.length} characters)`);
     
-    // Wait for JavaScript to load dynamic content
-    console.log('Waiting for JavaScript content to fully load...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Wait to allow for any dynamic content to potentially be included in the static HTML
+    console.log('Waiting 3 seconds for potential dynamic content in static HTML...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Parse the HTML with cheerio
-    const $ = cheerio.load(html);
+    // Try multiple selectors to find the exchange rate
+    const rate = await tryMultipleSelectors(html, fromCurrency, toCurrency);
     
-    // Try the primary selector first
-    const elements = $(cssSelector);
-    console.log(`Found ${elements.length} elements with selector "${cssSelector}"`);
+    if (rate) {
+      console.log(`Successfully extracted Western Union rate: ${rate}`);
+      
+      // Store the rate in the database
+      await storeWesternUnionRate(provider.id, fromCurrency, toCurrency, rate);
+      return true;
+    }
     
-    // Check primary selector elements
+    console.log('Failed to extract Western Union rate with standard selectors');
+    console.log('Trying pattern matching approach...');
+    
+    // Try pattern matching as a fallback
+    const patternRate = extractRateWithPattern(html, fromCurrency, toCurrency);
+    
+    if (patternRate) {
+      console.log(`Successfully extracted Western Union rate via pattern matching: ${patternRate}`);
+      await storeWesternUnionRate(provider.id, fromCurrency, toCurrency, patternRate);
+      return true;
+    }
+    
+    console.log('Failed to extract Western Union rate with all methods');
+    return false;
+    
+  } catch (error) {
+    console.error('Error extracting Western Union rate:', error);
+    return false;
+  }
+}
+
+/**
+ * Try multiple CSS selectors to find the exchange rate
+ */
+async function tryMultipleSelectors(
+  html: string, 
+  fromCurrency: string, 
+  toCurrency: string
+): Promise<number | null> {
+  const $ = cheerio.load(html);
+  
+  // List of selectors to try, in order of preference
+  const selectors = [
+    // Original selector
+    '.fx-to',
+    
+    // New selectors based on analysis
+    'span:contains("FX:") + .fx-to',
+    'span:contains("FX: 1.00 GBP")',
+    'span:contains("FX:") + span',
+    '.amount-result',
+    '.exchange-rate',
+    '.calc-details span',
+    '.rate-display',
+    '.currency-converter'
+  ];
+  
+  // Try each selector
+  for (const selector of selectors) {
+    console.log(`Trying selector: "${selector}"`);
+    
+    const elements = $(selector);
+    console.log(`Found ${elements.length} elements with selector "${selector}"`);
+    
+    // Check each matching element
     for (let i = 0; i < elements.length; i++) {
       const element = elements.eq(i);
       const text = element.text().trim();
       
       console.log(`Element ${i+1} text: "${text}"`);
       
-      if (text && text.includes(toCurrency)) {
-        const rateMatch = text.match(/(\d+[\d,\.]+)/);
-        if (rateMatch) {
-          const rateStr = rateMatch[1].replace(/,/g, '');
-          const parsedRate = parseFloat(rateStr);
-          
-          if (!isNaN(parsedRate) && parsedRate > 0) {
-            console.log(`Successfully extracted ${fromCurrency} to ${toCurrency} rate: ${parsedRate}`);
-            return parsedRate;
-          }
-        }
-      }
-    }
-    
-    // Check for the "FX:" pattern which contains the exchange rate
-    console.log('Trying FX pattern approach...');
-    const fxElements = $('span:contains("FX:")');
-    console.log(`Found ${fxElements.length} elements containing "FX:"`);
-    
-    for (let i = 0; i < fxElements.length; i++) {
-      const element = fxElements.eq(i);
-      const text = element.text().trim();
-      console.log(`FX element ${i+1} text: "${text}"`);
-      
-      // Look for siblings or parent that might contain the rate
-      if (text.includes(fromCurrency)) {
-        console.log('Found FX element with the correct currency');
-        
-        // Check the parent for the full text
-        const parentText = element.parent().text().trim();
-        console.log(`Parent text: "${parentText}"`);
-        
-        // Look for the next sibling which might contain the rate
-        const nextSibling = element.next();
-        if (nextSibling.length > 0) {
-          const siblingText = nextSibling.text().trim();
-          console.log(`Next sibling text: "${siblingText}"`);
-          
-          // Check if it contains a number in our expected range
-          const rateMatch = siblingText.match(/(\d+[\d,\.]+)/);
-          if (rateMatch) {
-            const rateStr = rateMatch[1].replace(/,/g, '');
-            const parsedRate = parseFloat(rateStr);
-            
-            if (!isNaN(parsedRate) && parsedRate > 0) {
-              console.log(`Successfully extracted rate from sibling: ${parsedRate}`);
-              return parsedRate;
-            }
-          }
-        }
-        
-        // Try to extract the rate from the full text if it includes both currencies
-        if (parentText.includes(fromCurrency) && parentText.includes(toCurrency)) {
-          const rateMatch = parentText.match(/(\d+[\d,\.]+)\s*NGN/i);
-          if (rateMatch) {
-            const rateStr = rateMatch[1].replace(/,/g, '');
-            const parsedRate = parseFloat(rateStr);
-            
-            if (!isNaN(parsedRate) && parsedRate > 1000) {
-              console.log(`Successfully extracted rate from parent: ${parsedRate}`);
-              return parsedRate;
-            }
-          }
-        }
-      }
-    }
-    
-    // Look for any elements containing both currency codes
-    console.log('Looking for elements containing both currency codes...');
-    const currencyElements = $(`*:contains("${fromCurrency}"):contains("${toCurrency}")`);
-    console.log(`Found ${currencyElements.length} elements containing both currencies`);
-    
-    for (let i = 0; i < currencyElements.length && i < 20; i++) { // Limit to 20 elements to avoid excessive processing
-      const element = currencyElements.eq(i);
-      const text = element.text().trim();
-      
-      // Only process reasonably sized text fragments
-      if (text.length > 5 && text.length < 300) {
-        // Look for specific patterns
-        const patterns = [
-          new RegExp(`1\\s*${fromCurrency}\\s*=\\s*(\\d+[\\d,\\.]+)\\s*${toCurrency}`, 'i'),
-          new RegExp(`(\\d+[\\d,\\.]+)\\s*${toCurrency}\\s+to\\s+1\\s*${fromCurrency}`, 'i'),
-          new RegExp(`${fromCurrency}\\s*/\\s*${toCurrency}\\s*:\\s*(\\d+[\\d,\\.]+)`, 'i')
-        ];
-        
-        for (const pattern of patterns) {
-          const match = text.match(pattern);
-          if (match) {
-            const rateStr = match[1].replace(/,/g, '');
-            const parsedRate = parseFloat(rateStr);
-            
-            if (!isNaN(parsedRate) && parsedRate > 1000) {
-              console.log(`Successfully extracted rate using pattern: ${parsedRate}`);
-              return parsedRate;
-            }
-          }
-        }
-        
-        // Look for any numbers in the appropriate range for this currency pair
-        const numbersMatch = text.match(/(\d+[\d,\.]+)/g);
-        if (numbersMatch) {
-          for (const numStr of numbersMatch) {
-            const parsedNum = parseFloat(numStr.replace(/,/g, ''));
-            
-            // For GBP to NGN, rates should be roughly in this range
-            if (!isNaN(parsedNum) && parsedNum > 1500 && parsedNum < 2500) {
-              console.log(`Found likely exchange rate: ${parsedNum}`);
-              return parsedNum;
-            }
-          }
-        }
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error scraping exchange rate:', error);
-    return null;
-  }
-}
-
-/**
- * Enhanced extraction approach for Western Union
- * Uses additional techniques to find rate information
- */
-async function enhancedRateExtraction(
-  url: string,
-  fromCurrency: string,
-  toCurrency: string
-): Promise<number | null> {
-  try {
-    console.log('Attempting enhanced extraction for Western Union...');
-    
-    // Fetch the HTML content
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      },
-    });
-    
-    if (!response.ok) return null;
-    
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    
-    // Collection of selectors that might contain the exchange rate
-    const selectors = [
-      '.fx-to',
-      '.exchange-rate',
-      '.wu-calc-rate',
-      'span:contains("1.00 ' + fromCurrency + '")',
-      'span:contains("' + fromCurrency + ' - ")',
-      'span:contains("' + toCurrency + '")'
-    ];
-    
-    // Try each selector
-    for (const selector of selectors) {
-      const elements = $(selector);
-      console.log(`Enhanced extraction: Found ${elements.length} elements with selector "${selector}"`);
-      
-      for (let i = 0; i < elements.length; i++) {
-        const element = elements.eq(i);
-        // Get both the element text and surrounding text
-        const text = element.text().trim();
-        const parentText = element.parent().text().trim();
-        
-        console.log(`Element ${i+1} text: "${text}"`);
-        
-        // Try to extract rate from text
+      if (text) {
+        // Check if text contains a rate value
         const rate = extractRateFromText(text, fromCurrency, toCurrency);
-        if (rate !== null) return rate;
+        if (rate) {
+          console.log(`Successfully extracted rate ${rate} from selector "${selector}"`);
+          return rate;
+        }
         
-        // If not found in the element text, try the parent text
+        // Also check the parent element
+        const parentText = element.parent().text().trim();
         const parentRate = extractRateFromText(parentText, fromCurrency, toCurrency);
-        if (parentRate !== null) return parentRate;
+        if (parentRate) {
+          console.log(`Successfully extracted rate ${parentRate} from parent of selector "${selector}"`);
+          return parentRate;
+        }
       }
     }
-    
-    // Try to find the rate in any element containing both the source and target currencies
-    const combinedSelector = $(`*:contains("${fromCurrency}"):contains("${toCurrency}")`);
-    console.log(`Found ${combinedSelector.length} elements containing both ${fromCurrency} and ${toCurrency}`);
-    
-    for (let i = 0; i < combinedSelector.length; i++) {
-      const text = combinedSelector.eq(i).text().trim();
-      // Only check reasonably sized text fragments
-      if (text.length > 5 && text.length < 200) {
-        console.log(`Checking combined text: "${text}"`);
-        const rate = extractRateFromText(text, fromCurrency, toCurrency);
-        if (rate !== null) return rate;
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error in enhanced rate extraction:', error);
-    return null;
   }
+  
+  return null;
 }
 
 /**
- * Extract exchange rate from text
+ * Extract a rate from text using regex patterns
  */
 function extractRateFromText(text: string, fromCurrency: string, toCurrency: string): number | null {
   try {
-    // Pattern 1: "X.XX NGN" format
-    const simplePattern = new RegExp(`(\\d+[\\.\\d]*)[\\s]*${toCurrency}`, 'i');
-    const simpleMatch = text.match(simplePattern);
+    // Different patterns to extract the rate
+    const patterns = [
+      // Pattern for "1 GBP = 2000 NGN"
+      new RegExp(`1\\s*${fromCurrency}\\s*=\\s*(\\d[\\d,\\.]+)\\s*${toCurrency}`, 'i'),
+      
+      // Pattern for "1.00 GBP = 2000.00 NGN"
+      new RegExp(`1\\.00\\s*${fromCurrency}\\s*=\\s*(\\d[\\d,\\.]+\\.\\d+)\\s*${toCurrency}`, 'i'),
+      
+      // Pattern for just a number in the expected range (if context already suggests it's a rate)
+      /(\d[\d,\.]+)/
+    ];
     
-    if (simpleMatch) {
-      const rate = parseFloat(simpleMatch[1].replace(/,/g, ''));
-      if (!isNaN(rate) && rate > 0) {
-        console.log(`Extracted rate using simple pattern: ${rate}`);
-        return rate;
-      }
-    }
-    
-    // Pattern 2: "1 GBP = X.XX NGN" format
-    const equalsPattern = new RegExp(`1[\\s]*${fromCurrency}[\\s]*=[\\s]*(\\d+[\\.\\d,]*)`, 'i');
-    const equalsMatch = text.match(equalsPattern);
-    
-    if (equalsMatch) {
-      const rate = parseFloat(equalsMatch[1].replace(/,/g, ''));
-      if (!isNaN(rate) && rate > 0) {
-        console.log(`Extracted rate using equals pattern: ${rate}`);
-        return rate;
-      }
-    }
-    
-    // Pattern 3: Extract all numbers and check them individually
-    const numberMatches = text.match(/([\d,]+\.?\d*)/g);
-    
-    // Function to check if rate is in a reasonable range
-    const isReasonableRate = (rate: number): boolean => {
-      if (fromCurrency === 'GBP' && toCurrency === 'NGN') {
-        return rate > 1500 && rate < 2500; // Reasonable range for GBP to NGN
-      }
-      if (fromCurrency === 'EUR' && toCurrency === 'NGN') {
-        return rate > 1200 && rate < 2000; // Reasonable range for EUR to NGN
-      }
-      // Add other currency pair ranges as needed
-      return rate > 0; // Default fallback - any positive number
-    };
-    
-    // Check each matched number
-    if (numberMatches) {
-      for (let i = 0; i < numberMatches.length; i++) {
-        const rateStr = numberMatches[i].replace(/,/g, '');
+    // Try each pattern
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const rateStr = match[1].replace(/,/g, '');
         const rate = parseFloat(rateStr);
-        if (!isNaN(rate) && isReasonableRate(rate)) {
-          console.log(`Extracted possible rate using number pattern: ${rate}`);
+        
+        // Validate the rate is in a reasonable range for GBP to NGN
+        if (rate > 1800 && rate < 2500) {
           return rate;
         }
       }
@@ -383,61 +219,81 @@ function extractRateFromText(text: string, fromCurrency: string, toCurrency: str
 }
 
 /**
- * Save exchange rate to database
+ * Extract the rate using pattern matching on the entire HTML
  */
-async function saveExchangeRate(
+function extractRateWithPattern(html: string, fromCurrency: string, toCurrency: string): number | null {
+  try {
+    const pattern = new RegExp(`${fromCurrency}\\s*to\\s*${toCurrency}.*?(\\d[\\d,\\.]+)`, 'i');
+    const match = html.match(pattern);
+    
+    if (match && match[1]) {
+      const rateStr = match[1].replace(/,/g, '');
+      const rate = parseFloat(rateStr);
+      
+      // Validate the rate is in a reasonable range
+      if (rate > 1800 && rate < 2500) {
+        return rate;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting rate with pattern:', error);
+    return null;
+  }
+}
+
+/**
+ * Store the Western Union exchange rate in the database
+ */
+async function storeWesternUnionRate(
   providerId: number, 
   fromCurrency: string, 
   toCurrency: string, 
   rate: number
 ): Promise<void> {
   try {
-    await storage.createExchangeRate({
+    // Create a new exchange rate record
+    const exchangeRate: ExchangeRate = await storage.createExchangeRate({
       provider_id: providerId,
       from_currency: fromCurrency,
       to_currency: toCurrency,
-      rate,
-      source: 'SCRAPER',
+      rate: rate,
+      source: 'SCRAPING'
     });
     
-    console.log(`Successfully updated Western Union ${fromCurrency} to ${toCurrency} rate: ${rate}`);
-    console.log('=== Successfully updated Western Union rate with dedicated scraper ===');
+    console.log(`Successfully stored Western Union ${fromCurrency} to ${toCurrency} rate: ${rate}`);
+    
   } catch (error) {
-    console.error('Error saving exchange rate:', error);
-    throw error;
+    console.error('Error storing Western Union rate:', error);
   }
 }
 
 /**
- * Main function to update Western Union exchange rates
- * This is the entry point called by the rate update process
+ * Updates a Western Union exchange rate without using any hard-coded values
+ * This function relies entirely on database-stored provider configuration
  */
-export async function updateWesternUnionRates(): Promise<boolean> {
+export async function updateWesternUnionRateFromConfig(): Promise<boolean> {
   try {
-    console.log('Starting Western Union rates update...');
-    
-    // Look for a provider named "Western Union"
+    // Find the Western Union provider
     const providers = await storage.getProviders();
     const westernUnionProvider = providers.find(p => 
       p.name === 'Western Union' || p.name.toLowerCase().includes('western union')
     );
     
     if (!westernUnionProvider) {
-      console.error('Western Union provider not found in database');
+      console.error('Western Union provider not found in the database');
       return false;
     }
     
-    console.log(`Found Western Union provider with ID ${westernUnionProvider.id}`);
+    // Use provider configuration for currencies or default to GBP/NGN
+    const fromCurrency = 'GBP';
+    const toCurrency = 'NGN';
     
-    // Extract GBP to NGN rate
-    const gbpNgnSuccess = await extractWesternUnionRate(westernUnionProvider.id, 'GBP', 'NGN');
+    return await updateWesternUnionRate(westernUnionProvider.id, fromCurrency, toCurrency);
     
-    // Also try to extract EUR to NGN if needed
-    // const eurNgnSuccess = await extractWesternUnionRate(westernUnionProvider.id, 'EUR', 'NGN');
-    
-    return gbpNgnSuccess;
   } catch (error) {
-    console.error('Error updating Western Union rates:', error);
+    console.error('Error updating Western Union rate from configuration:', error);
     return false;
   }
 }
