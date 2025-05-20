@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get rate trends
+  // Get rate trends - uses real historical exchange rate data from ExchangeRate-API
   apiRouter.get("/api/rate-trends", async (req: Request, res: Response) => {
     try {
       const fromCurrency = (req.query.from as string) || "GBP";
@@ -240,67 +240,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[API] Fetching rate trends for ${fromCurrency}/${toCurrency} (${days} days)`);
       
-      // Get trends from storage
-      const trends = await storage.getRateTrends(fromCurrency, toCurrency, days);
+      // Import our historical rates service
+      const { getHistoricalRates } = await import('./services/historicalRatesService');
       
-      if (!trends || trends.length === 0) {
-        console.log(`[API] No trend data found for ${fromCurrency}/${toCurrency}, forcing update`);
-        
-        // If no trends, try to directly pull from the database
-        const { db } = await import('./db');
-        const { rateTrends } = await import('@shared/schema');
-        const { eq, and, sql } = await import('drizzle-orm');
-        
-        // Query trends directly from database
-        const trendData = await db.select()
-          .from(rateTrends)
-          .where(
-            and(
-              eq(rateTrends.from_currency, fromCurrency),
-              eq(rateTrends.to_currency, toCurrency)
-            )
-          )
-          .orderBy(rateTrends.date);
-        
-        console.log(`[API] Direct DB query found ${trendData.length} trend points`);
-        
-        // Map database records to API response format
-        const formattedTrends = trendData.map(trend => ({
-          date: trend.date,
-          rate: trend.rate,
-          from_currency: trend.from_currency,
-          to_currency: trend.to_currency
-        }));
-        
+      // Get historical rates from our service (which uses real data from ExchangeRate-API)
+      const historicalRates = await getHistoricalRates(fromCurrency, toCurrency, days);
+      
+      if (historicalRates && historicalRates.length > 0) {
         // Ensure the data is sorted chronologically by date
-        const sortedTrends = formattedTrends.sort((a, b) => {
+        const sortedTrends = [...historicalRates].sort((a, b) => {
           return new Date(a.date).getTime() - new Date(b.date).getTime();
         });
         
-        console.log(`[API] Returning ${sortedTrends.length} trend points (sorted by date)`);
-        
-        // Log a sample of the data being returned
+        // Log the range of data we're returning
         if (sortedTrends.length > 0) {
+          console.log(`[API] Found ${sortedTrends.length} historical rate points from real data`);
           console.log(`[API] First point: ${JSON.stringify(sortedTrends[0])}`);
           console.log(`[API] Last point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
         }
         
-        res.json(sortedTrends);
+        return res.json(sortedTrends);
       } else {
-        console.log(`[API] Found ${trends.length} trend points for ${fromCurrency}/${toCurrency}`);
+        // No historical data found, fall back to legacy system
+        console.log(`[API] No historical rate data found from service, trying legacy system`);
         
-        // Ensure the data is sorted chronologically by date before returning
-        const sortedTrends = [...trends].sort((a, b) => {
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        });
+        // Get trends from storage (legacy implementation)
+        const trends = await storage.getRateTrends(fromCurrency, toCurrency, days);
         
-        // Log a sample of the data being returned
-        if (sortedTrends.length > 0) {
-          console.log(`[API] First point: ${JSON.stringify(sortedTrends[0])}`);
-          console.log(`[API] Last point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
+        if (!trends || trends.length === 0) {
+          console.log(`[API] No trend data found, trying direct database query`);
+          
+          // If no trends, try to directly pull from the database
+          const { db } = await import('./db');
+          const { rateTrends } = await import('@shared/schema');
+          const { eq, and, sql } = await import('drizzle-orm');
+          
+          // Query trends directly from database
+          const trendData = await db.select()
+            .from(rateTrends)
+            .where(
+              and(
+                eq(rateTrends.from_currency, fromCurrency),
+                eq(rateTrends.to_currency, toCurrency)
+              )
+            )
+            .orderBy(rateTrends.date);
+          
+          console.log(`[API] Direct DB query found ${trendData.length} trend points`);
+          
+          // Map database records to API response format
+          const formattedTrends = trendData.map(trend => ({
+            date: trend.date,
+            rate: trend.rate,
+            from_currency: trend.from_currency,
+            to_currency: trend.to_currency
+          }));
+          
+          // Ensure the data is sorted chronologically by date
+          const sortedTrends = formattedTrends.sort((a, b) => {
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          });
+          
+          console.log(`[API] Returning ${sortedTrends.length} trend points (sorted by date)`);
+          
+          // Log a sample of the data being returned
+          if (sortedTrends.length > 0) {
+            console.log(`[API] First point: ${JSON.stringify(sortedTrends[0])}`);
+            console.log(`[API] Last point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
+          }
+          
+          res.json(sortedTrends);
+        } else {
+          console.log(`[API] Found ${trends.length} trend points from legacy system`);
+          
+          // Ensure the data is sorted chronologically by date before returning
+          const sortedTrends = [...trends].sort((a, b) => {
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          });
+          
+          // Log a sample of the data being returned
+          if (sortedTrends.length > 0) {
+            console.log(`[API] First point: ${JSON.stringify(sortedTrends[0])}`);
+            console.log(`[API] Last point: ${JSON.stringify(sortedTrends[sortedTrends.length-1])}`);
+          }
+          
+          res.json(sortedTrends);
         }
-        
-        res.json(sortedTrends);
       }
     } catch (error) {
       console.error("Error fetching rate trends:", error);
@@ -1141,10 +1166,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Initialize providers and data
     await ensureProvidersExist().catch(err => console.error("Failed to initialize providers:", err));
     
+    // Initialize historical rates service
+    try {
+      console.log('Initializing historical rates service with real ExchangeRate-API data...');
+      const { initializeHistoricalRates } = await import('./services/historicalRatesService');
+      await initializeHistoricalRates();
+      console.log('Historical rates service initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize historical rates service:', error);
+    }
+    
     // Initial updates
     updateExchangeRates().catch(err => console.error("Failed to update exchange rates:", err));
     updateFinancialNews().catch(err => console.error("Failed to update news:", err));
-    updateRateTrends().catch(err => console.error("Failed to update rate trends:", err));
     
     // Schedule periodic updates
     setInterval(() => {
@@ -1155,9 +1189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       updateFinancialNews().catch(err => console.error("Failed to update news:", err));
     }, 6 * 60 * 60 * 1000); // Every 6 hours
     
-    setInterval(() => {
-      updateRateTrends().catch(err => console.error("Failed to update rate trends:", err));
-    }, 24 * 60 * 60 * 1000); // Daily update for exchange rate trends
+    // Note: Historical rate updates are now handled by the historicalRatesService scheduler
   }, 5000); // Start after 5 seconds to allow server to fully initialize
 
   const httpServer = createServer(app);

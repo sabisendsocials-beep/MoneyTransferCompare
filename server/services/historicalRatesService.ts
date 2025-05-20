@@ -1,16 +1,17 @@
 /**
- * Historical Exchange Rates Service
+ * Historical Rates Service
  * 
- * This service handles fetching, storing, and retrieving historical exchange rate data
- * from ExchangeRate-API, storing it in our database, and providing it to the frontend.
+ * This service centralizes all operations related to historical exchange rate data.
+ * It handles fetching, storing, and retrieving historical rates for currency pairs.
  */
 
+import { rateTrends } from '@shared/schema';
 import { db } from '../db';
-import { rateTrends, rateCache } from '@shared/schema';
-import { sql } from 'drizzle-orm';
-import fetch from 'node-fetch';
+import { and, eq, sql } from 'drizzle-orm';
+import { subDays, format } from 'date-fns';
+import type { RateTrendResponse } from '@shared/schema';
 
-// Currency pairs we track
+// Currency pairs we want to track
 const CURRENCY_PAIRS = [
   { from: 'GBP', to: 'NGN' },
   { from: 'EUR', to: 'NGN' },
@@ -18,199 +19,64 @@ const CURRENCY_PAIRS = [
   { from: 'EUR', to: 'GHS' }
 ];
 
-// API configuration
-const API_KEY = process.env.EXCHANGE_API_KEY;
-const API_BASE_URL = 'https://api.exchangerate.host';
-
-interface HistoricalRateResponse {
-  success: boolean;
-  base: string;
-  rates: Record<string, number>;
-  date: string;
-  [key: string]: any;
-}
-
 /**
- * Fetches historical exchange rate data for a specific date
- */
-async function fetchHistoricalRate(
-  baseCurrency: string,
-  targetCurrency: string,
-  date: string
-): Promise<number | null> {
-  if (!API_KEY) {
-    console.error('Missing EXCHANGE_API_KEY environment variable');
-    return null;
-  }
-
-  try {
-    const url = `${API_BASE_URL}/${date}?base=${baseCurrency}&symbols=${targetCurrency}&access_key=${API_KEY}`;
-    console.log(`Fetching historical rate for ${baseCurrency}/${targetCurrency} on ${date}`);
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error(`API error: ${response.status} ${response.statusText}`);
-      return null;
-    }
-    
-    const data: HistoricalRateResponse = await response.json();
-    
-    if (!data.success) {
-      console.error(`API returned error: ${JSON.stringify(data)}`);
-      return null;
-    }
-    
-    // Extract the exchange rate for the target currency
-    const rate = data.rates[targetCurrency];
-    
-    if (!rate) {
-      console.error(`No rate found for ${targetCurrency}`);
-      return null;
-    }
-    
-    return rate;
-  } catch (error) {
-    console.error(`Error fetching historical rate: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches historical rates for a specified date range
- */
-async function fetchHistoricalRates(
-  fromCurrency: string,
-  toCurrency: string,
-  startDate: Date,
-  endDate: Date
-): Promise<Array<{ date: string; rate: number }>> {
-  const results: Array<{ date: string; rate: number }> = [];
-  const currentDate = new Date(startDate);
-  
-  // Process one day at a time to ensure we handle API rate limits properly
-  while (currentDate <= endDate) {
-    const dateStr = currentDate.toISOString().split('T')[0];
-    const rate = await fetchHistoricalRate(fromCurrency, toCurrency, dateStr);
-    
-    if (rate) {
-      results.push({ date: dateStr, rate });
-    }
-    
-    // Move to the next day
-    currentDate.setDate(currentDate.getDate() + 1);
-    
-    // Add a small delay between requests to avoid hitting rate limits
-    await new Promise(resolve => setTimeout(resolve, 200));
-  }
-  
-  return results;
-}
-
-/**
- * Stores historical rate data in the database
- */
-async function storeHistoricalRates(
-  fromCurrency: string,
-  toCurrency: string,
-  rates: Array<{ date: string; rate: number }>
-): Promise<boolean> {
-  try {
-    // First delete any existing records for this currency pair in the date range
-    // to avoid duplicates
-    const dates = rates.map(r => r.date);
-    
-    if (dates.length > 0) {
-      await db.execute(sql`
-        DELETE FROM rate_trends 
-        WHERE from_currency = ${fromCurrency} 
-        AND to_currency = ${toCurrency}
-        AND date IN (${sql.join(dates, sql`, `)})
-      `);
-    }
-    
-    // Now insert the new records
-    for (const { date, rate } of rates) {
-      await db.execute(sql`
-        INSERT INTO rate_trends (from_currency, to_currency, date, rate, source)
-        VALUES (${fromCurrency}, ${toCurrency}, ${date}, ${rate}, 'api')
-      `);
-    }
-    
-    // Update the rate cache to mark data as fresh
-    const cacheEntry = await db.select()
-      .from(rateCache)
-      .where(sql`from_currency = ${fromCurrency} AND to_currency = ${toCurrency}`);
-    
-    if (cacheEntry.length > 0) {
-      await db.execute(sql`
-        UPDATE rate_cache
-        SET last_updated = NOW()
-        WHERE from_currency = ${fromCurrency} AND to_currency = ${toCurrency}
-      `);
-    } else {
-      await db.execute(sql`
-        INSERT INTO rate_cache (from_currency, to_currency, last_updated)
-        VALUES (${fromCurrency}, ${toCurrency}, NOW())
-      `);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error(`Error storing historical rates: ${error}`);
-    return false;
-  }
-}
-
-/**
- * Gets historical rate data for a specific currency pair and time period
+ * Gets historical exchange rate data for a currency pair.
+ * First checks the database for cached data, then falls back to the API if needed.
  */
 async function getHistoricalRates(
   fromCurrency: string,
   toCurrency: string,
   days: number = 30
-): Promise<Array<{ date: string; rate: number; from_currency: string; to_currency: string }>> {
+): Promise<RateTrendResponse[]> {
+  console.log(`Getting historical rates for ${fromCurrency}/${toCurrency} (${days} days)`);
+  
   try {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    // First try to get data from the database
+    const startDate = subDays(new Date(), days);
+    const formattedStartDate = format(startDate, 'yyyy-MM-dd');
     
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
+    const dbRates = await db.select()
+      .from(rateTrends)
+      .where(
+        and(
+          eq(rateTrends.from_currency, fromCurrency),
+          eq(rateTrends.to_currency, toCurrency),
+          sql`${rateTrends.date} >= ${formattedStartDate}`
+        )
+      )
+      .orderBy(rateTrends.date);
     
-    // Check if we have data in the database
-    const existingData = await db.execute(sql`
-      SELECT date, rate, from_currency, to_currency
-      FROM rate_trends
-      WHERE from_currency = ${fromCurrency}
-      AND to_currency = ${toCurrency}
-      AND date >= ${startDateStr}
-      AND date <= ${endDateStr}
-      ORDER BY date ASC
-    `);
-    
-    if (existingData.rows.length > 0) {
-      console.log(`Using cached rate trend data for ${fromCurrency}/${toCurrency}`);
-      return existingData.rows as any[];
-    }
-    
-    // If we don't have data, fetch it from the API
-    console.log(`No cached data found for ${fromCurrency}/${toCurrency}, fetching from API...`);
-    const apiData = await fetchHistoricalRates(fromCurrency, toCurrency, startDate, endDate);
-    
-    if (apiData.length > 0) {
-      // Store the data in the database
-      await storeHistoricalRates(fromCurrency, toCurrency, apiData);
+    if (dbRates && dbRates.length > 0) {
+      console.log(`Found ${dbRates.length} historical rates in database`);
       
-      // Return the data with the expected format
-      return apiData.map(item => ({
-        date: item.date,
-        rate: item.rate,
-        from_currency: fromCurrency,
-        to_currency: toCurrency
+      // Convert database records to API response format
+      const trends: RateTrendResponse[] = dbRates.map(trend => ({
+        date: trend.date,
+        rate: trend.rate,
+        from_currency: trend.from_currency,
+        to_currency: trend.to_currency
       }));
+      
+      return trends;
     }
     
+    // If no database data, try to fetch from API
+    console.log(`No historical data in database, fetching from API`);
+    const { fetchHistoricalRates, storeHistoricalRates } = await import('./exchangeRateApiService');
+    
+    const apiRates = await fetchHistoricalRates(fromCurrency, toCurrency, days);
+    
+    if (apiRates && apiRates.length > 0) {
+      console.log(`Successfully fetched ${apiRates.length} historical rates from API`);
+      
+      // Store in database for future use
+      await storeHistoricalRates(apiRates);
+      
+      return apiRates;
+    }
+    
+    // No data available
+    console.warn(`Could not get historical rate data for ${fromCurrency}/${toCurrency}`);
     return [];
   } catch (error) {
     console.error(`Error getting historical rates: ${error}`);
@@ -219,92 +85,100 @@ async function getHistoricalRates(
 }
 
 /**
- * Updates historical rate data for all tracked currency pairs
+ * Check if any tracked currency pairs need historical data refreshed
+ * and update them if needed.
  */
-async function updateAllHistoricalRates(days: number = 90): Promise<boolean> {
-  console.log(`Updating historical rates for ${CURRENCY_PAIRS.length} currency pairs (${days} days)...`);
-  
-  let successCount = 0;
-  
-  for (const pair of CURRENCY_PAIRS) {
-    try {
-      console.log(`Updating historical rates for ${pair.from}/${pair.to}...`);
-      
-      // Get the end date (today)
-      const endDate = new Date();
-      
-      // Get the start date (days ago)
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-      
-      // Fetch rates from the API
-      const rates = await fetchHistoricalRates(pair.from, pair.to, startDate, endDate);
-      
-      if (rates.length > 0) {
-        // Store the rates in the database
-        await storeHistoricalRates(pair.from, pair.to, rates);
-        
-        console.log(`Successfully updated ${rates.length} historical rates for ${pair.from}/${pair.to}`);
-        successCount++;
-      } else {
-        console.warn(`No historical rates found for ${pair.from}/${pair.to}`);
-      }
-    } catch (error) {
-      console.error(`Error updating historical rates for ${pair.from}/${pair.to}: ${error}`);
-    }
-    
-    // Add a delay between currency pairs to avoid hitting rate limits
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  console.log(`Historical rate update completed: ${successCount}/${CURRENCY_PAIRS.length} successful`);
-  
-  return successCount > 0;
-}
-
-/**
- * Checks if we need to refresh historical rate data
- */
-async function shouldRefreshHistoricalRates(fromCurrency: string, toCurrency: string): Promise<boolean> {
+async function updateHistoricalRatesIfNeeded(): Promise<void> {
   try {
-    // Check if we have a cache entry for this currency pair
-    const cacheEntry = await db.select()
-      .from(rateCache)
-      .where(sql`from_currency = ${fromCurrency} AND to_currency = ${toCurrency}`);
+    console.log(`Checking if any currency pairs need historical data refresh...`);
     
-    if (cacheEntry.length === 0) {
-      // No cache entry, we should refresh
-      return true;
+    // Get exchange rate API service
+    const { fetchHistoricalRates, storeHistoricalRates } = await import('./exchangeRateApiService');
+    
+    for (const pair of CURRENCY_PAIRS) {
+      try {
+        // Check if the data is recent enough
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        // Check if we have recent data in the database
+        const { db } = await import('../db');
+        const { rateCache } = await import('@shared/schema');
+        const { eq, and, sql } = await import('drizzle-orm');
+        
+        const cacheEntry = await db.select()
+          .from(rateCache)
+          .where(
+            and(
+              eq(rateCache.from_currency, pair.from),
+              eq(rateCache.to_currency, pair.to)
+            )
+          );
+          
+        const needsRefresh = !cacheEntry.length || 
+                            new Date(cacheEntry[0].last_updated) < oneWeekAgo;
+        
+        if (needsRefresh) {
+          console.log(`Refreshing historical data for ${pair.from}/${pair.to}`);
+          // Fetch the most recent 7 days of data
+          const recentRates = await fetchHistoricalRates(pair.from, pair.to, 7);
+          
+          if (recentRates && recentRates.length > 0) {
+            // Store the updated rates
+            await storeHistoricalRates(recentRates);
+            console.log(`Updated ${recentRates.length} historical rate points for ${pair.from}/${pair.to}`);
+          }
+        } else {
+          console.log(`Historical data for ${pair.from}/${pair.to} is up to date`);
+        }
+      } catch (error) {
+        console.error(`Error checking/updating ${pair.from}/${pair.to}: ${error}`);
+      }
     }
-    
-    // Check if the cache entry is older than 8 hours
-    const lastUpdated = new Date(cacheEntry[0].last_updated);
-    const now = new Date();
-    const diff = now.getTime() - lastUpdated.getTime();
-    const hours = diff / (1000 * 60 * 60);
-    
-    return hours > 8;
   } catch (error) {
-    console.error(`Error checking if we should refresh historical rates: ${error}`);
-    return true;
+    console.error(`Error updating historical rates: ${error}`);
   }
 }
 
 /**
- * Incremental update of historical rates
- * Only updates the most recent days to avoid excessive API calls
+ * Initialize the historical rates service on application startup.
+ * This performs a check and updates any missing data.
  */
-async function updateRecentHistoricalRates(days: number = 5): Promise<boolean> {
-  console.log(`Performing incremental update of historical rates (${days} recent days)...`);
+async function initializeHistoricalRates(): Promise<void> {
+  console.log('Initializing historical rates service...');
   
-  // Use a shorter timeframe for incremental updates
-  return updateAllHistoricalRates(days);
+  try {
+    // Start the scheduler
+    const { scheduleHistoricalRateUpdates } = await import('../scheduler/historicalRateScheduler');
+    scheduleHistoricalRateUpdates();
+    
+    // Check if we need to populate historical data
+    const countQuery = await db.select({ count: sql`COUNT(*)` }).from(rateTrends);
+    const count = parseInt(countQuery[0].count.toString());
+    
+    if (count === 0) {
+      console.log('No historical rate data found, performing initial population...');
+      
+      // Import the API service
+      const { updateAllHistoricalRates } = await import('./exchangeRateApiService');
+      
+      // Perform initial data population for 30 days to keep initial load reasonable
+      await updateAllHistoricalRates(30);
+    } else {
+      console.log(`Found ${count} existing historical rate records, checking for updates...`);
+      
+      // Check if any pairs need updates
+      await updateHistoricalRatesIfNeeded();
+    }
+    
+    console.log('Historical rates service initialized successfully');
+  } catch (error) {
+    console.error(`Error initializing historical rates service: ${error}`);
+  }
 }
 
-// Export the public functions
 export {
   getHistoricalRates,
-  updateAllHistoricalRates,
-  updateRecentHistoricalRates,
-  shouldRefreshHistoricalRates
+  updateHistoricalRatesIfNeeded,
+  initializeHistoricalRates
 };

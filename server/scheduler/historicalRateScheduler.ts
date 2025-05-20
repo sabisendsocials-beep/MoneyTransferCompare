@@ -5,7 +5,7 @@
  * using real data from ExchangeRate-API.
  */
 
-import { updateRecentHistoricalRates } from '../services/exchangeRateApiService';
+import { updateHistoricalRatesIfNeeded } from '../services/historicalRatesService';
 import { log } from '../vite';
 
 // Update intervals (3 times a day, matching rate collection schedule)
@@ -43,9 +43,8 @@ function scheduleHistoricalRateUpdates(): void {
         // Mark this hour as run
         runTracker.set(currentHour, true);
         
-        // Update the most recent 7 days for incremental updates
-        // This keeps the data fresh without hitting API limits
-        await updateRecentHistoricalRates(7);
+        // Update historical rates if needed
+        await updateHistoricalRatesIfNeeded();
         
         log('Scheduled historical rate update completed successfully');
       } catch (error) {
