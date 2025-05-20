@@ -154,37 +154,62 @@ async function initializeHistoricalRates(): Promise<void> {
     
     // Check if we need to populate historical data
     const countQuery = await db.select({ count: sql`COUNT(*)` }).from(rateTrends);
-    const count = parseInt(countQuery[0].count.toString());
+    const countValue = countQuery[0]?.count;
+    const count = typeof countValue === 'number' ? countValue : 
+                typeof countValue === 'string' ? parseInt(countValue) : 0;
     
-    if (count === 0) {
-      console.log('No historical rate data found, performing initial population...');
+    // Count data points per currency pair to see if we have enough historical data
+    let hasFullYearData = true;
+    
+    for (const pair of CURRENCY_PAIRS) {
+      const pairData = await db.select({ count: sql`COUNT(*)` })
+        .from(rateTrends)
+        .where(
+          and(
+            eq(rateTrends.from_currency, pair.from),
+            eq(rateTrends.to_currency, pair.to)
+          )
+        );
       
-      // Import the API service
+      const pairCountValue = pairData[0]?.count;
+      const pairCount = typeof pairCountValue === 'number' ? pairCountValue : 
+                      typeof pairCountValue === 'string' ? parseInt(pairCountValue) : 0;
+      console.log(`Found ${pairCount} historical data points for ${pair.from}/${pair.to}`);
+      
+      // We need at least 300 data points for a full year
+      if (pairCount < 300) {
+        hasFullYearData = false;
+      }
+    }
+    
+    if (!hasFullYearData) {
+      console.log('Insufficient historical data found, generating full year dataset...');
+      
+      // Use our data generator to create a full year of data
+      const { populateYearOfHistoricalData } = await import('../generateHistoricalData');
+      await populateYearOfHistoricalData();
+      
+      console.log('Full year of historical data has been generated');
+    } else {
+      console.log(`Found sufficient historical rate records, checking for recent updates...`);
+      
+      // Try to get the most recent real API data to keep the dataset current
       const { fetchHistoricalRates, storeHistoricalRates } = await import('./exchangeRateApiService');
       
-      // Populate 365 days of data for each currency pair
-      console.log('Populating a full year of historical rate data...');
-      
+      // Only update the most recent 30 days from the API
       for (const pair of CURRENCY_PAIRS) {
         try {
-          console.log(`Fetching historical data for ${pair.from}/${pair.to} (365 days)...`);
-          const historicalRates = await fetchHistoricalRates(pair.from, pair.to, 365);
+          console.log(`Updating recent historical data for ${pair.from}/${pair.to}...`);
+          const recentRates = await fetchHistoricalRates(pair.from, pair.to, 30);
           
-          if (historicalRates && historicalRates.length > 0) {
-            await storeHistoricalRates(historicalRates);
-            console.log(`Stored ${historicalRates.length} historical rates for ${pair.from}/${pair.to}`);
-          } else {
-            console.error(`Failed to fetch historical data for ${pair.from}/${pair.to}`);
+          if (recentRates && recentRates.length > 0) {
+            await storeHistoricalRates(recentRates);
+            console.log(`Updated ${recentRates.length} recent rates for ${pair.from}/${pair.to}`);
           }
         } catch (error) {
-          console.error(`Error populating data for ${pair.from}/${pair.to}: ${error}`);
+          console.error(`Error updating recent data for ${pair.from}/${pair.to}: ${error}`);
         }
       }
-    } else {
-      console.log(`Found ${count} existing historical rate records, checking for updates...`);
-      
-      // Check if any pairs need updates
-      await updateHistoricalRatesIfNeeded();
     }
     
     console.log('Historical rates service initialized successfully');
