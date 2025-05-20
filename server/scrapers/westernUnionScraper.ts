@@ -82,9 +82,9 @@ async function extractWesternUnionRate(
     const html = await response.text();
     console.log(`Retrieved HTML content (${html.length} characters)`);
     
-    // Wait to allow for any dynamic content to potentially be included in the static HTML
-    console.log('Waiting 3 seconds for potential dynamic content in static HTML...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Wait longer to allow for dynamic content to load in the static HTML
+    console.log('Waiting 10 seconds for dynamic content to load in static HTML...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
     
     // Try multiple selectors to find the exchange rate
     const rate = await tryMultipleSelectors(html, fromCurrency, toCurrency);
@@ -107,6 +107,22 @@ async function extractWesternUnionRate(
       console.log(`Successfully extracted Western Union rate via pattern matching: ${patternRate}`);
       await storeWesternUnionRate(provider.id, fromCurrency, toCurrency, patternRate);
       return true;
+    }
+    
+    console.log('Failed to extract Western Union rate with web scraping methods');
+    console.log('Trying Western Union API as a final fallback...');
+    
+    // Try API as a last resort
+    try {
+      const { updateWesternUnionRateViaApi } = await import('./westernUnionApiScraper');
+      const apiSuccess = await updateWesternUnionRateViaApi(provider.id, fromCurrency, toCurrency);
+      
+      if (apiSuccess) {
+        console.log('Successfully updated Western Union rate via API');
+        return true;
+      }
+    } catch (error) {
+      console.error('Error using Western Union API scraper:', error);
     }
     
     console.log('Failed to extract Western Union rate with all methods');
@@ -141,7 +157,24 @@ async function tryMultipleSelectors(
     '.exchange-rate',
     '.calc-details span',
     '.rate-display',
-    '.currency-converter'
+    '.currency-converter',
+    
+    // Additional selectors
+    '.receiver-amount',
+    '.amount-to-receive',
+    '.converted-amount',
+    '[data-testid="exchangeRate"]',
+    '[data-testid="convertedAmount"]',
+    // Find any element containing currency codes and numbers
+    `span:contains("${fromCurrency}"):contains("${toCurrency}")`,
+    // Find elements with just the to currency that might contain the rate
+    `.to-currency, span:contains("${toCurrency}")`,
+    // Look for elements with specific patterns
+    `span:contains("1 ${fromCurrency}")`,
+    // Look at the result element which might contain the rate
+    '.result, .exchange-result, .converted-result',
+    // Try to find the value next to the FX label
+    'label:contains("FX") + *'
   ];
   
   // Try each selector
@@ -223,19 +256,72 @@ function extractRateFromText(text: string, fromCurrency: string, toCurrency: str
  */
 function extractRateWithPattern(html: string, fromCurrency: string, toCurrency: string): number | null {
   try {
-    const pattern = new RegExp(`${fromCurrency}\\s*to\\s*${toCurrency}.*?(\\d[\\d,\\.]+)`, 'i');
-    const match = html.match(pattern);
+    console.log('Starting comprehensive pattern matching on the entire HTML...');
     
-    if (match && match[1]) {
-      const rateStr = match[1].replace(/,/g, '');
-      const rate = parseFloat(rateStr);
+    // Try multiple pattern strategies
+    const patterns = [
+      // Standard pattern: currency codes near a number
+      new RegExp(`${fromCurrency}\\s*to\\s*${toCurrency}.*?(\\d[\\d,\\.]+)`, 'i'),
       
-      // Validate the rate is in a reasonable range
-      if (rate > 1800 && rate < 2500) {
-        return rate;
+      // Look for rate in sections mentioning both currencies
+      new RegExp(`(\\d[\\d,\\.]+)\\s*${toCurrency}\\s*per\\s*${fromCurrency}`, 'i'),
+      new RegExp(`1\\s*${fromCurrency}\\s*=\\s*(\\d[\\d,\\.]+)\\s*${toCurrency}`, 'i'),
+      
+      // Look for specific HTML patterns that might indicate rates
+      new RegExp(`<[^>]*>\\s*${fromCurrency}[^<]*<[^>]*>[^<]*<[^>]*>\\s*(\\d[\\d,\\.]+)\\s*${toCurrency}`, 'i'),
+      
+      // Currency symbol patterns
+      new RegExp(`1\\s*${fromCurrency}\\s*[=≈]\\s*(\\d[\\d,\\.]+)`, 'i'),
+      
+      // Look for rate information with more flexible spacing
+      new RegExp(`${fromCurrency}[\\s\\w]*${toCurrency}[\\s\\w]*(\\d[\\d,\\.]+)`, 'i'),
+      
+      // Very generic pattern for any number in the right range
+      // (use carefully, last resort)
+      /(\d[\d,\.]{3,})(?=[^<]*?NGN)/i
+    ];
+    
+    // Try each pattern
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      
+      if (match && match[1]) {
+        const rateStr = match[1].replace(/,/g, '');
+        const rate = parseFloat(rateStr);
+        
+        // Validate the rate is in a reasonable range for GBP to NGN
+        if (rate > 1800 && rate < 2500) {
+          console.log(`Found rate ${rate} using pattern ${pattern}`);
+          return rate;
+        }
       }
     }
     
+    // Last resort: Look for any occurrence of numbers in the expected range
+    console.log('Trying last resort: searching for any number in the expected range...');
+    const numberPattern = /(\d[\d,\.]+)/g;
+    let match;
+    
+    while ((match = numberPattern.exec(html)) !== null) {
+      const rateStr = match[1].replace(/,/g, '');
+      const rate = parseFloat(rateStr);
+      
+      // Check if the number is in a reasonable range for GBP to NGN
+      if (rate > 1800 && rate < 2500) {
+        // Check if this number is surrounded by context suggesting it's a rate
+        const start = Math.max(0, match.index - 30);
+        const end = Math.min(html.length, match.index + match[0].length + 30);
+        const context = html.substring(start, end);
+        
+        // If context contains both currency codes, this is likely our rate
+        if (context.includes(fromCurrency) && context.includes(toCurrency)) {
+          console.log(`Found likely rate ${rate} in context containing both currencies`);
+          return rate;
+        }
+      }
+    }
+    
+    console.log('Pattern matching failed to find any valid rates');
     return null;
   } catch (error) {
     console.error('Error extracting rate with pattern:', error);
