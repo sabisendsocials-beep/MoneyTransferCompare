@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Spinner } from "@/components/Spinner";
 import { format } from "date-fns";
 import { ProviderManagement } from "@/components/ProviderManagement";
+import ScraperStatusPanel from "@/components/ScraperStatusPanel";
 
 // LatestRatesTable component to display the latest rates for each provider
 const LatestRatesTable = () => {

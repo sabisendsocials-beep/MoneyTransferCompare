@@ -330,8 +330,6 @@ export async function ensureProvidersExist() {
   }
 }
 
-import { recordScraperRun, canScraperRun } from '../routes/scraperStatus';
-
 export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider: string, success: boolean })[]> {
   try {
     // First ensure we have providers
