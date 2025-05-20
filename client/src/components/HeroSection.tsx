@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { 
   ArrowRightLeft, BarChart3, ShieldCheck, Compass, 
-  RefreshCw, ArrowRight, CheckCircle2
+  RefreshCw, ArrowRight, CheckCircle2, Globe
 } from "lucide-react";
 import CurrencyCalculator from "../components/CurrencyCalculator";
 
