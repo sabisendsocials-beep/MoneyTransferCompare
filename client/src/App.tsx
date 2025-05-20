@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Compare from "@/pages/Compare";
 import Results from "@/pages/Results";
+import SimplifiedResults from "@/pages/SimplifiedResults";
 import Trends from "@/pages/Trends";
 import News from "@/pages/News";
 import HowItWorks from "@/pages/HowItWorks";
@@ -23,7 +24,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/compare" component={Compare} />
-          <Route path="/results" component={Results} />
+          <Route path="/results" component={SimplifiedResults} />
           <Route path="/trends" component={Trends} />
           <Route path="/news" component={News} />
           <Route path="/how-it-works" component={HowItWorks} />
