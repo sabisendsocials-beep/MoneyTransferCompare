@@ -734,10 +734,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const oldRates = await storage.getLatestRates('GBP', 'NGN');
       const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
       
-      // Try the accurate rate scraper that filters out false positives
+      // Try the market-validated rate scraper that filters out false positives like 2000
       try {
-        const { updateSendwaveAccurateRate } = await import('./scrapers/sendwaveAccurateRateScraper');
-        const success = await updateSendwaveAccurateRate();
+        const { updateSendwaveMarketValidated } = await import('./scrapers/marketValidatedScraper');
+        const success = await updateSendwaveMarketValidated();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -746,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using accurate scraper',
+            message: 'SendWave rate updated successfully using market-validated scraper',
             provider: sendwave.name,
             oldRate,
             newRate: latestRate?.rate || 'unknown',
@@ -754,7 +754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (error) {
-        console.log('Accurate SendWave scraper failed:', error);
+        console.log('Market-validated SendWave scraper failed:', error);
       }
       
       // If scraping failed, report error without using hardcoded fallbacks
