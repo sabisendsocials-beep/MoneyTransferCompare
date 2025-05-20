@@ -86,13 +86,13 @@ const CurrencyCalculator = () => {
 
   // Toggle between send and receive calculation modes
   const toggleCalculationMode = () => {
-    // Clear any previous results and get current rate
+    // Get the current rate based on currency pair
     const key = `${fromCurrency}-${toCurrency}` as RateKey;
     const rate = exchangeRates[key];
     
     if (!rate) return; // Don't proceed if no rate is available
     
-    // Get clean numeric amount
+    // Get clean numeric amount from input
     const numericAmount = parseFloat(amount.replace(/,/g, ""));
     if (isNaN(numericAmount)) return;
     
@@ -100,25 +100,34 @@ const CurrencyCalculator = () => {
     const newMode = calculationMode === "send" ? "receive" : "send";
     setCalculationMode(newMode);
     
-    // If we're toggling from Send to Receive:
+    // For simple toggle, just swap input and output
     if (calculationMode === "send") {
-      // Current input is how much they send (e.g., 100 GBP)
-      // Current result is how much they receive (e.g., 216,687 NGN)
-      // We want to set the input to the result value (216,687)
-      const newInputAmount = result !== null ? result : numericAmount * rate;
-      setAmount(formatInputWithCommas(Math.round(newInputAmount).toString()));
-      // And the new result should be the original input (100)
-      setResult(numericAmount);
-    } 
-    // If we're toggling from Receive to Send:
-    else {
-      // Current input is how much they receive (e.g., 100,000 NGN)
-      // Current result is how much they send (e.g., 46.15 GBP)
-      // We want to set the input to the result value (46.15)
-      const newInputAmount = result !== null ? result : numericAmount / rate;
-      setAmount(formatInputWithCommas(newInputAmount.toFixed(2)));
-      // And the new result should be the original input (100,000)
-      setResult(numericAmount);
+      // Switching from Send to Receive mode
+      if (result !== null) {
+        // Use the current calculated result as the new input
+        setAmount(formatInputWithCommas(Math.round(result).toString()));
+        // The new result should be the original input
+        setResult(numericAmount);
+      } else {
+        // Calculate fresh based on rate: GBP → NGN
+        const ngnAmount = numericAmount * rate;
+        setAmount(formatInputWithCommas(Math.round(ngnAmount).toString()));
+        setResult(numericAmount);
+      }
+    } else {
+      // Switching from Receive to Send mode
+      if (result !== null) {
+        // Use the current calculated result as the new input
+        // For GBP amounts, show with 2 decimal places
+        setAmount(formatInputWithCommas(result.toFixed(2)));
+        // The new result should be the original input
+        setResult(numericAmount);
+      } else {
+        // Calculate fresh based on rate: NGN → GBP
+        const gbpAmount = numericAmount / rate;
+        setAmount(formatInputWithCommas(gbpAmount.toFixed(2)));
+        setResult(numericAmount);
+      }
     }
   };
 
