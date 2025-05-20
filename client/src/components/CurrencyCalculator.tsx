@@ -8,35 +8,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, RefreshCcw } from "lucide-react";
+import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
 
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
+type CalculationMode = "send" | "receive";
 
 const CurrencyCalculator = () => {
-  const [amount, setAmount] = useState<string>("1000");
+  const [amount, setAmount] = useState<string>("100");
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>("GBP");
   const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
-  
-  // Type-safe setters for the select components
-  const handleSetFromCurrency = (value: string) => {
-    setFromCurrency(value as CurrencyCode);
-  };
-  
-  const handleSetToCurrency = (value: string) => {
-    setToCurrency(value as CurrencyCode);
-  };
+  const [calculationMode, setCalculationMode] = useState<CalculationMode>("send");
   const [result, setResult] = useState<number | null>(null);
 
-  // Sample current exchange rates (would come from API in real implementation)
+  // Sample current exchange rates showing highest rates from providers
   const exchangeRates: Record<RateKey, number> = {
-    "GBP-NGN": 2166.87,
+    "GBP-NGN": 2166.87, // Highest rate among providers
     "GBP-GHS": 16.85,
     "EUR-NGN": 1354.45,
     "EUR-GHS": 14.37,
     "USD-NGN": 1456.78,
     "USD-GHS": 15.40
   } as Record<RateKey, number>;
+  
+  // Type-safe setters for the select components
+  const handleSetFromCurrency = (value: string) => {
+    setFromCurrency(value as CurrencyCode);
+    calculateRate();
+  };
+  
+  const handleSetToCurrency = (value: string) => {
+    setToCurrency(value as CurrencyCode);
+    calculateRate();
+  };
 
   useEffect(() => {
     // Calculate on initial render
@@ -48,9 +52,22 @@ const CurrencyCalculator = () => {
     if (exchangeRates[key]) {
       const numericAmount = parseFloat(amount.replace(/,/g, ""));
       if (!isNaN(numericAmount)) {
-        setResult(numericAmount * exchangeRates[key]);
+        if (calculationMode === "send") {
+          setResult(numericAmount * exchangeRates[key]);
+        } else {
+          setResult(numericAmount / exchangeRates[key]);
+        }
       }
     }
+  };
+
+  // Toggle between send and receive calculation modes
+  const toggleCalculationMode = () => {
+    const newMode = calculationMode === "send" ? "receive" : "send";
+    setCalculationMode(newMode);
+    // Reset amount and recalculate
+    setAmount("100");
+    setTimeout(calculateRate, 0);
   };
 
   // Format number with commas
@@ -61,39 +78,64 @@ const CurrencyCalculator = () => {
     });
   };
 
+  // Determine which is input and which is output based on mode
+  const inputCurrency = calculationMode === "send" ? fromCurrency : toCurrency;
+  const outputCurrency = calculationMode === "send" ? toCurrency : fromCurrency;
+  const inputLabel = calculationMode === "send" ? "You Send" : "They Receive";
+  const outputLabel = calculationMode === "send" ? "They Receive" : "You Send";
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 gap-4">
-        {/* From currency */}
+        {/* Input amount */}
         <div className="bg-white/10 rounded-lg p-4 lg:mx-auto lg:w-3/4 hover:bg-white/15 transition-colors">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-sm text-white/90 font-medium">You Send</label>
+            <label className="text-sm text-white/90 font-medium">{inputLabel}</label>
             <Select
-              value={fromCurrency}
-              onValueChange={handleSetFromCurrency}
+              value={calculationMode === "send" ? fromCurrency : toCurrency}
+              onValueChange={calculationMode === "send" ? handleSetFromCurrency : handleSetToCurrency}
             >
               <SelectTrigger className="w-[100px] bg-transparent border-0 text-white hover:bg-white/10 transition-colors">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="GBP">GBP (£)</SelectItem>
-                <SelectItem value="EUR">EUR (€)</SelectItem>
-                <SelectItem value="USD">USD ($)</SelectItem>
+                {calculationMode === "send" ? (
+                  <>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="NGN">NGN (₦)</SelectItem>
+                    <SelectItem value="GHS">GHS (₵)</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
           <div className="relative">
             <Input
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="bg-transparent border-0 text-3xl font-semibold text-white h-12 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              placeholder="1,000"
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setTimeout(calculateRate, 0);
+              }}
+              className="bg-transparent border-0 text-4xl font-semibold text-white h-14 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              placeholder="100"
             />
           </div>
         </div>
 
-        {/* Convert button */}
-        <div className="flex justify-center -my-2 z-10">
+        {/* Convert button and mode toggle */}
+        <div className="flex justify-center -my-2 z-10 gap-4">
+          <Button 
+            onClick={toggleCalculationMode}
+            className="rounded-full h-12 w-12 bg-purple-600 hover:bg-purple-500 flex items-center justify-center p-0 shadow-lg border-2 border-indigo-900 hover:scale-110 transition-all"
+            title="Switch calculation mode"
+          >
+            <ArrowDownUp size={18} />
+          </Button>
           <Button 
             onClick={calculateRate}
             className="rounded-full h-14 w-14 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 flex items-center justify-center p-0 shadow-lg border-2 border-indigo-900 hover:scale-110 transition-all"
@@ -102,25 +144,35 @@ const CurrencyCalculator = () => {
           </Button>
         </div>
 
-        {/* To currency */}
+        {/* Output amount */}
         <div className="bg-white/10 rounded-lg p-4 lg:mx-auto lg:w-3/4 hover:bg-white/15 transition-colors">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-sm text-white/90 font-medium">They Receive</label>
+            <label className="text-sm text-white/90 font-medium">{outputLabel}</label>
             <Select
-              value={toCurrency}
-              onValueChange={handleSetToCurrency}
+              value={calculationMode === "send" ? toCurrency : fromCurrency}
+              onValueChange={calculationMode === "send" ? handleSetToCurrency : handleSetFromCurrency}
             >
               <SelectTrigger className="w-[100px] bg-transparent border-0 text-white hover:bg-white/10 transition-colors">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="NGN">NGN (₦)</SelectItem>
-                <SelectItem value="GHS">GHS (₵)</SelectItem>
+                {calculationMode === "send" ? (
+                  <>
+                    <SelectItem value="NGN">NGN (₦)</SelectItem>
+                    <SelectItem value="GHS">GHS (₵)</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center justify-between">
-            <div className="text-3xl font-bold text-white bg-gradient-to-r from-white to-white/90 bg-clip-text py-1">
+            <div className="text-4xl font-bold text-transparent bg-gradient-to-r from-white via-emerald-200 to-white/90 bg-clip-text py-1">
               {result ? formatNumber(result) : "0.00"}
             </div>
             <Button 
@@ -138,7 +190,7 @@ const CurrencyCalculator = () => {
       {/* Exchange rate info */}
       <div className="mt-4 text-center bg-white/5 py-2 px-3 rounded-lg">
         <p className="text-sm text-white/90">
-          Exchange rate: <span className="text-emerald-300 font-medium">
+          Best rate available: <span className="text-emerald-300 font-medium">
             {fromCurrency && toCurrency && exchangeRates[`${fromCurrency}-${toCurrency}`] ? 
               `1 ${fromCurrency} = ${formatNumber(exchangeRates[`${fromCurrency}-${toCurrency}`])} ${toCurrency}` : 
               "Select currencies"}

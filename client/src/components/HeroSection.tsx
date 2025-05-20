@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { 
   ArrowRightLeft, BarChart3, ShieldCheck, Compass, 
-  RefreshCw, ArrowRight, CheckCircle2, Globe
+  RefreshCw, ArrowRight, CheckCircle2, Globe, Sparkles
 } from "lucide-react";
 import CurrencyCalculator from "../components/CurrencyCalculator";
 
@@ -113,9 +113,12 @@ const HeroSection = () => {
               {/* CTA Button */}
               <div className="mt-5 text-center">
                 <Link href="/compare">
-                  <Button className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-5 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">
-                    Get Best Rate Now
-                    <ArrowRight size={16} className="ml-2" />
+                  <Button className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-6 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all text-lg group">
+                    <span className="inline-flex items-center">
+                      <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
+                      Find Your Best Rate
+                      <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    </span>
                   </Button>
                 </Link>
                 
