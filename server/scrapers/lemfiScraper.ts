@@ -53,14 +53,20 @@ export async function extractLemfiRate(
       ];
     }
     
-    // Add additional variations of the selector to try
+    // Add additional variations of the selector to try, including the specific pattern from the screenshot
     selectors = [
       ...selectors,
+      'div.molecule-conversion-box__details div.molecule-conversion-box__details__item span.base-text--size-small--bold',
+      'div[class*="molecule-conversion-box"] div[class*="details"] span[class*="small--bold"]',
+      'div[class*="molecule-conversion-box"] span[class*="small--bold"]',
+      'div.molecule-conversion-box__details__item span',
+      '.molecule-conversion-box__details span',
       'span.base-text.base-text--size-small--bold',
       'span.base-text--size-small--bold',
       '.base-text--size-small--bold',
       '.molecule-conversion-box_details__item span',
-      'div.molecule-conversion-box_details__item span'
+      'div.molecule-conversion-box_details__item span',
+      'div[class*="conversion-box"] span[class*="small"]'
     ];
     
     console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
@@ -83,8 +89,8 @@ export async function extractLemfiRate(
     console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
     
     // Wait for JavaScript to finish loading dynamic content
-    console.log('Waiting 2 seconds for JavaScript to finish loading dynamic content...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('Waiting 5 seconds for JavaScript to finish loading dynamic content...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // Parse HTML with cheerio
     const $ = cheerio.load(html);
