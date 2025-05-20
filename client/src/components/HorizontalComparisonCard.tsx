@@ -186,18 +186,18 @@ export const HorizontalComparisonCard = ({
         <div className="p-4 md:w-1/12 flex items-center justify-center">
           {provider.websiteUrl ? (
             <Button
-              className="w-full bg-orange-500 hover:bg-orange-600"
+              className="w-full bg-orange-500 hover:bg-orange-600 px-3"
               onClick={() => window.open(provider.websiteUrl as string, '_blank')}
             >
-              Quote
+              Go
               <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           ) : (
             <Button
-              className="w-full bg-orange-500 hover:bg-orange-600"
+              className="w-full bg-orange-500 hover:bg-orange-600 px-3"
               onClick={() => window.open(`https://www.google.com/search?q=${provider.providerName}+money+transfer`, '_blank')}
             >
-              Visit
+              Go
               <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           )}
