@@ -89,10 +89,11 @@ export async function extractLemfiRate(
     // Parse HTML with cheerio
     const $ = cheerio.load(html);
     
-    // Try each selector until we find a valid rate
+    // Try multiple approaches to extract the exchange rate
     let rate: number | null = null;
     
-    for (let i = 0; i < selectors.length; i++) {
+    // Approach 1: Try each of our selectors
+    for (let i = 0; i < selectors.length && rate === null; i++) {
       const selector = selectors[i];
       console.log(`Trying selector "${selector}"...`);
       
@@ -100,30 +101,111 @@ export async function extractLemfiRate(
       console.log(`Found ${elements.length} elements with selector "${selector}"`);
       
       if (elements.length > 0) {
-        for (let j = 0; j < elements.length; j++) {
+        for (let j = 0; j < elements.length && rate === null; j++) {
           const element = elements.eq(j);
           const text = element.text().trim();
           console.log(`Element ${j+1} text: "${text}"`);
           
-          // Look for a pattern like "1 GBP = 2,153 NGN"
-          const rateMatch = text.match(/\s*1\s*[A-Z]{3}\s*=\s*([\d,\.]+)\s*[A-Z]{3}/i);
+          // Pattern for GBP to NGN exchange rate
+          if (text.includes('GBP') && text.includes('NGN')) {
+            console.log(`Found potential GBP/NGN rate text: "${text}"`);
+            const rateMatch = text.match(/(\d[\d,\.]+)/);
+            if (rateMatch) {
+              const rateStr = rateMatch[1].replace(/,/g, '');
+              const parsedRate = parseFloat(rateStr);
+              if (!isNaN(parsedRate) && parsedRate > 1000) { // NGN rates are typically above 1000
+                console.log(`Successfully extracted GBP/NGN rate: ${parsedRate}`);
+                rate = parsedRate;
+              }
+            }
+          }
           
-          if (rateMatch) {
-            const rateStr = rateMatch[1].replace(/,/g, '');
-            const parsedRate = parseFloat(rateStr);
-            
-            if (!isNaN(parsedRate) && parsedRate > 0) {
-              console.log(`Successfully extracted rate from selector "${selector}" on element ${j+1}: ${parsedRate}`);
-              rate = parsedRate;
-              break;
+          // Look for rate patterns
+          const ratePatterns = [
+            /\s*1\s*GBP\s*=\s*([\d,\.]+)\s*NGN/i,
+            /\s*GBP\s*\/\s*NGN\s*:\s*([\d,\.]+)/i,
+            /\s*exchange\s*rate\s*[\s\w]*\s*([\d,\.]+)/i,
+            /\s*([\d,\.]+)\s*NGN/i
+          ];
+          
+          for (const pattern of ratePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+              const rateStr = match[1].replace(/,/g, '');
+              const parsedRate = parseFloat(rateStr);
+              if (!isNaN(parsedRate) && parsedRate > 1000) {
+                console.log(`Successfully extracted rate using pattern ${pattern}: ${parsedRate}`);
+                rate = parsedRate;
+                break;
+              }
             }
           }
         }
       }
+    }
+    
+    // Approach 2: Look for specific Nigeria-related content that might contain rates
+    if (rate === null) {
+      console.log("Trying Nigeria-specific content approach...");
+      const nigeriaSelectors = [
+        'div:contains("Nigeria")',
+        'section:contains("Nigeria")',
+        'p:contains("Nigeria")',
+        'span:contains("Nigeria")'
+      ];
       
-      if (rate !== null) {
-        break;
+      for (const selector of nigeriaSelectors) {
+        const elements = $(selector);
+        elements.each((i, el) => {
+          const element = $(el);
+          const text = element.text();
+          
+          if (text.includes('GBP') && text.includes('NGN')) {
+            console.log(`Found Nigeria-specific element with currency info: "${text.substring(0, 100)}..."`);
+            
+            // Look for numeric patterns that could be rates
+            const rateMatch = text.match(/(\d[\d,\.]+)/g);
+            if (rateMatch) {
+              rateMatch.forEach(match => {
+                const parsedRate = parseFloat(match.replace(/,/g, ''));
+                if (!isNaN(parsedRate) && parsedRate > 1000 && parsedRate < 3000) { // Typical NGN rate range
+                  console.log(`Found potential exchange rate in Nigeria content: ${parsedRate}`);
+                  if (rate === null) {
+                    rate = parsedRate;
+                  }
+                }
+              });
+            }
+          }
+        });
       }
+    }
+    
+    // Approach 3: Look for any exchange rate information
+    if (rate === null) {
+      console.log("Trying general exchange rate content approach...");
+      const rateElements = $('*:contains("exchange rate")');
+      
+      rateElements.each((i, el) => {
+        const element = $(el);
+        // Get all surrounding text
+        const text = element.text();
+        console.log(`Found exchange rate text: "${text.substring(0, 100)}..."`);
+        
+        // Look for numbers in the text
+        const numbers = text.match(/(\d[\d,\.]+)/g);
+        if (numbers) {
+          numbers.forEach(num => {
+            const parsedNum = parseFloat(num.replace(/,/g, ''));
+            if (!isNaN(parsedNum) && parsedNum > 1000 && parsedNum < 3000) {
+              console.log(`Found potential exchange rate number: ${parsedNum}`);
+              if (rate === null) {
+                rate = parsedNum;
+              }
+            }
+          });
+        }
+      });
     }
     
     if (rate === null) {
