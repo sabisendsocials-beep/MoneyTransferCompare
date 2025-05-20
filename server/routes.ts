@@ -734,11 +734,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const oldRates = await storage.getLatestRates('GBP', 'NGN');
       const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
       
-      // First try the exact scraper that targets the specific element from screenshot
+      // First try the span scraper (from third screenshot)
       try {
-        const { extractExactSendwaveRate } = await import('./scrapers/exactSendwaveScraper');
-        console.log('Running exact element SendWave scraper...');
-        const success = await extractExactSendwaveRate();
+        const { extractSendwaveRateFromSpan } = await import('./scrapers/spanSendwaveScraper');
+        console.log('Running SendWave span scraper...');
+        const success = await extractSendwaveRateFromSpan();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -747,24 +747,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using exact element scraper',
+            message: 'SendWave rate updated successfully using span scraper',
             provider: sendwave.name,
             oldRate,
             newRate: latestRate?.rate || 'unknown',
             source: 'SCRAPER'
           });
         } else {
-          console.log('Exact element SendWave scraper did not find a valid rate');
+          console.log('Span-based SendWave scraper did not find a valid rate');
         }
       } catch (error) {
-        console.log('Exact element SendWave scraper failed:', error);
+        console.log('Span-based SendWave scraper failed:', error);
       }
       
-      // Then try screenshot-based scraper
+      // Then try the input field scraper (from second screenshot)
       try {
-        const { extractSendwaveRateFromScreenshot } = await import('./scrapers/screenshotBasedSendwaveScraper');
-        console.log('Trying screenshot-based SendWave scraper...');
-        const success = await extractSendwaveRateFromScreenshot();
+        const { extractSendwaveRateFromInput } = await import('./scrapers/inputFieldSendwaveScraper');
+        console.log('Trying SendWave input field scraper...');
+        const success = await extractSendwaveRateFromInput();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -773,17 +773,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using screenshot-based scraper',
+            message: 'SendWave rate updated successfully using input field scraper',
             provider: sendwave.name,
             oldRate,
             newRate: latestRate?.rate || 'unknown',
             source: 'SCRAPER'
           });
         } else {
-          console.log('Screenshot-based SendWave scraper did not find a valid rate');
+          console.log('Input field SendWave scraper did not find a valid rate');
         }
       } catch (error) {
-        console.log('Screenshot-based SendWave scraper failed:', error);
+        console.log('Input field SendWave scraper failed:', error);
       }
       
       // If scraping failed, report error without using hardcoded fallbacks
