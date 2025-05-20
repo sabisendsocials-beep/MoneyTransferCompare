@@ -34,13 +34,53 @@ export async function extractLemfiRate(
     }
     
     // Use admin-configured URL
-    const url = provider.scraping_url;
+    let url = provider.scraping_url;
     console.log(`Using admin-configured URL for Lemfi: ${url}`);
     
     if (!url) {
       console.error('No URL configured for Lemfi provider');
       return false;
     }
+    
+    // First try with the admin URL
+    let success = await tryFetchingRate(url, selectors, providerId, fromCurrency, toCurrency);
+    if (success) {
+      return true;
+    }
+    
+    // If that fails, try some alternate URLs
+    const alternateUrls = [
+      'https://www.lemfi.com/send-from-uk-to-nigeria',
+      'https://lemfi.com/send-from-uk-to-nigeria',
+      'https://lemfi.com/en-gb/send-money-online/united-kingdom-nigeria'
+    ];
+    
+    for (const altUrl of alternateUrls) {
+      console.log(`Trying alternate URL: ${altUrl}`);
+      success = await tryFetchingRate(altUrl, selectors, providerId, fromCurrency, toCurrency);
+      if (success) {
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error in Lemfi scraper:', error);
+    return false;
+  }
+}
+
+/**
+ * Helper function to fetch and extract rate from a specific URL
+ */
+async function tryFetchingRate(
+  url: string,
+  selectors: string[],
+  providerId: number,
+  fromCurrency: string,
+  toCurrency: string
+): Promise<boolean> {
+  try {
     
     // Get admin-configured selectors
     let selectors = provider.scraping_selector?.split(',') || [];
