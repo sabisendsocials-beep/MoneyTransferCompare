@@ -67,15 +67,18 @@ const CurrencyCalculator = () => {
 
   const calculateRate = () => {
     const key = `${fromCurrency}-${toCurrency}` as RateKey;
-    if (exchangeRates[key]) {
+    const rate = exchangeRates[key];
+    
+    if (rate) {
       const numericAmount = parseFloat(amount.replace(/,/g, ""));
       if (!isNaN(numericAmount)) {
         if (calculationMode === "send") {
           // When sending, multiply by exchange rate to get received amount
-          setResult(numericAmount * exchangeRates[key]);
+          setResult(numericAmount * rate);
         } else {
           // When receiving, divide by exchange rate to get sent amount
-          setResult(numericAmount / exchangeRates[key]);
+          // For 100,000 NGN with rate of 2166.87, it should be 100,000 / 2166.87 = 46.15
+          setResult(numericAmount / rate);
         }
       }
     }
@@ -83,7 +86,7 @@ const CurrencyCalculator = () => {
 
   // Toggle between send and receive calculation modes
   const toggleCalculationMode = () => {
-    // Get the current rate
+    // Clear any previous results and get current rate
     const key = `${fromCurrency}-${toCurrency}` as RateKey;
     const rate = exchangeRates[key];
     
@@ -95,31 +98,27 @@ const CurrencyCalculator = () => {
     
     // Switch the calculation mode
     const newMode = calculationMode === "send" ? "receive" : "send";
-    
-    // Define a new input value based on the current state
-    let newInputValue;
-    
-    if (calculationMode === "send") {
-      // Switching from Send to Receive
-      // Current amount represents what they send, result is what they receive
-      // New input should be the result (what they receive)
-      newInputValue = result !== null ? Math.round(result) : numericAmount * rate;
-    } else {
-      // Switching from Receive to Send
-      // Current amount represents what they receive, result is what they send
-      // New input should be the result (what they send)
-      newInputValue = result !== null ? Math.round(result) : numericAmount / rate;
-    }
-    
-    // Update the mode and input value
     setCalculationMode(newMode);
-    setAmount(formatInputWithCommas(newInputValue.toString()));
     
-    // Calculate and set the new result
-    if (newMode === "send") {
-      setResult(newInputValue * rate);
-    } else {
-      setResult(newInputValue / rate);
+    // If we're toggling from Send to Receive:
+    if (calculationMode === "send") {
+      // Current input is how much they send (e.g., 100 GBP)
+      // Current result is how much they receive (e.g., 216,687 NGN)
+      // We want to set the input to the result value (216,687)
+      const newInputAmount = result !== null ? result : numericAmount * rate;
+      setAmount(formatInputWithCommas(Math.round(newInputAmount).toString()));
+      // And the new result should be the original input (100)
+      setResult(numericAmount);
+    } 
+    // If we're toggling from Receive to Send:
+    else {
+      // Current input is how much they receive (e.g., 100,000 NGN)
+      // Current result is how much they send (e.g., 46.15 GBP)
+      // We want to set the input to the result value (46.15)
+      const newInputAmount = result !== null ? result : numericAmount / rate;
+      setAmount(formatInputWithCommas(newInputAmount.toFixed(2)));
+      // And the new result should be the original input (100,000)
+      setResult(numericAmount);
     }
   };
 
