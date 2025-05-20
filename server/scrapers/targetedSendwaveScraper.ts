@@ -151,10 +151,9 @@ export async function extractSendwaveRate(): Promise<boolean> {
           // Skip very long texts or known false positives
           if (text.length > 200 || text.includes('©')) return;
           
-          const numberPattern = /\b([0-9,]+\.?\d*)\b/g;
-          const matches = text.matchAll(numberPattern);
-          
-          for (const match of matches) {
+          const numberPattern3 = /\b([0-9,]+\.?\d*)\b/g;
+          let match3;
+          while ((match3 = numberPattern3.exec(text)) !== null) {
             const rate = parseFloat(match[1].replace(/,/g, ''));
             if (isValidRate(rate)) {
               console.log(`Found potential rate near NGN: ${rate}`);
