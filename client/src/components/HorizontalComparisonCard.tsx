@@ -1,14 +1,14 @@
 import { TransferResult } from "@shared/schema";
-import { ExternalLink, Clock, Star, Check, Info } from "lucide-react";
+import { ExternalLink, Clock, Star, Check, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface HorizontalComparisonCardProps {
   provider: TransferResult;
   index: number;
   fromCurrency: string;
   toCurrency: string;
+  bestRateAmount?: number;
 }
 
 export const HorizontalComparisonCard = ({
@@ -16,6 +16,7 @@ export const HorizontalComparisonCard = ({
   index,
   fromCurrency,
   toCurrency,
+  bestRateAmount
 }: HorizontalComparisonCardProps) => {
   // Format currency with proper formatting
   const formatCurrency = (value: number, currency: string) => {
@@ -41,24 +42,28 @@ export const HorizontalComparisonCard = ({
   // Determine if the provider has no fees
   const hasFreeTransfer = provider.fee === 0;
   
-  // Calculate the time since last update
-  const getTimeAgo = (date: string) => {
+  // Format the timestamp in a simple way
+  const formatTimeStamp = (date: string) => {
     if (!date) return "";
-    const now = new Date();
     const updateTime = new Date(date);
-    const diffMs = now.getTime() - updateTime.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
-    } else if (diffMins < 1440) { // less than a day
-      const hours = Math.floor(diffMins / 60);
-      return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-    } else {
-      const days = Math.floor(diffMins / 1440);
-      return `${days} ${days === 1 ? 'day' : 'days'} ago`;
-    }
+    return updateTime.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
+  
+  // Calculate difference from best rate
+  const calculateDifference = () => {
+    if (!bestRateAmount || index === 0) return null;
+    
+    const difference = bestRateAmount - normalizedReceivedAmount;
+    return {
+      amount: difference,
+      percentage: (difference / bestRateAmount) * 100
+    };
+  };
+  
+  const difference = calculateDifference();
 
   // Format ratings as stars (simplified)
   const renderRating = (rating: number | undefined) => {
@@ -148,26 +153,15 @@ export const HorizontalComparisonCard = ({
             </div>
           )}
           
-          <div className="flex justify-between items-center text-xs text-gray-500">
+          <div className="flex justify-between items-center text-xs text-gray-500 mt-1.5">
             <div>
               Fee: {hasFreeTransfer ? formatCurrency(0, fromCurrency) : formatCurrency(provider.fee, fromCurrency)}
             </div>
             
             {provider.lastUpdated && (
               <div className="flex items-center">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center cursor-help">
-                        <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                        {getTimeAgo(provider.lastUpdated)}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>Rate updated on {new Date(provider.lastUpdated).toLocaleString()}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Clock className="h-3 w-3 mr-1 text-gray-400" />
+                {formatTimeStamp(provider.lastUpdated)}
               </div>
             )}
           </div>
@@ -176,9 +170,16 @@ export const HorizontalComparisonCard = ({
         {/* They Receive Column */}
         <div className="p-4 md:w-1/6 border-b md:border-b-0 md:border-r text-center">
           <div className="text-xs text-gray-500 uppercase mb-2">YOU RECEIVE</div>
-          <div className="text-2xl font-bold text-primary">
+          <div className="text-3xl font-bold text-primary">
             {formatCurrency(normalizedReceivedAmount, toCurrency)}
           </div>
+          
+          {difference && (
+            <div className="text-xs text-red-500 mt-1 flex items-center justify-center">
+              <TrendingDown className="h-3 w-3 mr-1" />
+              {formatCurrency(difference.amount, toCurrency)}
+            </div>
+          )}
         </div>
         
         {/* Action Column */}

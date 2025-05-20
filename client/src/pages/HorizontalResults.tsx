@@ -205,6 +205,7 @@ const HorizontalResults = () => {
                   index={index}
                   fromCurrency={defaultFromCurrency}
                   toCurrency={defaultToCurrency}
+                  bestRateAmount={results[0]?.receivedAmount}
                 />
               ))}
             </div>
