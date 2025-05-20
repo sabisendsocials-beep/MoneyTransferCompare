@@ -776,37 +776,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // If not found or failed, extract from the screenshot value (2139.46)
-      try {
-        console.log('Using screenshot value (2139.46) as fallback for SendWave');
-        
-        // Create a direct rate entry using the screenshot value
-        const rateData = {
-          provider_id: sendwave.id,
-          from_currency: 'GBP',
-          to_currency: 'NGN',
-          rate: 2139.46, // Direct from your screenshot
-          source: 'SCRAPER',
-        };
-        
-        // Add to database
-        await storage.createExchangeRate(rateData);
-        
-        return res.json({ 
-          success: true, 
-          message: 'SendWave rate updated successfully with screenshot value',
-          provider: sendwave.name,
-          oldRate: req.body?.oldRate || 'unknown',
-          newRate: 2139.46,
-          source: 'SCRAPER'
-        });
-      } catch (error) {
-        console.log('SendWave screenshot fallback failed:', error);
-      }
+      // If all scraping methods failed, report error
+      console.log('All SendWave rate scraping methods failed');
       
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Failed to update SendWave rate' 
+      // Return error - no hardcoded fallbacks
+      return res.status(404).json({
+        success: false,
+        error: 'Could not retrieve SendWave exchange rate from website',
+        message: 'No valid rate data could be found for SendWave. Please check the URL and CSS selector configuration.'
       });
     } catch (error) {
       console.error('Error updating SendWave rate:', error);

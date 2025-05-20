@@ -188,23 +188,9 @@ export async function enhancedSendwaveRate(): Promise<boolean> {
       }
     }
     
-    // If all scraping approaches failed, use the screenshot rate as fallback
-    console.log('All scraping approaches failed, using screenshot value as fallback');
-    const screenshotRate = 2139.46;
-    
-    const exchangeRate: InsertExchangeRate = {
-      provider_id: sendwave.id,
-      from_currency: 'GBP',
-      to_currency: 'NGN',
-      rate: screenshotRate,
-      source: 'SCRAPER',
-      verified: null,
-      source_url: sendwave.scraping_url || 'https://www.sendwave.com/en/currency-converter/1-gbp_gb-ngn_ng'
-    };
-    
-    await storage.createExchangeRate(exchangeRate);
-    console.log(`Used fallback screenshot rate for SendWave: ${screenshotRate}`);
-    return true;
+    // If all scraping approaches failed, report that we couldn't find a valid rate
+    console.log('All scraping approaches failed, could not find a valid SendWave rate');
+    return false;
     
   } catch (error) {
     console.error('Error in enhanced SendWave scraper:', error);
