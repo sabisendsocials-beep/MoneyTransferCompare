@@ -4,9 +4,9 @@
  * This scraper is specifically designed to extract exchange rates from the Lemfi website
  * using admin-configured URLs and CSS selectors only.
  */
+import { storage } from '../storage';
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import { storage } from '../storage';
 
 /**
  * Extract the exchange rate from Lemfi website using admin-configured URL and selectors
@@ -34,7 +34,7 @@ export async function extractLemfiRate(
     }
     
     // Use admin-configured URL
-    let url = provider.scraping_url;
+    const url = provider.scraping_url;
     console.log(`Using admin-configured URL for Lemfi: ${url}`);
     
     if (!url) {
@@ -42,35 +42,19 @@ export async function extractLemfiRate(
       return false;
     }
     
-    console.log(`Trying primary URL: ${url}`);
-    // Get admin-configured selectors
-    const baseSelectors = provider.scraping_selector?.split(',') || [];
+    const primarySelector = provider.scraping_selector || '';
     
-    // Add additional variations of the selector to try, based on the screenshot
-    const allSelectors = [
-      ...baseSelectors,
-      '.molecule-conversion-box_details__item span.base-text.base-text--size-small--bold', 
-      '.molecule-conversion-box_details__item span:nth-child(2)',
-      'div.molecule-conversion-box__details div.molecule-conversion-box__details__item span.base-text--size-small--bold',
-      'div[class*="molecule-conversion-box"] div[class*="details"] span[class*="small--bold"]',
-      'div[class*="molecule-conversion-box"] span[class*="small--bold"]',
-      'div.molecule-conversion-box__details__item span',
-      '.molecule-conversion-box__details span',
-      'span.base-text.base-text--size-small--bold',
-      'span.base-text--size-small--bold',
-      '.base-text--size-small--bold',
-      '.molecule-conversion-box_details__item span',
-      'div.molecule-conversion-box_details__item span',
-      'div[class*="conversion-box"] span[class*="small"]'
-    ];
+    // Try primary URL with the admin-configured selector
+    let rate = await scrapeExchangeRate(url, primarySelector, fromCurrency, toCurrency);
     
-    // Try with primary URL
-    let success = await scrapeUrl(url, allSelectors, providerId, fromCurrency, toCurrency);
-    if (success) {
+    // If we got a rate, save it to the database
+    if (rate !== null) {
+      await saveExchangeRate(providerId, fromCurrency, toCurrency, rate);
       return true;
     }
     
-    // If that fails, try alternate URLs
+    // If primary URL fails, try alternate URLs
+    console.log('Primary URL failed, trying alternate URLs...');
     const alternateUrls = [
       'https://www.lemfi.com/send-from-uk-to-nigeria',
       'https://lemfi.com/send-from-uk-to-nigeria',
@@ -79,12 +63,15 @@ export async function extractLemfiRate(
     
     for (const altUrl of alternateUrls) {
       console.log(`Trying alternate URL: ${altUrl}`);
-      success = await scrapeUrl(altUrl, allSelectors, providerId, fromCurrency, toCurrency);
-      if (success) {
+      rate = await scrapeExchangeRate(altUrl, primarySelector, fromCurrency, toCurrency);
+      
+      if (rate !== null) {
+        await saveExchangeRate(providerId, fromCurrency, toCurrency, rate);
         return true;
       }
     }
     
+    console.error('Failed to extract Lemfi rate from any URL');
     return false;
   } catch (error) {
     console.error('Error in Lemfi scraper:', error);
@@ -93,18 +80,17 @@ export async function extractLemfiRate(
 }
 
 /**
- * Helper function to fetch and extract rate from a specific URL
+ * Helper function to scrape exchange rate from a URL
  */
-async function scrapeUrl(
-  url: string,
-  selectors: string[],
-  providerId: number,
+async function scrapeExchangeRate(
+  url: string, 
+  cssSelector: string,
   fromCurrency: string,
   toCurrency: string
-): Promise<boolean> {
+): Promise<number | null> {
   try {
-    
-    console.log(`Using selectors: ${JSON.stringify(selectors)}`);
+    console.log(`Attempting to scrape from URL: ${url}`);
+    console.log(`Using CSS selector: ${cssSelector}`);
     
     // Fetch the HTML content with browser-like headers
     const response = await fetch(url, {
@@ -119,145 +105,189 @@ async function scrapeUrl(
     
     if (!response.ok) {
       console.error(`Failed to fetch from ${url}: ${response.status} ${response.statusText}`);
-      return false;
+      return null;
     }
     
     const html = await response.text();
-    console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
+    console.log(`Retrieved HTML content (${html.length} characters)`);
     
-    // Wait longer for JavaScript to finish loading dynamic content
-    console.log('Waiting 15 seconds for JavaScript to fully load dynamic content...');
-    await new Promise(resolve => setTimeout(resolve, 15000));
+    // Wait for JavaScript to fully load dynamic content
+    console.log('Waiting 20 seconds for JavaScript content to fully load...');
+    await new Promise(resolve => setTimeout(resolve, 20000));
     
-    // Parse HTML with cheerio
+    // Parse the HTML with cheerio
     const $ = cheerio.load(html);
     
-    // Try multiple approaches to extract the exchange rate
-    let rate: number | null = null;
+    // Collection of CSS selectors to try
+    const selectors = [
+      // User the admin-configured selector as priority
+      cssSelector,
+      // Selectors from the screenshot
+      '.molecule-conversion-box_details__item span.base-text.base-text--size-small--bold',
+      '.molecule-conversion-box_details__item span:nth-child(2)',
+      // Additional selectors with variations
+      'div.molecule-conversion-box__details div.molecule-conversion-box__details__item span.base-text--size-small--bold',
+      'div[class*="molecule-conversion-box"] div[class*="details"] span[class*="small--bold"]',
+      'div[class*="molecule-conversion-box"] span[class*="small--bold"]',
+      'div.molecule-conversion-box__details__item span',
+      '.molecule-conversion-box__details span',
+      'span.base-text.base-text--size-small--bold',
+      'span.base-text--size-small--bold',
+      '.base-text--size-small--bold',
+      '.molecule-conversion-box_details__item span',
+      'div.molecule-conversion-box_details__item span',
+      'div[class*="conversion-box"] span[class*="small"]'
+    ].filter(Boolean); // Remove empty selectors
     
-    // Approach 1: Try each of our selectors
-    for (let i = 0; i < selectors.length && rate === null; i++) {
-      const selector = selectors[i];
-      console.log(`Trying selector "${selector}"...`);
-      
-      const elements = $(selector);
-      console.log(`Found ${elements.length} elements with selector "${selector}"`);
-      
-      if (elements.length > 0) {
-        for (let j = 0; j < elements.length && rate === null; j++) {
-          const element = elements.eq(j);
-          const text = element.text().trim();
-          console.log(`Element ${j+1} text: "${text}"`);
-          
-          // Pattern for GBP to NGN exchange rate
-          if (text.includes('GBP') && text.includes('NGN')) {
-            console.log(`Found potential GBP/NGN rate text: "${text}"`);
-            const rateMatch = text.match(/(\d[\d,\.]+)/);
-            if (rateMatch) {
-              const rateStr = rateMatch[1].replace(/,/g, '');
-              const parsedRate = parseFloat(rateStr);
-              if (!isNaN(parsedRate) && parsedRate > 1000) { // NGN rates are typically above 1000
-                console.log(`Successfully extracted GBP/NGN rate: ${parsedRate}`);
-                rate = parsedRate;
-              }
-            }
-          }
-          
-          // Look for rate patterns
-          const ratePatterns = [
-            /\s*1\s*GBP\s*=\s*([\d,\.]+)\s*NGN/i,
-            /\s*GBP\s*\/\s*NGN\s*:\s*([\d,\.]+)/i,
-            /\s*exchange\s*rate\s*[\s\w]*\s*([\d,\.]+)/i,
-            /\s*([\d,\.]+)\s*NGN/i
-          ];
-          
-          for (const pattern of ratePatterns) {
-            const match = text.match(pattern);
-            if (match) {
-              const rateStr = match[1].replace(/,/g, '');
-              const parsedRate = parseFloat(rateStr);
-              if (!isNaN(parsedRate) && parsedRate > 1000) {
-                console.log(`Successfully extracted rate using pattern ${pattern}: ${parsedRate}`);
-                rate = parsedRate;
-                break;
-              }
-            }
-          }
-        }
+    // Try each selector
+    for (const selector of selectors) {
+      const rate = tryExtractRateWithSelector($, selector);
+      if (rate !== null) {
+        return rate;
       }
     }
     
-    // Approach 2: Look for specific Nigeria-related content that might contain rates
-    if (rate === null) {
-      console.log("Trying Nigeria-specific content approach...");
-      const nigeriaSelectors = [
-        'div:contains("Nigeria")',
-        'section:contains("Nigeria")',
-        'p:contains("Nigeria")',
-        'span:contains("Nigeria")'
-      ];
-      
-      for (const selector of nigeriaSelectors) {
-        const elements = $(selector);
-        elements.each((i, el) => {
-          const element = $(el);
-          const text = element.text();
-          
-          if (text.includes('GBP') && text.includes('NGN')) {
-            console.log(`Found Nigeria-specific element with currency info: "${text.substring(0, 100)}..."`);
-            
-            // Look for numeric patterns that could be rates
-            const rateMatch = text.match(/(\d[\d,\.]+)/g);
-            if (rateMatch) {
-              rateMatch.forEach(match => {
-                const parsedRate = parseFloat(match.replace(/,/g, ''));
-                if (!isNaN(parsedRate) && parsedRate > 1000 && parsedRate < 3000) { // Typical NGN rate range
-                  console.log(`Found potential exchange rate in Nigeria content: ${parsedRate}`);
-                  if (rate === null) {
-                    rate = parsedRate;
-                  }
-                }
-              });
-            }
-          }
-        });
-      }
+    // Try finding any element with '1 GBP = X NGN' pattern
+    console.log('Looking for elements containing GBP and NGN currency codes...');
+    let rate = tryExtractRateFromPattern($);
+    if (rate !== null) {
+      return rate;
     }
     
-    // Approach 3: Look for any exchange rate information
-    if (rate === null) {
-      console.log("Trying general exchange rate content approach...");
-      const rateElements = $('*:contains("exchange rate")');
+    console.log('Failed to extract rate from any selector');
+    return null;
+  } catch (error) {
+    console.error('Error scraping exchange rate:', error);
+    return null;
+  }
+}
+
+/**
+ * Try to extract rate using a specific CSS selector
+ */
+function tryExtractRateWithSelector($: cheerio.CheerioAPI, selector: string): number | null {
+  try {
+    if (!selector) return null;
+    
+    console.log(`Trying selector: "${selector}"`);
+    const elements = $(selector);
+    console.log(`Found ${elements.length} elements with selector "${selector}"`);
+    
+    if (elements.length === 0) return null;
+    
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements.eq(i);
+      const text = element.text().trim();
       
-      rateElements.each((i, el) => {
-        const element = $(el);
-        // Get all surrounding text
-        const text = element.text();
-        console.log(`Found exchange rate text: "${text.substring(0, 100)}..."`);
+      if (text.length === 0) continue;
+      
+      console.log(`Element ${i+1} text: "${text}"`);
+      
+      // Check if text contains both currency codes
+      if (text.includes('GBP') && text.includes('NGN')) {
+        console.log(`Found potential GBP/NGN rate text: "${text}"`);
         
-        // Look for numbers in the text
-        const numbers = text.match(/(\d[\d,\.]+)/g);
-        if (numbers) {
-          numbers.forEach(num => {
-            const parsedNum = parseFloat(num.replace(/,/g, ''));
-            if (!isNaN(parsedNum) && parsedNum > 1000 && parsedNum < 3000) {
-              console.log(`Found potential exchange rate number: ${parsedNum}`);
-              if (rate === null) {
-                rate = parsedNum;
-              }
-            }
-          });
+        // Try exact pattern: 1 GBP = X NGN
+        const exactPattern = /1\s*GBP\s*=\s*([\d,\.]+)\s*NGN/i;
+        const exactMatch = text.match(exactPattern);
+        
+        if (exactMatch) {
+          const rateStr = exactMatch[1].replace(/,/g, '');
+          const parsedRate = parseFloat(rateStr);
+          
+          if (!isNaN(parsedRate) && parsedRate > 1000) {
+            console.log(`Successfully extracted exact GBP/NGN rate: ${parsedRate}`);
+            return parsedRate;
+          }
         }
-      });
+        
+        // If no exact pattern, try to find any number in the expected range
+        const anyNumber = text.match(/(\d[\d,\.]+)/g);
+        if (anyNumber) {
+          for (const numStr of anyNumber) {
+            const num = parseFloat(numStr.replace(/,/g, ''));
+            // NGN rates are typically in the 1800-2300 range for GBP
+            if (!isNaN(num) && num > 1800 && num < 2300) {
+              console.log(`Found likely exchange rate: ${num}`);
+              return num;
+            }
+          }
+        }
+      }
     }
     
-    if (rate === null) {
-      console.error('Failed to extract a valid rate from any selectors');
-      return false;
+    return null;
+  } catch (error) {
+    console.error(`Error trying selector "${selector}":`, error);
+    return null;
+  }
+}
+
+/**
+ * Try to extract rate by scanning the page for patterns
+ */
+function tryExtractRateFromPattern($: cheerio.CheerioAPI): number | null {
+  try {
+    // Find elements containing both currency codes
+    const elements = $('*:contains("GBP"):contains("NGN")');
+    console.log(`Found ${elements.length} elements containing both GBP and NGN`);
+    
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements.eq(i);
+      const text = element.text().trim();
+      
+      // Only process reasonably sized text to avoid huge blocks
+      if (text.length > 5 && text.length < 200) {
+        console.log(`Element with GBP/NGN: "${text}"`);
+        
+        // Look for specific pattern: 1 GBP = X NGN
+        const exactPattern = /1\s*GBP\s*=\s*([\d,\.]+)\s*NGN/i;
+        const match = text.match(exactPattern);
+        
+        if (match) {
+          const rateStr = match[1].replace(/,/g, '');
+          const parsedRate = parseFloat(rateStr);
+          
+          if (!isNaN(parsedRate) && parsedRate > 1000) {
+            console.log(`Found exact GBP to NGN rate: ${parsedRate}`);
+            return parsedRate;
+          }
+        }
+        
+        // Try to extract any number in the text that might be the rate
+        const numbers = text.match(/(\d[\d,\.]+)/g);
+        
+        if (numbers) {
+          for (const numStr of numbers) {
+            const num = parseFloat(numStr.replace(/,/g, ''));
+            // NGN rates are typically in the 2000-2300 range for GBP
+            if (!isNaN(num) && num > 2000 && num < 2300) {
+              console.log(`Found likely exchange rate: ${num}`);
+              return num;
+            }
+          }
+        }
+      }
     }
     
-    // Save the rate to the database
-    const result = await storage.createExchangeRate({
+    return null;
+  } catch (error) {
+    console.error('Error extracting rate from pattern:', error);
+    return null;
+  }
+}
+
+/**
+ * Save exchange rate to database
+ */
+async function saveExchangeRate(
+  providerId: number, 
+  fromCurrency: string, 
+  toCurrency: string, 
+  rate: number
+): Promise<void> {
+  try {
+    await storage.createExchangeRate({
       provider_id: providerId,
       from_currency: fromCurrency,
       to_currency: toCurrency,
@@ -267,11 +297,9 @@ async function scrapeUrl(
     
     console.log(`Successfully updated Lemfi ${fromCurrency} to ${toCurrency} rate: ${rate}`);
     console.log('=== Successfully updated Lemfi rate with dedicated scraper ===');
-    
-    return true;
   } catch (error) {
-    console.error('Error in Lemfi scraper:', error);
-    return false;
+    console.error('Error saving exchange rate:', error);
+    throw error;
   }
 }
 
@@ -281,24 +309,21 @@ async function scrapeUrl(
  */
 export async function updateLemfiRates(): Promise<boolean> {
   try {
-    // Get the Lemfi provider from the database
+    console.log('Starting Lemfi rates update...');
+    
+    // Look for a provider named "Lemfi"
     const providers = await storage.getProviders();
     const lemfiProvider = providers.find(p => p.name === 'Lemfi');
     
     if (!lemfiProvider) {
-      console.error('Lemfi provider not found in the database');
+      console.error('Lemfi provider not found in database');
       return false;
     }
     
-    // Update GBP to NGN rate
-    const success = await extractLemfiRate(lemfiProvider.id, 'GBP', 'NGN');
+    console.log(`Found Lemfi provider with ID ${lemfiProvider.id}`);
     
-    if (!success) {
-      console.error('=== Dedicated Lemfi scraper failed. No fallback will be used. ===');
-      console.error('=== Please check the Lemfi URL and CSS selector in the admin panel ===');
-    }
-    
-    return success;
+    // Extract GBP to NGN rate
+    return await extractLemfiRate(lemfiProvider.id, 'GBP', 'NGN');
   } catch (error) {
     console.error('Error updating Lemfi rates:', error);
     return false;
