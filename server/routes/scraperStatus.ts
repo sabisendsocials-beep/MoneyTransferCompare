@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getScraperStatus, resetScraperTimer, recordScraperRun } from '../services/scraperStatus';
+import { updateAllScraperStatuses } from '../updateScraperStatus';
 
 const router = Router();
 
@@ -9,7 +10,22 @@ const router = Router();
 router.get('/status', async (_req, res) => {
   try {
     console.log("Scraper status endpoint called");
+    
+    // First check the current status
     const status = await getScraperStatus();
+    
+    // Count providers with "never ran" status
+    const neverRanCount = status.status.filter(s => !s.lastRun).length;
+    
+    // If most providers show "never ran", initialize them
+    if (neverRanCount > 10) {
+      console.log(`Found ${neverRanCount} providers with "never ran" status, initializing...`);
+      await updateAllScraperStatuses();
+      // Get updated status after initialization
+      const updatedStatus = await getScraperStatus();
+      return res.json(updatedStatus);
+    }
+    
     res.json(status);
   } catch (error) {
     console.error('Error getting scraper status:', error);
