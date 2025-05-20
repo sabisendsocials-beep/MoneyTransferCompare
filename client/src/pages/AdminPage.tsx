@@ -282,9 +282,12 @@ export default function AdminPage() {
     setSubmitting(true);
     
     try {
-      // Submit the form data
-      await apiRequest("/api/rates/manual", {
-        method: "POST",
+      // Use direct fetch instead of apiRequest to avoid the endpoint.startsWith error
+      const response = await fetch('/api/rates/manual', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           providerId: parseInt(providerId),
           fromCurrency,
@@ -292,7 +295,12 @@ export default function AdminPage() {
           rate: parseFloat(rate),
           notes
         }),
+        credentials: 'include'
       });
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
       
       // Success message
       toast({
