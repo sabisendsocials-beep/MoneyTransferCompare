@@ -63,16 +63,16 @@ const CurrencyCalculator = () => {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 gap-5">
+      <div className="grid grid-cols-1 gap-4">
         {/* From currency */}
-        <div className="bg-white/10 rounded-lg p-5">
-          <div className="flex justify-between items-center mb-2">
+        <div className="bg-white/10 rounded-lg p-3 lg:mx-auto lg:w-2/3">
+          <div className="flex justify-between items-center mb-1">
             <label className="text-sm text-white/80 font-medium">You Send</label>
             <Select
               value={fromCurrency}
               onValueChange={handleSetFromCurrency}
             >
-              <SelectTrigger className="w-[110px] bg-transparent border-0 text-white">
+              <SelectTrigger className="w-[100px] bg-transparent border-0 text-white">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>
@@ -86,32 +86,32 @@ const CurrencyCalculator = () => {
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="bg-transparent border-0 text-3xl font-semibold text-white h-14 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="bg-transparent border-0 text-3xl font-semibold text-white h-12 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               placeholder="1,000"
             />
           </div>
         </div>
 
         {/* Convert button */}
-        <div className="flex justify-center -my-3 z-10">
+        <div className="flex justify-center -my-2 z-10">
           <Button 
             onClick={calculateRate}
             size="sm" 
-            className="rounded-full h-12 w-12 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 flex items-center justify-center p-0 shadow-lg border-4 border-indigo-900"
+            className="rounded-full h-10 w-10 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 flex items-center justify-center p-0 shadow-lg border-2 border-indigo-900"
           >
-            <ArrowRight size={18} />
+            <ArrowRight size={16} />
           </Button>
         </div>
 
         {/* To currency */}
-        <div className="bg-white/10 rounded-lg p-5">
-          <div className="flex justify-between items-center mb-2">
+        <div className="bg-white/10 rounded-lg p-3 lg:mx-auto lg:w-2/3">
+          <div className="flex justify-between items-center mb-1">
             <label className="text-sm text-white/80 font-medium">They Receive</label>
             <Select
               value={toCurrency}
               onValueChange={handleSetToCurrency}
             >
-              <SelectTrigger className="w-[110px] bg-transparent border-0 text-white">
+              <SelectTrigger className="w-[100px] bg-transparent border-0 text-white">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>

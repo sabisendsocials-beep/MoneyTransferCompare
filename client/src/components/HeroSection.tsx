@@ -21,75 +21,75 @@ const HeroSection = () => {
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-r from-transparent to-white/10"></div>
       </div>
 
-      <div className="max-w-full w-[95%] mx-auto px-4 pt-6 pb-8 md:pt-8 md:pb-10 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-5 lg:gap-6">
+      <div className="max-w-full w-[98%] mx-auto px-2 pt-4 pb-6 md:pt-6 md:pb-8 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-5">
           {/* Left content */}
-          <div className="lg:w-2/5">
-            <div className="inline-flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md rounded-full px-4 py-1.5 text-sm font-medium mb-3">
-              <CheckCircle2 size={14} className="text-emerald-400" />
+          <div className="lg:w-[45%]">
+            <div className="inline-flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md rounded-full px-3 py-1 text-sm font-medium mb-2">
+              <CheckCircle2 size={12} className="text-emerald-400" />
               <span>Verified rates from trusted providers</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-3">
               Find the <span className="bg-gradient-to-r from-emerald-400 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
             </h1>
             
-            <p className="text-lg text-blue-100 mb-4 max-w-xl">
+            <p className="text-base text-blue-100 mb-3 max-w-xl">
               Our platform compares exchange rates from 12+ trusted providers in real-time, 
               helping you save on fees and get more value in every international transfer.
             </p>
             
-            <div className="grid grid-cols-2 gap-4 mb-5">
-              <div className="flex items-center gap-3 text-white">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                  <ArrowRightLeft size={18} />
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="flex items-center gap-2 text-white">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <ArrowRightLeft size={16} />
                 </div>
                 <div>
-                  <p className="font-medium">Real-time rates</p>
-                  <p className="text-sm text-blue-200">Updated every 6 hours</p>
+                  <p className="font-medium text-sm">Real-time rates</p>
+                  <p className="text-xs text-blue-200">Updated every 6 hours</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 text-white">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-                  <BarChart3 size={18} />
+              <div className="flex items-center gap-2 text-white">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
+                  <BarChart3 size={16} />
                 </div>
                 <div>
-                  <p className="font-medium">Historical data</p>
-                  <p className="text-sm text-blue-200">365-day analysis</p>
+                  <p className="font-medium text-sm">Historical data</p>
+                  <p className="text-xs text-blue-200">365-day analysis</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 text-white">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                  <ShieldCheck size={18} />
+              <div className="flex items-center gap-2 text-white">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                  <ShieldCheck size={16} />
                 </div>
                 <div>
-                  <p className="font-medium">Verified sources</p>
-                  <p className="text-sm text-blue-200">Direct from providers</p>
+                  <p className="font-medium text-sm">Verified sources</p>
+                  <p className="text-xs text-blue-200">Direct from providers</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 text-white">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                  <Compass size={18} />
+              <div className="flex items-center gap-2 text-white">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                  <Compass size={16} />
                 </div>
                 <div>
-                  <p className="font-medium">Global coverage</p>
-                  <p className="text-sm text-blue-200">Multi-country support</p>
+                  <p className="font-medium text-sm">Global coverage</p>
+                  <p className="text-xs text-blue-200">Multi-country support</p>
                 </div>
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
               <Link href="/compare">
-                <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium">
+                <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium h-9 text-sm">
                   Compare All Providers
-                  <ArrowRight size={16} className="ml-2" />
+                  <ArrowRight size={14} className="ml-1.5" />
                 </Button>
               </Link>
               <Link href="/trends">
-                <Button size="lg" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10">
+                <Button variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10 h-9 text-sm">
                   View Rate Trends
                 </Button>
               </Link>
@@ -97,36 +97,35 @@ const HeroSection = () => {
           </div>
           
           {/* Right content - Calculator */}
-          <div className="lg:w-3/5 w-full">
-            <div className="bg-white/15 backdrop-blur-xl p-5 md:p-6 rounded-2xl border border-white/20 shadow-[0_0_45px_rgba(8,107,230,0.15)]">
-              <h2 className="text-xl text-white font-semibold mb-4 text-center">Quick Rate Calculator</h2>
+          <div className="lg:w-[55%] w-full">
+            <div className="bg-white/15 backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-[0_0_45px_rgba(8,107,230,0.15)]">
+              <h2 className="text-lg text-white font-semibold mb-3 text-center">Quick Rate Calculator</h2>
               
               <CurrencyCalculator />
               
               {/* Combined CTA and provider section for more compact design */}
-              <div className="mt-5 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-white/10 pt-5">
+              <div className="mt-3 flex flex-col md:flex-row items-center justify-between gap-3 border-t border-white/10 pt-3">
                 <div className="md:order-2">
                   <Link href="/compare">
-                    <Button className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium px-6">
+                    <Button className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium px-5 h-9 text-sm">
                       Get Best Rate Now
-                      <ArrowRight size={16} className="ml-2" />
+                      <ArrowRight size={14} className="ml-1.5" />
                     </Button>
                   </Link>
                 </div>
                 
                 <div className="flex items-center md:order-1 text-xs text-blue-200">
-                  <RefreshCw size={12} className="mr-1.5" /> 
+                  <RefreshCw size={10} className="mr-1" /> 
                   <span>Updated today at 14:00 UTC</span>
                 </div>
               </div>
               
               {/* Provider logos */}
-              <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                <div className="py-1 px-3 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Western Union</div>
-                <div className="py-1 px-3 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Wise</div>
-                <div className="py-1 px-3 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">MoneyGram</div>
-                <div className="py-1 px-3 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Remitly</div>
-                <div className="py-1 px-3 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">+8 more</div>
+              <div className="mt-2 flex flex-wrap gap-1.5 justify-center">
+                <div className="py-0.5 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Western Union</div>
+                <div className="py-0.5 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Wise</div>
+                <div className="py-0.5 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">MoneyGram</div>
+                <div className="py-0.5 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">+9 more</div>
               </div>
             </div>
           </div>
