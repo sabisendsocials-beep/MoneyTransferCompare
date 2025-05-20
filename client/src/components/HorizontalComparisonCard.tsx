@@ -82,7 +82,7 @@ export const HorizontalComparisonCard = ({
     >
       <div className="flex flex-col md:flex-row">
         {/* Provider Column */}
-        <div className="flex items-center py-4 px-5 md:w-2/5 border-b md:border-b-0 md:border-r relative">
+        <div className="flex items-center py-4 px-5 md:w-1/3 border-b md:border-b-0 md:border-r relative">
           {/* Rank Badge */}
           <div className="mr-3 flex-shrink-0">
             {index === 0 ? (
@@ -131,71 +131,73 @@ export const HorizontalComparisonCard = ({
         </div>
         
         {/* Fee & Exchange Rate Column */}
-        <div className="p-4 md:w-1/4 border-b md:border-b-0 md:border-r">
+        <div className="p-4 md:w-2/5 border-b md:border-b-0 md:border-r">
           <div className="text-xs text-gray-500 uppercase mb-2">FEE & EXCHANGE RATE</div>
           
-          <div className="mb-1">
-            <span className="font-medium">Fee: </span>
-            <span className={hasFreeTransfer ? "text-green-600 font-medium" : ""}>
-              {hasFreeTransfer ? "NONE" : formatCurrency(provider.fee, fromCurrency)}
-            </span>
-          </div>
-          
-          <div className="mb-1">
-            <span className="font-medium">Exchange rate: </span>
+          <div className="text-lg font-medium mb-1">
             {normalizedRate.toFixed(4)}
           </div>
           
+          <div className="text-sm text-gray-700 mb-2">
+            1 {fromCurrency} = {normalizedRate.toFixed(4)} {toCurrency}
+          </div>
+          
           {provider.comment && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-sm mb-1">
               {provider.comment}
             </div>
           )}
+          
+          <div className="flex justify-between items-center text-xs text-gray-500">
+            <div>
+              Fee: {hasFreeTransfer ? formatCurrency(0, fromCurrency) : formatCurrency(provider.fee, fromCurrency)}
+            </div>
+            
+            {provider.lastUpdated && (
+              <div className="flex items-center">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center cursor-help">
+                        <Clock className="h-3 w-3 mr-1 text-gray-400" />
+                        {getTimeAgo(provider.lastUpdated)}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Rate updated on {new Date(provider.lastUpdated).toLocaleString()}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* They Receive Column */}
-        <div className="p-4 md:w-1/5 border-b md:border-b-0 md:border-r text-center">
+        <div className="p-4 md:w-1/6 border-b md:border-b-0 md:border-r text-center">
           <div className="text-xs text-gray-500 uppercase mb-2">YOU RECEIVE</div>
           <div className="text-2xl font-bold text-primary">
             {formatCurrency(normalizedReceivedAmount, toCurrency)}
           </div>
-          
-          {provider.lastUpdated && (
-            <div className="text-xs text-gray-400 mt-2 flex justify-center items-center">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center cursor-help">
-                      <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                      {getTimeAgo(provider.lastUpdated)}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Rate updated on {new Date(provider.lastUpdated).toLocaleString()}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
         </div>
         
         {/* Action Column */}
-        <div className="p-4 md:w-1/5 flex items-center justify-center">
+        <div className="p-4 md:w-1/12 flex items-center justify-center">
           {provider.websiteUrl ? (
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600"
               onClick={() => window.open(provider.websiteUrl as string, '_blank')}
             >
-              Get a Quote
-              <ExternalLink className="w-4 h-4 ml-1.5" />
+              Quote
+              <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           ) : (
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600"
               onClick={() => window.open(`https://www.google.com/search?q=${provider.providerName}+money+transfer`, '_blank')}
             >
-              Visit Provider
-              <ExternalLink className="w-4 h-4 ml-1.5" />
+              Visit
+              <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           )}
         </div>
