@@ -169,13 +169,39 @@ router.post('/api/rates/collect', async (_req: Request, res: Response) => {
   try {
     log('Manual rate collection triggered');
     
+    // Update scraper status tracker
+    try {
+      const { recordScraperRun } = await import('../api/simpleScraperStatus');
+      recordScraperRun('SYSTEM', true, 'Manual rate collection triggered from admin panel');
+    } catch (err) {
+      log('Could not record scraper run status (non-critical)');
+    }
+    
     // Trigger the rate collection
     collectAllRates()
-      .then(() => {
+      .then(async () => {
         log('Manual rate collection completed');
+        
+        // Update scraper status when complete
+        try {
+          const { recordScraperRun } = await import('../api/simpleScraperStatus');
+          recordScraperRun('SYSTEM', true, 'Manual rate collection completed successfully');
+          // Also update Wise (which is always used)
+          recordScraperRun('Wise', true, 'Rates collected via API in manual collection');
+        } catch (err) {
+          log('Could not record final scraper status (non-critical)');
+        }
       })
-      .catch(error => {
+      .catch(async (error) => {
         log(`Error in manual rate collection: ${error}`);
+        
+        // Record error in scraper status
+        try {
+          const { recordScraperRun } = await import('../api/simpleScraperStatus');
+          recordScraperRun('SYSTEM', false, `Manual collection failed: ${error}`);
+        } catch (err) {
+          log('Could not record error status (non-critical)');
+        }
       });
     
     // Return immediately to not block the request

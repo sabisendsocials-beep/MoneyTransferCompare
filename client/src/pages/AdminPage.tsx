@@ -351,6 +351,14 @@ export default function AdminPage() {
       });
     } finally {
       setCollecting(false);
+      
+      // Refresh all data after collection is finished
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/compare"] });
+        // Also refresh scraper status panel
+        queryClient.invalidateQueries({ queryKey: ["scraper-status"] });
+      }, 1000); // Small delay to allow server processing
     }
   };
   
