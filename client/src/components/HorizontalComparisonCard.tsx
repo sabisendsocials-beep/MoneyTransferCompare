@@ -74,60 +74,52 @@ export const HorizontalComparisonCard = ({
       <div className="grid grid-cols-1 md:grid-cols-12 items-center">
         {/* Provider Info Column */}
         <div className={cn(
-          "py-4 px-5 flex items-center md:col-span-3 border-b md:border-b-0 md:border-r relative",
+          "py-4 px-5 flex items-center md:col-span-4 border-b md:border-b-0 md:border-r relative",
           index === 0 ? "bg-primary/5" : ""
         )}>
           {/* Rank Badge */}
-          <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
             {index === 0 ? (
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <Check className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                <Check className="w-5 h-5 text-white" />
               </div>
             ) : (
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-gray-700 font-medium">{index + 1}</span>
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-gray-700 font-medium text-lg">{index + 1}</span>
               </div>
             )}
           </div>
           
           {/* Provider Logo and Name */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center mb-1">
-              <div className="w-8 h-8 mr-2 flex-shrink-0">
-                {provider.providerLogo ? (
-                  <img 
-                    src={provider.providerLogo} 
-                    alt={`${provider.providerName} logo`} 
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
-                    <span className="text-gray-500 font-bold text-xs">{provider.providerName.substring(0, 2)}</span>
+            <div className="flex flex-col mb-1">
+              {provider.providerLogo ? (
+                <div className="flex items-center">
+                  <div className="w-8 h-8 mr-2 flex-shrink-0">
+                    <img 
+                      src={provider.providerLogo} 
+                      alt={`${provider.providerName} logo`} 
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-                )}
-              </div>
-              <h3 className="font-semibold text-lg truncate">{provider.providerName}</h3>
-            </div>
-            
-            <div className="flex items-center text-sm text-gray-600">
+                  <h3 className="font-semibold text-lg">{provider.providerName}</h3>
+                </div>
+              ) : (
+                <h3 className="font-semibold text-lg">{provider.providerName}</h3>
+              )}
+              
               {provider.rating && (
-                <div className="flex items-center mr-3">
+                <div className="flex items-center mt-1">
                   <span className="font-medium mr-1.5 text-gray-700">{provider.rating.toFixed(1)}</span>
                   {renderStars(provider.rating)}
                 </div>
               )}
-              
-              {provider.transferTime && (
-                <div className="flex items-center text-xs text-gray-500">
-                  <Clock className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-                  <span>{provider.transferTime}</span>
-                </div>
-              )}
             </div>
             
-            {provider.comment && (
-              <div className="text-xs text-gray-500 mt-1 line-clamp-1">
-                {provider.comment}
+            {provider.transferTime && (
+              <div className="flex items-center text-xs text-gray-500 mt-1">
+                <Clock className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                <span>{provider.transferTime}</span>
               </div>
             )}
             
@@ -154,7 +146,7 @@ export const HorizontalComparisonCard = ({
         </div>
         
         {/* EXCHANGE RATE Column */}
-        <div className="p-4 flex flex-col md:col-span-3 border-b md:border-b-0 md:border-r text-center">
+        <div className="p-4 flex flex-col md:col-span-2 border-b md:border-b-0 md:border-r text-center">
           <div className="text-xs text-gray-500 mb-2 uppercase">EXCHANGE RATE</div>
           <div className="font-semibold text-lg">
             {formatRate(normalizedRate)}
@@ -162,6 +154,11 @@ export const HorizontalComparisonCard = ({
           <div className="text-xs text-gray-500 mt-1">
             1 {fromCurrency} = {normalizedRate.toFixed(4)} {toCurrency}
           </div>
+          {provider.comment && (
+            <div className="text-xs text-gray-500 mt-1 line-clamp-1">
+              {provider.comment}
+            </div>
+          )}
         </div>
         
         {/* THEY RECEIVE Column */}
