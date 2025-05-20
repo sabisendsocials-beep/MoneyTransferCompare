@@ -45,11 +45,22 @@ const ScraperStatusPanel = () => {
   const { data, isLoading, error } = useQuery<ScraperStatusResponse>({
     queryKey: ['scraper-status', refreshTrigger],
     queryFn: async () => {
-      const response = await fetch('/api/scrapers/status');
-      if (!response.ok) {
-        throw new Error('Failed to fetch scraper status');
+      try {
+        console.log('Fetching scraper status from /api/scrapers/status');
+        const response = await fetch('/api/scrapers/status');
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch scraper status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Scraper status data:', data);
+        return data;
+      } catch (err) {
+        console.error('Error fetching scraper status:', err);
+        throw err;
       }
-      return response.json();
     }
   });
   

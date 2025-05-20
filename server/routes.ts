@@ -34,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(lemfiRouter);
   
   // Register scraper status routes
-  app.use(scraperStatusRouter);
+  app.use('/api/scrapers', scraperStatusRouter);
   
   // Direct verification endpoint
   apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {

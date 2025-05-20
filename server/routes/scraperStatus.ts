@@ -68,6 +68,7 @@ export function canScraperRun(providerName: string): boolean {
  * Gets all scrapers' status information
  */
 router.get('/status', async (_req, res) => {
+  console.log("Scraper status endpoint called");
   try {
     // Get all providers
     const providers = await storage.getProviders();
