@@ -42,13 +42,35 @@ export async function extractLemfiRate(
       return false;
     }
     
-    // First try with the admin URL
-    let success = await tryFetchingRate(url, selectors, providerId, fromCurrency, toCurrency);
+    console.log(`Trying primary URL: ${url}`);
+    // Get admin-configured selectors
+    const baseSelectors = provider.scraping_selector?.split(',') || [];
+    
+    // Add additional variations of the selector to try, based on the screenshot
+    const allSelectors = [
+      ...baseSelectors,
+      '.molecule-conversion-box_details__item span.base-text.base-text--size-small--bold', 
+      '.molecule-conversion-box_details__item span:nth-child(2)',
+      'div.molecule-conversion-box__details div.molecule-conversion-box__details__item span.base-text--size-small--bold',
+      'div[class*="molecule-conversion-box"] div[class*="details"] span[class*="small--bold"]',
+      'div[class*="molecule-conversion-box"] span[class*="small--bold"]',
+      'div.molecule-conversion-box__details__item span',
+      '.molecule-conversion-box__details span',
+      'span.base-text.base-text--size-small--bold',
+      'span.base-text--size-small--bold',
+      '.base-text--size-small--bold',
+      '.molecule-conversion-box_details__item span',
+      'div.molecule-conversion-box_details__item span',
+      'div[class*="conversion-box"] span[class*="small"]'
+    ];
+    
+    // Try with primary URL
+    let success = await scrapeUrl(url, allSelectors, providerId, fromCurrency, toCurrency);
     if (success) {
       return true;
     }
     
-    // If that fails, try some alternate URLs
+    // If that fails, try alternate URLs
     const alternateUrls = [
       'https://www.lemfi.com/send-from-uk-to-nigeria',
       'https://lemfi.com/send-from-uk-to-nigeria',
@@ -57,7 +79,7 @@ export async function extractLemfiRate(
     
     for (const altUrl of alternateUrls) {
       console.log(`Trying alternate URL: ${altUrl}`);
-      success = await tryFetchingRate(altUrl, selectors, providerId, fromCurrency, toCurrency);
+      success = await scrapeUrl(altUrl, allSelectors, providerId, fromCurrency, toCurrency);
       if (success) {
         return true;
       }
@@ -73,7 +95,7 @@ export async function extractLemfiRate(
 /**
  * Helper function to fetch and extract rate from a specific URL
  */
-async function tryFetchingRate(
+async function scrapeUrl(
   url: string,
   selectors: string[],
   providerId: number,
@@ -82,41 +104,16 @@ async function tryFetchingRate(
 ): Promise<boolean> {
   try {
     
-    // Get admin-configured selectors
-    let selectors = provider.scraping_selector?.split(',') || [];
+    console.log(`Using selectors: ${JSON.stringify(selectors)}`);
     
-    // Ensure we have at least the default selector
-    if (selectors.length === 0) {
-      selectors = [
-        '.molecule-conversion-box_details__item span.base-text.base-text--size-small--bold',
-        '.molecule-conversion-box_details__item span:nth-child(2)'
-      ];
-    }
-    
-    // Add additional variations of the selector to try, including the specific pattern from the screenshot
-    selectors = [
-      ...selectors,
-      'div.molecule-conversion-box__details div.molecule-conversion-box__details__item span.base-text--size-small--bold',
-      'div[class*="molecule-conversion-box"] div[class*="details"] span[class*="small--bold"]',
-      'div[class*="molecule-conversion-box"] span[class*="small--bold"]',
-      'div.molecule-conversion-box__details__item span',
-      '.molecule-conversion-box__details span',
-      'span.base-text.base-text--size-small--bold',
-      'span.base-text--size-small--bold',
-      '.base-text--size-small--bold',
-      '.molecule-conversion-box_details__item span',
-      'div.molecule-conversion-box_details__item span',
-      'div[class*="conversion-box"] span[class*="small"]'
-    ];
-    
-    console.log(`Using admin-configured selectors: ${JSON.stringify(selectors)}`);
-    
-    // Fetch the HTML content
+    // Fetch the HTML content with browser-like headers
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       },
     });
     
@@ -128,9 +125,9 @@ async function tryFetchingRate(
     const html = await response.text();
     console.log(`Retrieved HTML content (${html.length} characters) from ${url}`);
     
-    // Wait for JavaScript to finish loading dynamic content
-    console.log('Waiting 5 seconds for JavaScript to finish loading dynamic content...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Wait longer for JavaScript to finish loading dynamic content
+    console.log('Waiting 15 seconds for JavaScript to fully load dynamic content...');
+    await new Promise(resolve => setTimeout(resolve, 15000));
     
     // Parse HTML with cheerio
     const $ = cheerio.load(html);
