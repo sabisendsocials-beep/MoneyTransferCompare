@@ -112,14 +112,9 @@ const HeroSection = () => {
               
               {/* CTA Button */}
               <div className="mt-5 text-center">
-                <Link href="/compare">
+                <Link href="/results">
                   <Button 
                     className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-6 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all text-lg group"
-                    onClick={() => {
-                      // When clicked, this would perform a comparison and navigate to results page
-                      // Current implementation uses Link, but in a full implementation, 
-                      // we would send the form data to the comparison endpoint
-                    }}
                   >
                     <span className="inline-flex items-center">
                       <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
