@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getScraperStatus, resetScraperTimer } from '../api/simpleScraperStatus';
+import { getScraperStatus, resetScraperTimer, recordScraperRun } from '../services/scraperStatus';
 
 const router = Router();
 
