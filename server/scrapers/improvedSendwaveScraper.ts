@@ -182,10 +182,18 @@ export async function scrapeSendwaveImproved(): Promise<boolean> {
             // let's look specifically for numbers in the current market rate range
             // avoiding potential false matches like "2000 NGN" in table headers
             
-            // Filter out the common false positives we know about
-            const filteredNumbers = allNumbers.filter(num => 
-              num !== "1000" && num !== "2000" && num !== "10000" && num !== "20000"
-            );
+            // Filter out common false positives we know about
+            // The numbers 1000, 2000, 10000, 20000 are headers in their conversion table
+            // They are not actual exchange rates but rather the amounts being converted
+            console.log(`All numbers found in page: ${allNumbers.slice(0, 30).join(', ')}`);
+            
+            const filteredNumbers = allNumbers.filter(num => {
+              const n = parseFloat(num);
+              // Exclude common table headers and keep only numbers in valid rate range
+              return !isNaN(n) && 
+                     n !== 1000 && n !== 2000 && n !== 10000 && n !== 20000 &&
+                     n > 2100 && n < 2200; // Focus on likely exchange rate values
+            });
             
             console.log(`After filtering false positives, found ${filteredNumbers.length} potential rate numbers`);
             
@@ -213,11 +221,8 @@ export async function scrapeSendwaveImproved(): Promise<boolean> {
               return widerRangeNumbers[0];
             }
             
-            // If we still haven't found anything, use the value from your screenshot (2139.46)
-            // since the SendWave website is clearly not showing the correct rate currently
-            console.log("Website doesn't have a valid current rate - using 2139.46 from screenshot");
-            return 2139.46;
-            
+            // If we can't find a valid rate, report failure
+            console.log("Couldn't find a valid rate in the expected range - no fallback values");
             return null;
           }
         ];
