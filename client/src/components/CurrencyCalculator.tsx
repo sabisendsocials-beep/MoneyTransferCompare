@@ -17,6 +17,15 @@ const CurrencyCalculator = () => {
   const [amount, setAmount] = useState<string>("1000");
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>("GBP");
   const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
+  
+  // Type-safe setters for the select components
+  const handleSetFromCurrency = (value: string) => {
+    setFromCurrency(value as CurrencyCode);
+  };
+  
+  const handleSetToCurrency = (value: string) => {
+    setToCurrency(value as CurrencyCode);
+  };
   const [result, setResult] = useState<number | null>(null);
 
   // Sample current exchange rates (would come from API in real implementation)
@@ -61,7 +70,7 @@ const CurrencyCalculator = () => {
             <label className="text-sm text-white/80 font-medium">You Send</label>
             <Select
               value={fromCurrency}
-              onValueChange={setFromCurrency}
+              onValueChange={handleSetFromCurrency}
             >
               <SelectTrigger className="w-[110px] bg-transparent border-0 text-white">
                 <SelectValue placeholder="Currency" />
@@ -100,7 +109,7 @@ const CurrencyCalculator = () => {
             <label className="text-sm text-white/80 font-medium">They Receive</label>
             <Select
               value={toCurrency}
-              onValueChange={setToCurrency}
+              onValueChange={handleSetToCurrency}
             >
               <SelectTrigger className="w-[110px] bg-transparent border-0 text-white">
                 <SelectValue placeholder="Currency" />
