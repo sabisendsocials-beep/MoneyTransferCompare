@@ -1,108 +1,133 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowRight, Globe, LineChart, Clock, BadgeCheck, ChevronsUpDown } from "lucide-react";
+import { 
+  ArrowRightLeft, BarChart3, ShieldCheck, Compass, 
+  RefreshCw, ArrowRight, CheckCircle2
+} from "lucide-react";
 import TransferCalculator from "../components/TransferCalculator";
 
 const HeroSection = () => {
   return (
-    <section className="relative bg-white pt-12 lg:pt-20 pb-0 overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-gradient-to-b from-indigo-50 to-transparent opacity-70"></div>
-        <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-t from-green-50 to-transparent opacity-70"></div>
-        <div className="absolute inset-0 opacity-10">
-          <svg width="100%" height="100%">
-            <pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1" fill="#4f46e5" />
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#dots)" />
+    <section className="relative overflow-hidden">
+      {/* Hero background with gradient effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-purple-950">
+        <div className="absolute inset-0 opacity-30" 
+          style={{
+            backgroundImage: "radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.15) 2%, transparent 0%), radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.15) 2%, transparent 0%)",
+            backgroundSize: "100px 100px"
+          }}>
+        </div>
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M0,0 L100,0 L100,5 Q50,40 0,5 Z" fill="white" />
+            <path d="M0,95 L100,95 L100,100 Q50,60 0,100 Z" fill="white" />
+            <path d="M0,30 L100,20 L100,25 Q50,35 0,25 Z" fill="white" opacity="0.5" />
+            <path d="M0,65 L100,75 L100,80 Q50,70 0,80 Z" fill="white" opacity="0.5" />
           </svg>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="mb-12 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center bg-indigo-50 rounded-full px-3 py-1 text-sm font-medium text-indigo-700 mb-4">
-            <BadgeCheck size={14} className="mr-1"/> Verified rates from 12+ providers
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 bg-clip-text text-transparent leading-tight">
-            Compare Money Transfer Rates in Seconds
-          </h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Get the best exchange rates for your international transfers with real-time 
-            data from trusted providers and save on fees.
-          </p>
-        </div>
-
-        {/* Main calculator card */}
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden transform translate-y-0 hover:-translate-y-1 transition-all duration-300">
-            {/* Card tabs */}
-            <div className="flex border-b border-gray-100">
-              <div className="px-6 py-3 border-b-2 border-indigo-600 text-indigo-600 font-medium">Compare Rates</div>
-              <div className="px-6 py-3 text-gray-500 font-medium">View Trends</div>
-              <div className="px-6 py-3 text-gray-500 font-medium">Provider Details</div>
+      <div className="container mx-auto px-4 pt-14 pb-12 md:pt-28 md:pb-24 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-12">
+          {/* Left content */}
+          <div className="lg:w-1/2">
+            <div className="inline-flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+              <CheckCircle2 size={14} className="text-emerald-400" />
+              <span>Verified rates from trusted providers</span>
             </div>
             
-            {/* Card content */}
-            <div className="p-6">
-              <TransferCalculator onCompare={() => {}} />
-            </div>
-
-            {/* Card footer */}
-            <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
-              <div className="text-sm text-gray-500 flex items-center">
-                <Clock size={14} className="mr-1.5" />
-                <span>Rates updated every 6 hours</span>
+            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+              Find the <span className="bg-gradient-to-r from-emerald-400 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
+            </h1>
+            
+            <p className="text-lg text-blue-100 mb-8 max-w-xl">
+              Our platform compares exchange rates from 12+ trusted providers in real-time, 
+              helping you save on fees and get more value in every international transfer.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 mb-10 md:pr-8">
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <ArrowRightLeft size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">Real-time rates</p>
+                  <p className="text-sm text-blue-200">Updated every 6 hours</p>
+                </div>
               </div>
+              
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
+                  <BarChart3 size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">Historical data</p>
+                  <p className="text-sm text-blue-200">365-day analysis</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">Verified sources</p>
+                  <p className="text-sm text-blue-200">Direct from providers</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                  <Compass size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">Global coverage</p>
+                  <p className="text-sm text-blue-200">Multi-country support</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-4">
               <Link href="/compare">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-sm">
+                <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium">
                   Compare All Providers
-                  <ArrowRight size={14} className="ml-2" />
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              </Link>
+              <Link href="/trends">
+                <Button size="lg" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10">
+                  View Rate Trends
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
-
-        {/* Features grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-16 mb-16">
-          <div className="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-              <Globe className="text-indigo-600" size={24} />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Global Coverage</h3>
-            <p className="text-gray-600">Compare transfers between UK, EU, US, Nigeria, Ghana, and more countries worldwide.</p>
-          </div>
           
-          <div className="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mb-4">
-              <LineChart className="text-green-600" size={24} />
+          {/* Right content - Calculator */}
+          <div className="lg:w-1/2 w-full">
+            <div className="bg-white/10 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-white/20 shadow-[0_0_45px_rgba(8,107,230,0.15)]">
+              <h2 className="text-xl text-white font-semibold mb-6">Quick Rate Comparison</h2>
+              
+              <TransferCalculator onCompare={() => {}} />
+              
+              {/* Provider logos */}
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-blue-200">Trusted Providers</span>
+                  <span className="text-xs text-blue-300 flex items-center">
+                    <RefreshCw size={12} className="mr-1.5" />
+                    Last updated today at 10:00 UTC
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <div className="py-1.5 px-3 rounded-md text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Western Union</div>
+                  <div className="py-1.5 px-3 rounded-md text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Wise</div>
+                  <div className="py-1.5 px-3 rounded-md text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">MoneyGram</div>
+                  <div className="py-1.5 px-3 rounded-md text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">Remitly</div>
+                  <div className="py-1.5 px-3 rounded-md text-xs text-white/90 font-medium bg-gradient-to-br from-white/10 to-white/5">+8 more</div>
+                </div>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Historical Trends</h3>
-            <p className="text-gray-600">Track exchange rate movements with 365-day historical data to find the best time to send money.</p>
-          </div>
-          
-          <div className="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
-              <ChevronsUpDown className="text-purple-600" size={24} />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Fee Transparency</h3>
-            <p className="text-gray-600">See all fees and hidden costs with our comprehensive comparison to maximize your transfer amount.</p>
-          </div>
-        </div>
-
-        {/* Trusted providers */}
-        <div className="text-center mb-16">
-          <h3 className="text-gray-400 uppercase text-sm font-medium tracking-wider mb-6">Trusted Providers</h3>
-          <div className="flex flex-wrap justify-center gap-6 opacity-60">
-            <div className="text-gray-500 font-medium">Western Union</div>
-            <div className="text-gray-500 font-medium">Wise</div>
-            <div className="text-gray-500 font-medium">MoneyGram</div>
-            <div className="text-gray-500 font-medium">Remitly</div>
-            <div className="text-gray-500 font-medium">WorldRemit</div>
-            <div className="text-gray-500 font-medium">Nala</div>
-            <div className="text-gray-500 font-medium">SendWave</div>
           </div>
         </div>
       </div>
