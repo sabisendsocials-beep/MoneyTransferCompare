@@ -12,6 +12,7 @@ import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './west
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
+import { recordScraperRun, canScraperRun } from '../routes/scraperStatus';
 
 /**
  * Add the additional providers from additionalProviders.ts to the database
@@ -348,6 +349,7 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
         const canRun = canScraperRun(provider.name);
         if (!canRun) {
           console.log(`=== Skipping ${provider.name} - minimum time between runs not elapsed ===`);
+          // No need to record a run that's being skipped due to time limitations
           results.push({ provider: provider.name, success: true });
           continue; // Skip to next provider
         }
