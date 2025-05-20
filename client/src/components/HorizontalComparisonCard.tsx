@@ -47,124 +47,138 @@ export const HorizontalComparisonCard = ({
     
   // Determine if the provider has no fees
   const hasFreeTransfer = provider.fee === 0;
+
+  // Render stars based on rating
+  const renderStars = (rating: number | null | undefined) => {
+    if (!rating) return null;
+    
+    return (
+      <div className="flex items-center">
+        {[...Array(5)].map((_, i) => (
+          <Star 
+            key={i} 
+            className={`w-3.5 h-3.5 ${i < Math.floor(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+          />
+        ))}
+      </div>
+    );
+  };
   
   return (
     <div 
       className={cn(
-        "bg-white rounded-lg border shadow-sm overflow-hidden mb-3",
-        index === 0 ? "border-primary/30" : "border-gray-200"
+        "bg-white border overflow-hidden mb-3",
+        index === 0 ? "border-primary/50 shadow-md" : "border-gray-200"
       )}
     >
-      <div className="flex flex-col md:flex-row">
+      <div className="grid grid-cols-1 md:grid-cols-12 items-center">
         {/* Provider Info Column */}
         <div className={cn(
-          "p-4 flex items-center md:w-1/4 lg:w-1/5 border-b md:border-b-0 md:border-r",
+          "py-4 px-5 flex items-center md:col-span-3 border-b md:border-b-0 md:border-r relative",
           index === 0 ? "bg-primary/5" : ""
         )}>
-          {/* Rank Badge (only for mobile) */}
-          <div className="md:hidden w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2 flex-shrink-0">
-            <span className="text-xs font-medium text-gray-700">{index + 1}</span>
-          </div>
-          
-          {/* Desktop Rank Column */}
-          <div className="hidden md:flex flex-col items-center mr-3 flex-shrink-0">
-            <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-              {index === 0 ? (
-                <Check className="w-4 h-4 text-primary" />
-              ) : (
-                <span className="text-xs font-medium text-gray-700">{index + 1}</span>
-              )}
-            </div>
+          {/* Rank Badge */}
+          <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+            {index === 0 ? (
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            ) : (
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-gray-700 font-medium">{index + 1}</span>
+              </div>
+            )}
           </div>
           
           {/* Provider Logo and Name */}
-          <div className="flex items-center">
-            <div className="w-9 h-9 mr-3 flex-shrink-0">
-              {provider.providerLogo ? (
-                <img 
-                  src={provider.providerLogo} 
-                  alt={`${provider.providerName} logo`} 
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
-                  <span className="text-gray-500 font-bold">{provider.providerName.substring(0, 2)}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center mb-1">
+              <div className="w-8 h-8 mr-2 flex-shrink-0">
+                {provider.providerLogo ? (
+                  <img 
+                    src={provider.providerLogo} 
+                    alt={`${provider.providerName} logo`} 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-gray-500 font-bold text-xs">{provider.providerName.substring(0, 2)}</span>
+                  </div>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg truncate">{provider.providerName}</h3>
+            </div>
+            
+            <div className="flex items-center text-sm text-gray-600">
+              {provider.rating && (
+                <div className="flex items-center mr-3">
+                  <span className="font-medium mr-1.5 text-gray-700">{provider.rating.toFixed(1)}</span>
+                  {renderStars(provider.rating)}
+                </div>
+              )}
+              
+              {provider.transferTime && (
+                <div className="flex items-center text-xs text-gray-500">
+                  <Clock className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                  <span>{provider.transferTime}</span>
                 </div>
               )}
             </div>
             
-            <div>
-              <h3 className="font-medium">{provider.providerName}</h3>
-              {provider.rating && (
-                <div className="flex items-center text-xs text-gray-500">
-                  <Star className="w-3 h-3 mr-1 text-yellow-400 fill-yellow-400" />
-                  <span>{provider.rating.toFixed(1)}</span>
-                </div>
-              )}
-            </div>
+            {provider.comment && (
+              <div className="text-xs text-gray-500 mt-1 line-clamp-1">
+                {provider.comment}
+              </div>
+            )}
+            
+            {/* Best Provider Badge */}
+            {index === 0 && (
+              <div className="absolute top-2 right-2 text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                Best Rate
+              </div>
+            )}
           </div>
-          
-          {/* Best Provider Badge (visible only on mobile) */}
-          {index === 0 && (
-            <div className="ml-auto md:hidden text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded-sm">
-              Best
+        </div>
+        
+        {/* YOU SEND Column */}
+        <div className="p-4 flex flex-col md:col-span-2 border-b md:border-b-0 md:border-r text-center">
+          <div className="text-xs text-gray-500 mb-2 uppercase">YOU SEND</div>
+          <div className="font-semibold text-lg">
+            {formatCurrency(provider.sendAmount, fromCurrency)}
+          </div>
+          {provider.fee > 0 && (
+            <div className="text-xs text-gray-500 mt-1">
+              Fee: {formatCurrency(provider.fee, fromCurrency)}
             </div>
           )}
         </div>
         
-        {/* Amount, Rate & Results Column */}
-        <div className="p-4 flex items-center justify-between md:w-1/2 lg:w-3/5 border-b md:border-b-0 md:border-r">
-          <div className="flex flex-col items-start">
-            <div className="text-xs text-gray-500 mb-1">YOU SEND</div>
-            <div className="font-medium">
-              {formatCurrency(provider.sendAmount, fromCurrency)}
-            </div>
-            {provider.fee > 0 && (
-              <div className="text-xs text-gray-500 mt-1">
-                Fee: {formatCurrency(provider.fee, fromCurrency)}
-              </div>
-            )}
-            {provider.transferTime && (
-              <div className="flex items-center text-xs text-gray-500 mt-1">
-                <Clock className="w-3 h-3 mr-1" />
-                <span>{provider.transferTime}</span>
-              </div>
-            )}
+        {/* EXCHANGE RATE Column */}
+        <div className="p-4 flex flex-col md:col-span-3 border-b md:border-b-0 md:border-r text-center">
+          <div className="text-xs text-gray-500 mb-2 uppercase">EXCHANGE RATE</div>
+          <div className="font-semibold text-lg">
+            {formatRate(normalizedRate)}
           </div>
-          
-          <div className="flex flex-col items-start">
-            <div className="text-xs text-gray-500 mb-1">EXCHANGE RATE</div>
-            <div className="font-medium">
-              {formatRate(normalizedRate)}
-            </div>
-            {provider.rating && (
-              <div className="flex items-center text-xs text-yellow-500 mt-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star 
-                    key={i}
-                    className={`w-3 h-3 ${i < Math.floor(provider.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex flex-col items-end">
-            <div className="text-xs text-gray-500 mb-1">THEY RECEIVE</div>
-            <div className="text-xl font-bold text-primary">
-              {formatCurrency(normalizedReceivedAmount, toCurrency)}
-            </div>
-            {/* Best Rate Badge (desktop only) */}
-            {index === 0 && (
-              <div className="hidden md:block text-xs text-green-600 mt-1">
-                Best value
-              </div>
-            )}
+          <div className="text-xs text-gray-500 mt-1">
+            1 {fromCurrency} = {normalizedRate.toFixed(4)} {toCurrency}
           </div>
         </div>
         
-        {/* Action Column */}
-        <div className="p-4 flex items-center justify-center md:w-1/4 lg:w-1/5">
+        {/* THEY RECEIVE Column */}
+        <div className="p-4 flex flex-col md:col-span-2 border-b md:border-b-0 md:border-r text-center">
+          <div className="text-xs text-gray-500 mb-2 uppercase">THEY RECEIVE</div>
+          <div className="text-xl font-bold text-primary">
+            {formatCurrency(normalizedReceivedAmount, toCurrency)}
+          </div>
+          {index === 0 && (
+            <div className="text-xs text-green-600 mt-1">
+              Best value
+            </div>
+          )}
+        </div>
+        
+        {/* ACTION Column */}
+        <div className="p-4 flex items-center justify-center md:col-span-2">
           {provider.websiteUrl ? (
             <Button
               className="w-full"
