@@ -734,10 +734,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const oldRates = await storage.getLatestRates('GBP', 'NGN');
       const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
       
-      // First try the screenshot-based scraper that targets the exact HTML structure seen
+      // First try the exact scraper that targets the specific element from screenshot
+      try {
+        const { extractExactSendwaveRate } = await import('./scrapers/exactSendwaveScraper');
+        console.log('Running exact element SendWave scraper...');
+        const success = await extractExactSendwaveRate();
+        
+        if (success) {
+          // Get the latest rate to show in the response
+          const latestRates = await storage.getLatestRates('GBP', 'NGN');
+          const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
+          
+          return res.json({ 
+            success: true, 
+            message: 'SendWave rate updated successfully using exact element scraper',
+            provider: sendwave.name,
+            oldRate,
+            newRate: latestRate?.rate || 'unknown',
+            source: 'SCRAPER'
+          });
+        } else {
+          console.log('Exact element SendWave scraper did not find a valid rate');
+        }
+      } catch (error) {
+        console.log('Exact element SendWave scraper failed:', error);
+      }
+      
+      // Then try screenshot-based scraper
       try {
         const { extractSendwaveRateFromScreenshot } = await import('./scrapers/screenshotBasedSendwaveScraper');
-        console.log('Running screenshot-based SendWave scraper...');
+        console.log('Trying screenshot-based SendWave scraper...');
         const success = await extractSendwaveRateFromScreenshot();
         
         if (success) {
@@ -758,32 +784,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (error) {
         console.log('Screenshot-based SendWave scraper failed:', error);
-      }
-      
-      // Then try direct scraping with multiple attempts and longer delays
-      try {
-        const { scrapeSendwaveDirectly } = await import('./scrapers/sendwaveDirectScraper');
-        console.log('Trying direct SendWave scraper with multiple attempts...');
-        const success = await scrapeSendwaveDirectly();
-        
-        if (success) {
-          // Get the latest rate to show in the response
-          const latestRates = await storage.getLatestRates('GBP', 'NGN');
-          const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
-          
-          return res.json({ 
-            success: true, 
-            message: 'SendWave rate updated successfully using direct scraper',
-            provider: sendwave.name,
-            oldRate,
-            newRate: latestRate?.rate || 'unknown',
-            source: 'SCRAPER'
-          });
-        } else {
-          console.log('Direct SendWave scraper did not find a valid rate');
-        }
-      } catch (error) {
-        console.log('Direct SendWave scraper failed:', error);
       }
       
       // If scraping failed, report error without using hardcoded fallbacks
