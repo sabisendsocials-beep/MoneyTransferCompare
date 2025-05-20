@@ -730,10 +730,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, error: 'SendWave provider not found' });
       }
       
-      // Try the dedicated scraper first
+      // Try the enhanced scraper first (this should work more reliably)
       try {
-        const { updateSendwaveRate } = await import('./scrapers/sendwaveScraper');
-        const success = await updateSendwaveRate();
+        const { enhancedSendwaveRate } = await import('./scrapers/enhancedSendwaveScraper');
+        const success = await enhancedSendwaveRate();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -742,7 +742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using dedicated scraper',
+            message: 'SendWave rate updated successfully using enhanced scraper',
             provider: sendwave.name,
             oldRate: req.body?.oldRate || 'unknown',
             newRate: latestRate?.rate || 'unknown',
@@ -750,7 +750,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (error) {
-        console.log('SendWave dedicated scraper failed:', error);
+        console.log('Enhanced SendWave scraper failed:', error);
+        
+        // Try the original scraper as fallback
+        try {
+          const { updateSendwaveRate } = await import('./scrapers/sendwaveScraper');
+          const success = await updateSendwaveRate();
+          
+          if (success) {
+            // Get the latest rate to show in the response
+            const latestRates = await storage.getLatestRates('GBP', 'NGN');
+            const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
+            
+            return res.json({ 
+              success: true, 
+              message: 'SendWave rate updated successfully using original scraper',
+              provider: sendwave.name,
+              oldRate: req.body?.oldRate || 'unknown',
+              newRate: latestRate?.rate || 'unknown',
+              source: 'SCRAPER'
+            });
+          }
+        } catch (fallbackError) {
+          console.log('Original SendWave scraper also failed:', fallbackError);
+        }
       }
       
       // If not found or failed, extract from the screenshot value (2139.46)
