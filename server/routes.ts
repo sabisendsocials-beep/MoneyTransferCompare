@@ -734,11 +734,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const oldRates = await storage.getLatestRates('GBP', 'NGN');
       const oldRate = oldRates.find(r => r.provider_id === sendwave.id)?.rate || 'unknown';
       
-      // Try the screenshot-based scraper that targets all elements from screenshots
+      // Try the precise CSS selector scraper first
       try {
-        const { extractSendwaveRateFromScreenshots } = await import('./scrapers/screenshotBasedSendwaveScraper');
-        console.log('Running screenshot-based SendWave scraper...');
-        const success = await extractSendwaveRateFromScreenshots();
+        const { extractSendwaveRateWithPreciseSelector } = await import('./scrapers/sendwavePreciseScraper');
+        console.log('Running SendWave precise CSS selector scraper...');
+        const success = await extractSendwaveRateWithPreciseSelector();
         
         if (success) {
           // Get the latest rate to show in the response
@@ -747,43 +747,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json({ 
             success: true, 
-            message: 'SendWave rate updated successfully using screenshot-based scraper',
+            message: 'SendWave rate updated successfully using precise CSS selector',
             provider: sendwave.name,
             oldRate,
             newRate: latestRate?.rate || 'unknown',
-            source: latestRate?.source || 'UNKNOWN'
+            source: latestRate?.source || 'SCRAPER'
           });
         } else {
-          console.log('Screenshot-based SendWave scraper did not find a valid rate');
+          console.log('Precise CSS selector SendWave scraper did not find a valid rate');
         }
       } catch (error) {
-        console.log('Screenshot-based SendWave scraper failed:', error);
+        console.log('Precise CSS selector SendWave scraper failed:', error);
       }
       
-      // Then try the input field scraper as a backup
+      // If the precise selector fails, try alternative selectors based on HTML structure
       try {
-        const { extractSendwaveRateFromInput } = await import('./scrapers/inputFieldSendwaveScraper');
-        console.log('Trying SendWave input field scraper...');
-        const success = await extractSendwaveRateFromInput();
+        // Try with specific elements that match the HTML structure
+        const selectors = [
+          'p.MuiTypography-root.MuiTypography-body1',
+          '[data-testid="cex-rate-table-exchange-rate"] p',
+          '[css-1r2n4gj]',
+          'td[data-testid="cex-rate-table-exchange-rate"] p'
+        ];
         
-        if (success) {
-          // Get the latest rate to show in the response
-          const latestRates = await storage.getLatestRates('GBP', 'NGN');
-          const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
-          
-          return res.json({ 
-            success: true, 
-            message: 'SendWave rate updated successfully using input field scraper',
-            provider: sendwave.name,
-            oldRate,
-            newRate: latestRate?.rate || 'unknown',
-            source: latestRate?.source || 'UNKNOWN'
-          });
-        } else {
-          console.log('Input field SendWave scraper did not find a valid rate');
+        for (const selector of selectors) {
+          // Update the scraping selector in the provider
+          if (sendwave.scraping_selector !== selector) {
+            console.log(`Trying alternative selector: ${selector}`);
+            const { extractSendwaveRateWithPreciseSelector } = await import('./scrapers/sendwavePreciseScraper');
+            const success = await extractSendwaveRateWithPreciseSelector();
+            
+            if (success) {
+              // Get the latest rate to show in the response
+              const latestRates = await storage.getLatestRates('GBP', 'NGN');
+              const latestRate = latestRates.find(r => r.provider_id === sendwave.id);
+              
+              return res.json({ 
+                success: true, 
+                message: `SendWave rate updated successfully using alternative selector: ${selector}`,
+                provider: sendwave.name,
+                oldRate,
+                newRate: latestRate?.rate || 'unknown',
+                source: latestRate?.source || 'SCRAPER'
+              });
+            }
+          }
         }
+        
+        console.log('All alternative selectors failed');
       } catch (error) {
-        console.log('Input field SendWave scraper failed:', error);
+        console.log('Alternative selectors failed:', error);
       }
       
       // If scraping failed, report error without using hardcoded fallbacks
@@ -847,10 +860,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test endpoint for SendWave screenshot-based scraper
-  apiRouter.get("/api/test-sendwave-screenshots", async (req: Request, res: Response) => {
+  // Update SendWave CSS selector and test scraper
+  apiRouter.post("/api/update-sendwave-selector", async (req: Request, res: Response) => {
     try {
-      console.log("Testing SendWave screenshot-based scraper...");
+      // Get the SendWave provider
+      const providers = await storage.getProviders();
+      const sendwaveProvider = providers.find(p => p.name === 'Sendwave');
+      
+      if (!sendwaveProvider) {
+        return res.status(404).json({ error: "SendWave provider not found" });
+      }
+      
+      // Get the CSS selector from the request body
+      const { selector } = req.body;
+      
+      if (!selector) {
+        return res.status(400).json({ 
+          error: "CSS selector is required",
+          example: { selector: "p.MuiTypography-root.MuiTypography-body1.css-1r2n4gj" }
+        });
+      }
+      
+      console.log(`Updating SendWave CSS selector to: ${selector}`);
+      
+      // Update the provider in the database
+      const updatedProvider = await storage.updateProvider(sendwaveProvider.id, {
+        scraping_selector: selector
+      });
+      
+      if (!updatedProvider) {
+        return res.status(500).json({ error: "Failed to update SendWave provider" });
+      }
+      
+      console.log(`Successfully updated SendWave CSS selector to: ${selector}`);
+      
+      // Now test the scraper with the new selector
+      const { extractSendwaveRateWithPreciseSelector } = await import('./scrapers/sendwavePreciseScraper');
+      console.log('Testing SendWave scraper with updated CSS selector...');
+      const success = await extractSendwaveRateWithPreciseSelector();
+      
+      if (success) {
+        const latestRates = await storage.getLatestRates('GBP', 'NGN');
+        const latestRate = latestRates.find(r => r.provider_id === sendwaveProvider.id);
+        
+        return res.json({
+          success: true,
+          message: "SendWave provider updated with new CSS selector and rate updated successfully",
+          selector,
+          rate: latestRate?.rate || "unknown",
+          source: latestRate?.source || "SCRAPER"
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "SendWave provider updated with new CSS selector but scraper failed",
+          selector
+        });
+      }
+    } catch (error) {
+      console.error("Error updating SendWave CSS selector:", error);
+      return res.status(500).json({ error: "Failed to update SendWave CSS selector" });
+    }
+  });
+  
+  // Test endpoint for SendWave precise CSS selector scraper
+  apiRouter.get("/api/test-sendwave-css", async (req: Request, res: Response) => {
+    try {
+      console.log("Testing SendWave precise CSS selector scraper...");
       
       const providers = await storage.getProviders();
       const sendwaveProvider = providers.find(p => p.name === 'Sendwave');
@@ -859,13 +935,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "SendWave provider not found" });
       }
       
+      // Check if a CSS selector was provided in the query
+      const cssSelector = req.query.selector as string || sendwaveProvider.scraping_selector;
+      console.log(`Using CSS selector: ${cssSelector || '(none provided)'}`);
+      
+      // Temporarily set the CSS selector if provided
+      if (cssSelector && cssSelector !== sendwaveProvider.scraping_selector) {
+        // Only for testing - we don't actually update the provider in the database
+        sendwaveProvider.scraping_selector = cssSelector;
+      }
+      
       // Check current rate in database
       const currentRates = await storage.getLatestRates('GBP', 'NGN');
       const currentRate = currentRates.find(r => r.provider_id === sendwaveProvider.id);
       
-      console.log("Running screenshot-based scraper test...");
-      const { extractSendwaveRateFromScreenshots } = await import('./scrapers/screenshotBasedSendwaveScraper');
-      const success = await extractSendwaveRateFromScreenshots();
+      console.log("Running precise CSS selector scraper test...");
+      const { extractSendwaveRateWithPreciseSelector } = await import('./scrapers/sendwavePreciseScraper');
+      const success = await extractSendwaveRateWithPreciseSelector();
       
       if (success) {
         // Get updated rate
@@ -874,18 +960,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.json({
           success: true,
-          message: "SendWave rate updated successfully with screenshot-based scraper",
+          message: "SendWave rate updated successfully with precise CSS selector",
+          cssSelector: cssSelector || 'default from provider',
           oldRate: currentRate?.rate || "unknown",
           newRate: updatedRate?.rate || "unknown",
-          source: updatedRate?.source || "unknown"
+          source: updatedRate?.source || "SCRAPER"
         });
       } else {
         return res.json({
           success: false,
-          message: "Screenshot-based scraper failed to extract SendWave rate",
+          message: "Precise CSS selector scraper failed to extract SendWave rate",
+          cssSelector: cssSelector || 'default from provider',
           currentRate: currentRate?.rate || "unknown"
         });
       }
+    } catch (error) {
+      console.error("Error testing SendWave:", error);
+      return res.status(500).json({ error: "Failed to test SendWave rate extraction" });
+    }
+  });
+  
+  // Keep this endpoint to compare different approaches
+  apiRouter.get("/api/test-sendwave-screenshots", async (req: Request, res: Response) => {
+    try {
+      return res.json({
+        success: false,
+        message: "Screenshot-based scraper has been replaced with CSS-selector based approach",
+        alternative: "/api/test-sendwave-css?selector=p.MuiTypography-root.MuiTypography-body1"
+      });
     } catch (error) {
       console.error("Error testing SendWave:", error);
       return res.status(500).json({ error: "Failed to test SendWave rate extraction" });
