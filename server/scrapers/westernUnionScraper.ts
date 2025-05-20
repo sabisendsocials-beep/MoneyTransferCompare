@@ -82,9 +82,9 @@ async function extractWesternUnionRate(
     const html = await response.text();
     console.log(`Retrieved HTML content (${html.length} characters)`);
     
-    // Wait longer to allow for dynamic content to load in the static HTML
-    console.log('Waiting 10 seconds for dynamic content to load in static HTML...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    // Wait for dynamic content to load in the static HTML (shorter time for testing)
+    console.log('Waiting 2 seconds for dynamic content to load in static HTML...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Try multiple selectors to find the exchange rate
     const rate = await tryMultipleSelectors(html, fromCurrency, toCurrency);
@@ -276,9 +276,23 @@ function extractRateWithPattern(html: string, fromCurrency: string, toCurrency: 
       // Look for rate information with more flexible spacing
       new RegExp(`${fromCurrency}[\\s\\w]*${toCurrency}[\\s\\w]*(\\d[\\d,\\.]+)`, 'i'),
       
+      // Western Union specific patterns
+      new RegExp(`FX:\\s*1.00\\s*${fromCurrency}.*?(\\d[\\d,\\.]+)`, 'i'),
+      new RegExp(`Today.*?${fromCurrency}.*?${toCurrency}.*?(\\d[\\d,\\.]+)`, 'i'),
+      new RegExp(`Exchange Rate.*?${fromCurrency}.*?${toCurrency}.*?(\\d[\\d,\\.]+)`, 'i'),
+      
+      // Very targeted pattern for Western Union's specific format
+      /FX: 1.00 GBP = ([0-9,\.]+) NGN/i,
+      
+      // Title patterns
+      new RegExp(`${fromCurrency} to ${toCurrency} - Convert.*?(\\d[\\d,\\.]+)`, 'i'),
+      
       // Very generic pattern for any number in the right range
       // (use carefully, last resort)
-      /(\d[\d,\.]{3,})(?=[^<]*?NGN)/i
+      /(\d[\d,\.]{3,})(?=[^<]*?NGN)/i,
+      
+      // Western Union title tag pattern
+      /<title>.*?${fromCurrency} to ${toCurrency}.*?([0-9,\.]+).*?<\/title>/i
     ];
     
     // Try each pattern
