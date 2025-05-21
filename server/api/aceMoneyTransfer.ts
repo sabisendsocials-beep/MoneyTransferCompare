@@ -3,7 +3,7 @@
  * 
  * This file provides direct API access to test and update ACE Money Transfer rates
  */
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, json } from 'express';
 import { storage } from '../storage';
 import { updateAceMoneyTransferRate } from '../scrapers/aceMoneyTransferScraper';
 import { db } from '../db';
@@ -13,6 +13,9 @@ import { subDays, format } from 'date-fns';
 
 // Create router
 const aceRouter = Router();
+
+// Use JSON middleware
+aceRouter.use(json());
 
 /**
  * Get latest historical rate for a currency pair

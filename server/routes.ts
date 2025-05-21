@@ -16,6 +16,7 @@ import providerApiRouter from "./routes/providerApi";
 import { lemfiRouter } from "./routes/lemfiRoutes";
 import scraperStatusRouter from "./routes/scraperStatus";
 import aceRouter from "./routes/aceMoneyTransferRoutes";
+import testRouter from './api/aceRateTest';
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -39,6 +40,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register ACE Money Transfer routes
   app.use('/api/ace', aceRouter);
+  
+  // Register ACE rate test routes
+  app.use('/api/test', testRouter);
   
   // Direct verification endpoint
   apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {
