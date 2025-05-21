@@ -15,6 +15,7 @@ import dataSourceRouter from "./routes/dataSourceRouter";
 import providerApiRouter from "./routes/providerApi";
 import { lemfiRouter } from "./routes/lemfiRoutes";
 import scraperStatusRouter from "./routes/scraperStatus";
+import aceRouter from "./routes/aceMoneyTransferRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -35,6 +36,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register scraper status routes
   app.use('/api/scrapers', scraperStatusRouter);
+  
+  // Register ACE Money Transfer routes
+  app.use('/api/ace', aceRouter);
   
   // Direct verification endpoint
   apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {
