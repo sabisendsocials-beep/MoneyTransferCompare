@@ -60,12 +60,15 @@ function Router() {
 function App() {
   // Initialize Google Analytics when app loads
   useEffect(() => {
-    // Verify required environment variable is present
-    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
-      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+    // Google Analytics is already initialized via the HTML script tag
+    // This is just for debugging and to ensure compatibility with our tracking functions
+    console.log('Google Analytics verification - Tag ID: G-53RE6BJB46');
+    
+    // Check if gtag is available (should be from the HTML script)
+    if (typeof window !== 'undefined' && typeof window.gtag !== 'function') {
+      console.warn('Warning: Google Analytics gtag function not found');
     } else {
-      console.log('Initializing Google Analytics...');
-      initGA();
+      console.log('Google Analytics successfully detected');
     }
   }, []);
 
