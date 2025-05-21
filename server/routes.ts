@@ -372,74 +372,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get best rates for the calculator
+  // Get best rates for the calculator (using same logic as results page)
   apiRouter.get("/api/best-rates", async (req: Request, res: Response) => {
     try {
-      // Get the most recent rates for all supported currency pairs
-      const gbpNgnRates = await storage.getLatestRates("GBP", "NGN");
-      const gbpGhsRates = await storage.getLatestRates("GBP", "GHS");
-      const eurNgnRates = await storage.getLatestRates("EUR", "NGN");
-      const eurGhsRates = await storage.getLatestRates("EUR", "GHS");
-      const usdNgnRates = await storage.getLatestRates("USD", "NGN");
-      const usdGhsRates = await storage.getLatestRates("USD", "GHS");
+      // Get all active providers from the database
+      const providers = await storage.getActiveProviders();
       
-      // Format the response with the best rate for each pair
-      const bestRates = [
-        {
-          fromCurrency: "GBP",
-          toCurrency: "NGN",
-          rate: gbpNgnRates.length > 0 ? Math.max(...gbpNgnRates.map(r => r.rate)) : 2189.17,
-          timestamp: gbpNgnRates.length > 0 ? 
-            gbpNgnRates.reduce((latest, rate) => 
-              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-            ).timestamp : new Date().toISOString()
-        },
-        {
-          fromCurrency: "GBP",
-          toCurrency: "GHS",
-          rate: gbpGhsRates.length > 0 ? Math.max(...gbpGhsRates.map(r => r.rate)) : 16.85,
-          timestamp: gbpGhsRates.length > 0 ? 
-            gbpGhsRates.reduce((latest, rate) => 
-              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-            ).timestamp : new Date().toISOString()
-        },
-        {
-          fromCurrency: "EUR",
-          toCurrency: "NGN",
-          rate: eurNgnRates.length > 0 ? Math.max(...eurNgnRates.map(r => r.rate)) : 1354.45,
-          timestamp: eurNgnRates.length > 0 ? 
-            eurNgnRates.reduce((latest, rate) => 
-              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-            ).timestamp : new Date().toISOString()
-        },
-        {
-          fromCurrency: "EUR",
-          toCurrency: "GHS",
-          rate: eurGhsRates.length > 0 ? Math.max(...eurGhsRates.map(r => r.rate)) : 14.37,
-          timestamp: eurGhsRates.length > 0 ? 
-            eurGhsRates.reduce((latest, rate) => 
-              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-            ).timestamp : new Date().toISOString()
-        },
-        {
-          fromCurrency: "USD",
-          toCurrency: "NGN",
-          rate: usdNgnRates.length > 0 ? Math.max(...usdNgnRates.map(r => r.rate)) : 1456.78,
-          timestamp: usdNgnRates.length > 0 ? 
-            usdNgnRates.reduce((latest, rate) => 
-              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-            ).timestamp : new Date().toISOString()
-        },
-        {
-          fromCurrency: "USD",
-          toCurrency: "GHS",
-          rate: usdGhsRates.length > 0 ? Math.max(...usdGhsRates.map(r => r.rate)) : 15.40,
-          timestamp: usdGhsRates.length > 0 ? 
-            usdGhsRates.reduce((latest, rate) => 
-              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-            ).timestamp : new Date().toISOString()
-        }
+      // Define currency pairs we need rates for
+      const currencyPairs = [
+        { from: "GBP", to: "NGN" },
+        { from: "GBP", to: "GHS" },
+        { from: "EUR", to: "NGN" },
+        { from: "EUR", to: "GHS" },
+        { from: "USD", to: "NGN" },
+        { from: "USD", to: "GHS" }
       ];
+      
+      // Set realistic rate ranges to filter out obviously incorrect values
+      const rateRanges = {
+        "GBP-NGN": { min: 1800, max: 2500 },
+        "GBP-GHS": { min: 14, max: 20 },
+        "EUR-NGN": { min: 1200, max: 1600 },
+        "EUR-GHS": { min: 12, max: 18 },
+        "USD-NGN": { min: 1000, max: 1600 },
+        "USD-GHS": { min: 12, max: 18 }
+      };
+      
+      // Default rates to use if no valid rates are found
+      const defaultRates = {
+        "GBP-NGN": 2189.17,
+        "GBP-GHS": 16.85,
+        "EUR-NGN": 1354.45,
+        "EUR-GHS": 14.37,
+        "USD-NGN": 1456.78,
+        "USD-GHS": 15.40
+      };
+      
+      // Process each currency pair to get the best rate
+      const bestRates = [];
+      
+      for (const pair of currencyPairs) {
+        // Get the latest rates for this currency pair
+        const rates = await storage.getLatestRates(pair.from, pair.to);
+        
+        // Skip if no rates found
+        if (!rates || rates.length === 0) {
+          const pairKey = `${pair.from}-${pair.to}` as keyof typeof defaultRates;
+          bestRates.push({
+            fromCurrency: pair.from,
+            toCurrency: pair.to,
+            rate: defaultRates[pairKey],
+            timestamp: new Date().toISOString()
+          });
+          continue;
+        }
+        
+        // Get the range for this currency pair
+        const pairKey = `${pair.from}-${pair.to}` as keyof typeof rateRanges;
+        const range = rateRanges[pairKey];
+        
+        // Filter rates by realistic values and active providers
+        const validRates = rates.filter(rate => {
+          // Check if rate is within realistic range
+          if (range && (rate.rate < range.min || rate.rate > range.max)) {
+            return false;
+          }
+          
+          // Check if provider is active
+          const provider = providers.find(p => p.id === rate.provider_id);
+          return provider && provider.active;
+        });
+        
+        if (validRates.length === 0) {
+          // Use default rate if no valid rates found
+          const pairKey = `${pair.from}-${pair.to}` as keyof typeof defaultRates;
+          bestRates.push({
+            fromCurrency: pair.from,
+            toCurrency: pair.to,
+            rate: defaultRates[pairKey],
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          // Find the most recent valid rate
+          const mostRecent = validRates.reduce((latest, rate) => 
+            new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+          );
+          
+          // Add to the result
+          bestRates.push({
+            fromCurrency: pair.from,
+            toCurrency: pair.to,
+            rate: mostRecent.rate,
+            timestamp: mostRecent.timestamp
+          });
+        }
+      }
       
       res.json(bestRates);
     } catch (error) {
