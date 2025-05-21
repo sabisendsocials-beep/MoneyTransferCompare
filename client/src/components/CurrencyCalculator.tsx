@@ -11,6 +11,11 @@ import {
 import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { RateStats, ExchangeRate } from "@shared/schema";
+import { 
+  trackCurrencyChange,
+  trackAmountChange,
+  trackComparisonSearch 
+} from "./AnalyticsTracker";
 
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
@@ -107,13 +112,19 @@ const CurrencyCalculator = () => {
   
   // Type-safe setters for the select components
   const handleSetFromCurrency = (value: string) => {
-    setFromCurrency(value as CurrencyCode);
+    const newCurrency = value as CurrencyCode;
+    setFromCurrency(newCurrency);
     calculateRate();
+    // Track when user changes the currency selection
+    trackCurrencyChange(newCurrency, toCurrency);
   };
   
   const handleSetToCurrency = (value: string) => {
-    setToCurrency(value as CurrencyCode);
+    const newCurrency = value as CurrencyCode;
+    setToCurrency(newCurrency);
     calculateRate();
+    // Track when user changes the currency selection
+    trackCurrencyChange(fromCurrency, newCurrency);
   };
 
   useEffect(() => {

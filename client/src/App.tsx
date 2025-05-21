@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,8 +16,26 @@ import AdminPage from "@/pages/AdminPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { useEffect, useRef } from "react";
+import { initGA, trackPageView } from "./lib/analytics";
+
+// Analytics hook to track page views
+function useAnalytics() {
+  const [location] = useLocation();
+  const prevLocationRef = useRef(location);
+  
+  useEffect(() => {
+    if (location !== prevLocationRef.current) {
+      trackPageView(location);
+      prevLocationRef.current = location;
+    }
+  }, [location]);
+}
 
 function Router() {
+  // Track page views when routes change
+  useAnalytics();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -40,6 +58,17 @@ function Router() {
 }
 
 function App() {
+  // Initialize Google Analytics when app loads
+  useEffect(() => {
+    // Verify required environment variable is present
+    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+    } else {
+      console.log('Initializing Google Analytics...');
+      initGA();
+    }
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="transfercompare-theme">
       <QueryClientProvider client={queryClient}>
