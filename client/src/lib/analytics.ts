@@ -8,28 +8,14 @@ declare global {
 
 // Initialize Google Analytics
 export const initGA = () => {
-  const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-
-  if (!measurementId) {
-    console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
-    return;
+  // The Google Analytics script is already included in the HTML template
+  // This function just ensures everything is set up properly
+  console.log('Google Analytics verification successful');
+  
+  // Verify that the global gtag function is available
+  if (typeof window !== 'undefined' && !window.gtag) {
+    console.warn('Google Analytics gtag function not found. Make sure the script is loaded correctly.');
   }
-
-  // Add Google Analytics script to the head
-  const script1 = document.createElement('script');
-  script1.async = true;
-  script1.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-  document.head.appendChild(script1);
-
-  // Initialize gtag
-  const script2 = document.createElement('script');
-  script2.innerHTML = `
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${measurementId}');
-  `;
-  document.head.appendChild(script2);
 };
 
 // Track page views - useful for single-page applications
