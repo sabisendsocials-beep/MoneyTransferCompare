@@ -6,7 +6,9 @@ import {
   News, InsertNews,
   TransferRequest, TransferResult,
   RateTrend, RateTrendResponse, RateStats,
-  InsertRateTrend
+  InsertRateTrend,
+  ContactSubmission, InsertContactSubmission,
+  contactSubmissions
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -667,5 +669,34 @@ export class DatabaseStorage implements IStorage {
         )
       );
     console.log(`Deleted exchange rates for provider ${providerId} (${fromCurrency} → ${toCurrency})`);
+  }
+
+  // Contact form submission methods
+  async createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission> {
+    const [newSubmission] = await db.insert(schema.contactSubmissions)
+      .values(submission)
+      .returning();
+    
+    console.log(`New contact submission created: ID #${newSubmission.id} from ${submission.name}`);
+    return newSubmission;
+  }
+  
+  async getContactSubmissions(limit: number = 100): Promise<ContactSubmission[]> {
+    return await db.select()
+      .from(schema.contactSubmissions)
+      .orderBy(desc(schema.contactSubmissions.created_at))
+      .limit(limit);
+  }
+  
+  async updateContactSubmissionStatus(id: number, status: string): Promise<ContactSubmission | undefined> {
+    const [updatedSubmission] = await db.update(schema.contactSubmissions)
+      .set({ 
+        status, 
+        updated_at: new Date() 
+      })
+      .where(eq(schema.contactSubmissions.id, id))
+      .returning();
+    
+    return updatedSubmission;
   }
 }
