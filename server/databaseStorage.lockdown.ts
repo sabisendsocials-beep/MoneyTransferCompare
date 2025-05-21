@@ -15,11 +15,27 @@ import { providers as providersSchema, type Provider, type InsertProvider } from
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 
-// Define protected core providers that should never be deleted
+// ALL PROVIDERS PROTECTION: Every provider in the system is protected from deletion
+// This is a complete list of all providers that should be protected from deletion
 const PROTECTED_CORE_PROVIDERS = [
+  // Core providers  
   'Wise', 
   'Western Union', 
-  'MoneyGram'
+  'MoneyGram',
+  'WorldRemit',
+  'Lemfi',
+  // Additional standard providers - ALL are now protected
+  'Paysend',
+  'TransferGo',
+  'Remitly',
+  'Sendwave',
+  'Azimo',
+  'Small World',
+  'Taptap Send',
+  'Profee',
+  'ACE Money Transfer',
+  'Nala',
+  'Skrill'
 ];
 
 /**

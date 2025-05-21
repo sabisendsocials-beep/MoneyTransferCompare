@@ -239,7 +239,7 @@ export async function restoreAllProviders(): Promise<void> {
 }
 
 // If executed directly as a script
-if (require.main === module) {
+if (import.meta.url.endsWith('restoreAllProviders.ts')) {
   restoreAllProviders().then(() => {
     console.log('Provider restoration complete');
     process.exit(0);
