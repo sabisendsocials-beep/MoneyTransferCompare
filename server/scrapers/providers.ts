@@ -419,8 +419,8 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             console.log('=== Using dedicated Profee scraper with admin-configured URL and selectors ONLY... ===');
             
             // Extract URL and selectors from provider config
-            const profeeUrl = provider.url;
-            const profeeSelector = provider.rateSelector;
+            const profeeUrl = provider.scraping_url;
+            const profeeSelector = provider.scraping_selector;
             
             if (!profeeUrl || !profeeSelector) {
               console.log('❌ Missing URL or selector for Profee in admin config. Cannot continue.');
