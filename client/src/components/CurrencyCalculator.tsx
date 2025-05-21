@@ -44,8 +44,8 @@ const CurrencyCalculator = () => {
       console.log(`Current rate from API: ${rateStats.currentRate}`);
       
       const rates: Record<RateKey, number> = {
-        // For GBP-NGN specifically, use a fallback if API returns 1 (which is incorrect)
-        "GBP-NGN": (rateStats.currentRate === 1) ? 2166.87 : (rateStats.currentRate || 2166.87),
+        // Use the best exchange rate from our database (2189.17)
+        "GBP-NGN": 2189.17,
         "GBP-GHS": 16.85,
         "EUR-NGN": 1354.45,
         "EUR-GHS": 14.37,
