@@ -5,7 +5,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { storage } from '../storage';
-import { updateAceMoneyTransferRate } from '../scrapers/aceMoneyTransferScraper';
+import { scrapeAceMoneyTransfer } from '../scrapers/aceMoneyTransferDirectScraper';
 import { updateAceMoneyTransferMarketRates } from '../scrapers/aceMoneyTransferMarketRate';
 
 // Create router
@@ -42,8 +42,8 @@ aceRouter.post("/test-ace-scraper", async (req: Request, res: Response) => {
     console.log(`Using admin-configured URL for ACE Money Transfer: ${aceUrl}`);
     console.log(`Using CSS selector: ${aceSelector}`);
     
-    // Run the scraper
-    const success = await updateAceMoneyTransferRate(
+    // Run the direct scraper (no fallbacks)
+    const success = await scrapeAceMoneyTransfer(
       aceUrl,
       aceSelector,
       aceProvider.id,
@@ -90,56 +90,50 @@ aceRouter.post("/update-ace-rate", async (req: Request, res: Response) => {
       });
     }
     
-    // First try direct scraping
-    let success = false;
+    // Direct scraping only - no fallbacks
+    console.log("Using direct scraping only - no fallbacks");
     
-    try {
-      console.log("Attempting direct scraping first...");
-      
-      // Get the admin-configured URL and selector
-      const aceUrl = aceProvider.scraping_url;
-      // Use the provider's selector if available, otherwise use our default from the screenshot
-      const aceSelector = aceProvider.scraping_selector || 'span.color-000.lt-61C';
-      
-      if (aceUrl) {
-        success = await updateAceMoneyTransferRate(
-          aceUrl,
-          aceSelector,
-          aceProvider.id,
-          'GBP',
-          'NGN'
-        );
-      }
-    } catch (scrapingError) {
-      console.error("Error during direct scraping:", scrapingError);
-      success = false;
+    // Get the admin-configured URL and selector
+    const aceUrl = aceProvider.scraping_url;
+    // Use the provider's selector if available, otherwise use our default from the screenshot
+    const aceSelector = aceProvider.scraping_selector || 'span.color-000.lt-61C';
+    
+    if (!aceUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "ACE Money Transfer provider missing required URL in admin config"
+      });
     }
     
-    // If direct scraping failed, use market-based approach
-    if (!success) {
-      console.log("Direct scraping failed, using market-based approach...");
-      
-      // Run the market-based rate update
-      success = await updateAceMoneyTransferMarketRates(aceProvider.id);
+    try {
+      // Run the direct scraper (no fallbacks)
+      const success = await scrapeAceMoneyTransfer(
+        aceUrl,
+        aceSelector,
+        aceProvider.id,
+        'GBP',
+        'NGN'
+      );
       
       if (success) {
         res.json({
           success: true,
-          message: "ACE Money Transfer rates successfully updated using market-based approach",
-          method: "MARKET_BASED"
+          message: "ACE Money Transfer rate successfully updated using direct scraping",
+          method: "DIRECT_SCRAPING"
         });
       } else {
-        res.status(500).json({
+        res.status(404).json({
           success: false,
-          message: "ACE Money Transfer rate update failed with both methods",
-          method: "DIRECT_AND_MARKET_BASED"
+          message: "ACE Money Transfer rate could not be found on the website",
+          method: "DIRECT_SCRAPING" 
         });
       }
-    } else {
-      res.json({
-        success: true,
-        message: "ACE Money Transfer rate successfully updated using direct scraping",
-        method: "DIRECT_SCRAPING"
+    } catch (error) {
+      console.error("Error in direct scraping:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error during ACE Money Transfer scraping",
+        error: String(error)
       });
     }
   } catch (error) {
