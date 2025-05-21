@@ -313,7 +313,7 @@ const CurrencyCalculator = () => {
         </p>
         {lastUpdated && (
           <div className="flex items-center justify-center mt-1 text-xs text-blue-200">
-            <RefreshCw size={12} className="mr-1.5 text-emerald-400" /> 
+            <RefreshCcw size={12} className="mr-1.5 text-emerald-400" /> 
             <span>Updated {new Date(lastUpdated).toLocaleDateString()} at <span className="text-emerald-400 font-medium">{new Date(lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></span>
           </div>
         )}
