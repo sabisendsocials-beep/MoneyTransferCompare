@@ -34,13 +34,24 @@ const CurrencyCalculator = () => {
   const [result, setResult] = useState<number | null>(null);
   const [exchangeRates, setExchangeRates] = useState<Record<RateKey, number>>({} as Record<RateKey, number>);
   
-  // Initialize with the hardcoded best rates directly
+  // Initialize with the hardcoded best rates directly and calculate immediately
   useEffect(() => {
     // Set exchange rates directly from our database query results
     setExchangeRates(BEST_RATES as Record<RateKey, number>);
     
-    // Calculate the rate once exchange rates are loaded
-    calculateRate();
+    // Set a default amount of 100
+    setAmount("100");
+    
+    // Run the calculation right away with a slight delay to ensure rates are loaded
+    setTimeout(() => {
+      const key = `${fromCurrency}-${toCurrency}` as RateKey;
+      const rate = BEST_RATES[key];
+      
+      if (rate) {
+        // Calculate for 100 GBP to NGN by default (100 * 2189.17)
+        setResult(100 * rate);
+      }
+    }, 100);
   }, []);
   
   // Format input with commas
