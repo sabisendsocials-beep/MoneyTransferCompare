@@ -513,6 +513,7 @@ export class DatabaseStorage implements IStorage {
       
       // Return empty stats on error
       return {
+        currentRate: null,
         thirtyDayHigh: null,
         thirtyDayHighDate: null,
         thirtyDayLow: null,

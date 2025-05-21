@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { RateStats } from "@shared/schema";
 
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
@@ -24,7 +25,7 @@ const CurrencyCalculator = () => {
   const [exchangeRates, setExchangeRates] = useState<Record<RateKey, number>>({} as Record<RateKey, number>);
   
   // Fetch the latest exchange rates from the API
-  const { data: rateStats, isLoading: isLoadingRates } = useQuery({ 
+  const { data: rateStats, isLoading: isLoadingRates } = useQuery<RateStats>({ 
     queryKey: ['/api/rate-stats'],
     staleTime: 60 * 60 * 1000, // 1 hour
   });
@@ -33,6 +34,7 @@ const CurrencyCalculator = () => {
     // Update exchange rates when stats are loaded
     if (rateStats) {
       const rates: Record<RateKey, number> = {
+        // Use the real current rate from API data or fallback if not available
         "GBP-NGN": rateStats.currentRate || 2166.87,
         "GBP-GHS": 16.85,
         "EUR-NGN": 1354.45,
@@ -42,6 +44,8 @@ const CurrencyCalculator = () => {
       } as Record<RateKey, number>;
       
       setExchangeRates(rates);
+      // Calculate the rate once exchange rates are loaded
+      calculateRate();
     }
   }, [rateStats]);
   

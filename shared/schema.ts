@@ -181,6 +181,7 @@ export type RateTrendResponse = z.infer<typeof rateTrendSchema>;
 
 // Rate statistics schema
 export const rateStatsSchema = z.object({
+  currentRate: z.number().nullable(),
   thirtyDayHigh: z.number().nullable(),
   thirtyDayHighDate: z.string().nullable(),
   thirtyDayLow: z.number().nullable(), 
