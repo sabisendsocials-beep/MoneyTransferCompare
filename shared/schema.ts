@@ -194,3 +194,33 @@ export const rateStatsSchema = z.object({
 });
 
 export type RateStats = z.infer<typeof rateStatsSchema>;
+
+// Contact Submissions schema - for storing user feedback and feature requests
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  topic: text("topic").notNull(), // e.g., 'feature_request', 'feedback', 'bug_report', 'support'
+  message: text("message").notNull(),
+  status: text("status").default('new').notNull(), // e.g., 'new', 'in_progress', 'completed', 'spam'
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertContactSubmissionSchema = createInsertSchema(contactSubmissions).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  status: true
+});
+
+export type InsertContactSubmission = z.infer<typeof insertContactSubmissionSchema>;
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+
+// Contact form validation schema for frontend
+export const contactFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  topic: z.string().min(1, { message: "Please select a topic" }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters" }).max(1000, { message: "Message cannot exceed 1000 characters" }),
+});

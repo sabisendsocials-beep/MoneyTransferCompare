@@ -442,6 +442,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Contact form submission endpoint
+  apiRouter.post("/api/contact", async (req: Request, res: Response) => {
+    try {
+      // Validate the request data using our schema
+      const { name, email, topic, message } = req.body;
+      
+      if (!name || !email || !topic || !message) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "All fields are required" 
+        });
+      }
+      
+      // Store the submission in the database
+      const submission = await storage.createContactSubmission({
+        name,
+        email,
+        topic,
+        message
+      });
+      
+      // Success response
+      return res.status(201).json({
+        success: true,
+        message: "Your feedback has been received. Thank you!",
+        submissionId: submission.id
+      });
+    } catch (error) {
+      console.error("Error processing contact form submission:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to process your submission. Please try again later." 
+      });
+    }
+  });
+  
   // Get rate statistics
   apiRouter.get("/api/rate-stats", async (req: Request, res: Response) => {
     try {
