@@ -16,6 +16,7 @@ import providerApiRouter from "./routes/providerApi";
 import { lemfiRouter } from "./routes/lemfiRoutes";
 import scraperStatusRouter from "./routes/scraperStatus";
 import aceRouter from "./routes/aceMoneyTransferRoutes";
+import afriexappRouter from "./routes/afriexappRoutes";
 import testRouter from './api/aceRateTest';
 
 
@@ -40,6 +41,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register ACE Money Transfer routes
   app.use('/api/ace', aceRouter);
+  
+  // Register Afriexapp routes
+  app.use('/api/afriexapp', afriexappRouter);
   
   // Register ACE rate test routes
   app.use('/api/test', testRouter);
