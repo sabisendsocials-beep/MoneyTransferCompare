@@ -5,7 +5,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { storage } from '../storage';
-import { scrapeAceMoneyTransfer } from '../scrapers/aceMoneyTransferDirectScraper';
+import { getAceMoneyTransferRateDirectOnly } from '../scrapers/aceMoneyTransferCustomPage';
 import { updateAceMoneyTransferMarketRates } from '../scrapers/aceMoneyTransferMarketRate';
 
 // Create router
@@ -43,9 +43,7 @@ aceRouter.post("/test-ace-scraper", async (req: Request, res: Response) => {
     console.log(`Using CSS selector: ${aceSelector}`);
     
     // Run the direct scraper (no fallbacks)
-    const success = await scrapeAceMoneyTransfer(
-      aceUrl,
-      aceSelector,
+    const success = await getAceMoneyTransferRateDirectOnly(
       aceProvider.id,
       'GBP',
       'NGN'
@@ -107,9 +105,7 @@ aceRouter.post("/update-ace-rate", async (req: Request, res: Response) => {
     
     try {
       // Run the direct scraper (no fallbacks)
-      const success = await scrapeAceMoneyTransfer(
-        aceUrl,
-        aceSelector,
+      const success = await getAceMoneyTransferRateDirectOnly(
         aceProvider.id,
         'GBP',
         'NGN'
