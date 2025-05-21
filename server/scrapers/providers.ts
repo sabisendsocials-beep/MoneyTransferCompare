@@ -348,9 +348,9 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
         // Will implement time-based limitations more carefully in a future update
         console.log(`Processing ${provider.name} with normal scraping flow`);
         
-        // Skip providers that are configured to use API-only collection
-        if (provider.preferred_collection === 'API') {
-          console.log(`=== Skipping ${provider.name} - configured for API-only collection ===`);
+        // Skip providers that are configured to use API-only collection or Manual updates
+        if (provider.preferred_collection === 'API' || provider.preferred_collection === 'MANUAL') {
+          console.log(`=== Skipping ${provider.name} - configured for ${provider.preferred_collection} collection ===`);
           // Status tracking will be implemented separately
           results.push({ provider: provider.name, success: true });
           continue; // Skip to next provider
