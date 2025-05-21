@@ -133,9 +133,13 @@ testRouter.get('/test-exchange-rates', async (_req: Request, res: Response) => {
     
     // Use direct database query instead of storage method
 const rates = await db.select()
-  .from(storage.tables.exchangeRates)
-  .where(eq(storage.tables.exchangeRates.provider_id, aceProvider.id))
-  .orderBy(sql`timestamp DESC`);
+  .from(rateTrends)
+  .where(and(
+    eq(rateTrends.from_currency, 'GBP'),
+    eq(rateTrends.to_currency, 'NGN')
+  ))
+  .orderBy(sql`date DESC`)
+  .limit(5);
     
     return res.json({
       success: true,
