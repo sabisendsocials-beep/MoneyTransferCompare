@@ -86,10 +86,10 @@ const Footer = () => {
                   <circle cx="12" cy="12" r="10"></circle>
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold">TransferCompare</h3>
+              <h3 className="text-lg font-semibold">SabiSend</h3>
             </div>
             <p className="text-gray-400 text-sm mb-4">
-              We help you find the best international money transfer options with real-time comparisons of rates, fees, and delivery times.
+              SabiSend helps you find the best international money transfer options with real-time comparisons of rates, fees, and delivery times.
             </p>
             <div className="flex space-x-4 mt-4">
               <a href="#" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">

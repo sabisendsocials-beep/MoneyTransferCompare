@@ -48,7 +48,7 @@ const Header = () => {
               <circle cx="12" cy="12" r="10"></circle>
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white">TransferCompare</h1>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white">SabiSend</h1>
         </div>
         
         <nav className="hidden md:flex space-x-6">
