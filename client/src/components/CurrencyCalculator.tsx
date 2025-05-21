@@ -267,9 +267,6 @@ const CurrencyCalculator = () => {
             )}
           </span>
         </p>
-        <p className="text-xs text-blue-300/80 mt-1">
-          Updated today at {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-        </p>
       </div>
     </div>
   );
