@@ -84,11 +84,22 @@ const ContactUs = () => {
     setSubmitting(true);
     
     try {
-      // In a real implementation, you would send this data to your backend
-      // Simulating API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Submit form data to our API endpoint
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
       
-      console.log("Feedback submitted:", data);
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      console.log("Feedback submitted successfully:", result);
       setSubmitted(true);
       
       toast({
