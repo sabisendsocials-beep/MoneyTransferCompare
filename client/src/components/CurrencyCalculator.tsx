@@ -12,10 +12,10 @@ import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { RateStats, ExchangeRate } from "@shared/schema";
 import { 
-  trackCurrencyChange,
-  trackAmountChange,
-  trackComparisonSearch 
-} from "./AnalyticsTracker";
+  trackCurrencySelection,
+  trackCalculatorUsage,
+  trackFeatureUsage
+} from "./analytics/EventTracking";
 
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
@@ -116,7 +116,7 @@ const CurrencyCalculator = () => {
     setFromCurrency(newCurrency);
     calculateRate();
     // Track when user changes the currency selection
-    trackCurrencyChange(newCurrency, toCurrency);
+    trackCurrencySelection(newCurrency, toCurrency, 'calculator');
   };
   
   const handleSetToCurrency = (value: string) => {
@@ -124,7 +124,7 @@ const CurrencyCalculator = () => {
     setToCurrency(newCurrency);
     calculateRate();
     // Track when user changes the currency selection
-    trackCurrencyChange(fromCurrency, newCurrency);
+    trackCurrencySelection(fromCurrency, newCurrency, 'calculator');
   };
 
   useEffect(() => {
@@ -147,6 +147,9 @@ const CurrencyCalculator = () => {
           // For 100,000 NGN with rate of 2166.87, it should be 100,000 / 2166.87 = 46.15
           setResult(numericAmount / rate);
         }
+        
+        // Track calculator usage in analytics
+        trackCalculatorUsage(fromCurrency, toCurrency, numericAmount);
       }
     }
   };
@@ -166,6 +169,9 @@ const CurrencyCalculator = () => {
     // Switch the calculation mode
     const newMode = calculationMode === "send" ? "receive" : "send";
     setCalculationMode(newMode);
+    
+    // Track this feature usage in analytics
+    trackFeatureUsage('calculator_mode_toggle', `${calculationMode}_to_${newMode}`);
     
     // For simple toggle, just swap input and output
     if (calculationMode === "send") {
