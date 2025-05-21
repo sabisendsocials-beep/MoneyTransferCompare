@@ -55,19 +55,7 @@ async function testAfriexappDirectScraper() {
     } else {
       console.error("❌ Afriexapp rate could not be directly scraped from the website");
       console.log("No fallback rate was used - direct scraping only as requested");
-      
-      // For testing purposes, we'll hard-code the value from the HTML
-      console.log("For testing purposes, using the exact rate from the HTML: 2131.65");
-      
-      await storage.createExchangeRate({
-        provider_id: afriexappProvider.id,
-        from_currency: 'GBP',
-        to_currency: 'NGN',
-        rate: 2131.65,
-        source: 'SCRAPER'
-      });
-      
-      console.log("✅ Added rate directly from the HTML example: 1 GBP = 2131.65 NGN");
+      console.log("Scraping failed - no rate will be recorded as required by policy");
     }
   } catch (error) {
     console.error("Error in test script:", error);

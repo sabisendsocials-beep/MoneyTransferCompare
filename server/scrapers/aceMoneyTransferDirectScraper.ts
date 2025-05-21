@@ -71,35 +71,11 @@ export async function scrapeAceMoneyTransfer(
       const text = $(el).text().trim();
       console.log(`Element ${i+1} text: "${text}"`);
       
-      // Check if this text contains what looks like an exchange rate
+      // Accept any numeric value without range assumptions
       if (/\b\d+(\.\d+)?\b/.test(text)) {
         console.log(`Element ${i+1} contains numeric value: ${text}`);
-        
-        // For GBP to NGN, rates are typically around 2100-2200
-        if (fromCurrency === 'GBP' && toCurrency === 'NGN' && /\b2\d{3}(\.\d+)?\b/.test(text)) {
-          rateText = text;
-          console.log(`Found rate text for ${fromCurrency}-${toCurrency}: ${rateText}`);
-        }
-        // For EUR to NGN, rates are typically around 1800-1900
-        else if (fromCurrency === 'EUR' && toCurrency === 'NGN' && /\b1[78]\d{2}(\.\d+)?\b/.test(text)) {
-          rateText = text;
-          console.log(`Found rate text for ${fromCurrency}-${toCurrency}: ${rateText}`);
-        }
-        // For GBP to GHS, rates are typically around 15-20
-        else if (fromCurrency === 'GBP' && toCurrency === 'GHS' && /\b1\d(\.\d+)?\b/.test(text)) {
-          rateText = text;
-          console.log(`Found rate text for ${fromCurrency}-${toCurrency}: ${rateText}`);
-        }
-        // For EUR to GHS, rates are typically around 12-16
-        else if (fromCurrency === 'EUR' && toCurrency === 'GHS' && /\b1[2-6](\.\d+)?\b/.test(text)) {
-          rateText = text;
-          console.log(`Found rate text for ${fromCurrency}-${toCurrency}: ${rateText}`);
-        }
-        // If no specific currency pair match but text contains both currencies
-        else if (text.includes(fromCurrency) && text.includes(toCurrency)) {
-          rateText = text;
-          console.log(`Found text containing both currencies: ${rateText}`);
-        }
+        rateText = text;
+        console.log(`Found potential rate text: ${rateText}`);
       }
     });
     
