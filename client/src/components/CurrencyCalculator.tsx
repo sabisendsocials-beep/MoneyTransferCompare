@@ -40,9 +40,12 @@ const CurrencyCalculator = () => {
   useEffect(() => {
     // Update exchange rates when stats are loaded
     if (rateStats) {
+      // Debug the current rate - API seems to return 1 but should be ~2166
+      console.log(`Current rate from API: ${rateStats.currentRate}`);
+      
       const rates: Record<RateKey, number> = {
-        // Use the real current rate from API data or fallback if not available
-        "GBP-NGN": rateStats.currentRate || 2166.87,
+        // For GBP-NGN specifically, use a fallback if API returns 1 (which is incorrect)
+        "GBP-NGN": (rateStats.currentRate === 1) ? 2166.87 : (rateStats.currentRate || 2166.87),
         "GBP-GHS": 16.85,
         "EUR-NGN": 1354.45,
         "EUR-GHS": 14.37,
@@ -316,6 +319,18 @@ const CurrencyCalculator = () => {
             <span className="mr-2">🚀</span> Get Best Rate Now <ArrowRight size={16} className="ml-1" />
           </Button>
         </a>
+      </div>
+      
+      {/* Provider indicator */}
+      <div className="flex justify-center mt-3 space-x-2">
+        {['Western Union', 'Wise'].map(provider => (
+          <div key={provider} className="bg-white/10 px-3 py-1 rounded-full text-xs">
+            {provider}
+          </div>
+        ))}
+        <div className="bg-white/10 px-3 py-1 rounded-full text-xs">
+          +10 more
+        </div>
       </div>
     </div>
   );
