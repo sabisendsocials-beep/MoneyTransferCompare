@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { trackTrendPeriodChange } from "./AnalyticsTracker";
 import {
   Tabs,
   TabsContent,

@@ -2,6 +2,7 @@ import { TransferResult } from "@shared/schema";
 import { ExternalLink, Clock, Star, Check, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { trackProviderClick } from "./AnalyticsTracker";
 
 interface HorizontalComparisonCardProps {
   provider: TransferResult;
@@ -187,7 +188,15 @@ export const HorizontalComparisonCard = ({
           {provider.websiteUrl ? (
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600 px-3"
-              onClick={() => window.open(provider.websiteUrl as string, '_blank')}
+              onClick={() => {
+                // Track the provider click in analytics
+                trackProviderClick(
+                  provider.providerName,
+                  fromCurrency,
+                  toCurrency
+                );
+                window.open(provider.websiteUrl as string, '_blank');
+              }}
             >
               Go
               <ExternalLink className="w-3 h-3 ml-1" />
@@ -195,7 +204,15 @@ export const HorizontalComparisonCard = ({
           ) : (
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600 px-3"
-              onClick={() => window.open(`https://www.google.com/search?q=${provider.providerName}+money+transfer`, '_blank')}
+              onClick={() => {
+                // Track the provider click in analytics
+                trackProviderClick(
+                  provider.providerName,
+                  fromCurrency,
+                  toCurrency
+                );
+                window.open(`https://www.google.com/search?q=${provider.providerName}+money+transfer`, '_blank');
+              }}
             >
               Go
               <ExternalLink className="w-3 h-3 ml-1" />

@@ -26,6 +26,7 @@ import {
   Info, Clock, Check, Loader2 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackContactFormSubmit } from "@/components/AnalyticsTracker";
 
 // Form schema
 const contactFormSchema = z.object({
@@ -98,6 +99,9 @@ const ContactUs = () => {
       }
       
       const result = await response.json();
+      
+      // Track the successful form submission in analytics
+      trackContactFormSubmit(data.topic);
       
       console.log("Feedback submitted successfully:", result);
       setSubmitted(true);
