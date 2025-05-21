@@ -62,6 +62,8 @@ const faqItems = [
 ];
 
 const ContactUs = () => {
+  // For SEO
+  document.title = "Feedback & Feature Requests | MoneyTrans";
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
@@ -125,7 +127,7 @@ const ContactUs = () => {
         {/* Contact Form */}
         <div>
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm max-w-3xl mx-auto">
-            <h2 className="text-xl font-semibold mb-6">Submit Your Feedback</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-center">Share Your Ideas with Us</h2>
             
             {submitted ? (
               <div className="text-center py-10">
