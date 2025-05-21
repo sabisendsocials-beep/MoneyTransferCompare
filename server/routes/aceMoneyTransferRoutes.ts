@@ -5,7 +5,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { storage } from '../storage';
-import { scrapeAceMoneyTransferWithPuppeteer } from '../scrapers/aceMoneyTransferPuppeteerScraper';
+import { scrapeAceMoneyTransferDirect } from '../scrapers/aceMoneyTransferDirectImplementation';
 import { updateAceMoneyTransferMarketRates } from '../scrapers/aceMoneyTransferMarketRate';
 
 // Create router
@@ -42,8 +42,8 @@ aceRouter.post("/test-ace-scraper", async (req: Request, res: Response) => {
     console.log(`Using admin-configured URL for ACE Money Transfer: ${aceUrl}`);
     console.log(`Using CSS selector: ${aceSelector}`);
     
-    // Run the direct scraper with Puppeteer (no fallbacks)
-    const success = await scrapeAceMoneyTransferWithPuppeteer(
+    // Run the direct scraper (no fallbacks)
+    const success = await scrapeAceMoneyTransferDirect(
       aceProvider.id,
       'GBP',
       'NGN'
@@ -104,8 +104,8 @@ aceRouter.post("/update-ace-rate", async (req: Request, res: Response) => {
     }
     
     try {
-      // Run the direct scraper with Puppeteer (no fallbacks)
-      const success = await scrapeAceMoneyTransferWithPuppeteer(
+      // Run the direct scraper (no fallbacks)
+      const success = await scrapeAceMoneyTransferDirect(
         aceProvider.id,
         'GBP',
         'NGN'
