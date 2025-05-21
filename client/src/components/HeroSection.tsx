@@ -76,7 +76,7 @@ const HeroSection = () => {
                   
                   <div className="flex items-center justify-center mt-2 text-sm text-blue-200">
                     <RefreshCw size={14} className="mr-1.5 text-emerald-400" /> 
-                    <span>Updated today at <span className="text-emerald-400 font-medium">14:00 UTC</span></span>
+                    <span>Updated today at <span className="text-emerald-400 font-medium">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></span>
                   </div>
                 </div>
                 
