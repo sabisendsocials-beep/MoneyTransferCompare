@@ -27,22 +27,17 @@ const HeroSection = () => {
         </div>
 
         {/* Compact hero content */}
-        <div className="max-w-full w-[94%] mx-auto px-2 pt-5 pb-4 relative z-10">
-          <div className="flex flex-col lg:flex-row items-start gap-4 lg:gap-8">
-            {/* Left content - More compact and aligned at top */}
-            <div className="lg:w-3/5 pt-1">
-              <div className="inline-flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md rounded-full px-3 py-1 text-sm font-medium mb-2">
-                <CheckCircle2 size={16} className="text-emerald-400" />
-                <span>Verified rates from trusted providers</span>
-              </div>
-              
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-3">
+        <div className="max-w-full w-[94%] mx-auto px-2 pt-8 pb-4 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
+            {/* Left content - Now centered vertically */}
+            <div className="lg:w-3/5">              
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
                 Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
               </h1>
               
               <p className="text-base md:text-lg text-blue-100 mb-3 max-w-2xl">
-                Our platform compares exchange rates from 12+ trusted providers in real-time, 
-                helping you save on fees and get more value in every international transfer.
+                We compare current exchange rates from trusted providers in real time so you don't have to; 
+                helping you save on fees and get best value in every international transfer.
               </p>
               
               <div className="flex flex-wrap gap-3 mt-2">
