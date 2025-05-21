@@ -48,6 +48,23 @@ const CurrencyCalculator = () => {
       calculateRate();
     }
   }, [rateStats]);
+
+  // Fetch rates for the selected currency pair
+  const { data: selectedPairRates } = useQuery<RateStats>({
+    queryKey: ['/api/rate-stats', { from: fromCurrency, to: toCurrency }],
+    enabled: !!fromCurrency && !!toCurrency,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+  
+  // Update rates when we get currency-specific data
+  useEffect(() => {
+    if (selectedPairRates?.currentRate) {
+      setExchangeRates(prev => ({
+        ...prev,
+        [`${fromCurrency}-${toCurrency}`]: selectedPairRates.currentRate || 0
+      }));
+    }
+  }, [selectedPairRates, fromCurrency, toCurrency]);
   
   // Format input with commas
   const formatInputWithCommas = (value: string): string => {
@@ -262,15 +279,27 @@ const CurrencyCalculator = () => {
         </div>
       </div>
 
-      {/* Exchange rate info */}
+      {/* Exchange rate info with loading states */}
       <div className="mt-4 text-center bg-white/5 py-2 px-3 rounded-lg">
         <p className="text-sm text-white/90">
           Best rate available: <span className="text-emerald-300 font-medium">
-            {fromCurrency && toCurrency && exchangeRates[`${fromCurrency}-${toCurrency}`] ? 
-              `1 ${fromCurrency} = ${formatNumber(exchangeRates[`${fromCurrency}-${toCurrency}`])} ${toCurrency}` : 
-              "Select currencies"}
+            {isLoadingRates ? (
+              <span className="flex items-center justify-center">
+                <RefreshCcw size={12} className="animate-spin mr-1" /> 
+                Loading latest rates...
+              </span>
+            ) : fromCurrency && toCurrency && exchangeRates[`${fromCurrency}-${toCurrency}`] ? (
+              `1 ${fromCurrency} = ${formatNumber(exchangeRates[`${fromCurrency}-${toCurrency}`])} ${toCurrency}`
+            ) : (
+              "Select currencies"
+            )}
           </span>
         </p>
+        {rateStats?.lastUpdated && (
+          <p className="text-xs text-blue-300/80 mt-1">
+            Updated {new Date(rateStats.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </p>
+        )}
       </div>
     </div>
   );

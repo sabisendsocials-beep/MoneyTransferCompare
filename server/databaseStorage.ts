@@ -437,6 +437,7 @@ export class DatabaseStorage implements IStorage {
       // Return empty stats if no data
       if (!trendsResult.rows.length) {
         return {
+          currentRate: null,
           thirtyDayHigh: null,
           thirtyDayHighDate: null,
           thirtyDayLow: null,
