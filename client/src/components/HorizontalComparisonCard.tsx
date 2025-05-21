@@ -2,7 +2,7 @@ import { TransferResult } from "@shared/schema";
 import { ExternalLink, Clock, Star, Check, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { trackProviderClick } from "./AnalyticsTracker";
+import { trackProviderClick } from "./analytics/EventTracking";
 
 interface HorizontalComparisonCardProps {
   provider: TransferResult;
@@ -193,7 +193,8 @@ export const HorizontalComparisonCard = ({
                 trackProviderClick(
                   provider.providerName,
                   fromCurrency,
-                  toCurrency
+                  toCurrency,
+                  provider.sendAmount || 100
                 );
                 window.open(provider.websiteUrl as string, '_blank');
               }}
@@ -209,7 +210,8 @@ export const HorizontalComparisonCard = ({
                 trackProviderClick(
                   provider.providerName,
                   fromCurrency,
-                  toCurrency
+                  toCurrency,
+                  provider.sendAmount || 100
                 );
                 window.open(`https://www.google.com/search?q=${provider.providerName}+money+transfer`, '_blank');
               }}
