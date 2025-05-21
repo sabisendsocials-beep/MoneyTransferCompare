@@ -178,34 +178,84 @@ const ContactUs = () => {
                     />
                   </div>
                   
-                  {/* Topic Select */}
-                  <FormField
-                    control={form.control}
-                    name="topic"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Topic</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a topic" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="feature_request">Feature Request</SelectItem>
-                            <SelectItem value="feedback">General Feedback</SelectItem>
-                            <SelectItem value="bug_report">Report a Problem</SelectItem>
-                            <SelectItem value="improvement">Suggestion for Improvement</SelectItem>
-                            <SelectItem value="provider_request">Request New Provider</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                  {/* Topic Tiles */}
+                  <div className="mb-6">
+                    <label className="text-sm font-medium leading-none">
+                      What is your feedback about?
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${form.watch('topic') === 'feature_request' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                        onClick={() => form.setValue('topic', 'feature_request')}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </div>
+                        <span className="font-medium text-gray-800">Feature Request</span>
+                        <span className="text-xs text-gray-500 mt-1 text-center">Suggest a new feature</span>
+                      </div>
+                      
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${form.watch('topic') === 'provider_request' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                        onClick={() => form.setValue('topic', 'provider_request')}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <span className="font-medium text-gray-800">Add New Provider</span>
+                        <span className="text-xs text-gray-500 mt-1 text-center">Request a new transfer service</span>
+                      </div>
+                      
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${form.watch('topic') === 'bug_report' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                        onClick={() => form.setValue('topic', 'bug_report')}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </div>
+                        <span className="font-medium text-gray-800">Report an Issue</span>
+                        <span className="text-xs text-gray-500 mt-1 text-center">Tell us what's not working</span>
+                      </div>
+                      
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${form.watch('topic') === 'improvement' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                        onClick={() => form.setValue('topic', 'improvement')}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </div>
+                        <span className="font-medium text-gray-800">Improve Design</span>
+                        <span className="text-xs text-gray-500 mt-1 text-center">Suggest UI/UX improvements</span>
+                      </div>
+                      
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${form.watch('topic') === 'new_currency' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                        onClick={() => form.setValue('topic', 'new_currency')}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10a15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                        <span className="font-medium text-gray-800">Add Currency</span>
+                        <span className="text-xs text-gray-500 mt-1 text-center">Request a new currency pair</span>
+                      </div>
+                      
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${form.watch('topic') === 'feedback' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                        onClick={() => form.setValue('topic', 'feedback')}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-600"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </div>
+                        <span className="font-medium text-gray-800">General Feedback</span>
+                        <span className="text-xs text-gray-500 mt-1 text-center">Share your thoughts</span>
+                      </div>
+                    </div>
+                    {form.formState.errors.topic && (
+                      <p className="text-sm font-medium text-destructive mt-2">
+                        {form.formState.errors.topic.message as string}
+                      </p>
                     )}
-                  />
+                  </div>
                   
                   {/* Message Field */}
                   <FormField
