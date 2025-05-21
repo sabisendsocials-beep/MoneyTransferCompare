@@ -11,8 +11,15 @@ import { storage } from '../storage';
 import type { ExchangeRate, InsertExchangeRate } from '@shared/schema';
 import fetch from 'node-fetch';
 
-// Rate extraction pattern for PaySend
-const RATE_PATTERN = /1\.00\s+([A-Z]{3})\s*=\s*([\d,.]+)\s+([A-Z]{3})/i;
+// Rate extraction pattern for PaySend - handles multiple formats
+const RATE_PATTERN = /(?:1\.00|1\.0|1)\s*([A-Z]{3})\s*=\s*([\d,.\s]+)\s+([A-Z]{3})/i;
+// Alternative patterns to try if main one fails
+const ALT_PATTERNS = [
+  // Format: "GBP1.00 GBP = 2 141.5125 NGN"
+  /(?:[A-Z]{3})(?:\d+\.\d+)?\s+([A-Z]{3})\s*=\s*([\d,.\s]+)\s+([A-Z]{3})/i,
+  // Format with extra text before the rate
+  /.*?([A-Z]{3})\s*=\s*([\d,.\s]+)\s+([A-Z]{3})/i
+];
 
 /**
  * Updates the PaySend exchange rate using its dedicated scraper
@@ -44,8 +51,13 @@ export async function updatePaysendRate(): Promise<boolean> {
       return false;
     }
     
-    // Default selector if none is provided in the database
-    const cssSelector = paysendProvider.scraping_selector || 'span.PromoText__TextSpan-sc-oncfto-5.feIPcV';
+    // Use the selector configured in the admin panel, with no hardcoded fallback
+    if (!paysendProvider.scraping_selector) {
+      console.error('No CSS selector configured for PaySend in the admin panel');
+      return false;
+    }
+    
+    const cssSelector = paysendProvider.scraping_selector;
     
     console.log(`Using admin-configured URL for PaySend: ${paysendProvider.scraping_url}`);
     console.log(`Using CSS selector: ${cssSelector}`);
@@ -82,23 +94,80 @@ export async function updatePaysendRate(): Promise<boolean> {
       const $ = cheerio.load(html);
       
       // Try the main selector from admin panel
+      // First try the configured selector
       let rateText = $(cssSelector).text().trim();
       console.log(`Found text with selector "${cssSelector}": ${rateText || '(no text found)'}`);
       
-      // If not found, try additional fallback selectors
+      // If not found, try our comprehensive set of fallback selectors
       if (!rateText) {
         console.log('Main selector failed, trying fallback selectors...');
         
-        // Fallback 1: Look for any span mentioning exchange rate or GBP
-        const fallbackSelector1 = 'span:contains("GBP")';
-        rateText = $(fallbackSelector1).text().trim();
-        console.log(`Fallback 1 "${fallbackSelector1}" result: ${rateText || '(no text found)'}`);
+        // This is an array of selectors to try in order
+        const fallbackSelectors = [
+          // Standard exchange rate display selectors
+          'span:contains("GBP = ")',
+          'div:contains("GBP = ")',
+          'span.PromoText__TextSpan-sc-oncfto-5',
+          'span[color="purple80"]',
+          '.exchange-rate, .rate-display, .fx-rate',
+          // Common providers' rate display selectors
+          '.conversion-rate, .calculator-result',
+          '[data-testid="exchange-rate"], [data-testid="rate-display"]',
+          '.rate-value, .rate-amount',
+          // Generic text with currency codes
+          'span:contains("GBP"):contains("NGN")',
+          'div:contains("GBP"):contains("NGN")'
+        ];
         
-        // Fallback 2: Look for elements with color attribute set to purple80
+        // Try each selector in sequence
+        for (let i = 0; i < fallbackSelectors.length; i++) {
+          const selector = fallbackSelectors[i];
+          const elements = $(selector);
+          
+          console.log(`Trying fallback selector ${i+1}: "${selector}" (Found ${elements.length} elements)`);
+          
+          // If we found elements, check each one for rate text
+          if (elements.length > 0) {
+            // Look at each element
+            for (let j = 0; j < Math.min(elements.length, 5); j++) { // Limit to first 5 to avoid excessive logging
+              const elementText = $(elements[j]).text().trim();
+              console.log(`Element ${j+1} text: "${elementText}"`);
+              
+              // Check if the text contains both currency codes and a number
+              if (elementText.includes('GBP') && elementText.includes('NGN') && /\d+/.test(elementText)) {
+                rateText = elementText;
+                console.log(`Found promising rate text in element ${j+1}: "${rateText}"`);
+                break;
+              }
+            }
+            
+            // If we found rate text, break out of the selector loop
+            if (rateText) break;
+          }
+        }
+        
+        // If we still don't have rate text, try scraping the entire page
         if (!rateText) {
-          const fallbackSelector2 = 'span[color="purple80"]';
-          rateText = $(fallbackSelector2).text().trim();
-          console.log(`Fallback 2 "${fallbackSelector2}" result: ${rateText || '(no text found)'}`);
+          console.log('Fallback selectors failed, analyzing entire page content...');
+          
+          // Get all text nodes in the document
+          const bodyText = $('body').text();
+          
+          // Try to match rate patterns in the entire text
+          const patterns = [
+            /(\d+\.\d+)\s*GBP\s*=\s*(\d+[\d,.]*)\s*NGN/i,
+            /GBP\s*=\s*(\d+[\d,.]*)\s*NGN/i,
+            /1\s*GBP\s*=\s*(\d+[\d,.]*)\s*NGN/i
+          ];
+          
+          for (const pattern of patterns) {
+            const match = bodyText.match(pattern);
+            if (match) {
+              rateText = match[0];
+              console.log(`Found rate pattern in page body: "${rateText}"`);
+              break;
+            }
+          }
         }
         
         // Fallback 3: Try a more generic selector for any element containing rate-like text
@@ -117,15 +186,32 @@ export async function updatePaysendRate(): Promise<boolean> {
       if (rateText) {
         console.log(`Extracting rate from text: "${rateText}"`);
         
-        // Extract using regex to handle different formats
-        const match = rateText.match(RATE_PATTERN);
+        // Try multiple pattern matching approaches
+        let match = rateText.match(RATE_PATTERN);
+        let patternUsed = "Primary Pattern";
+        
+        // If main pattern fails, try alternative patterns
+        if (!match) {
+          console.log("Primary pattern failed, trying alternative patterns...");
+          
+          for (let i = 0; i < ALT_PATTERNS.length; i++) {
+            match = rateText.match(ALT_PATTERNS[i]);
+            if (match) {
+              console.log(`Alternative pattern ${i+1} matched!`);
+              patternUsed = `Alternative Pattern ${i+1}`;
+              break;
+            }
+          }
+        }
         
         if (match) {
           const fromCurrency = match[1];
-          const rate = parseFloat(match[2].replace(/,/g, ''));
+          // Clean up the rate string - remove any spaces, commas, etc.
+          const rateString = match[2].replace(/[\s,]/g, '');
+          const rate = parseFloat(rateString);
           const toCurrency = match[3];
           
-          console.log(`Extracted rate: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
+          console.log(`Extracted rate using ${patternUsed}: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
           
           if (rate > 0) {
             // Convert currencies to our standard format
