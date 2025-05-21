@@ -9,6 +9,7 @@ import { updateWorldRemitRate } from './worldRemitScraper';
 import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
 import { updateNalaRate } from './nalaScraper';
+import { updatePaysendRate } from './paysendScraper';
 import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './westernUnionScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
@@ -390,6 +391,17 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               continue; // Skip to next provider
             } else {
               console.log('=== Dedicated Remitly scraper failed. Trying enhanced scraping as fallback... ===');
+              // Will continue to standard scraping as fallback
+            }
+          } else if (provider.name === 'Paysend') {
+            console.log('=== Using dedicated PaySend scraper with admin-configured URL and selectors ONLY... ===');
+            let success = await updatePaysendRate();
+            if (success) {
+              console.log('=== Successfully updated PaySend rate with dedicated scraper ===');
+              results.push({ provider: provider.name, success: true });
+              continue; // Skip to next provider
+            } else {
+              console.log('=== Dedicated PaySend scraper failed. Trying enhanced scraping as fallback... ===');
               // Will continue to standard scraping as fallback
             }
           } else if (provider.name === 'TransferGo') {
