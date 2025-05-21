@@ -10,7 +10,7 @@ import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
 import { updateNalaRate } from './nalaScraper';
 import { updatePaysendRate } from './paysendScraper';
-import { updateProfeeRate } from './profeeScraper';
+import { updateProfeeRateSimple } from './simpleProfeeScraper';
 import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './westernUnionScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
@@ -429,23 +429,25 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             }
             
             // GBP to NGN is the primary pair we're interested in
-            let success = await updateProfeeRate(
+            let success = await updateProfeeRateSimple(
               profeeUrl, 
               profeeSelector, 
               provider.id, 
               'GBP', 
               'NGN',
-              async (providerId, fromCurrency, toCurrency, rate) => {
-                return await addOrUpdateExchangeRate({
-                  providerId,
-                  fromCurrency,
-                  toCurrency,
+              async (providerId: number, fromCurrency: string, toCurrency: string, rate: number) => {
+                // Use the standard storage method for adding exchange rates
+                await storage.createExchangeRate({
+                  provider_id: providerId,
+                  from_currency: fromCurrency,
+                  to_currency: toCurrency,
                   rate,
-                  fee: provider.fee || null,
-                  minimumAmount: provider.minimumAmount || null,
-                  maximumAmount: provider.maximumAmount || null,
+                  fee: null,
+                  minimumAmount: null,
+                  maximumAmount: null,
                   source: 'SCRAPER'
                 });
+                return true; // Return boolean for success
               }
             );
             

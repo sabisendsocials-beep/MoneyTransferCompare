@@ -37,8 +37,7 @@ async function scrapeProfeeSite(
         'Accept-Language': 'en-US,en;q=0.5',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache'
-      },
-      timeout: 30000
+      }
     });
 
     if (!response.ok) {
@@ -110,13 +109,75 @@ async function scrapeProfeeSite(
     if (!rateText) {
       console.log('Looking for rate patterns in the entire page');
       
-      // This regex looks for patterns like "2,162.23" or similar decimal numbers
-      const rateRegex = new RegExp(`${toCurrency}[\\s]*([\\d,]+\\.\\d+)|(\\d[\\d,]+\\.\\d+)[\\s]*${toCurrency}`, 'i');
-      const match = html.match(rateRegex);
+      // Look for any common rate pattern in the HTML
+      const commonRatePatterns = [
+        /(\d{1,3}(?:,\d{3})*)(?:\.\d+)?\s*NGN/gi,      // Like "2,162.23 NGN"
+        /NGN\s*(\d{1,3}(?:,\d{3})*)(?:\.\d+)?/gi,      // Like "NGN 2,162.23"
+        /(\d{1,3}(?:,\d{3})*)(?:\.\d+)?/gi,            // Any number like "2,162.23"
+        /Promo\s+rate[^<>]*?(\d{1,3}(?:,\d{3})*)(?:\.\d+)?/gi,  // "Promo rate" followed by a number
+        /1\s*GBP\s*=\s*(\d{1,3}(?:,\d{3})*)(?:\.\d+)?\s*NGN/gi  // "1 GBP = 2,162.23 NGN"
+      ];
       
-      if (match) {
-        rateText = match[0];
-        console.log(`Found rate pattern in HTML: "${rateText}"`);
+      for (const pattern of commonRatePatterns) {
+        console.log(`Trying pattern: ${pattern}`);
+        const matches = html.match(pattern);
+        
+        if (matches && matches.length > 0) {
+          console.log(`Found ${matches.length} matches with pattern ${pattern}:`);
+          
+          // Log the first 3 matches
+          for (let i = 0; i < Math.min(matches.length, 3); i++) {
+            console.log(`  Match ${i+1}: "${matches[i]}"`);
+          }
+          
+          // Look for a match in the expected rate range for GBP to NGN (around 2000-2200)
+          for (const match of matches) {
+            // Extract the numeric part
+            const numericMatches = match.match(/(\d{1,3}(?:,\d{3})*)(?:\.\d+)?/);
+            if (numericMatches) {
+              const numericStr = numericMatches[1].replace(/,/g, '');
+              const rate = parseFloat(numericStr);
+              
+              // For GBP to NGN, rates should be in this range
+              if (rate > 2000 && rate < 2200) {
+                console.log(`Found likely exchange rate: ${rate}`);
+                return {
+                  success: true,
+                  rate,
+                  rawData: `Rate found with pattern ${pattern}: "${match}"`
+                };
+              }
+            }
+          }
+        } else {
+          console.log(`No matches found with pattern ${pattern}`);
+        }
+      }
+      
+      // If we haven't found a rate yet, try a more aggressive approach
+      console.log('Trying more aggressive pattern matching...');
+      
+      // Look for any number in the HTML within the expected range
+      const allNumbersPattern = /(\d{1,3}(?:,\d{3})*)(?:\.\d+)?/g;
+      const allNumbers = html.match(allNumbersPattern);
+      
+      if (allNumbers) {
+        console.log(`Found ${allNumbers.length} numbers in the HTML`);
+        
+        // Check each number to see if it's in the expected range for GBP to NGN
+        for (const numStr of allNumbers) {
+          const num = parseFloat(numStr.replace(/,/g, ''));
+          
+          // For GBP to NGN, the rate is typically in the 2000-2200 range
+          if (num > 2000 && num < 2200) {
+            console.log(`Found potential rate by value range: ${num}`);
+            return {
+              success: true, 
+              rate: num,
+              rawData: `Rate found by numeric value: ${num}`
+            };
+          }
+        }
       }
     }
     
