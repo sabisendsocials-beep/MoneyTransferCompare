@@ -29,6 +29,13 @@ const CurrencyCalculator = () => {
     queryKey: ['/api/rate-stats'],
     staleTime: 60 * 60 * 1000, // 1 hour
   });
+  
+  // For debugging
+  useEffect(() => {
+    if (rateStats) {
+      console.log("Rate stats loaded:", rateStats);
+    }
+  }, [rateStats]);
 
   useEffect(() => {
     // Update exchange rates when stats are loaded
@@ -300,6 +307,15 @@ const CurrencyCalculator = () => {
             Updated {new Date(rateStats.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
           </p>
         )}
+      </div>
+      
+      {/* Get Best Rate Now CTA button */}
+      <div className="mt-4">
+        <a href="/compare?amount=100&from=GBP&to=NGN" className="block">
+          <Button className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium py-3">
+            <span className="mr-2">🚀</span> Get Best Rate Now <ArrowRight size={16} className="ml-1" />
+          </Button>
+        </a>
       </div>
     </div>
   );
