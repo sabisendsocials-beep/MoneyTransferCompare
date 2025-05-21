@@ -29,11 +29,11 @@ const HeroSection = () => {
             {/* Left column - main messaging */}
             <div className="lg:w-1/2 mb-8 lg:mb-0">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
-                Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
+                <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">SabiSend</span> - Best Rates for Money Transfers
               </h1>
               
               <p className="text-xl text-blue-100 mb-6">
-                We compare current exchange rates from trusted providers in real time so you don't have to; 
+                SabiSend compares exchange rates from trusted providers in real time so you don't have to, 
                 helping you save on fees and get best value in every international transfer.
               </p>
               
