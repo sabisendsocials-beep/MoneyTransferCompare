@@ -9,8 +9,8 @@ import CurrencyCalculator from "../components/CurrencyCalculator";
 const HeroSection = () => {
   return (
     <>
-      {/* Hero Section with Calculator */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800" style={{ maxHeight: '85vh' }}>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800 py-6">
         {/* Hero background with gradient effect */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 opacity-30" 
@@ -19,86 +19,85 @@ const HeroSection = () => {
               backgroundSize: "100px 100px"
             }}>
           </div>
-          {/* Lighter gradient overlay toward the calculator area */}
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-r from-transparent to-white/10"></div>
           {/* Subtle glow effects */}
           <div className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full bg-emerald-500/10 filter blur-3xl"></div>
           <div className="absolute bottom-1/3 left-1/4 w-72 h-72 rounded-full bg-indigo-500/10 filter blur-3xl"></div>
         </div>
 
-        {/* Hero content with mobile-first approach */}
-        <div className="max-w-full w-[94%] mx-auto px-2 pt-6 pb-6 relative z-10">
-          {/* Text content */}
-          <div className="w-full mb-6">              
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-3 text-center">
-              Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
-            </h1>
-            
-            <p className="text-base md:text-lg text-blue-100 mb-4 max-w-2xl mx-auto text-center">
-              We compare current exchange rates from trusted providers in real time so you don't have to; 
-              helping you save on fees and get best value in every international transfer.
-            </p>
-            
-            {/* Desktop-only buttons - Hidden on mobile */}
-            <div className="hidden lg:flex flex-wrap gap-3 mt-4 mb-2 justify-center">
-              <Link href="/compare">
-                <Button size="default" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium shadow-lg hover:scale-105 transition-transform">
-                  Compare All Providers
-                  <ArrowRight size={16} className="ml-2" />
-                </Button>
-              </Link>
-              <Link href="/trends">
-                <Button size="default" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10 shadow-md hover:border-white/50 transition-colors">
-                  View Rate Trends
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          {/* Calculator - Dedicated full width on mobile, positioned before feature cards */}
-          <div className="w-full max-w-md mx-auto">
-            <div className="bg-white/15 backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-lg">
-              <h2 className="text-lg text-white font-semibold mb-2 text-center">Quick Calculator</h2>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
+            {/* Left column - main messaging */}
+            <div className="lg:w-1/2 mb-8 lg:mb-0">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
+                Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
+              </h1>
               
-              <CurrencyCalculator />
+              <p className="text-xl text-blue-100 mb-6">
+                We compare current exchange rates from trusted providers in real time so you don't have to; 
+                helping you save on fees and get best value in every international transfer.
+              </p>
               
-              {/* CTA Button */}
-              <div className="mt-3 text-center">
-                <Link href="/results">
-                  <Button 
-                    className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-2 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all text-base group"
-                  >
-                    <span className="inline-flex items-center">
-                      <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
-                      Get Best Rate Now
-                      <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                    </span>
+              {/* Desktop-only buttons */}
+              <div className="hidden lg:flex space-x-4">
+                <Link href="/compare">
+                  <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium shadow-lg hover:scale-105 transition-transform">
+                    Compare All Providers
+                    <ArrowRight size={18} className="ml-2" />
                   </Button>
                 </Link>
-                
-                <div className="flex items-center justify-center mt-2 text-xs text-blue-200">
-                  <RefreshCw size={12} className="mr-1.5 text-emerald-400" /> 
-                  <span>Updated today at <span className="text-emerald-400 font-medium">14:00 UTC</span></span>
-                </div>
+                <Link href="/trends">
+                  <Button size="lg" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10 shadow-md hover:border-white/50 transition-colors">
+                    View Rate Trends
+                  </Button>
+                </Link>
               </div>
-              
-              {/* Provider logos */}
-              <div className="mt-2 pt-2 border-t border-white/10 flex flex-wrap gap-2 justify-center">
-                <div className="py-1 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10 cursor-pointer transition-all shadow-sm">Western Union</div>
-                <div className="py-1 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10 cursor-pointer transition-all shadow-sm">Wise</div>
-                <div className="py-1 px-2 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10 cursor-pointer transition-all shadow-sm">+10 more</div>
+            </div>
+            
+            {/* Right column - calculator */}
+            <div className="lg:w-1/2">
+              <div className="bg-white/15 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/20 shadow-lg">
+                <h2 className="text-lg text-white font-semibold mb-3 text-center">Quick Calculator</h2>
+                
+                <CurrencyCalculator />
+                
+                {/* CTA Button */}
+                <div className="mt-4 text-center">
+                  <Link href="/results">
+                    <Button 
+                      className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg group"
+                    >
+                      <span className="inline-flex items-center">
+                        <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
+                        Get Best Rate Now
+                        <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </Button>
+                  </Link>
+                  
+                  <div className="flex items-center justify-center mt-2 text-sm text-blue-200">
+                    <RefreshCw size={14} className="mr-1.5 text-emerald-400" /> 
+                    <span>Updated today at <span className="text-emerald-400 font-medium">14:00 UTC</span></span>
+                  </div>
+                </div>
+                
+                {/* Provider logos */}
+                <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2 justify-center">
+                  <div className="py-1 px-2.5 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10 cursor-pointer transition-all shadow-sm">Western Union</div>
+                  <div className="py-1 px-2.5 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10 cursor-pointer transition-all shadow-sm">Wise</div>
+                  <div className="py-1 px-2.5 rounded-full text-xs text-white/90 font-medium bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10 cursor-pointer transition-all shadow-sm">+10 more</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
       
-      {/* Features section - Completely separate from hero with white background */}
-      <section className="bg-white py-8">
-        <div className="max-w-full w-[94%] mx-auto px-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="group bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl px-4 py-3.5 hover:shadow-lg transition-all duration-300 border border-blue-100 shadow-sm">
-              <div className="mb-2.5 flex items-center gap-2">
+      {/* Features section - with white background and clear separation */}
+      <section className="bg-white py-10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="group bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl px-4 py-4 hover:shadow-lg transition-all duration-300 border border-blue-100 shadow-sm">
+              <div className="mb-3 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-600 flex items-center justify-center shadow-md">
                   <RefreshCw size={22} className="text-white" />
                 </div>
@@ -108,8 +107,8 @@ const HeroSection = () => {
               <p className="text-sm text-blue-700">Get the most current exchange rates directly from provider sources</p>
             </div>
             
-            <div className="group bg-gradient-to-br from-green-50 to-green-100 rounded-xl px-4 py-3.5 hover:shadow-lg transition-all duration-300 border border-green-100 shadow-sm">
-              <div className="mb-2.5 flex items-center gap-2">
+            <div className="group bg-gradient-to-br from-green-50 to-green-100 rounded-xl px-4 py-4 hover:shadow-lg transition-all duration-300 border border-green-100 shadow-sm">
+              <div className="mb-3 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-md">
                   <ShieldCheck size={22} className="text-white" />
                 </div>
@@ -119,8 +118,8 @@ const HeroSection = () => {
               <p className="text-sm text-emerald-700">Compare rates from legitimate and verified money transfer services</p>
             </div>
             
-            <div className="group bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl px-4 py-3.5 hover:shadow-lg transition-all duration-300 border border-purple-100 shadow-sm">
-              <div className="mb-2.5 flex items-center gap-2">
+            <div className="group bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl px-4 py-4 hover:shadow-lg transition-all duration-300 border border-purple-100 shadow-sm">
+              <div className="mb-3 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center shadow-md">
                   <BarChart3 size={22} className="text-white" />
                 </div>
@@ -130,8 +129,8 @@ const HeroSection = () => {
               <p className="text-sm text-purple-700">Track historical rate patterns to time your transfers optimally</p>
             </div>
             
-            <div className="group bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl px-4 py-3.5 hover:shadow-lg transition-all duration-300 border border-amber-100 shadow-sm">
-              <div className="mb-2.5 flex items-center gap-2">
+            <div className="group bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl px-4 py-4 hover:shadow-lg transition-all duration-300 border border-amber-100 shadow-sm">
+              <div className="mb-3 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-md">
                   <Globe size={22} className="text-white" />
                 </div>
