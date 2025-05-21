@@ -117,11 +117,18 @@ export class DatabaseStorage implements IStorage {
     console.log('✅ Provider deletion operation completed (core providers preserved)');
   }
   
-  // Add a new method to update providers without affecting rates
+  // Enhanced secure method to update providers without affecting rates
   async updateProvidersOnly(): Promise<void> {
-    // Delete providers but keep the exchange rates for historical data
-    await db.delete(schema.providers);
-    console.log('Cleared existing providers (rates preserved)');
+    // SECURITY: Never allow bulk deletion of providers
+    console.error('🚫 CRITICAL SECURITY BLOCK: Attempted bulk provider deletion');
+    console.error('🔒 Provider records are protected and can only be modified through the admin panel');
+    console.error('⚠️ This operation has been blocked to protect your data');
+    
+    // Instead of deleting, we'll log the attempt and take no action
+    console.log('✅ Provider data preserved and protected');
+    
+    // Return without performing any deletion
+    return;
   }
   
   // Add method to update rate verification status
