@@ -26,21 +26,23 @@ const HeroSection = () => {
           <div className="absolute bottom-1/3 left-1/4 w-72 h-72 rounded-full bg-indigo-500/10 filter blur-3xl"></div>
         </div>
 
-        {/* Compact hero content */}
-        <div className="max-w-full w-[94%] mx-auto px-2 pt-8 pb-4 relative z-10">
+        {/* Compact hero content - Optimized for mobile viewing */}
+        <div className="max-w-full w-[94%] mx-auto px-2 pt-6 pb-4 relative z-10">
+          {/* Mobile layout: Hero text followed by calculator */}
           <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
-            {/* Left content - Now centered vertically */}
-            <div className="lg:w-3/5">              
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
+            {/* Content - Now optimized for mobile */}
+            <div className="w-full lg:w-3/5">              
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-3 text-center lg:text-left">
                 Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
               </h1>
               
-              <p className="text-base md:text-lg text-blue-100 mb-3 max-w-2xl">
+              <p className="text-base md:text-lg text-blue-100 mb-4 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left">
                 We compare current exchange rates from trusted providers in real time so you don't have to; 
                 helping you save on fees and get best value in every international transfer.
               </p>
               
-              <div className="flex flex-wrap gap-3 mt-2">
+              {/* Desktop-only buttons - Hidden on mobile */}
+              <div className="hidden lg:flex flex-wrap gap-3 mt-2 mb-4">
                 <Link href="/compare">
                   <Button size="default" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium shadow-lg hover:scale-105 transition-transform">
                     Compare All Providers
@@ -55,8 +57,8 @@ const HeroSection = () => {
               </div>
             </div>
             
-            {/* Right content - Calculator */}
-            <div className="lg:w-2/5 w-full">
+            {/* Calculator - Appears right after hero message on mobile */}
+            <div className="w-full lg:w-2/5 order-2 lg:order-1">
               <div className="bg-white/15 backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-[0_0_60px_rgba(8,107,230,0.25)] hover:shadow-[0_0_70px_rgba(8,107,230,0.3)] transition-all">
                 <h2 className="text-lg text-white font-semibold mb-2 text-center">Quick Calculator</h2>
                 
