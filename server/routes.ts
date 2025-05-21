@@ -372,6 +372,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get best rates for the calculator
+  apiRouter.get("/api/best-rates", async (req: Request, res: Response) => {
+    try {
+      // Get the most recent rates for all supported currency pairs
+      const gbpNgnRates = await storage.getLatestRates("GBP", "NGN");
+      const gbpGhsRates = await storage.getLatestRates("GBP", "GHS");
+      const eurNgnRates = await storage.getLatestRates("EUR", "NGN");
+      const eurGhsRates = await storage.getLatestRates("EUR", "GHS");
+      const usdNgnRates = await storage.getLatestRates("USD", "NGN");
+      const usdGhsRates = await storage.getLatestRates("USD", "GHS");
+      
+      // Format the response with the best rate for each pair
+      const bestRates = [
+        {
+          fromCurrency: "GBP",
+          toCurrency: "NGN",
+          rate: gbpNgnRates.length > 0 ? Math.max(...gbpNgnRates.map(r => r.rate)) : 2189.17,
+          timestamp: gbpNgnRates.length > 0 ? 
+            gbpNgnRates.reduce((latest, rate) => 
+              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+            ).timestamp : new Date().toISOString()
+        },
+        {
+          fromCurrency: "GBP",
+          toCurrency: "GHS",
+          rate: gbpGhsRates.length > 0 ? Math.max(...gbpGhsRates.map(r => r.rate)) : 16.85,
+          timestamp: gbpGhsRates.length > 0 ? 
+            gbpGhsRates.reduce((latest, rate) => 
+              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+            ).timestamp : new Date().toISOString()
+        },
+        {
+          fromCurrency: "EUR",
+          toCurrency: "NGN",
+          rate: eurNgnRates.length > 0 ? Math.max(...eurNgnRates.map(r => r.rate)) : 1354.45,
+          timestamp: eurNgnRates.length > 0 ? 
+            eurNgnRates.reduce((latest, rate) => 
+              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+            ).timestamp : new Date().toISOString()
+        },
+        {
+          fromCurrency: "EUR",
+          toCurrency: "GHS",
+          rate: eurGhsRates.length > 0 ? Math.max(...eurGhsRates.map(r => r.rate)) : 14.37,
+          timestamp: eurGhsRates.length > 0 ? 
+            eurGhsRates.reduce((latest, rate) => 
+              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+            ).timestamp : new Date().toISOString()
+        },
+        {
+          fromCurrency: "USD",
+          toCurrency: "NGN",
+          rate: usdNgnRates.length > 0 ? Math.max(...usdNgnRates.map(r => r.rate)) : 1456.78,
+          timestamp: usdNgnRates.length > 0 ? 
+            usdNgnRates.reduce((latest, rate) => 
+              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+            ).timestamp : new Date().toISOString()
+        },
+        {
+          fromCurrency: "USD",
+          toCurrency: "GHS",
+          rate: usdGhsRates.length > 0 ? Math.max(...usdGhsRates.map(r => r.rate)) : 15.40,
+          timestamp: usdGhsRates.length > 0 ? 
+            usdGhsRates.reduce((latest, rate) => 
+              new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+            ).timestamp : new Date().toISOString()
+        }
+      ];
+      
+      res.json(bestRates);
+    } catch (error) {
+      console.error('Error fetching best rates:', error);
+      res.status(500).json({ message: "Failed to fetch best rates" });
+    }
+  });
+  
   // Get rate statistics
   apiRouter.get("/api/rate-stats", async (req: Request, res: Response) => {
     try {

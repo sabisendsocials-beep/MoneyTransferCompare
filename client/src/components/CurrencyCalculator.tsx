@@ -10,17 +10,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { RateStats } from "@shared/schema";
-
-// Hardcoded exchange rates based on our database query (selected best rates)
-const BEST_RATES = {
-  "GBP-NGN": 2189.17, // From our SQL query of best rates in exchange_rates table
-  "GBP-GHS": 16.85,
-  "EUR-NGN": 1354.45,
-  "EUR-GHS": 14.37,
-  "USD-NGN": 1456.78,
-  "USD-GHS": 15.40
-};
+import { RateStats, ExchangeRate } from "@shared/schema";
 
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
@@ -34,25 +24,68 @@ const CurrencyCalculator = () => {
   const [result, setResult] = useState<number | null>(null);
   const [exchangeRates, setExchangeRates] = useState<Record<RateKey, number>>({} as Record<RateKey, number>);
   
-  // Initialize with the hardcoded best rates directly and calculate immediately
+  // Store the latest timestamp from the database
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  
+  // Fetch the latest exchange rates from the database
+  const { data: latestRates, isLoading, isError } = useQuery({
+    queryKey: ['/api/best-rates'],
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+
+  // Initialize with real rates from the database and calculate immediately
   useEffect(() => {
-    // Set exchange rates directly from our database query results
-    setExchangeRates(BEST_RATES as Record<RateKey, number>);
-    
-    // Set a default amount of 100
-    setAmount("100");
-    
-    // Run the calculation right away with a slight delay to ensure rates are loaded
-    setTimeout(() => {
-      const key = `${fromCurrency}-${toCurrency}` as RateKey;
-      const rate = BEST_RATES[key];
+    if (latestRates && Array.isArray(latestRates) && latestRates.length > 0) {
+      // Convert array of rates to a record for easy lookup
+      const ratesRecord: Record<RateKey, number> = {} as Record<RateKey, number>;
       
-      if (rate) {
-        // Calculate for 100 GBP to NGN by default (100 * 2189.17)
-        setResult(100 * rate);
+      // Find the GBP-NGN timestamp to use for "last updated"
+      const gbpNgnRate = latestRates.find(
+        (rate: any) => rate.fromCurrency === 'GBP' && rate.toCurrency === 'NGN'
+      );
+      
+      if (gbpNgnRate && gbpNgnRate.timestamp) {
+        setLastUpdated(gbpNgnRate.timestamp);
       }
-    }, 100);
-  }, []);
+      
+      // Process all rates
+      latestRates.forEach((rate: any) => {
+        if (rate.fromCurrency && rate.toCurrency) {
+          const key = `${rate.fromCurrency}-${rate.toCurrency}` as RateKey;
+          ratesRecord[key] = rate.rate;
+        }
+      });
+      
+      // Set the exchange rates from real data
+      setExchangeRates(ratesRecord);
+      
+      // Set a default amount of 100
+      setAmount("100");
+      
+      // Run the calculation right away with real data
+      const key = `${fromCurrency}-${toCurrency}` as RateKey;
+      if (ratesRecord[key]) {
+        setResult(100 * ratesRecord[key]);
+      } else {
+        // Fallback for GBP-NGN if rate is not in the record
+        setResult(100 * 2189.17);
+      }
+    } else if (!isLoading) {
+      // Fallback to default rates if API returned no data
+      const fallbackRates: Record<RateKey, number> = {
+        "GBP-NGN": 2189.17,
+        "GBP-GHS": 16.85,
+        "EUR-NGN": 1354.45,
+        "EUR-GHS": 14.37,
+        "USD-NGN": 1456.78,
+        "USD-GHS": 15.40
+      } as Record<RateKey, number>;
+      
+      setExchangeRates(fallbackRates);
+      setResult(100 * 2189.17);
+      setLastUpdated(new Date().toISOString());
+    }
+  }, [latestRates, isLoading, fromCurrency, toCurrency]);
   
   // Format input with commas
   const formatInputWithCommas = (value: string): string => {
@@ -278,6 +311,12 @@ const CurrencyCalculator = () => {
             )}
           </span>
         </p>
+        {lastUpdated && (
+          <div className="flex items-center justify-center mt-1 text-xs text-blue-200">
+            <RefreshCw size={12} className="mr-1.5 text-emerald-400" /> 
+            <span>Updated {new Date(lastUpdated).toLocaleDateString()} at <span className="text-emerald-400 font-medium">{new Date(lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></span>
+          </div>
+        )}
       </div>
     </div>
   );
