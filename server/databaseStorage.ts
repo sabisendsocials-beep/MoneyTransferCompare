@@ -497,6 +497,7 @@ export class DatabaseStorage implements IStorage {
       const oneYearChange = ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100;
       
       return {
+        currentRate: currentRate,
         thirtyDayHigh: thirtyDayHigh !== -Infinity ? thirtyDayHigh : null,
         thirtyDayHighDate: thirtyDayHighDate || null,
         thirtyDayLow: thirtyDayLow !== Infinity ? thirtyDayLow : null,

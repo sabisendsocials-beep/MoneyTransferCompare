@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
@@ -20,6 +21,29 @@ const CurrencyCalculator = () => {
   const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
   const [calculationMode, setCalculationMode] = useState<CalculationMode>("send");
   const [result, setResult] = useState<number | null>(null);
+  const [exchangeRates, setExchangeRates] = useState<Record<RateKey, number>>({} as Record<RateKey, number>);
+  
+  // Fetch the latest exchange rates from the API
+  const { data: rateStats, isLoading: isLoadingRates } = useQuery({ 
+    queryKey: ['/api/rate-stats'],
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+
+  useEffect(() => {
+    // Update exchange rates when stats are loaded
+    if (rateStats) {
+      const rates: Record<RateKey, number> = {
+        "GBP-NGN": rateStats.currentRate || 2166.87,
+        "GBP-GHS": 16.85,
+        "EUR-NGN": 1354.45,
+        "EUR-GHS": 14.37,
+        "USD-NGN": 1456.78,
+        "USD-GHS": 15.40
+      } as Record<RateKey, number>;
+      
+      setExchangeRates(rates);
+    }
+  }, [rateStats]);
   
   // Format input with commas
   const formatInputWithCommas = (value: string): string => {
@@ -38,16 +62,6 @@ const CurrencyCalculator = () => {
     // Return with or without decimal part
     return parts.length > 1 ? `${parts[0]}.${parts[1]}` : parts[0];
   };
-
-  // Sample current exchange rates showing highest rates from providers
-  const exchangeRates: Record<RateKey, number> = {
-    "GBP-NGN": 2166.87, // Highest rate among providers
-    "GBP-GHS": 16.85,
-    "EUR-NGN": 1354.45,
-    "EUR-GHS": 14.37,
-    "USD-NGN": 1456.78,
-    "USD-GHS": 15.40
-  } as Record<RateKey, number>;
   
   // Type-safe setters for the select components
   const handleSetFromCurrency = (value: string) => {
