@@ -12,6 +12,7 @@ import { updateNalaRate } from './nalaScraper';
 import { updatePaysendRate } from './paysendScraper';
 import { updateProfeeRateWithMarketData } from './profeeMarketRate';
 import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './westernUnionScraper';
+import { updateAceMoneyTransferRate } from './aceMoneyTransferScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
