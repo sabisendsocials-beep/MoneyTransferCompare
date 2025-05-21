@@ -271,27 +271,6 @@ const CurrencyCalculator = () => {
           Updated today at {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
         </p>
       </div>
-      
-      {/* Get Best Rate Now CTA button */}
-      <div className="mt-4">
-        <a href="/compare?amount=100&from=GBP&to=NGN" className="block">
-          <Button className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium py-3">
-            <span className="mr-2">🚀</span> Get Best Rate Now <ArrowRight size={16} className="ml-1" />
-          </Button>
-        </a>
-      </div>
-      
-      {/* Provider indicator */}
-      <div className="flex flex-wrap justify-center mt-3 gap-2">
-        {['Western Union', 'Wise', 'Remitly', 'WorldRemit'].map(provider => (
-          <div key={provider} className="bg-white/10 px-3 py-1 rounded-full text-xs">
-            {provider}
-          </div>
-        ))}
-        <div className="bg-white/10 px-3 py-1 rounded-full text-xs">
-          +8 more
-        </div>
-      </div>
     </div>
   );
 };
