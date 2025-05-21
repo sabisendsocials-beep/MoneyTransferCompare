@@ -40,24 +40,24 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 // FAQ items
 const faqItems = [
   {
-    question: "How does the rate comparison work?",
-    answer: "Our platform collects real exchange rates from over 12 trusted money transfer providers. We update rates multiple times daily to ensure you always have the most current information. The comparison shows fees, exchange rates, and the total amount recipients will receive so you can make informed decisions."
+    question: "How can I request a new provider to be added?",
+    answer: "You can easily request a new provider by submitting a feature request through this page. Select 'Request New Provider' from the dropdown menu and include details about which money transfer provider you'd like us to add. We prioritize adding providers based on user demand."
   },
   {
-    question: "Are there any fees for using this service?",
-    answer: "No, our rate comparison service is completely free to use. We help you find the best rates without charging any fees. We may receive commissions from some providers when you choose their services, but this never affects the rates displayed or our rankings."
+    question: "What type of feedback is most helpful?",
+    answer: "The most helpful feedback includes specific details about your experience using our platform and concrete suggestions for improvement. Whether you've spotted an issue with our rate comparison, have ideas for new features, or suggestions about the user interface - we value all types of constructive feedback."
   },
   {
-    question: "How often are the exchange rates updated?",
-    answer: "Exchange rates are updated multiple times daily (at 6 AM, 2 PM, and 10 PM UTC). Each rate shows the exact time it was last updated, so you always know how current the information is."
+    question: "How do you decide which features to implement?",
+    answer: "We prioritize new features based on several factors, with user feedback being the most important one. We look at how many users have requested a feature, how it would improve the overall experience, and the technical feasibility of implementation. Your suggestions directly influence our development roadmap!"
   },
   {
-    question: "Can I send money directly through your platform?",
-    answer: "We don't process money transfers directly. When you find a provider with favorable rates, we direct you to their official website where you can complete your transaction securely."
+    question: "Can I suggest new destination countries to include?",
+    answer: "Absolutely! We're continuously expanding our coverage to include more countries and currencies. If you'd like us to add support for a specific country or currency pair, please submit a feature request and we'll evaluate adding it to our platform."
   },
   {
-    question: "How do you verify the accuracy of exchange rates?",
-    answer: "We employ multiple verification methods to ensure rate accuracy, including direct API connections with providers when available, and sophisticated web scraping technology to capture rates from official provider websites. We also have data validation systems that flag any suspicious rates."
+    question: "How long does it typically take for a feature request to be implemented?",
+    answer: "Implementation time varies depending on the complexity of the feature and our current development priorities. Simple features might be implemented within weeks, while more complex ones could take several months. We always strive to keep improving the platform based on your feedback."
   }
 ];
 
@@ -72,7 +72,7 @@ const ContactUs = () => {
     defaultValues: {
       name: "",
       email: "",
-      topic: "",
+      topic: "feature_request", // Default to feature request
       message: "",
     },
   });
@@ -86,23 +86,23 @@ const ContactUs = () => {
       // Simulating API call with timeout
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log("Form submitted:", data);
+      console.log("Feedback submitted:", data);
       setSubmitted(true);
       
       toast({
-        title: "Message sent successfully",
-        description: "We've received your message and will respond shortly.",
+        title: "Feedback submitted successfully",
+        description: "Thank you for helping us improve our platform!",
         variant: "default",
       });
       
       // Reset form
       form.reset();
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error submitting feedback:", error);
       
       toast({
         title: "Something went wrong",
-        description: "Your message couldn't be sent. Please try again later.",
+        description: "Your feedback couldn't be submitted. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -114,80 +114,33 @@ const ContactUs = () => {
     <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Page Header */}
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold mb-4">Contact Us</h1>
+        <h1 className="text-3xl font-bold mb-4">Feedback & Feature Requests</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Have questions about our service? Looking for more information? 
-          Or maybe you have a feature suggestion? We'd love to hear from you!
+          We're constantly improving our platform based on your suggestions! 
+          Share your ideas, report issues, or request new features to help us make our service better for you.
         </p>
       </div>
       
-      <div className="grid md:grid-cols-3 gap-10">
-        {/* Contact Details */}
-        <div className="md:col-span-1">
-          <div className="bg-blue-50 rounded-lg p-6 h-full">
-            <h2 className="text-xl font-semibold mb-6">Get In Touch</h2>
-            
-            <div className="space-y-6">
-              <div className="flex items-start">
-                <Mail className="w-5 h-5 text-blue-600 mt-1 mr-3" />
-                <div>
-                  <h3 className="font-medium">Email</h3>
-                  <p className="text-gray-600">support@ratecompare.com</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Clock className="w-5 h-5 text-blue-600 mt-1 mr-3" />
-                <div>
-                  <h3 className="font-medium">Support Hours</h3>
-                  <p className="text-gray-600">Monday - Friday: 9AM - 5PM UTC</p>
-                  <p className="text-gray-600">Weekend: Closed</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Info className="w-5 h-5 text-blue-600 mt-1 mr-3" />
-                <div>
-                  <h3 className="font-medium">Response Time</h3>
-                  <p className="text-gray-600">We typically respond within 24 hours during business days.</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-8 pt-6 border-t border-blue-100">
-              <h3 className="font-medium mb-3">Follow Us</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
-                </a>
-                <a href="#" className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>
-                </a>
-                <a href="#" className="w-8 h-8 bg-pink-600 rounded-full flex items-center justify-center text-white hover:bg-pink-700 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        
+      <div className="grid md:grid-cols-1 gap-10">        
         {/* Contact Form */}
-        <div className="md:col-span-2">
-          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-6">Send Us a Message</h2>
+        <div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm max-w-3xl mx-auto">
+            <h2 className="text-xl font-semibold mb-6">Submit Your Feedback</h2>
             
             {submitted ? (
               <div className="text-center py-10">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Check className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Thank You!</h3>
-                <p className="text-gray-600 mb-6">Your message has been sent successfully. We'll get back to you soon.</p>
+                <h3 className="text-xl font-semibold mb-2">Thank You For Your Feedback!</h3>
+                <p className="text-gray-600 mb-6">
+                  Your suggestions help us improve our platform. We review all feedback and prioritize new features based on user demand.
+                </p>
                 <Button 
                   onClick={() => setSubmitted(false)}
                   variant="outline"
                 >
-                  Send Another Message
+                  Submit Another Idea
                 </Button>
               </div>
             ) : (
@@ -242,11 +195,11 @@ const ContactUs = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="general_enquiry">General Enquiry</SelectItem>
                             <SelectItem value="feature_request">Feature Request</SelectItem>
+                            <SelectItem value="feedback">General Feedback</SelectItem>
                             <SelectItem value="bug_report">Report a Problem</SelectItem>
-                            <SelectItem value="partnership">Partnership Opportunity</SelectItem>
-                            <SelectItem value="feedback">Feedback</SelectItem>
+                            <SelectItem value="improvement">Suggestion for Improvement</SelectItem>
+                            <SelectItem value="provider_request">Request New Provider</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -260,16 +213,16 @@ const ContactUs = () => {
                     name="message"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Your Message</FormLabel>
+                        <FormLabel>Your Idea or Feedback</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Please describe your question or request in detail..." 
+                            placeholder="Describe your feature idea or feedback in detail. What would you like to see improved? How would this enhance your experience?" 
                             className="min-h-[150px]" 
                             {...field} 
                           />
                         </FormControl>
                         <FormDescription>
-                          Maximum 1000 characters
+                          We value your input! Your suggestions directly influence our development priorities.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -278,16 +231,16 @@ const ContactUs = () => {
                   
                   <Button 
                     type="submit" 
-                    className="w-full"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                     disabled={submitting}
                   >
                     {submitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
+                        Submitting...
                       </>
                     ) : (
-                      "Send Message"
+                      "Submit Feature Request"
                     )}
                   </Button>
                 </form>

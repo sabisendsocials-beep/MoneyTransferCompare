@@ -23,7 +23,7 @@ const Header = () => {
     { href: "/trends", label: "Trends", icon: <TrendingUp size={18} /> },
     { href: "/news", label: "News", icon: <Newspaper size={18} /> },
     { href: "/how-it-works", label: "How It Works", icon: <HelpCircle size={18} /> },
-    { href: "/contact", label: "Contact Us", icon: <MessageSquare size={18} /> }
+    { href: "/contact", label: "Feedback", icon: <Newspaper size={18} /> }
   ];
 
   return (
