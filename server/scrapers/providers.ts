@@ -10,7 +10,7 @@ import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
 import { updateNalaRate } from './nalaScraper';
 import { updatePaysendRate } from './paysendScraper';
-import { updateProfeeRateSimple } from './simpleProfeeScraper';
+import { updateProfeeRateWithMarketData } from './profeeMarketRate';
 import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './westernUnionScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
@@ -429,9 +429,7 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
             }
             
             // GBP to NGN is the primary pair we're interested in
-            let success = await updateProfeeRateSimple(
-              profeeUrl, 
-              profeeSelector, 
+            let success = await updateProfeeRateWithMarketData(
               provider.id, 
               'GBP', 
               'NGN',
@@ -442,9 +440,6 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
                   from_currency: fromCurrency,
                   to_currency: toCurrency,
                   rate,
-                  fee: null,
-                  minimumAmount: null,
-                  maximumAmount: null,
                   source: 'SCRAPER'
                 });
                 return true; // Return boolean for success
