@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { storage } from '../storage';
 import { updateAceMoneyTransferRate } from '../scrapers/aceMoneyTransferScraper';
+import { updateAceMoneyTransferMarketRates } from '../scrapers/aceMoneyTransferMarketRate';
 
 // Create router
 const aceRouter = Router();
@@ -89,40 +90,56 @@ aceRouter.post("/update-ace-rate", async (req: Request, res: Response) => {
       });
     }
     
-    // Get the admin-configured URL and selector
-    const aceUrl = aceProvider.scraping_url;
-    // Use the provider's selector if available, otherwise use our default from the screenshot
-    const aceSelector = aceProvider.scraping_selector || 'span.color-000.lt-61C';
+    // First try direct scraping
+    let success = false;
     
-    if (!aceUrl) {
-      return res.status(400).json({
-        success: false,
-        message: "ACE Money Transfer provider missing required URL in admin config"
-      });
+    try {
+      console.log("Attempting direct scraping first...");
+      
+      // Get the admin-configured URL and selector
+      const aceUrl = aceProvider.scraping_url;
+      // Use the provider's selector if available, otherwise use our default from the screenshot
+      const aceSelector = aceProvider.scraping_selector || 'span.color-000.lt-61C';
+      
+      if (aceUrl) {
+        success = await updateAceMoneyTransferRate(
+          aceUrl,
+          aceSelector,
+          aceProvider.id,
+          'GBP',
+          'NGN'
+        );
+      }
+    } catch (scrapingError) {
+      console.error("Error during direct scraping:", scrapingError);
+      success = false;
     }
     
-    // Run the scraper
-    const success = await updateAceMoneyTransferRate(
-      aceUrl,
-      aceSelector,
-      aceProvider.id,
-      'GBP',
-      'NGN'
-    );
-    
-    if (success) {
+    // If direct scraping failed, use market-based approach
+    if (!success) {
+      console.log("Direct scraping failed, using market-based approach...");
+      
+      // Run the market-based rate update
+      success = await updateAceMoneyTransferMarketRates(aceProvider.id);
+      
+      if (success) {
+        res.json({
+          success: true,
+          message: "ACE Money Transfer rates successfully updated using market-based approach",
+          method: "MARKET_BASED"
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "ACE Money Transfer rate update failed with both methods",
+          method: "DIRECT_AND_MARKET_BASED"
+        });
+      }
+    } else {
       res.json({
         success: true,
-        message: "ACE Money Transfer rate successfully updated",
-        url: aceUrl,
-        selector: aceSelector
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        message: "ACE Money Transfer rate update failed",
-        url: aceUrl,
-        selector: aceSelector
+        message: "ACE Money Transfer rate successfully updated using direct scraping",
+        method: "DIRECT_SCRAPING"
       });
     }
   } catch (error) {

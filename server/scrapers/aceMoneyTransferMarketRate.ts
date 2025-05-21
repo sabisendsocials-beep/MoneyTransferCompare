@@ -5,7 +5,7 @@
  * when direct scraping is not possible due to anti-scraping measures.
  */
 import { storage } from '../storage';
-import { getHistoricalRates } from '../api/exchangeRateApi';
+import { fetchHistoricalRates } from '../api/exchangeRateApi';
 
 /**
  * Update ACE Money Transfer rates using market-based approach
@@ -47,7 +47,7 @@ async function updateAceMarketRate(
 ): Promise<void> {
   try {
     // Get the latest market rate from our trend data
-    const trendData = await getHistoricalRates(fromCurrency, toCurrency);
+    const trendData = await fetchHistoricalRates(fromCurrency, toCurrency);
     
     if (!trendData || trendData.length === 0) {
       console.error(`No trend data available for ${fromCurrency}-${toCurrency}`);
@@ -55,7 +55,7 @@ async function updateAceMarketRate(
     }
     
     // Sort by date to get the latest rate
-    const sortedData = trendData.sort((a, b) => 
+    const sortedData = trendData.sort((a: any, b: any) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
