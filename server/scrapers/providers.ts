@@ -10,11 +10,11 @@ import { scrapeRemitlyRate, updateRemitlyRate } from './remitlyScraper';
 import { updateTransferGoRate } from './transferGoScraper';
 import { updateNalaRate } from './nalaScraper';
 import { updatePaysendRate } from './paysendScraper';
+import { updateProfeeRate } from './profeeScraper';
 import { updateWesternUnionRate, updateWesternUnionRateFromConfig } from './westernUnionScraper';
 import { scrapeExchangeRate, scrapeWorldRemitRate as robustScrapeWorldRemitRate } from './robustScraper';
 import { updateWorldRemitRateViaApi, getProviderRate } from './proxyApiScraper';
 import { additionalProviders } from './additionalProviders';
-// Remove problematic import line
 
 /**
  * Add the additional providers from additionalProviders.ts to the database
@@ -413,6 +413,48 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               continue; // Skip to next provider
             } else {
               console.log('=== Dedicated TransferGo scraper failed. Trying enhanced scraping as fallback... ===');
+              // Will continue to standard scraping as fallback
+            }
+          } else if (provider.name === 'Profee') {
+            console.log('=== Using dedicated Profee scraper with admin-configured URL and selectors ONLY... ===');
+            
+            // Extract URL and selectors from provider config
+            const profeeUrl = provider.url;
+            const profeeSelector = provider.rateSelector;
+            
+            if (!profeeUrl || !profeeSelector) {
+              console.log('❌ Missing URL or selector for Profee in admin config. Cannot continue.');
+              results.push({ provider: provider.name, success: false });
+              continue; // Skip to next provider
+            }
+            
+            // GBP to NGN is the primary pair we're interested in
+            let success = await updateProfeeRate(
+              profeeUrl, 
+              profeeSelector, 
+              provider.id, 
+              'GBP', 
+              'NGN',
+              async (providerId, fromCurrency, toCurrency, rate) => {
+                return await addOrUpdateExchangeRate({
+                  providerId,
+                  fromCurrency,
+                  toCurrency,
+                  rate,
+                  fee: provider.fee || null,
+                  minimumAmount: provider.minimumAmount || null,
+                  maximumAmount: provider.maximumAmount || null,
+                  source: 'SCRAPER'
+                });
+              }
+            );
+            
+            if (success) {
+              console.log('=== Successfully updated Profee rate with dedicated scraper ===');
+              results.push({ provider: provider.name, success: true });
+              continue; // Skip to next provider
+            } else {
+              console.log('=== Dedicated Profee scraper failed. Trying enhanced scraping as fallback... ===');
               // Will continue to standard scraping as fallback
             }
           } else if (provider.name === 'Nala') {
