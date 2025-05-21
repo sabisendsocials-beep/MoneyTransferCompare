@@ -34,20 +34,7 @@ const CurrencyCalculator = () => {
   const [result, setResult] = useState<number | null>(null);
   const [exchangeRates, setExchangeRates] = useState<Record<RateKey, number>>({} as Record<RateKey, number>);
   
-  // Fetch the latest exchange rates from the API
-  const { data: rateStats, isLoading: isLoadingRates } = useQuery<RateStats>({ 
-    queryKey: ['/api/rate-stats'],
-    staleTime: 60 * 60 * 1000, // 1 hour
-  });
-  
-  // For debugging
-  useEffect(() => {
-    if (rateStats) {
-      console.log("Rate stats loaded:", rateStats);
-    }
-  }, [rateStats]);
-
-  // Use the hardcoded best rates directly instead of relying on the API
+  // Initialize with the hardcoded best rates directly
   useEffect(() => {
     // Set exchange rates directly from our database query results
     setExchangeRates(BEST_RATES as Record<RateKey, number>);
@@ -55,23 +42,6 @@ const CurrencyCalculator = () => {
     // Calculate the rate once exchange rates are loaded
     calculateRate();
   }, []);
-
-  // Fetch rates for the selected currency pair
-  const { data: selectedPairRates } = useQuery<RateStats>({
-    queryKey: ['/api/rate-stats', { from: fromCurrency, to: toCurrency }],
-    enabled: !!fromCurrency && !!toCurrency,
-    staleTime: 60 * 60 * 1000, // 1 hour
-  });
-  
-  // Update rates when we get currency-specific data
-  useEffect(() => {
-    if (selectedPairRates?.currentRate) {
-      setExchangeRates(prev => ({
-        ...prev,
-        [`${fromCurrency}-${toCurrency}`]: selectedPairRates.currentRate || 0
-      }));
-    }
-  }, [selectedPairRates, fromCurrency, toCurrency]);
   
   // Format input with commas
   const formatInputWithCommas = (value: string): string => {
@@ -312,14 +282,14 @@ const CurrencyCalculator = () => {
       </div>
       
       {/* Provider indicator */}
-      <div className="flex justify-center mt-3 space-x-2">
-        {['Western Union', 'Wise'].map(provider => (
+      <div className="flex flex-wrap justify-center mt-3 gap-2">
+        {['Western Union', 'Wise', 'Remitly', 'WorldRemit'].map(provider => (
           <div key={provider} className="bg-white/10 px-3 py-1 rounded-full text-xs">
             {provider}
           </div>
         ))}
         <div className="bg-white/10 px-3 py-1 rounded-full text-xs">
-          +10 more
+          +8 more
         </div>
       </div>
     </div>
