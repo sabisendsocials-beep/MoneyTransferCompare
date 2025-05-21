@@ -109,7 +109,7 @@ export const HorizontalComparisonCard = ({
                 <img 
                   src={provider.providerLogo} 
                   alt={`${provider.providerName} logo`} 
-                  className="w-8 h-8 mr-3 object-contain"
+                  className="w-12 h-12 mr-3 object-contain"
                 />
               )}
               <div>
