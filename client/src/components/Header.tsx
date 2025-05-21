@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home } from "lucide-react";
+import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -22,7 +22,8 @@ const Header = () => {
     { href: "/compare", label: "Compare", icon: <Banknote size={18} /> },
     { href: "/trends", label: "Trends", icon: <TrendingUp size={18} /> },
     { href: "/news", label: "News", icon: <Newspaper size={18} /> },
-    { href: "/how-it-works", label: "How It Works", icon: <HelpCircle size={18} /> }
+    { href: "/how-it-works", label: "How It Works", icon: <HelpCircle size={18} /> },
+    { href: "/contact", label: "Contact Us", icon: <MessageSquare size={18} /> }
   ];
 
   return (
