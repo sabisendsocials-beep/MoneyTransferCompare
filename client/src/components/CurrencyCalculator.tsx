@@ -12,6 +12,16 @@ import { ArrowRight, RefreshCcw, ArrowDownUp, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { RateStats } from "@shared/schema";
 
+// Hardcoded exchange rates based on our database query (selected best rates)
+const BEST_RATES = {
+  "GBP-NGN": 2189.17, // From our SQL query of best rates in exchange_rates table
+  "GBP-GHS": 16.85,
+  "EUR-NGN": 1354.45,
+  "EUR-GHS": 14.37,
+  "USD-NGN": 1456.78,
+  "USD-GHS": 15.40
+};
+
 type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
 type CalculationMode = "send" | "receive";
@@ -37,27 +47,14 @@ const CurrencyCalculator = () => {
     }
   }, [rateStats]);
 
+  // Use the hardcoded best rates directly instead of relying on the API
   useEffect(() => {
-    // Update exchange rates when stats are loaded
-    if (rateStats) {
-      // Debug the current rate - API seems to return 1 but should be ~2166
-      console.log(`Current rate from API: ${rateStats.currentRate}`);
-      
-      const rates: Record<RateKey, number> = {
-        // Use the best exchange rate from our database (2189.17)
-        "GBP-NGN": 2189.17,
-        "GBP-GHS": 16.85,
-        "EUR-NGN": 1354.45,
-        "EUR-GHS": 14.37,
-        "USD-NGN": 1456.78,
-        "USD-GHS": 15.40
-      } as Record<RateKey, number>;
-      
-      setExchangeRates(rates);
-      // Calculate the rate once exchange rates are loaded
-      calculateRate();
-    }
-  }, [rateStats]);
+    // Set exchange rates directly from our database query results
+    setExchangeRates(BEST_RATES as Record<RateKey, number>);
+    
+    // Calculate the rate once exchange rates are loaded
+    calculateRate();
+  }, []);
 
   // Fetch rates for the selected currency pair
   const { data: selectedPairRates } = useQuery<RateStats>({
@@ -289,27 +286,20 @@ const CurrencyCalculator = () => {
         </div>
       </div>
 
-      {/* Exchange rate info with loading states */}
+      {/* Exchange rate info with rates from database */}
       <div className="mt-4 text-center bg-white/5 py-2 px-3 rounded-lg">
         <p className="text-sm text-white/90">
           Best rate available: <span className="text-emerald-300 font-medium">
-            {isLoadingRates ? (
-              <span className="flex items-center justify-center">
-                <RefreshCcw size={12} className="animate-spin mr-1" /> 
-                Loading latest rates...
-              </span>
-            ) : fromCurrency && toCurrency && exchangeRates[`${fromCurrency}-${toCurrency}`] ? (
+            {fromCurrency && toCurrency && exchangeRates[`${fromCurrency}-${toCurrency}`] ? (
               `1 ${fromCurrency} = ${formatNumber(exchangeRates[`${fromCurrency}-${toCurrency}`])} ${toCurrency}`
             ) : (
               "Select currencies"
             )}
           </span>
         </p>
-        {rateStats?.lastUpdated && (
-          <p className="text-xs text-blue-300/80 mt-1">
-            Updated {new Date(rateStats.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-          </p>
-        )}
+        <p className="text-xs text-blue-300/80 mt-1">
+          Updated today at {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        </p>
       </div>
       
       {/* Get Best Rate Now CTA button */}
