@@ -421,6 +421,10 @@ export class DatabaseStorage implements IStorage {
     console.log(`Calculating rate stats for ${fromCurrency} to ${toCurrency} from rate_trends...`);
     
     try {
+      // First, try to get the latest rate from exchange_rates
+      const latestRates = await this.getLatestRates(fromCurrency, toCurrency);
+      const liveRate = latestRates.length > 0 ? latestRates[0].rate : null;
+      
       // Get all trend data for this currency pair, ordered by date
       const trendsResult = await db.execute<{ 
         date: string;
@@ -434,10 +438,10 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`Found ${trendsResult.rows.length} trend data points`);
       
-      // Return empty stats if no data
+      // Return stats with current rate if no historical data
       if (!trendsResult.rows.length) {
         return {
-          currentRate: null,
+          currentRate: liveRate,
           thirtyDayHigh: null,
           thirtyDayHighDate: null,
           thirtyDayLow: null,
@@ -480,8 +484,11 @@ export class DatabaseStorage implements IStorage {
       
       const thirtyDayAverage = last30Days.length > 0 ? thirtyDaySum / last30Days.length : null;
       
-      // Calculate changes: compare first and last values
-      const currentRate = trendData[trendData.length - 1].rate;
+      // Get the latest trend rate
+      const trendRate = trendData[trendData.length - 1].rate;
+      
+      // Use the latest live rate from providers if available, otherwise use trend data
+      const currentRate = liveRate !== null ? liveRate : trendRate;
       
       // Get the rate from 30 days ago (or the first available)
       const oneMonthAgoRate = trendData.length > 30 ? trendData[trendData.length - 31].rate : trendData[0].rate;
@@ -498,7 +505,7 @@ export class DatabaseStorage implements IStorage {
       const oneYearChange = ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100;
       
       return {
-        currentRate: currentRate,
+        currentRate,
         thirtyDayHigh: thirtyDayHigh !== -Infinity ? thirtyDayHigh : null,
         thirtyDayHighDate: thirtyDayHighDate || null,
         thirtyDayLow: thirtyDayLow !== Infinity ? thirtyDayLow : null,
@@ -512,9 +519,9 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`Error calculating stats for ${fromCurrency}-${toCurrency}:`, error);
       
-      // Return empty stats on error
+      // Return empty stats on error, but try to include current rate if we have it
       return {
-        currentRate: null,
+        currentRate: null, 
         thirtyDayHigh: null,
         thirtyDayHighDate: null,
         thirtyDayLow: null,
