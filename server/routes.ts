@@ -372,13 +372,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get best rates for the calculator (using same logic as results page)
+  // Get best rates for the calculator - using the same simple logic as the results page
   apiRouter.get("/api/best-rates", async (req: Request, res: Response) => {
     try {
-      // Get all active providers from the database
-      const providers = await storage.getActiveProviders();
-      
-      // Define currency pairs we need rates for
+      // Define the currency pairs we need
       const currencyPairs = [
         { from: "GBP", to: "NGN" },
         { from: "GBP", to: "GHS" },
@@ -388,82 +385,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { from: "USD", to: "GHS" }
       ];
       
-      // Set realistic rate ranges to filter out obviously incorrect values
-      const rateRanges = {
-        "GBP-NGN": { min: 1800, max: 2500 },
-        "GBP-GHS": { min: 14, max: 20 },
-        "EUR-NGN": { min: 1200, max: 1600 },
-        "EUR-GHS": { min: 12, max: 18 },
-        "USD-NGN": { min: 1000, max: 1600 },
-        "USD-GHS": { min: 12, max: 18 }
-      };
-      
-      // Default rates to use if no valid rates are found
-      const defaultRates = {
-        "GBP-NGN": 2189.17,
-        "GBP-GHS": 16.85,
-        "EUR-NGN": 1354.45,
-        "EUR-GHS": 14.37,
-        "USD-NGN": 1456.78,
-        "USD-GHS": 15.40
-      };
-      
-      // Process each currency pair to get the best rate
       const bestRates = [];
       
+      // For each currency pair, simulate a transfer request to get the best provider
       for (const pair of currencyPairs) {
-        // Get the latest rates for this currency pair
-        const rates = await storage.getLatestRates(pair.from, pair.to);
+        // Create a transfer request for 100 units
+        const request = {
+          amount: 100,
+          fromCurrency: pair.from,
+          toCurrency: pair.to,
+          type: "send"
+        };
         
-        // Skip if no rates found
-        if (!rates || rates.length === 0) {
-          const pairKey = `${pair.from}-${pair.to}` as keyof typeof defaultRates;
-          bestRates.push({
-            fromCurrency: pair.from,
-            toCurrency: pair.to,
-            rate: defaultRates[pairKey],
-            timestamp: new Date().toISOString()
-          });
-          continue;
-        }
+        // Use the same compare API as the results page
+        const transferResults = await storage.compareTransferOptions(request);
         
-        // Get the range for this currency pair
-        const pairKey = `${pair.from}-${pair.to}` as keyof typeof rateRanges;
-        const range = rateRanges[pairKey];
-        
-        // Filter rates by realistic values and active providers
-        const validRates = rates.filter(rate => {
-          // Check if rate is within realistic range
-          if (range && (rate.rate < range.min || rate.rate > range.max)) {
-            return false;
+        if (transferResults && transferResults.length > 0) {
+          // Sort by received amount to find the best rate
+          transferResults.sort((a, b) => b.receivedAmount - a.receivedAmount);
+          
+          // Get the best option
+          const bestOption = transferResults[0];
+          
+          // The best rate is the received amount divided by the amount after fees
+          const bestRate = bestOption.receivedAmount / bestOption.amountAfterFees;
+          
+          // Use the most recent timestamp from the provider
+          const latestRates = await storage.getLatestRates(pair.from, pair.to);
+          let timestamp = new Date().toISOString();
+          
+          if (latestRates && latestRates.length > 0) {
+            // Find the rate from this provider
+            const providerRate = latestRates.find(r => r.provider_id === bestOption.providerId);
+            if (providerRate) {
+              timestamp = providerRate.timestamp;
+            } else {
+              // Get most recent timestamp if provider's rate not found
+              timestamp = latestRates.reduce((latest, rate) => 
+                new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
+              ).timestamp;
+            }
           }
           
-          // Check if provider is active
-          const provider = providers.find(p => p.id === rate.provider_id);
-          return provider && provider.active;
-        });
-        
-        if (validRates.length === 0) {
-          // Use default rate if no valid rates found
-          const pairKey = `${pair.from}-${pair.to}` as keyof typeof defaultRates;
           bestRates.push({
             fromCurrency: pair.from,
             toCurrency: pair.to,
-            rate: defaultRates[pairKey],
-            timestamp: new Date().toISOString()
+            rate: bestRate,
+            timestamp: timestamp,
+            providerName: bestOption.providerName
           });
         } else {
-          // Find the most recent valid rate
-          const mostRecent = validRates.reduce((latest, rate) => 
-            new Date(rate.timestamp) > new Date(latest.timestamp) ? rate : latest
-          );
-          
-          // Add to the result
+          // Fallback to trend data if no transfer options found
+          const stats = await storage.getRateStats(pair.from, pair.to);
           bestRates.push({
             fromCurrency: pair.from,
             toCurrency: pair.to,
-            rate: mostRecent.rate,
-            timestamp: mostRecent.timestamp
+            rate: stats.currentRate || 0,
+            timestamp: stats.lastUpdated || new Date().toISOString()
           });
         }
       }
