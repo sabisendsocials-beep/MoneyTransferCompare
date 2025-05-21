@@ -57,100 +57,138 @@ export async function scrapeRemitChoiceDirect(
     const html = await response.text();
     console.log(`Retrieved ${html.length} characters from Remit Choice website`);
     
+    // Wait for JavaScript to load (simulating browser behavior)
+    console.log("Waiting for JavaScript to load dynamic content...");
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    
     // Parse the HTML
     const $ = cheerio.load(html);
     
-    console.log(`First trying with the provided CSS selector: "${selector}"`);
+    console.log(`Trying multiple scraping approaches for Remit Choice`);
     
-    // Try first with the exact selector provided
+    // Try with the exact CSS selector first
+    console.log(`1. First trying with the provided CSS selector: "${selector}"`);
     const elements = $(selector);
     console.log(`Found ${elements.length} elements matching selector "${selector}"`);
     
-    // Initialize rate text
     let rateText = '';
+    let rate = 0;
     
-    // If we found elements with the provided selector, check them
+    // If we found elements with the selector, process them
     if (elements.length > 0) {
       elements.each((i, el) => {
         const text = $(el).text().trim();
         console.log(`Element ${i+1} text: "${text}"`);
         
-        // Accept any text containing the currencies and a number
-        if (text.includes(fromCurrency) && text.includes(toCurrency) && /\d+(\.\d+)?/.test(text)) {
+        // Look for text containing currency codes and numbers
+        if (text.includes(fromCurrency) && /\d+(\.\d+)?/.test(text)) {
+          console.log(`Found text with currency and number: "${text}"`);
           rateText = text;
-          console.log(`Found rate text: ${rateText}`);
         }
       });
     }
     
-    // If we didn't find a match with the provided selector, try a more general approach
+    // Try to find any element containing "Exchange Rate" text
     if (!rateText) {
-      console.log("No match with provided selector, trying a broader approach...");
+      console.log(`2. Looking for elements containing "Exchange Rate" text...`);
       
-      // Looking for exchange rate text - common patterns but no hard-coded values
-      const allSpans = $('span');
-      console.log(`Checking ${allSpans.length} span elements on page`);
-      
-      // Look for specific pattern "Exchange Rate" near the currencies or numbers
-      allSpans.each((i, el) => {
+      $('*').each((i, el) => {
         const text = $(el).text().trim();
-        
-        // Look for text containing "Exchange Rate" and both currencies
-        if (text.includes("Exchange Rate") && text.includes(fromCurrency) && text.includes(toCurrency)) {
-          console.log(`Found potential rate text in span ${i+1}: "${text}"`);
-          rateText = text;
+        if (text.includes('Exchange Rate') && text.includes(fromCurrency) && text.includes(toCurrency)) {
+          console.log(`Found element with exchange rate text: "${text}"`);
+          
+          // Only use if relatively short (likely to be just the rate)
+          if (text.length < 200) {
+            rateText = text;
+          }
         }
-        // Also check for text with both currencies and equals sign (likely an exchange rate)
-        else if (text.includes(fromCurrency) && text.includes(toCurrency) && text.includes("=") && /\d+(\.\d+)?/.test(text)) {
-          console.log(`Found potential rate text in span ${i+1}: "${text}"`);
+      });
+    }
+    
+    // Try finding the specific class structure shown in the screenshot
+    if (!rateText) {
+      console.log(`3. Looking for specific HTML structure from screenshot...`);
+      
+      // Look for divs with classes containing "text-center"
+      $('div[class*="text-center"]').each((i, el) => {
+        const text = $(el).text().trim();
+        console.log(`Text-center div ${i+1}: "${text}"`);
+        
+        // If this div has content with both currencies
+        if (text.includes(fromCurrency) && text.includes(toCurrency)) {
+          console.log(`Found text-center div with both currencies: "${text}"`);
           rateText = text;
         }
       });
+    }
+    
+    // Try to find spans containing rate information
+    if (!rateText) {
+      console.log(`4. Looking for spans with rate information...`);
       
-      // If spans didn't work, check divs
-      if (!rateText) {
-        const allDivs = $('div');
-        console.log(`Checking ${allDivs.length} div elements on page`);
-        
-        allDivs.each((i, el) => {
-          const text = $(el).text().trim();
-          
-          // Look for common exchange rate patterns but without hard-coded values
-          if ((text.includes("Exchange Rate") || text.includes("exchange rate")) && 
-              text.includes(fromCurrency) && text.includes(toCurrency) && 
-              /\d+(\.\d+)?/.test(text)) {
-            
-            console.log(`Found potential rate text in div ${i+1}: "${text}"`);
-            
-            // Only use if relatively short text (likely to be just the rate)
-            if (text.length < 200) {
-              rateText = text;
-            }
-          }
-        });
+      $('span').each((i, el) => {
+        const text = $(el).text().trim();
+        // Looking for spans with specific text patterns like "1 GBP = X NGN"
+        if (text.includes('=') && text.includes(fromCurrency) && /\d+/.test(text)) {
+          console.log(`Found span with possible rate: "${text}"`);
+          rateText = text;
+        }
+      });
+    }
+    
+    // As a last resort, scan the entire page for rate patterns
+    if (!rateText) {
+      console.log(`5. Scanning entire page for rate patterns...`);
+      
+      // Get all text from the page
+      const pageText = $('body').text();
+      
+      // Look for a pattern like "1 GBP = X NGN" or "Exchange Rate 1 GBP = X NGN"
+      const exchangeRateMatches = pageText.match(new RegExp(`\\b(Exchange Rate)?\\s*\\d+\\s*${fromCurrency}\\s*=\\s*(\\d+[.,]?\\d*)\\s*${toCurrency}\\b`, 'i'));
+      
+      if (exchangeRateMatches) {
+        console.log(`Found exchange rate pattern in page text: "${exchangeRateMatches[0]}"`);
+        rateText = exchangeRateMatches[0];
       }
     }
     
-    if (!rateText) {
-      console.error(`Could not find rate text for ${fromCurrency}-${toCurrency}`);
-      return false;
+    // If we found rate text, extract the numeric rate
+    if (rateText) {
+      console.log(`Processing rate text: "${rateText}"`);
+      
+      // Extract the numeric rate - look for the largest number in the text
+      // This works because exchange rates (like 2165) are typically much larger
+      // than the "1" in "1 GBP = 2165 NGN"
+      const numberMatches = rateText.match(/\d+[,.]?\d*/g);
+      
+      if (numberMatches && numberMatches.length > 0) {
+        console.log(`Found numbers in text: ${numberMatches.join(', ')}`);
+        
+        // Convert matches to numbers, handling comma as decimal separator
+        const numbers = numberMatches.map(match => {
+          // Replace comma with period for proper parsing if needed
+          const normalizedMatch = match.replace(',', '.');
+          return parseFloat(normalizedMatch);
+        });
+        
+        // For currency pairs like GBP to NGN, the rate is the largest number
+        // (excludes the "1" in "1 GBP = X NGN")
+        rate = Math.max(...numbers);
+        
+        // Avoid unreasonably large values (like paragraph numbers)
+        if (rate > 10000) {
+          // Look for more reasonable numbers
+          const reasonableNumbers = numbers.filter(num => num > 100 && num < 10000);
+          if (reasonableNumbers.length > 0) {
+            rate = Math.max(...reasonableNumbers);
+          }
+        }
+      }
     }
     
-    // Extract the numeric rate from the text
-    // Expected format: "Exchange Rate 1 GBP = 2165 NGN"
-    const rateMatch = rateText.match(/\d+(\.\d+)?/g);
-    if (!rateMatch || rateMatch.length === 0) {
-      console.error(`Could not extract numeric rate from text: ${rateText}`);
-      return false;
-    }
-    
-    // If multiple numbers found, use the largest one as it's likely the rate
-    // (the first number is often '1' as in '1 GBP = X NGN')
-    const numberValues = rateMatch.map(Number);
-    const rate = Math.max(...numberValues);
-    
-    if (isNaN(rate) || rate <= 0) {
-      console.error(`Invalid rate value: ${rate}`);
+    // Validate the extracted rate
+    if (!rateText || !rate || isNaN(rate) || rate <= 0) {
+      console.error(`Could not extract a valid rate from text: ${rateText || 'No text found'}`);
       return false;
     }
     
