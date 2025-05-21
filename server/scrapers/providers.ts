@@ -428,32 +428,55 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               continue; // Skip to next provider
             }
             
-            // GBP to NGN is the primary pair we're interested in
-            let success = await updateProfeeRateWithMarketData(
-              provider.id, 
-              'GBP', 
-              'NGN',
-              async (providerId: number, fromCurrency: string, toCurrency: string, rate: number) => {
-                // Use the standard storage method for adding exchange rates
-                await storage.createExchangeRate({
-                  provider_id: providerId,
-                  from_currency: fromCurrency,
-                  to_currency: toCurrency,
-                  rate,
-                  source: 'SCRAPER'
-                });
-                return true; // Return boolean for success
-              }
-            );
+            // Define all the currency pairs we want to support for Profee
+            const currencyPairs = [
+              { from: 'GBP', to: 'NGN' },
+              { from: 'EUR', to: 'NGN' },
+              { from: 'GBP', to: 'GHS' },
+              { from: 'EUR', to: 'GHS' }
+            ];
             
-            if (success) {
-              console.log('=== Successfully updated Profee rate with dedicated scraper ===');
-              results.push({ provider: provider.name, success: true });
-              continue; // Skip to next provider
-            } else {
-              console.log('=== Dedicated Profee scraper failed. Trying enhanced scraping as fallback... ===');
-              // Will continue to standard scraping as fallback
+            // Process each currency pair
+            let allPairsSuccessful = true;
+            
+            for (const pair of currencyPairs) {
+              console.log(`Processing Profee ${pair.from} to ${pair.to} pair...`);
+              
+              const pairSuccess = await updateProfeeRateWithMarketData(
+                provider.id, 
+                pair.from, 
+                pair.to,
+                async (providerId: number, fromCurrency: string, toCurrency: string, rate: number) => {
+                  // Use the standard storage method for adding exchange rates
+                  await storage.createExchangeRate({
+                    provider_id: providerId,
+                    from_currency: fromCurrency,
+                    to_currency: toCurrency,
+                    rate,
+                    source: 'SCRAPER'
+                  });
+                  return true; // Return boolean for success
+                }
+              );
+              
+              if (pairSuccess) {
+                console.log(`=== Successfully updated Profee ${pair.from} to ${pair.to} rate with market-based provider ===`);
+              } else {
+                console.log(`=== Failed to update Profee ${pair.from} to ${pair.to} rate with market-based provider ===`);
+                allPairsSuccessful = false;
+              }
             }
+            
+            if (allPairsSuccessful) {
+              console.log('=== Successfully updated all Profee currency pairs with market-based provider ===');
+              results.push({ provider: provider.name, success: true });
+            } else {
+              console.log('=== Some Profee currency pairs failed to update ===');
+              results.push({ provider: provider.name, success: false });
+            }
+            
+            // Continue to next provider regardless of success since we've already handled all pairs
+            continue;
           } else if (provider.name === 'Nala') {
             console.log('=== Using dedicated Nala scraper with admin-configured URL and selectors ONLY... ===');
             
