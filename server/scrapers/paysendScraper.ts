@@ -206,11 +206,17 @@ export async function updatePaysendRate(): Promise<boolean> {
         
         if (match) {
           const fromCurrency = match[1];
-          // Clean up the rate string - remove any spaces, commas, etc.
-          const rateString = match[2].replace(/[\s,]/g, '');
+          
+          // Store the original rate string for logging/debugging
+          const originalRateString = match[2];
+          
+          // Clean up the rate string for parsing - remove any spaces, commas, etc.
+          const rateString = originalRateString.replace(/[\s,]/g, '');
           const rate = parseFloat(rateString);
           const toCurrency = match[3];
           
+          // Log both the original format and the parsed value
+          console.log(`Original rate format: 1 ${fromCurrency} = ${originalRateString} ${toCurrency}`);
           console.log(`Extracted rate using ${patternUsed}: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
           
           if (rate > 0) {
