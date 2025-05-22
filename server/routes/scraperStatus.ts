@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getScraperStatus, resetScraperTimer, recordScraperRun } from '../services/scraperStatus';
 import { updateAllScraperStatuses } from '../updateScraperStatus';
+import { updateScraperStatusFromRates } from '../services/enhancedScraperStatus';
 
 const router = Router();
 
@@ -26,7 +27,13 @@ router.get('/status', async (_req, res) => {
       return res.json(updatedStatus);
     }
     
-    res.json(status);
+    // Update the status based on actual rate data to ensure accuracy
+    await updateScraperStatusFromRates();
+    
+    // Get the updated status with accurate rate information
+    const enhancedStatus = await getScraperStatus();
+    
+    res.json(enhancedStatus);
   } catch (error) {
     console.error('Error getting scraper status:', error);
     res.status(500).json({
