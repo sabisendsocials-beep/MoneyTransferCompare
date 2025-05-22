@@ -45,28 +45,34 @@ export async function updateScraperStatusFromRates(): Promise<boolean> {
         const rateAgeMs = Date.now() - new Date(latestRate.timestamp).getTime();
         const isRateCurrent = rateAgeMs < MAX_RATE_AGE_MS;
         
+        const fromCurrency = latestRate.from_currency;
+        const toCurrency = latestRate.to_currency;
+        const rate = latestRate.rate;
+        const timeAgo = Math.floor(rateAgeMs / (1000 * 60));
+        
         if (isRateCurrent) {
           // Rate is current and valid
           success = true;
           
           // Custom messages based on provider
           if (provider.name === 'Wise' || provider.name === 'WorldRemit' || provider.name === 'TransferGo') {
-            message = `API integration active - Latest ${latestRate.fromCurrency}/${latestRate.toCurrency} rate: ${latestRate.rate}`;
+            message = `API integration active - ${fromCurrency}/${toCurrency}: ${rate} (${timeAgo}m ago)`;
           } else if (provider.name === 'Western Union' || provider.name === 'Paysend') {
-            message = `Multi-method scraper active - Latest ${latestRate.fromCurrency}/${latestRate.toCurrency} rate: ${latestRate.rate}`;
+            message = `Multi-method scraper active - ${fromCurrency}/${toCurrency}: ${rate} (${timeAgo}m ago)`;
           } else if (provider.name === 'Remitly' || provider.name === 'Nala') {
-            message = `Web scraping active - Latest ${latestRate.fromCurrency}/${latestRate.toCurrency} rate: ${latestRate.rate}`;
-          } else if (provider.updatePolicy === 'MANUAL') {
-            message = `Manual rate: ${latestRate.fromCurrency}/${latestRate.toCurrency} = ${latestRate.rate}`;
+            message = `Web scraping active - ${fromCurrency}/${toCurrency}: ${rate} (${timeAgo}m ago)`;
+          } else if (provider.preferred_collection === 'MANUAL') {
+            message = `Manual rate - ${fromCurrency}/${toCurrency}: ${rate} (${timeAgo}m ago)`;
           } else {
-            message = `Latest ${latestRate.fromCurrency}/${latestRate.toCurrency} rate: ${latestRate.rate}`;
+            message = `Rate collected - ${fromCurrency}/${toCurrency}: ${rate} (${timeAgo}m ago)`;
           }
         } else {
           // Rate exists but is outdated
           success = false;
-          message = `Rate outdated (${Math.floor(rateAgeMs / (1000 * 60 * 60))} hours old)`;
+          const hoursAgo = Math.floor(rateAgeMs / (1000 * 60 * 60));
+          message = `Rate outdated - ${fromCurrency}/${toCurrency}: ${rate} (${hoursAgo}h old)`;
         }
-      } else if (provider.updatePolicy === 'MANUAL') {
+      } else if (provider.preferred_collection === 'MANUAL') {
         // Special case for manually updated providers
         success = true;
         message = 'Configured for manual updates only';
