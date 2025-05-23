@@ -198,6 +198,10 @@ export class DatabaseStorage implements IStorage {
     toCurrency: string, 
     limit: number
   ): Promise<ExchangeRate[]> {
+    // Calculate 24-hour cutoff
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    
     return await db
       .select()
       .from(schema.exchangeRates)
@@ -205,7 +209,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(schema.exchangeRates.provider_id, providerId),
           eq(schema.exchangeRates.from_currency, fromCurrency),
-          eq(schema.exchangeRates.to_currency, toCurrency)
+          eq(schema.exchangeRates.to_currency, toCurrency),
+          gte(schema.exchangeRates.timestamp, twentyFourHoursAgo)
         )
       )
       .orderBy(desc(schema.exchangeRates.timestamp))
