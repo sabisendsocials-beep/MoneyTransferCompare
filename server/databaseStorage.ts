@@ -12,6 +12,7 @@ import {
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
+import { filterFreshRates, isRateFresh } from './utils/rateFilter';
 
 // Import the storage interface
 import { IStorage } from './storage';
@@ -159,7 +160,11 @@ export class DatabaseStorage implements IStorage {
     const providers = await this.getActiveProviders();
     const providerIds = providers.map(p => p.id);
     
-    // For each provider, get the latest rate
+    // Calculate 24-hour cutoff
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    
+    // For each provider, get the latest rate within 24 hours
     const latestRatesPromises = providerIds.map(async providerId => {
       const [rate] = await db
         .select()
@@ -168,7 +173,8 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(schema.exchangeRates.provider_id, providerId),
             eq(schema.exchangeRates.from_currency, fromCurrency),
-            eq(schema.exchangeRates.to_currency, toCurrency)
+            eq(schema.exchangeRates.to_currency, toCurrency),
+            gte(schema.exchangeRates.timestamp, twentyFourHoursAgo)
           )
         )
         .orderBy(desc(schema.exchangeRates.timestamp))
