@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all manual providers
       const providers = await storage.getProviders();
-      const manualProviders = providers.filter(p => p.update_policy === 'MANUAL');
+      const manualProviders = providers.filter(p => p.preferred_collection === 'MANUAL');
       
       const rates = [];
       
@@ -312,7 +312,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             from_currency: fromCurrency,
             to_currency: toCurrency,
             rate: parseFloat(rate),
-            timestamp: new Date(),
             verified: true
           });
           
