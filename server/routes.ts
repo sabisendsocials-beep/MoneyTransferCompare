@@ -243,6 +243,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current rates for manual providers
+  apiRouter.get("/api/manual-rates", async (req: Request, res: Response) => {
+    try {
+      // Get all manual providers
+      const providers = await storage.getProviders();
+      const manualProviders = providers.filter(p => p.update_policy === 'MANUAL');
+      
+      const rates = [];
+      
+      // Get latest rates for each manual provider and currency pair
+      for (const provider of manualProviders) {
+        for (const pair of [
+          { from: 'GBP', to: 'NGN' },
+          { from: 'EUR', to: 'NGN' },
+          { from: 'GBP', to: 'GHS' },
+          { from: 'EUR', to: 'GHS' }
+        ]) {
+          const latestRates = await storage.getRatesByProvider(
+            provider.id, 
+            pair.from, 
+            pair.to, 
+            1
+          );
+          
+          if (latestRates.length > 0) {
+            const rate = latestRates[0];
+            rates.push({
+              providerId: provider.id,
+              providerName: provider.name,
+              fromCurrency: pair.from,
+              toCurrency: pair.to,
+              rate: rate.rate,
+              lastUpdated: rate.timestamp
+            });
+          }
+        }
+      }
+      
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching manual rates:", error);
+      res.status(500).json({ message: "Failed to fetch manual rates" });
+    }
+  });
+
+  // Bulk update rates for manual providers
+  apiRouter.post("/api/bulk-update-rates", async (req: Request, res: Response) => {
+    try {
+      const { updates } = req.body;
+      
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ message: "Invalid updates format" });
+      }
+      
+      const results = [];
+      
+      for (const update of updates) {
+        const { providerId, fromCurrency, toCurrency, rate } = update;
+        
+        if (!providerId || !fromCurrency || !toCurrency || !rate) {
+          continue;
+        }
+        
+        try {
+          const newRate = await storage.createExchangeRate({
+            provider_id: providerId,
+            from_currency: fromCurrency,
+            to_currency: toCurrency,
+            rate: parseFloat(rate),
+            timestamp: new Date(),
+            verified: true
+          });
+          
+          results.push({
+            providerId,
+            fromCurrency,
+            toCurrency,
+            rate: newRate.rate,
+            success: true
+          });
+        } catch (error) {
+          results.push({
+            providerId,
+            fromCurrency,
+            toCurrency,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `Updated ${results.filter(r => r.success).length} of ${results.length} rates`,
+        results
+      });
+    } catch (error) {
+      console.error("Error bulk updating rates:", error);
+      res.status(500).json({ message: "Failed to bulk update rates" });
+    }
+  });
+
   // Get rate trends - uses real historical exchange rate data from ExchangeRate-API
   apiRouter.get("/api/rate-trends", async (req: Request, res: Response) => {
     try {
