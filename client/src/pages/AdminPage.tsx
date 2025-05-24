@@ -377,6 +377,7 @@ export default function AdminPage() {
       <Tabs defaultValue="manual-entry" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-8">
           <TabsTrigger value="manual-entry">Manual Rate Entry</TabsTrigger>
+          <TabsTrigger value="manual-rates">Manual Providers</TabsTrigger>
           <TabsTrigger value="collection">Data Collection</TabsTrigger>
           <TabsTrigger value="sources">Data Sources</TabsTrigger>
           <TabsTrigger value="providers">Provider Management</TabsTrigger>
@@ -488,6 +489,106 @@ export default function AdminPage() {
                   {submitting ? "Adding Rate..." : "Add Rate"}
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Manual Providers Tab */}
+        <TabsContent value="manual-rates">
+          <Card>
+            <CardHeader>
+              <CardTitle>Manual Provider Rates</CardTitle>
+              <CardDescription>
+                Update rates for providers that require manual entry (Pesa and Sendwave)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Filter providers to show only manual ones */}
+                {providers && Array.isArray(providers) && providers
+                  .filter(provider => provider.preferred_collection === 'MANUAL')
+                  .map(provider => (
+                    <div key={provider.id} className="border rounded-lg p-4">
+                      <h3 className="text-lg font-semibold mb-4">{provider.name}</h3>
+                      
+                      {/* Currency pairs grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          { from: 'GBP', to: 'NGN' },
+                          { from: 'EUR', to: 'NGN' },
+                          { from: 'GBP', to: 'GHS' },
+                          { from: 'EUR', to: 'GHS' }
+                        ].map(pair => (
+                          <div key={`${pair.from}-${pair.to}`} className="border rounded p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium">{pair.from} → {pair.to}</span>
+                              <Badge variant="outline">Manual</Badge>
+                            </div>
+                            
+                            <form 
+                              onSubmit={async (e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.target as HTMLFormElement);
+                                const rate = formData.get('rate') as string;
+                                
+                                if (!rate || isNaN(parseFloat(rate))) {
+                                  toast({ title: "Please enter a valid rate", variant: "destructive" });
+                                  return;
+                                }
+                                
+                                try {
+                                  const response = await fetch('/api/rates/manual', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      providerId: provider.id,
+                                      fromCurrency: pair.from,
+                                      toCurrency: pair.to,
+                                      rate: parseFloat(rate),
+                                      notes: `Manual entry for ${provider.name} ${pair.from}/${pair.to}`
+                                    })
+                                  });
+                                  
+                                  if (response.ok) {
+                                    toast({ title: `${provider.name} rate updated successfully` });
+                                    (e.target as HTMLFormElement).reset();
+                                    queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
+                                  } else {
+                                    throw new Error('Failed to update rate');
+                                  }
+                                } catch (error) {
+                                  toast({ 
+                                    title: "Error updating rate", 
+                                    description: error instanceof Error ? error.message : "Failed to update",
+                                    variant: "destructive" 
+                                  });
+                                }
+                              }}
+                              className="flex gap-2"
+                            >
+                              <Input
+                                name="rate"
+                                type="number"
+                                step="0.0001"
+                                placeholder="Enter rate"
+                                className="flex-1"
+                              />
+                              <Button type="submit" size="sm">
+                                Update
+                              </Button>
+                            </form>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                
+                {!providers || providers.filter(p => p.preferred_collection === 'MANUAL').length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No manual providers found. Configure providers with "MANUAL" collection method in the Provider Management tab.
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
