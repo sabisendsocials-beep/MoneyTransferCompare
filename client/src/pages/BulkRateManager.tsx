@@ -62,11 +62,11 @@ const BulkRateManager = () => {
   const rateData: ManualRateData[] = providers?.flatMap(provider => 
     CURRENCY_PAIRS.map(pair => {
       const rateKey = `${provider.id}-${pair.from}-${pair.to}`;
-      const existingRate = manualRates?.find((r: any) => 
+      const existingRate = Array.isArray(manualRates) ? manualRates.find((r: any) => 
         r.providerId === provider.id && 
         r.fromCurrency === pair.from && 
         r.toCurrency === pair.to
-      );
+      ) : null;
       
       const lastUpdated = existingRate?.lastUpdated;
       const isStale = lastUpdated ? 

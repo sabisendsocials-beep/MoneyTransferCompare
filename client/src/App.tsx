@@ -13,6 +13,7 @@ import News from "@/pages/News";
 import HowItWorks from "@/pages/HowItWorks";
 import ContactUs from "@/pages/ContactUs";
 import AdminPage from "@/pages/AdminPage";
+import BulkRateManager from "@/pages/BulkRateManager";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -49,6 +50,7 @@ function Router() {
           <Route path="/how-it-works" component={HowItWorks} />
           <Route path="/contact" component={ContactUs} />
           <Route path="/admin" component={AdminPage} />
+          <Route path="/bulk-rates" component={BulkRateManager} />
           <Route component={NotFound} />
         </Switch>
       </main>
