@@ -248,10 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all manual providers
       const providers = await storage.getProviders();
-      console.log('All providers count:', providers.length);
-      console.log('Sample provider:', providers[0]);
       const manualProviders = providers.filter(p => p.preferred_collection === 'MANUAL');
-      console.log('Manual providers found:', manualProviders.length, manualProviders.map(p => p.name));
       
       const rates = [];
       
