@@ -248,7 +248,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all manual providers
       const providers = await storage.getProviders();
+      console.log('All providers count:', providers.length);
+      console.log('Sample provider:', providers[0]);
       const manualProviders = providers.filter(p => p.preferred_collection === 'MANUAL');
+      console.log('Manual providers found:', manualProviders.length, manualProviders.map(p => p.name));
       
       const rates = [];
       
@@ -267,6 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             1
           );
           
+          // Always add an entry, even if no existing rate
           if (latestRates.length > 0) {
             const rate = latestRates[0];
             rates.push({
@@ -275,7 +279,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               fromCurrency: pair.from,
               toCurrency: pair.to,
               rate: rate.rate,
-              lastUpdated: rate.timestamp
+              lastUpdated: rate.timestamp,
+              hasExistingRate: true
+            });
+          } else {
+            // Add placeholder entry for providers without existing rates
+            rates.push({
+              providerId: provider.id,
+              providerName: provider.name,
+              fromCurrency: pair.from,
+              toCurrency: pair.to,
+              rate: null,
+              lastUpdated: null,
+              hasExistingRate: false
             });
           }
         }

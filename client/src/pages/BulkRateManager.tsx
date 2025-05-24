@@ -117,7 +117,7 @@ const BulkRateManager = () => {
   const handleRateChange = (rateKey: string, value: string) => {
     setRateUpdates(prev => ({ ...prev, [rateKey]: value }));
     if (value && !isNaN(parseFloat(value))) {
-      setSelectedUpdates(prev => new Set([...prev, rateKey]));
+      setSelectedUpdates(prev => new Set(Array.from(prev).concat([rateKey])));
     } else {
       setSelectedUpdates(prev => {
         const newSet = new Set(prev);
