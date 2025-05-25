@@ -9,7 +9,8 @@ import {
   News, InsertNews,
   TransferRequest, TransferResult,
   RateTrendResponse, RateStats,
-  ContactSubmission, InsertContactSubmission
+  ContactSubmission, InsertContactSubmission,
+  NewsletterSubscription, InsertNewsletterSubscription
 } from '@shared/schema';
 
 export interface IStorage {

@@ -48,6 +48,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register ACE rate test routes
   app.use('/api/test', testRouter);
   
+  // Newsletter subscription endpoint
+  app.post('/api/newsletter-signup', async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email required' });
+      }
+      
+      // Store newsletter subscription
+      await storage.createNewsletterSubscription({ email });
+      
+      res.json({ success: true, message: 'Successfully subscribed' });
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      res.status(500).json({ error: 'Subscription failed' });
+    }
+  });
+  
   // Direct verification endpoint
   apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {
     try {

@@ -195,6 +195,23 @@ export const rateStatsSchema = z.object({
 
 export type RateStats = z.infer<typeof rateStatsSchema>;
 
+// Newsletter Subscriptions schema - for storing email subscriptions
+export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  subscribed_at: timestamp("subscribed_at").defaultNow().notNull(),
+  active: boolean("active").default(true),
+});
+
+export const insertNewsletterSubscriptionSchema = createInsertSchema(newsletterSubscriptions).omit({
+  id: true,
+  subscribed_at: true,
+  active: true,
+});
+
+export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSubscriptionSchema>;
+export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
+
 // Contact Submissions schema - for storing user feedback and feature requests
 export const contactSubmissions = pgTable("contact_submissions", {
   id: serial("id").primaryKey(),
