@@ -29,12 +29,29 @@ const Header = () => {
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center space-x-3" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
-          <img 
-            src="/attached_assets/SabiSend Logo with tagline.png" 
-            alt="SabiSend - Your money, made wiser"
-            className="h-8 w-auto"
-          />
+        <div className="flex items-center space-x-2" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
+          <div className="bg-primary rounded-full p-1.5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-white"
+            >
+              <path d="M12 12V6"></path>
+              <path d="M12 12h6"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white">SabiSend</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Your money, made wiser</p>
+          </div>
         </div>
         
         <nav className="hidden md:flex space-x-6">
