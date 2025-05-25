@@ -16,7 +16,7 @@ import AdminPage from "@/pages/AdminPage";
 import BulkRateManager from "@/pages/BulkRateManager";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import NewsletterPopup from "@/components/NewsletterPopup";
+import { NewsletterPopup } from "@/components/NewsletterPopup";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useEffect, useRef } from "react";
 import { initGA, trackPageView } from "./lib/analytics";
@@ -56,6 +56,7 @@ function Router() {
         </Switch>
       </main>
       <Footer />
+      <NewsletterPopup />
     </div>
   );
 }
