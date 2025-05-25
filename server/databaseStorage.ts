@@ -8,7 +8,8 @@ import {
   RateTrend, RateTrendResponse, RateStats,
   InsertRateTrend,
   ContactSubmission, InsertContactSubmission,
-  contactSubmissions
+  NewsletterSubscription, InsertNewsletterSubscription,
+  contactSubmissions, newsletterSubscriptions
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -697,6 +698,34 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`New contact submission created: ID #${newSubmission.id} from ${submission.name}`);
     return newSubmission;
+  }
+
+  // Newsletter subscription methods
+  async createNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription> {
+    try {
+      const [newSubscription] = await db.insert(newsletterSubscriptions)
+        .values(subscription)
+        .returning();
+      
+      console.log(`New newsletter subscription: ${subscription.email}`);
+      return newSubscription;
+    } catch (error: any) {
+      if (error.code === '23505') { // Unique constraint violation
+        console.log(`Email already subscribed: ${subscription.email}`);
+        const [existing] = await db.select()
+          .from(newsletterSubscriptions)
+          .where(eq(newsletterSubscriptions.email, subscription.email));
+        return existing;
+      }
+      throw error;
+    }
+  }
+
+  async getNewsletterSubscriptions(): Promise<NewsletterSubscription[]> {
+    return await db.select()
+      .from(newsletterSubscriptions)
+      .where(eq(newsletterSubscriptions.active, true))
+      .orderBy(desc(newsletterSubscriptions.subscribed_at));
   }
   
   async getContactSubmissions(limit: number = 100): Promise<ContactSubmission[]> {

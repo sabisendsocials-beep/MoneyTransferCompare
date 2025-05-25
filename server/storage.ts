@@ -54,6 +54,10 @@ export interface IStorage {
   createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission>;
   getContactSubmissions(limit?: number): Promise<ContactSubmission[]>;
   updateContactSubmissionStatus(id: number, status: string): Promise<ContactSubmission | undefined>;
+  
+  // Newsletter subscription methods
+  createNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription>;
+  getNewsletterSubscriptions(): Promise<NewsletterSubscription[]>;
 }
 
 // Import and export the database storage implementation
