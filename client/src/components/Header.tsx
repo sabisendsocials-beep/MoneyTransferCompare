@@ -34,7 +34,7 @@ const Header = () => {
           <img 
             src={sabiSendLogo}
             alt="SabiSend - Your money, made wiser"
-            className="h-12 w-auto md:h-14 max-w-none"
+            className="h-20 w-auto md:h-24 max-w-none"
           />
         </div>
         
