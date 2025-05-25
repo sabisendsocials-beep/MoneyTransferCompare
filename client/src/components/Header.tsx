@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
-import sabiSendLogo from "@assets/SabiSend Logo with tagline.png";
+import sabiSendLogo from "@assets/SabiSend Logo with tagline short.png";
 
 const Header = () => {
   const [location] = useLocation();
@@ -29,12 +29,12 @@ const Header = () => {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-1 flex justify-between items-center">
-        <div className="flex items-center -my-4" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="flex items-center" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
           <img 
             src={sabiSendLogo}
             alt="SabiSend - Your money, made wiser"
-            className="h-28 w-auto md:h-32 max-w-none object-contain"
+            className="h-12 w-auto md:h-14 max-w-none object-contain"
             style={{
               filter: 'contrast(1.1)',
               imageRendering: 'crisp-edges'
