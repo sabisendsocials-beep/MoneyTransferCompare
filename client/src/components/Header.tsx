@@ -29,8 +29,8 @@ const Header = () => {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
-        <div className="flex items-center -my-2" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
+      <div className="container mx-auto px-4 py-1 flex justify-between items-center">
+        <div className="flex items-center -my-4" onClick={() => window.location.href = '/'} style={{cursor: 'pointer'}}>
           <img 
             src={sabiSendLogo}
             alt="SabiSend - Your money, made wiser"
