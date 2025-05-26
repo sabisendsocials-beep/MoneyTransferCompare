@@ -30,10 +30,10 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-white pt-16 pb-8">
+    <footer className="bg-gradient-to-r from-blue-900 to-blue-800 text-white pt-16 pb-8">
       <div className="container mx-auto px-4">
         {/* Value Propositions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 border-b border-gray-800 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 border-b border-blue-700 pb-12">
           <div className="flex flex-col items-center text-center">
             <div className="bg-primary/10 p-3 rounded-full mb-4">
               <Clock className="h-7 w-7 text-primary" />
