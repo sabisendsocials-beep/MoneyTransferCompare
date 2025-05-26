@@ -42,16 +42,16 @@ export async function fetchFinancialNews(): Promise<InsertNews[]> {
   const newsItems: InsertNews[] = [];
 
   try {
-    // Search terms focused on financial topics relevant to our users
+    // Search terms focused on Nigeria-related financial topics
     const searchQueries = [
-      "Nigeria currency exchange rate naira",
-      "Ghana cedi exchange rate financial",
-      "Nigeria remittance money transfer",
-      "Ghana remittance financial services",
-      "Nigeria central bank monetary policy",
-      "Ghana bank financial economy",
-      "Nigeria forex foreign exchange",
-      "Ghana economic financial news"
+      "Nigeria naira exchange rate",
+      "Nigeria central bank CBN",
+      "Nigeria economy financial",
+      "Nigeria banking finance",
+      "Nigeria inflation monetary policy",
+      "Nigeria foreign exchange forex",
+      "Nigeria remittance diaspora",
+      "Nigeria financial technology fintech"
     ];
 
     for (const query of searchQueries) {
