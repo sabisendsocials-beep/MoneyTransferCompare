@@ -30,16 +30,16 @@ export const useNewsletterPopup = () => {
     window.addEventListener("click", trackEngagement);
     window.addEventListener("keydown", trackEngagement);
 
-    // Smart timing logic
+    // Smart timing logic (reduced for testing)
     const checkShouldShow = () => {
-      // Show after 45 seconds if user has engaged
-      if (timeOnSite >= 45000 && hasEngaged) {
+      // Show after 5 seconds if user has engaged
+      if (timeOnSite >= 5000 && hasEngaged) {
         setShowPopup(true);
         setHasShown(true);
         cleanup();
       }
-      // Show after 90 seconds regardless
-      else if (timeOnSite >= 90000) {
+      // Show after 10 seconds regardless
+      else if (timeOnSite >= 10000) {
         setShowPopup(true);
         setHasShown(true);
         cleanup();
