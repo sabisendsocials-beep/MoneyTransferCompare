@@ -283,7 +283,7 @@ function extractRateWithRegex(html: string): number | null {
     // Filter to find values in the expected NGN rate range
     const possibleRates = matches
       .map(m => parseFloat(m[1]))
-      .filter(n => !isNaN(n) && n > 1500 && n < 2500);
+      .filter(n => !isNaN(n) && n > 1500 && n < 3000);
     
     if (possibleRates.length > 0) {
       console.log(`Found ${possibleRates.length} possible rate matches: ${possibleRates.join(', ')}`);
@@ -299,7 +299,7 @@ function extractRateWithRegex(html: string): number | null {
   if (knownMatches && knownMatches.length > 0) {
     const nalaRates = knownMatches
       .map(m => parseFloat(m[1]))
-      .filter(n => !isNaN(n) && n > 1500 && n < 2000);
+      .filter(n => !isNaN(n) && n > 1500 && n < 3000);
     
     if (nalaRates.length > 0) {
       console.log(`Found ${nalaRates.length} Nala-specific rate matches: ${nalaRates.join(', ')}`);
@@ -544,7 +544,7 @@ export async function updateNalaRate(): Promise<boolean> {
     }
     
     // Validate the rate (making sure it's reasonable for GBP to NGN)
-    const isValidRate = rate > 500 && rate < 5000;
+    const isValidRate = rate > 1000 && rate < 3000;
     console.log(`Extracted rate for Nala: ${rate}, Valid: ${isValidRate}`);
     
     if (!isValidRate) {
