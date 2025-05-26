@@ -660,19 +660,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("No fresh news found (within last 3 days), fetching from NewsAPI...");
         
         try {
-          const { updateFinancialNewsFromAPI } = await import('./api/newsApi');
-          const addedArticles = await updateFinancialNewsFromAPI();
+          const { updateBusinessDayNews } = await import('./api/businessdayApi');
+          const addedArticles = await updateBusinessDayNews();
           
           if (addedArticles.length > 0) {
-            console.log(`Successfully fetched ${addedArticles.length} fresh articles from NewsAPI`);
+            console.log(`Successfully fetched ${addedArticles.length} fresh articles from BusinessDay Nigeria`);
             // Fetch updated news from database
             news = await storage.getLatestNews(limit);
           } else {
-            console.log("No articles returned from NewsAPI, keeping existing news");
+            console.log("No articles returned from BusinessDay Nigeria, keeping existing news");
           }
-        } catch (newsApiError) {
-          console.error("Error fetching from NewsAPI:", newsApiError);
-          // Keep existing news if NewsAPI fails
+        } catch (businessDayError) {
+          console.error("Error fetching from BusinessDay Nigeria:", businessDayError);
+          // Keep existing news if BusinessDay fails
         }
       }
       
@@ -758,24 +758,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/api/update-news", async (req: Request, res: Response) => {
     try {
-      console.log("Starting NewsAPI update process...");
+      console.log("Starting BusinessDay Nigeria update process...");
       
-      // Use NewsAPI to fetch fresh financial news
-      const { updateFinancialNewsFromAPI } = await import('./api/newsApi');
-      const results = await updateFinancialNewsFromAPI();
+      // Use BusinessDay Nigeria to fetch Nigerian financial news
+      const { updateBusinessDayNews } = await import('./api/businessdayApi');
+      const results = await updateBusinessDayNews();
       
-      console.log(`Successfully updated ${results.length} news items from NewsAPI`);
+      console.log(`Successfully updated ${results.length} news items from BusinessDay Nigeria`);
       res.json({ 
         success: true,
-        message: `Updated ${results.length} fresh news articles from NewsAPI`,
+        message: `Updated ${results.length} fresh Nigerian financial articles from BusinessDay`,
         count: results.length,
         timestamp: new Date()
       });
     } catch (error) {
-      console.error("Error updating news from NewsAPI:", error);
+      console.error("Error updating news from BusinessDay Nigeria:", error);
       res.status(500).json({ 
         success: false, 
-        message: "Failed to update news from NewsAPI", 
+        message: "Failed to update news from BusinessDay Nigeria", 
         error: error instanceof Error ? error.message : String(error)
       });
     }
