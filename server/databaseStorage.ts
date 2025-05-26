@@ -237,6 +237,12 @@ export class DatabaseStorage implements IStorage {
     await db.delete(schema.news);
     console.log('All news have been deleted from the database');
   }
+
+  async deleteOldNews(beforeDate: Date): Promise<void> {
+    // Delete news entries older than the specified date
+    await db.delete(schema.news).where(sql`${schema.news.published_at} < ${beforeDate}`);
+    console.log(`Deleted news older than ${beforeDate.toISOString()}`);
+  }
   
   // Comparison methods
   async compareTransferOptions(request: TransferRequest): Promise<TransferResult[]> {

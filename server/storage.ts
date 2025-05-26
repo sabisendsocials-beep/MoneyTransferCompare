@@ -40,6 +40,7 @@ export interface IStorage {
   getLatestNews(limit: number): Promise<News[]>;
   createNews(newsItem: InsertNews): Promise<News>;
   deleteAllNews(): Promise<void>;
+  deleteOldNews(beforeDate: Date): Promise<void>;
   
   // Transfer comparison methods
   compareTransferOptions(request: TransferRequest): Promise<TransferResult[]>;

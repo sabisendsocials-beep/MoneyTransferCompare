@@ -655,24 +655,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return publishDate >= threeDaysAgo;
         });
       
-      // If no news found or no fresh news, populate with updated sample news
+      // If no news found or no fresh news, fetch from NewsAPI
       if (!hasFreshNews) {
-        console.log("No fresh news found (within last 3 days), using updated sample news...");
+        console.log("No fresh news found (within last 3 days), fetching from NewsAPI...");
         
-        // Import sample news data with current dates
-        const { sampleNews } = await import('./sampleNewsData');
-        
-        // Clear any existing news first
-        await storage.deleteAllNews();
-        
-        // Add each sample news item
-        for (const item of sampleNews) {
-          await storage.createNews(item);
+        try {
+          const { updateFinancialNewsFromAPI } = await import('./api/newsApi');
+          const addedArticles = await updateFinancialNewsFromAPI();
+          
+          if (addedArticles.length > 0) {
+            console.log(`Successfully fetched ${addedArticles.length} fresh articles from NewsAPI`);
+            // Fetch updated news from database
+            news = await storage.getLatestNews(limit);
+          } else {
+            console.log("No articles returned from NewsAPI, keeping existing news");
+          }
+        } catch (newsApiError) {
+          console.error("Error fetching from NewsAPI:", newsApiError);
+          // Keep existing news if NewsAPI fails
         }
-        
-        // Fetch again after adding sample data
-        news = await storage.getLatestNews(limit);
-        console.log(`Added ${sampleNews.length} fresh sample news items to database (all within last 3 days)`);
       }
       
       // Format the dates to display in the frontend
@@ -757,32 +758,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/api/update-news", async (req: Request, res: Response) => {
     try {
-      console.log("Starting news update process...");
+      console.log("Starting NewsAPI update process...");
       
-      // First clear existing news to avoid duplicates
-      try {
-        await storage.deleteAllNews();
-        console.log("Cleared existing news before update");
-      } catch (clearError) {
-        console.error("Error clearing existing news:", clearError);
-        // Continue with the update anyway
-      }
+      // Use NewsAPI to fetch fresh financial news
+      const { updateFinancialNewsFromAPI } = await import('./api/newsApi');
+      const results = await updateFinancialNewsFromAPI();
       
-      // Fetch and store new news
-      const results = await updateFinancialNews();
-      
-      console.log(`Successfully updated ${results.length} news items`);
+      console.log(`Successfully updated ${results.length} news items from NewsAPI`);
       res.json({ 
         success: true,
-        message: `Updated ${results.length} news items`,
+        message: `Updated ${results.length} fresh news articles from NewsAPI`,
         count: results.length,
         timestamp: new Date()
       });
     } catch (error) {
-      console.error("Error updating news:", error);
+      console.error("Error updating news from NewsAPI:", error);
       res.status(500).json({ 
         success: false, 
-        message: "Failed to update news", 
+        message: "Failed to update news from NewsAPI", 
         error: error instanceof Error ? error.message : String(error)
       });
     }
