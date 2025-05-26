@@ -5,7 +5,7 @@ const Trends = () => {
   return (
     <>
       <Helmet>
-        <title>GBP to NGN Exchange Rate Trends | TransferWise</title>
+        <title>GBP to NGN Exchange Rate Trends | SabiSend</title>
         <meta 
           name="description" 
           content="View historical exchange rate trends for GBP to NGN. Monitor rate changes, set rate alerts, and make informed decisions for your money transfers."

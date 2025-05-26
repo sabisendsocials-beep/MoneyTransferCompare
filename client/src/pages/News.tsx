@@ -46,7 +46,7 @@ const NewsPage = () => {
   return (
     <>
       <Helmet>
-        <title>Nigeria Financial News | UK to Nigeria Money Transfer | TransferWise</title>
+        <title>Nigeria Financial News | UK to Nigeria Money Transfer | SabiSend</title>
         <meta 
           name="description" 
           content="Stay updated with the latest financial news from Nigeria that may affect exchange rates, money transfers, and the economy."
