@@ -655,9 +655,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return publishDate >= threeDaysAgo;
         });
       
-      // If no news found or no fresh news, fetch from NewsAPI
+      // If no news found or no fresh news, fetch from BusinessDay Nigeria
       if (!hasFreshNews) {
-        console.log("No fresh news found (within last 3 days), fetching from NewsAPI...");
+        console.log("No fresh news found (within last 3 days), fetching from BusinessDay Nigeria...");
         
         try {
           const { updateBusinessDayNews } = await import('./api/businessdayApi');
