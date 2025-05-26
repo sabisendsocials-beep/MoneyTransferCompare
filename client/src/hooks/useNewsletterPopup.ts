@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 
 export const useNewsletterPopup = () => {
   const [showPopup, setShowPopup] = useState(false);
-  const [hasShown, setHasShown] = useState(false);
+  const [hasShown, setHasShown] = useState(() => {
+    // Check if already shown in this session
+    return sessionStorage.getItem("newsletter_popup_shown") === "true";
+  });
 
   useEffect(() => {
     // Don't show if already shown in this session
@@ -30,18 +33,20 @@ export const useNewsletterPopup = () => {
     window.addEventListener("click", trackEngagement);
     window.addEventListener("keydown", trackEngagement);
 
-    // Smart timing logic (reduced for testing)
+    // Smart timing logic
     const checkShouldShow = () => {
-      // Show after 5 seconds if user has engaged
-      if (timeOnSite >= 5000 && hasEngaged) {
+      // Show after 30 seconds if user has engaged
+      if (timeOnSite >= 30000 && hasEngaged) {
         setShowPopup(true);
         setHasShown(true);
+        sessionStorage.setItem("newsletter_popup_shown", "true");
         cleanup();
       }
-      // Show after 10 seconds regardless
-      else if (timeOnSite >= 10000) {
+      // Show after 60 seconds regardless
+      else if (timeOnSite >= 60000) {
         setShowPopup(true);
         setHasShown(true);
+        sessionStorage.setItem("newsletter_popup_shown", "true");
         cleanup();
       }
     };
@@ -61,6 +66,7 @@ export const useNewsletterPopup = () => {
       if (e.clientY <= 0 && !hasShown) {
         setShowPopup(true);
         setHasShown(true);
+        sessionStorage.setItem("newsletter_popup_shown", "true");
         cleanup();
       }
     };
@@ -75,6 +81,8 @@ export const useNewsletterPopup = () => {
 
   const closePopup = () => {
     setShowPopup(false);
+    // Mark as dismissed for this session
+    sessionStorage.setItem("newsletter_popup_dismissed", "true");
   };
 
   const markAsSubscribed = () => {
