@@ -543,7 +543,7 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
         <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">About Our Comparison</h3>
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            TransferCompare shows you real-time rates and fees from multiple providers, helping you find the best option for your international money transfer needs. 
+            SabiSend shows you real-time rates and fees from multiple providers, helping you find the best option for your international money transfer needs. 
             We compare over 10 major providers including Wise, Western Union, Remitly, WorldRemit, MoneyGram, and more.
           </p>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">

@@ -16,7 +16,7 @@ const Compare = () => {
   return (
     <>
       <Helmet>
-        <title>Compare Money Transfer Options - UK to Nigeria | TransferWise</title>
+        <title>Compare Money Transfer Options - UK to Nigeria | SabiSend</title>
         <meta 
           name="description" 
           content="Compare the best money transfer options from UK to Nigeria. Find the lowest fees, best exchange rates and fastest delivery times."

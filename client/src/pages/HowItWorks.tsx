@@ -80,17 +80,17 @@ const HowItWorks = () => {
   return (
     <>
       <Helmet>
-        <title>How It Works | TransferCompare - International Money Transfer Comparison</title>
+        <title>How It Works | SabiSend - International Money Transfer Comparison</title>
         <meta 
           name="description" 
-          content="Learn how TransferCompare helps you find the best money transfer options. Compare rates, fees, and delivery times to save money on international transfers."
+          content="Learn how SabiSend helps you find the best money transfer options. Compare rates, fees, and delivery times to save money on international transfers."
         />
       </Helmet>
       
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-16">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">How TransferCompare Works</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">How SabiSend Works</h1>
           <p className="text-xl text-primary-100 max-w-3xl mx-auto">
             Simple, transparent comparisons to help you find the best international money transfer options
           </p>
