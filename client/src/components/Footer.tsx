@@ -30,7 +30,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white pt-16 pb-8">
+    <footer className="bg-gradient-to-r from-emerald-700 to-emerald-600 text-white pt-16 pb-8">
       <div className="container mx-auto px-4">
         {/* Value Propositions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 border-b border-emerald-700 pb-12">
