@@ -116,6 +116,12 @@ export class RateCollectionService {
         return null;
       }
       
+      // CRITICAL: Check if provider is set to MANUAL collection
+      if (provider.preferred_collection === 'MANUAL') {
+        log(`Skipping ${provider.name} - configured for MANUAL collection`);
+        return null;
+      }
+      
       // Check if we already have fresh data (unless force refresh is requested)
       if (!forceRefresh) {
         const existingRate = await this.getBestRate(providerId, fromCurrency, toCurrency);
