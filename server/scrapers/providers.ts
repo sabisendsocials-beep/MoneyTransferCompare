@@ -423,7 +423,7 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               // Will continue to standard scraping as fallback
             }
           } else if (provider.name === 'Profee') {
-            console.log('=== Using dedicated Profee scraper with admin-configured URL and selectors ONLY... ===');
+            console.log('=== Using dedicated Profee web scraper with admin-configured URL and selectors ONLY... ===');
             
             // Extract URL and selectors from provider config
             const profeeUrl = provider.scraping_url;
@@ -435,54 +435,71 @@ export async function scrapeExchangeRates(): Promise<(ExchangeRate | { provider:
               continue; // Skip to next provider
             }
             
-            // Define all the currency pairs we want to support for Profee
-            const currencyPairs = [
-              { from: 'GBP', to: 'NGN' },
-              { from: 'EUR', to: 'NGN' },
-              { from: 'GBP', to: 'GHS' },
-              { from: 'EUR', to: 'GHS' }
-            ];
+            console.log(`Using admin-configured URL for Profee: ${profeeUrl}`);
+            console.log(`Using admin-configured CSS selector: ${profeeSelector}`);
             
-            // Process each currency pair
-            let allPairsSuccessful = true;
-            
-            for (const pair of currencyPairs) {
-              console.log(`Processing Profee ${pair.from} to ${pair.to} pair...`);
-              
-              const pairSuccess = await updateProfeeRateWithMarketData(
-                provider.id, 
-                pair.from, 
-                pair.to,
-                async (providerId: number, fromCurrency: string, toCurrency: string, rate: number) => {
-                  // Use the standard storage method for adding exchange rates
-                  await storage.createExchangeRate({
-                    provider_id: providerId,
-                    from_currency: fromCurrency,
-                    to_currency: toCurrency,
-                    rate,
-                    source: 'SCRAPER'
-                  });
-                  return true; // Return boolean for success
-                }
-              );
-              
-              if (pairSuccess) {
-                console.log(`=== Successfully updated Profee ${pair.from} to ${pair.to} rate with market-based provider ===`);
-              } else {
-                console.log(`=== Failed to update Profee ${pair.from} to ${pair.to} rate with market-based provider ===`);
-                allPairsSuccessful = false;
+            try {
+              // Use actual web scraping instead of synthetic market data
+              const response = await fetch(profeeUrl);
+              if (!response.ok) {
+                console.log(`Failed to fetch Profee page: ${response.statusText}`);
+                results.push({ provider: provider.name, success: false });
+                continue;
               }
-            }
-            
-            if (allPairsSuccessful) {
-              console.log('=== Successfully updated all Profee currency pairs with market-based provider ===');
-              results.push({ provider: provider.name, success: true });
-            } else {
-              console.log('=== Some Profee currency pairs failed to update ===');
+              
+              const html = await response.text();
+              const $ = cheerio.load(html);
+              
+              // Try to extract rate using the configured selector
+              const selectors = profeeSelector.split(',').map(s => s.trim());
+              let foundRate = null;
+              
+              for (const selector of selectors) {
+                console.log(`Trying Profee selector: ${selector}`);
+                const elements = $(selector);
+                
+                if (elements.length > 0) {
+                  elements.each((_, element) => {
+                    const text = $(element).text().trim();
+                    console.log(`Found text with selector "${selector}": ${text}`);
+                    
+                    // Look for NGN rates in the text
+                    const rateMatch = text.match(/(\d+(?:[,.]?\d+)*)\s*NGN/i);
+                    if (rateMatch) {
+                      const rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+                      if (rate > 1000 && rate < 3000) { // Reasonable range for GBP to NGN
+                        foundRate = rate;
+                        console.log(`Successfully extracted Profee rate: ${rate}`);
+                        return false; // Break out of each loop
+                      }
+                    }
+                  });
+                  
+                  if (foundRate) break; // Break out of selector loop
+                }
+              }
+              
+              if (foundRate) {
+                await storage.createExchangeRate({
+                  provider_id: provider.id,
+                  from_currency: 'GBP',
+                  to_currency: 'NGN',
+                  rate: foundRate,
+                  source: 'SCRAPER'
+                });
+                
+                console.log(`=== Successfully updated Profee rate with web scraping: ${foundRate} ===`);
+                results.push({ provider: provider.name, success: true });
+              } else {
+                console.log('=== Failed to extract Profee rate from web scraping ===');
+                results.push({ provider: provider.name, success: false });
+              }
+              
+            } catch (error) {
+              console.log(`Error scraping Profee: ${error}`);
               results.push({ provider: provider.name, success: false });
             }
             
-            // Continue to next provider regardless of success since we've already handled all pairs
             continue;
           } else if (provider.name === 'Nala') {
             console.log('=== Using dedicated Nala scraper with admin-configured URL and selectors ONLY... ===');
