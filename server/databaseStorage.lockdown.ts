@@ -17,25 +17,8 @@ import { eq } from 'drizzle-orm';
 
 // ALL PROVIDERS PROTECTION: Every provider in the system is protected from deletion
 // This is a complete list of all providers that should be protected from deletion
-const PROTECTED_CORE_PROVIDERS = [
-  // Core providers  
-  'Wise', 
-  'Western Union', 
-  'MoneyGram',
-  'WorldRemit',
-  'Lemfi',
-  // Additional standard providers - ALL are now protected
-  'Paysend',
-  'TransferGo',
-  'Remitly',
-  'Sendwave',
-  'Azimo',
-  'Small World',
-  'Taptap Send',
-  'Profee',
-  'ACE Money Transfer',
-  'Nala',
-  'Skrill'
+const PROTECTED_CORE_PROVIDERS: string[] = [
+  // DISABLED: All provider protection removed to give admin panel full control
 ];
 
 /**
