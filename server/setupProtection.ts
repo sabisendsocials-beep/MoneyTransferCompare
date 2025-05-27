@@ -34,39 +34,10 @@ export async function initializeProtectedStorage(): Promise<void> {
 }
 
 /**
- * Ensures Wise is correctly configured to use API collection
+ * DISABLED: Wise enforcement removed to allow admin panel control
  */
 async function enforceWiseConfiguration(): Promise<void> {
-  // Find Wise provider
-  const [wiseProvider] = await db
-    .select()
-    .from(providers)
-    .where(eq(providers.name, 'Wise'));
-  
-  if (wiseProvider) {
-    // Check if Wise is correctly configured
-    if (wiseProvider.preferred_collection !== 'API' || !wiseProvider.has_api) {
-      console.log('🔧 Fixing Wise provider configuration to use API collection');
-      
-      // Update Wise to use API collection
-      await db
-        .update(providers)
-        .set({ 
-          preferred_collection: 'API',
-          has_api: true,
-          api_url: wiseProvider.api_url || 'https://api.wise.com/v1/rates',
-          api_key_required: true,
-          api_response_path: wiseProvider.api_response_path || 'rate'
-        })
-        .where(eq(providers.id, wiseProvider.id));
-      
-      console.log('✅ Wise provider configuration corrected to use API collection');
-    } else {
-      console.log('✓ Wise provider correctly configured to use API collection');
-    }
-  } else {
-    console.log('⚠️ Wise provider not found in database');
-  }
+  console.log('✓ Wise enforcement disabled - admin panel has full control');
 }
 
 // Initialize with protection

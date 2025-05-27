@@ -198,15 +198,8 @@ export async function restoreAllProviders(): Promise<void> {
           if (wiseProvider && (wiseProvider.preferred_collection !== 'API' || !wiseProvider.has_api)) {
             console.log(`FIXING WISE PROVIDER: Enforcing API collection mode`);
             await db.update(providers)
-              .set({
-                preferred_collection: 'API',
-                has_api: true,
-                api_url: 'https://api.wise.com/v1/rates',
-                api_key_required: true,
-                api_response_path: 'rate'
-              })
-              .where(eq(providers.id, wiseProvider.id));
-            console.log(`✅ Successfully fixed Wise provider configuration`);
+                     // DISABLED: Wise enforcement removed to allow admin panel control
+            console.log(`✓ Wise provider configuration unchanged - admin has control`);
           }
         }
       }
