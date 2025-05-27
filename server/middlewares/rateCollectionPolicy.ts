@@ -43,16 +43,9 @@ export function enforceProviderCollectionPolicies(providers: Provider[]): Provid
 }
 
 /**
- * Fixes any Wise records to always show API source
- * This is called after rate collection
+ * DISABLED: Wise source enforcement removed to allow admin panel control
  */
 export async function fixWiseSource(): Promise<void> {
-  try {
-    // Simple direct update for Wise records
-    await db.execute(
-      `UPDATE exchange_rates SET source = 'API' WHERE provider_id = 10001 AND source != 'API'`
-    );
-  } catch (error) {
-    console.error('Error fixing Wise source:', error);
-  }
+  // Disabled - admin panel has full control over Wise provider settings
+  console.log('✓ Wise source enforcement disabled - admin has control');
 }

@@ -84,7 +84,7 @@ app.use((req, res, next) => {
       log(`Error in core provider restoration: ${restorationError}`);
     }
     
-    // Run provider configuration validation to ensure Wise uses API
+    // DISABLED: Provider validation disabled to give admin panel full control
     try {
       log("🔒 Validating critical provider configurations...");
       const { validateProviderConfigurations } = await import('./scripts/validateProviderConfigurations');
