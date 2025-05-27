@@ -72,16 +72,8 @@ export class DatabaseStorage implements IStorage {
       .from(schema.providers)
       .where(eq(schema.providers.id, id));
       
-    // Special handling for Wise provider
-    if (existingProvider && (existingProvider.name === 'Wise' || providerUpdate.name === 'Wise')) {
-      // Force Wise to always use API collection method
-      providerUpdate.preferred_collection = 'API';
-      providerUpdate.has_api = true;
-      providerUpdate.api_url = providerUpdate.api_url || 'https://api.wise.com/v1/rates';
-      providerUpdate.api_key_required = true;
-      providerUpdate.api_response_path = providerUpdate.api_response_path || 'rate';
-      console.log('🔒 Enforcing API collection policy for Wise provider');
-    }
+    // DISABLED: Wise enforcement removed - admin panel has full control
+    console.log('✓ Wise enforcement disabled - admin panel has full control');
     
     const [updatedProvider] = await db
       .update(schema.providers)
