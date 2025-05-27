@@ -94,47 +94,10 @@ export async function collectRatesFromAllSources(): Promise<boolean> {
 }
 
 /**
- * Collects exchange rates from provider APIs
- * Currently supports: Wise
+ * DISABLED: API collection removed - admin panel has full control
  */
 async function collectFromApis(): Promise<void> {
-  console.log('Collecting rates from provider APIs...');
-  
-  try {
-    // Get rates from Wise API
-    const wiseRates = await fetchWiseRates();
-    if (wiseRates && wiseRates.length > 0) {
-      // Find Wise provider in our database
-      const wiseProvider = await findProviderByName('Wise');
-      if (wiseProvider) {
-        // Store each rate from Wise
-        for (const rate of wiseRates) {
-          const exchangeRate = {
-            provider_id: wiseProvider.id,
-            from_currency: rate.fromCurrency,
-            to_currency: rate.toCurrency,
-            rate: rate.rate,
-            source: DataSourceType.API,
-            source_url: 'Wise API Direct Integration',
-            verified: true,
-            timestamp: new Date()
-          };
-
-          await storage.createExchangeRate(exchangeRate);
-        }
-        console.log(`Added ${wiseRates.length} rates from Wise API`);
-      } else {
-        console.error('Wise provider not found in database');
-      }
-    } else {
-      console.log('No rates returned from Wise API');
-    }
-    
-    // Add additional provider APIs here as they become available
-    
-  } catch (error) {
-    console.error('Error collecting from provider APIs:', error);
-  }
+  console.log('✓ API collection disabled - admin panel has full control');
 }
 
 /**
