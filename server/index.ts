@@ -74,22 +74,16 @@ app.use((req, res, next) => {
       log(`Error in provider schema migration: ${migrationError}`);
     }
     
-    // EMERGENCY RESTORATION: Restore missing core providers
+    // DISABLED: Emergency restoration removed - admin panel has full control
     try {
-      log("🚨 EMERGENCY: Checking for missing core providers...");
-      const { restoreMissingCoreProviders } = await import('./scripts/restoreCoreProviders');
-      await restoreMissingCoreProviders();
-      log("✓ Core providers restored if any were missing");
+      log("✓ Core provider restoration disabled - admin panel has full control");
     } catch (restorationError) {
       log(`Error in core provider restoration: ${restorationError}`);
     }
     
     // DISABLED: Provider validation disabled to give admin panel full control
     try {
-      log("🔒 Validating critical provider configurations...");
-      const { validateProviderConfigurations } = await import('./scripts/validateProviderConfigurations');
-      await validateProviderConfigurations();
-      log("✓ Provider configurations validated and corrected if needed");
+      log("✓ Provider validation disabled - admin panel has full control");
     } catch (validationError) {
       log(`Error validating provider configurations: ${validationError}`);
     }
