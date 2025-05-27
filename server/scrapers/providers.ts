@@ -714,6 +714,12 @@ async function addAdditionalCurrencyPairs(providers: any[]) {
   ];
 
   for (const provider of providers) {
+    // CRITICAL: Skip providers configured for MANUAL collection
+    if (provider.preferred_collection === 'MANUAL') {
+      console.log(`Skipping additional currency pairs for ${provider.name} - configured for MANUAL collection`);
+      continue;
+    }
+    
     for (const pair of currencyPairs) {
       try {
         // Find the real rate for this provider and currency pair
