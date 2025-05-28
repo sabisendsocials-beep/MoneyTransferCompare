@@ -230,9 +230,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Compare transfer options
   apiRouter.post("/api/compare", async (req: Request, res: Response) => {
     try {
+      console.log('SERVER: Raw request body received:', req.body);
+      console.log('SERVER: Request body amount:', req.body.amount);
+      console.log('SERVER: Request body type:', typeof req.body.amount);
+      
       const validationResult = transferRequestSchema.safeParse(req.body);
       
       if (!validationResult.success) {
+        console.log('SERVER: Validation failed:', validationResult.error.format());
         return res.status(400).json({ 
           message: "Invalid request data", 
           errors: validationResult.error.format() 
@@ -240,6 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const transferRequest = validationResult.data;
+      console.log('SERVER: Validated request data:', transferRequest);
       const results = await storage.compareTransferOptions(transferRequest);
       res.json(results);
     } catch (error) {
