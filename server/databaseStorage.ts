@@ -259,14 +259,14 @@ export class DatabaseStorage implements IStorage {
         let receivedAmount = request.amount;
         let fee = provider.fixed_fee || 0;
         
-        // If percentage fee exists, calculate it
-        if (provider.percentage_fee) {
-          fee += (request.amount * provider.percentage_fee / 100);
-        }
-        
         // Calculate based on whether this is a "send" or "receive" request
         if (request.type === 'send') {
-          // For "send" type, deduct fees first, then apply exchange rate
+          // For "send" type, calculate percentage fee based on send amount
+          if (provider.percentage_fee) {
+            fee += (request.amount * provider.percentage_fee / 100);
+          }
+          
+          // Deduct fees first, then apply exchange rate
           const amountAfterFees = request.amount - fee;
           console.log(`Provider: ${provider.name}, Amount: ${request.amount}, Fee: ${fee}, Amount After Fees: ${amountAfterFees}, Exchange Rate: ${rate.rate}`);
           receivedAmount = amountAfterFees * rate.rate;
@@ -275,15 +275,16 @@ export class DatabaseStorage implements IStorage {
           // For "receive" type, calculate how much GBP you need to send to get the desired amount
           receivedAmount = request.amount; // They want to receive this exact amount
           
+          // Calculate base send amount (before fees)
+          const baseSendAmount = request.amount / rate.rate;
+          
           if (provider.percentage_fee && provider.percentage_fee > 0) {
-            // For percentage fees, we need to calculate backwards
-            // If they want to receive X and there's a Y% fee, we need to send X/(1-Y/100) * (1/rate)
-            const feeMultiplier = 1 + (provider.percentage_fee / 100);
-            sendAmount = (request.amount / rate.rate) * feeMultiplier;
-            fee = sendAmount - (request.amount / rate.rate); // Recalculate actual fee amount
+            // For percentage fees in receive mode, add the percentage to the base send amount
+            fee = baseSendAmount * (provider.percentage_fee / 100);
+            sendAmount = baseSendAmount + fee;
           } else {
-            // For fixed fees, just add the fee to the required send amount
-            sendAmount = (request.amount / rate.rate) + fee;
+            // For fixed fees, just add the fixed fee to the base send amount
+            sendAmount = baseSendAmount + fee;
           }
           
           console.log(`Provider: ${provider.name}, To Receive: ${request.amount} NGN, Send Amount: ${sendAmount} GBP, Fee: ${fee}, Exchange Rate: ${rate.rate}`);
