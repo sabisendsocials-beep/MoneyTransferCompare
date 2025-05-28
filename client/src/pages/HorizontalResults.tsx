@@ -65,16 +65,24 @@ const HorizontalResults = () => {
   };
   
   useEffect(() => {
+    // Get URL parameters from calculator
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
+    const fromCurrency = urlParams.get('from') || defaultFromCurrency;
+    const toCurrency = urlParams.get('to') || defaultToCurrency;
+    
+    console.log('URL Parameters:', { amount, fromCurrency, toCurrency });
+    
     // Fetch real comparison results
     const fetchResults = async () => {
       try {
         setLoading(true);
         
-        // Use the API to get real provider data
+        // Use the API to get real provider data with actual URL parameters
         const response = await axios.post("/api/compare", {
-          amount: defaultAmount,
-          fromCurrency: defaultFromCurrency,
-          toCurrency: defaultToCurrency,
+          amount: amount,
+          fromCurrency: fromCurrency,
+          toCurrency: toCurrency,
           type: "send"
         });
         
