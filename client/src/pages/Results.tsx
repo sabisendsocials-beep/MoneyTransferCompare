@@ -16,6 +16,11 @@ const Results = () => {
   const [results, setResults] = useState<TransferResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [transferParams, setTransferParams] = useState({
+    amount: defaultAmount,
+    fromCurrency: defaultFromCurrency,
+    toCurrency: defaultToCurrency
+  });
   
   useEffect(() => {
     // Fetch real comparison results
@@ -28,6 +33,9 @@ const Results = () => {
         const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
         const fromCurrency = urlParams.get('from') || defaultFromCurrency;
         const toCurrency = urlParams.get('to') || defaultToCurrency;
+        
+        // Store parameters for display
+        setTransferParams({ amount, fromCurrency, toCurrency });
         
         // Use the API to get real provider data
         const response = await axios.post('/api/compare', {
@@ -92,7 +100,7 @@ const Results = () => {
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Best Money Transfer Options</h1>
       <p className="mb-8 text-gray-600">
-        Comparing the best rates for sending <strong>£{defaultAmount.toFixed(2)} {defaultFromCurrency}</strong> to <strong>{defaultToCurrency}</strong>
+        Comparing the best rates for sending <strong>{transferParams.fromCurrency === 'GBP' ? '£' : transferParams.fromCurrency === 'EUR' ? '€' : '$'}{transferParams.amount.toFixed(2)} {transferParams.fromCurrency}</strong> to <strong>{transferParams.toCurrency}</strong>
       </p>
       
       {loading ? (
