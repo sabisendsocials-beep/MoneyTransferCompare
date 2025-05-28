@@ -118,7 +118,6 @@ const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
   const handleSetFromCurrency = (value: string) => {
     const newCurrency = value as CurrencyCode;
     setFromCurrency(newCurrency);
-    calculateRate();
     // Track when user changes the currency selection
     trackCurrencySelection(newCurrency, toCurrency, 'calculator');
   };
@@ -126,7 +125,6 @@ const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
   const handleSetToCurrency = (value: string) => {
     const newCurrency = value as CurrencyCode;
     setToCurrency(newCurrency);
-    calculateRate();
     // Track when user changes the currency selection
     trackCurrencySelection(fromCurrency, newCurrency, 'calculator');
   };
@@ -146,6 +144,11 @@ const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
       });
     }
   }, [amount, fromCurrency, toCurrency, onValuesChange]);
+
+  // Real-time calculation whenever currencies or exchange rates change
+  useEffect(() => {
+    calculateRate();
+  }, [fromCurrency, toCurrency, exchangeRates]);
 
   const calculateRate = () => {
     const key = `${fromCurrency}-${toCurrency}` as RateKey;
@@ -270,7 +273,19 @@ const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
                 // Format with commas and update state
                 const formattedValue = formatInputWithCommas(e.target.value);
                 setAmount(formattedValue);
-                setTimeout(calculateRate, 0);
+                // Calculate immediately without setTimeout for real-time updates
+                const numericAmount = parseFloat(formattedValue.replace(/,/g, ""));
+                if (!isNaN(numericAmount)) {
+                  const key = `${fromCurrency}-${toCurrency}` as RateKey;
+                  const rate = exchangeRates[key];
+                  if (rate) {
+                    if (calculationMode === "send") {
+                      setResult(numericAmount * rate);
+                    } else {
+                      setResult(numericAmount / rate);
+                    }
+                  }
+                }
               }}
               className="bg-transparent border-0 text-4xl font-semibold text-white h-14 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               placeholder="100"

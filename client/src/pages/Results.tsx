@@ -23,11 +23,17 @@ const Results = () => {
       try {
         setLoading(true);
         
+        // Get URL parameters from calculator
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
+        const fromCurrency = urlParams.get('from') || defaultFromCurrency;
+        const toCurrency = urlParams.get('to') || defaultToCurrency;
+        
         // Use the API to get real provider data
         const response = await axios.post('/api/compare', {
-          amount: defaultAmount,
-          fromCurrency: defaultFromCurrency,
-          toCurrency: defaultToCurrency,
+          amount,
+          fromCurrency,
+          toCurrency,
           type: "send"
         });
         
