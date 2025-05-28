@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SEO, createComparisonSchema, createCurrencyExchangeSchema, createBreadcrumbSchema } from "@/components/SEO";
 
 // Default values for comparison
 const defaultAmount = 100;
