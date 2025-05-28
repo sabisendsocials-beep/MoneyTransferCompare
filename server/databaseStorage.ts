@@ -273,12 +273,19 @@ export class DatabaseStorage implements IStorage {
           console.log(`Received Amount: ${receivedAmount}`);
         } else {
           // For "receive" type, calculate how much GBP you need to send to get the desired amount
-          sendAmount = (request.amount / rate.rate);
-          // Add the fee to the send amount
-          if (fee > 0) {
-            sendAmount += fee;
-          }
           receivedAmount = request.amount; // They want to receive this exact amount
+          
+          if (provider.percentage_fee && provider.percentage_fee > 0) {
+            // For percentage fees, we need to calculate backwards
+            // If they want to receive X and there's a Y% fee, we need to send X/(1-Y/100) * (1/rate)
+            const feeMultiplier = 1 + (provider.percentage_fee / 100);
+            sendAmount = (request.amount / rate.rate) * feeMultiplier;
+            fee = sendAmount - (request.amount / rate.rate); // Recalculate actual fee amount
+          } else {
+            // For fixed fees, just add the fee to the required send amount
+            sendAmount = (request.amount / rate.rate) + fee;
+          }
+          
           console.log(`Provider: ${provider.name}, To Receive: ${request.amount} NGN, Send Amount: ${sendAmount} GBP, Fee: ${fee}, Exchange Rate: ${rate.rate}`);
         }
         
@@ -314,8 +321,14 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    // Sort by the most received amount (best deal first)
-    return results.sort((a, b) => b.receivedAmount - a.receivedAmount);
+    // Sort based on the request type
+    if (request.type === 'receive') {
+      // For receive mode, sort by lowest send amount (best deal = least money to send)
+      return results.sort((a, b) => a.sendAmount - b.sendAmount);
+    } else {
+      // For send mode, sort by highest received amount (best deal = most money received)
+      return results.sort((a, b) => b.receivedAmount - a.receivedAmount);
+    }
   }
   
   // Rate trend methods

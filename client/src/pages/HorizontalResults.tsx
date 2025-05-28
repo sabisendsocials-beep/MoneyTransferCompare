@@ -51,7 +51,12 @@ const HorizontalResults = () => {
   const sortResults = (data: TransferResult[]) => {
     switch (sortOption) {
       case "best-value":
-        return [...data].sort((a, b) => b.receivedAmount - a.receivedAmount);
+        // In receive mode, best value = lowest send amount. In send mode, best value = highest received amount
+        if (transferParams.calculationMode === "receive") {
+          return [...data].sort((a, b) => (a.sendAmount || 0) - (b.sendAmount || 0));
+        } else {
+          return [...data].sort((a, b) => b.receivedAmount - a.receivedAmount);
+        }
       case "lowest-fee":
         return [...data].sort((a, b) => a.fee - b.fee);
       case "fastest":
