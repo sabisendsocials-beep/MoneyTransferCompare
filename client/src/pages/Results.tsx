@@ -23,22 +23,22 @@ const Results = () => {
   });
   
   useEffect(() => {
+    // Get URL parameters from calculator FIRST
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
+    const fromCurrency = urlParams.get('from') || defaultFromCurrency;
+    const toCurrency = urlParams.get('to') || defaultToCurrency;
+    
+    // Store parameters for display IMMEDIATELY
+    setTransferParams({ amount, fromCurrency, toCurrency });
+    
+    console.log('URL Parameters:', { amount, fromCurrency, toCurrency });
+    console.log('Full URL:', window.location.href);
+    
     // Fetch real comparison results
     const fetchResults = async () => {
       try {
         setLoading(true);
-        
-        // Get URL parameters from calculator
-        const urlParams = new URLSearchParams(window.location.search);
-        const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
-        const fromCurrency = urlParams.get('from') || defaultFromCurrency;
-        const toCurrency = urlParams.get('to') || defaultToCurrency;
-        
-        // Store parameters for display
-        setTransferParams({ amount, fromCurrency, toCurrency });
-        
-        console.log('URL Parameters:', { amount, fromCurrency, toCurrency });
-        console.log('Full URL:', window.location.href);
         
         // Use the API to get real provider data
         const response = await axios.post('/api/compare', {
