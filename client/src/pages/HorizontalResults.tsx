@@ -227,9 +227,10 @@ const HorizontalResults = () => {
                   key={provider.providerId}
                   provider={provider}
                   index={index}
-                  fromCurrency={defaultFromCurrency}
-                  toCurrency={defaultToCurrency}
+                  fromCurrency={transferParams.fromCurrency}
+                  toCurrency={transferParams.toCurrency}
                   bestRateAmount={results[0]?.receivedAmount}
+                  calculationMode={transferParams.calculationMode}
                 />
               ))}
             </div>

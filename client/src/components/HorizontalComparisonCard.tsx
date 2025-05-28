@@ -10,6 +10,7 @@ interface HorizontalComparisonCardProps {
   fromCurrency: string;
   toCurrency: string;
   bestRateAmount?: number;
+  calculationMode?: string;
 }
 
 export const HorizontalComparisonCard = ({
@@ -17,7 +18,8 @@ export const HorizontalComparisonCard = ({
   index,
   fromCurrency,
   toCurrency,
-  bestRateAmount
+  bestRateAmount,
+  calculationMode
 }: HorizontalComparisonCardProps) => {
   // Format currency with proper formatting
   const formatCurrency = (value: number, currency: string) => {
@@ -170,9 +172,14 @@ export const HorizontalComparisonCard = ({
         
         {/* They Receive Column */}
         <div className="p-4 md:w-1/6 border-b md:border-b-0 md:border-r text-center">
-          <div className="text-xs text-gray-500 uppercase mb-2">YOU RECEIVE</div>
+          <div className="text-xs text-gray-500 uppercase mb-2">
+            {calculationMode === "receive" ? "YOU SEND" : "YOU RECEIVE"}
+          </div>
           <div className="text-3xl font-bold text-primary">
-            {formatCurrency(normalizedReceivedAmount, toCurrency)}
+            {calculationMode === "receive" 
+              ? formatCurrency(provider.sendAmount || 0, fromCurrency)
+              : formatCurrency(normalizedReceivedAmount, toCurrency)
+            }
           </div>
           
           {difference && (
