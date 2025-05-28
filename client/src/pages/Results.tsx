@@ -40,11 +40,12 @@ const Results = () => {
       try {
         setLoading(true);
         
-        // Use the API to get real provider data
+        // Use the API to get real provider data with the exact URL parameters
+        console.log('Making API call with:', { amount, fromCurrency, toCurrency });
         const response = await axios.post('/api/compare', {
-          amount,
-          fromCurrency,
-          toCurrency,
+          amount: amount,
+          fromCurrency: fromCurrency,
+          toCurrency: toCurrency,
           type: "send"
         });
         
