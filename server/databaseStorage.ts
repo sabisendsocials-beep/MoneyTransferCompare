@@ -272,11 +272,14 @@ export class DatabaseStorage implements IStorage {
           receivedAmount = amountAfterFees * rate.rate;
           console.log(`Received Amount: ${receivedAmount}`);
         } else {
+          // For "receive" type, calculate how much GBP you need to send to get the desired amount
           sendAmount = (request.amount / rate.rate);
-          // For "receive" type, add the fee to the send amount
+          // Add the fee to the send amount
           if (fee > 0) {
             sendAmount += fee;
           }
+          receivedAmount = request.amount; // They want to receive this exact amount
+          console.log(`Provider: ${provider.name}, To Receive: ${request.amount} NGN, Send Amount: ${sendAmount} GBP, Fee: ${fee}, Exchange Rate: ${rate.rate}`);
         }
         
         // Use provider information directly from the database
@@ -298,7 +301,7 @@ export class DatabaseStorage implements IStorage {
           rating: provider.rating,
           exchangeRate: rate.rate,
           fee: finalFee,
-          receivedAmount: finalFee === 0 ? request.amount * rate.rate : (request.amount - finalFee) * rate.rate, // Always recalculate based on final fee
+          receivedAmount: receivedAmount,
           sendAmount,
           transferTime: finalTransferTime,
           totalCost: finalFee,

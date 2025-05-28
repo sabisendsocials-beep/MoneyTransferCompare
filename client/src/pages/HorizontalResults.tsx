@@ -28,7 +28,8 @@ const HorizontalResults = () => {
   const [transferParams, setTransferParams] = useState({
     amount: defaultAmount,
     fromCurrency: defaultFromCurrency,
-    toCurrency: defaultToCurrency
+    toCurrency: defaultToCurrency,
+    calculationMode: "send"
   });
   
   // Filter out results with suspiciously high rates (e.g., Sendwave 20000)
@@ -78,7 +79,7 @@ const HorizontalResults = () => {
     const calculationMode = urlParams.get('mode') || 'send';
     
     // Store parameters for display
-    setTransferParams({ amount, fromCurrency, toCurrency });
+    setTransferParams({ amount, fromCurrency, toCurrency, calculationMode });
     
     console.log('URL Parameters:', { amount, fromCurrency, toCurrency, calculationMode });
     
@@ -171,7 +172,13 @@ const HorizontalResults = () => {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Best Money Transfer Options</h1>
             <p className="text-gray-500 mt-1">
-              For sending <strong>£{transferParams.amount}</strong> from <strong>{transferParams.fromCurrency}</strong> to <strong>{transferParams.toCurrency}</strong>
+              {transferParams.calculationMode === "receive" ? (
+                <>For receiving <strong>{transferParams.toCurrency === "NGN" ? "₦" : transferParams.toCurrency === "GHS" ? "₵" : ""}
+                {transferParams.amount.toLocaleString()}</strong> in <strong>{transferParams.toCurrency}</strong></>
+              ) : (
+                <>For sending <strong>{transferParams.fromCurrency === "GBP" ? "£" : transferParams.fromCurrency === "EUR" ? "€" : "$"}
+                {transferParams.amount.toLocaleString()}</strong> from <strong>{transferParams.fromCurrency}</strong> to <strong>{transferParams.toCurrency}</strong></>
+              )}
             </p>
           </div>
           
