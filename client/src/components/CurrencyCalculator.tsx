@@ -21,7 +21,11 @@ type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
 type CalculationMode = "send" | "receive";
 
-const CurrencyCalculator = () => {
+interface CurrencyCalculatorProps {
+  onValuesChange?: (values: { amount: string; fromCurrency: string; toCurrency: string }) => void;
+}
+
+const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
   const [amount, setAmount] = useState<string>("100");
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>("GBP");
   const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
@@ -131,6 +135,17 @@ const CurrencyCalculator = () => {
     // Calculate on initial render
     calculateRate();
   }, []);
+
+  // Notify parent component when values change
+  useEffect(() => {
+    if (onValuesChange) {
+      onValuesChange({
+        amount,
+        fromCurrency,
+        toCurrency
+      });
+    }
+  }, [amount, fromCurrency, toCurrency, onValuesChange]);
 
   const calculateRate = () => {
     const key = `${fromCurrency}-${toCurrency}` as RateKey;

@@ -5,8 +5,15 @@ import {
   RefreshCw, ArrowRight, CheckCircle2, Globe, Sparkles
 } from "lucide-react";
 import CurrencyCalculator from "../components/CurrencyCalculator";
+import { useState } from "react";
 
 const HeroSection = () => {
+  const [calculatorValues, setCalculatorValues] = useState({
+    amount: "100",
+    fromCurrency: "GBP",
+    toCurrency: "NGN"
+  });
+
   return (
     <>
       {/* Hero Section */}
@@ -58,11 +65,11 @@ const HeroSection = () => {
               <div className="bg-white/15 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/20 shadow-lg">
                 <h2 className="text-lg text-white font-semibold mb-3 text-center">Quick Calculator</h2>
                 
-                <CurrencyCalculator />
+                <CurrencyCalculator onValuesChange={setCalculatorValues} />
                 
                 {/* CTA Button */}
                 <div className="mt-4 text-center">
-                  <Link href="/results">
+                  <Link href={`/results?amount=${calculatorValues.amount.replace(/,/g, '')}&from=${calculatorValues.fromCurrency}&to=${calculatorValues.toCurrency}`}>
                     <Button 
                       className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg group"
                     >
