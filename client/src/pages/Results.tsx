@@ -37,6 +37,9 @@ const Results = () => {
         // Store parameters for display
         setTransferParams({ amount, fromCurrency, toCurrency });
         
+        console.log('URL Parameters:', { amount, fromCurrency, toCurrency });
+        console.log('Full URL:', window.location.href);
+        
         // Use the API to get real provider data
         const response = await axios.post('/api/compare', {
           amount,
