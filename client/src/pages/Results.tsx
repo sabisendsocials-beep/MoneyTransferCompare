@@ -41,17 +41,21 @@ const Results = () => {
     console.log('URL Parameters:', { amount, fromCurrency, toCurrency });
     console.log('Full URL:', window.location.href);
     
-    // Fetch real comparison results
-    const fetchResults = async () => {
+    // Fetch real comparison results with explicit parameter values
+    const fetchResults = async (amountValue: number, fromValue: string, toValue: string) => {
       try {
         setLoading(true);
         
         // Use the API to get real provider data with the exact URL parameters
-        console.log('Making API call with:', { amount, fromCurrency, toCurrency });
+        console.log('Making API call with explicit values:', { 
+          amount: amountValue, 
+          fromCurrency: fromValue, 
+          toCurrency: toValue 
+        });
         const response = await axios.post('/api/compare', {
-          amount: amount,
-          fromCurrency: fromCurrency,
-          toCurrency: toCurrency,
+          amount: amountValue,
+          fromCurrency: fromValue,
+          toCurrency: toValue,
           type: "send"
         });
         
@@ -103,7 +107,8 @@ const Results = () => {
       }
     };
     
-    fetchResults();
+    // Call fetchResults with the actual parameter values
+    fetchResults(amount, fromCurrency, toCurrency);
   }, []);
   
   return (
