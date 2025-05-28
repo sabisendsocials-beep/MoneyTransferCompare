@@ -22,7 +22,7 @@ type RateKey = `${CurrencyCode}-${CurrencyCode}`;
 type CalculationMode = "send" | "receive";
 
 interface CurrencyCalculatorProps {
-  onValuesChange?: (values: { amount: string; fromCurrency: string; toCurrency: string }) => void;
+  onValuesChange?: (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => void;
 }
 
 const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
@@ -140,10 +140,11 @@ const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
       onValuesChange({
         amount,
         fromCurrency,
-        toCurrency
+        toCurrency,
+        calculationMode
       });
     }
-  }, [amount, fromCurrency, toCurrency, onValuesChange]);
+  }, [amount, fromCurrency, toCurrency, calculationMode, onValuesChange]);
 
   // Real-time calculation whenever currencies or exchange rates change
   useEffect(() => {

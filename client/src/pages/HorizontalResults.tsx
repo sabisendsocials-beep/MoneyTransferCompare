@@ -75,11 +75,12 @@ const HorizontalResults = () => {
     const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
     const fromCurrency = urlParams.get('from') || defaultFromCurrency;
     const toCurrency = urlParams.get('to') || defaultToCurrency;
+    const calculationMode = urlParams.get('mode') || 'send';
     
     // Store parameters for display
     setTransferParams({ amount, fromCurrency, toCurrency });
     
-    console.log('URL Parameters:', { amount, fromCurrency, toCurrency });
+    console.log('URL Parameters:', { amount, fromCurrency, toCurrency, calculationMode });
     
     // Fetch real comparison results
     const fetchResults = async () => {
@@ -91,7 +92,7 @@ const HorizontalResults = () => {
           amount: amount,
           fromCurrency: fromCurrency,
           toCurrency: toCurrency,
-          type: "send"
+          type: calculationMode === "receive" ? "receive" : "send"
         });
         
         // Parse and validate the response data
