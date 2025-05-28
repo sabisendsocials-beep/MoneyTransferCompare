@@ -25,7 +25,13 @@ const Results = () => {
   useEffect(() => {
     // Get URL parameters from calculator FIRST
     const urlParams = new URLSearchParams(window.location.search);
-    const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
+    console.log('Raw URL search:', window.location.search);
+    console.log('All URL params:', Object.fromEntries(urlParams.entries()));
+    
+    const amountParam = urlParams.get('amount');
+    console.log('Amount param from URL:', amountParam);
+    
+    const amount = amountParam ? parseFloat(amountParam) : defaultAmount;
     const fromCurrency = urlParams.get('from') || defaultFromCurrency;
     const toCurrency = urlParams.get('to') || defaultToCurrency;
     
