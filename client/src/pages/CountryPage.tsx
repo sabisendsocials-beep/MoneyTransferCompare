@@ -1,6 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { SEO } from '@/components/SEO';
-import CurrencyCalculator from '@/components/CurrencyCalculator';
+import HeroSection from '@/components/HeroSection';
 import { Link } from 'wouter';
 
 interface CountryConfig {
@@ -113,20 +113,8 @@ export default function CountryPage() {
         structuredData={structuredData}
       />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-green-600 to-green-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">
-              Send Money to {name}
-            </h1>
-            <p className="text-xl text-green-100 max-w-3xl mx-auto">
-              Compare live exchange rates and find the best way to send money to {name}. 
-              Trusted providers, competitive rates, secure transfers.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section with Calculator */}
+      <HeroSection />
 
       {/* Transfer Corridors */}
       <section className="py-16 bg-white">
@@ -227,24 +215,7 @@ export default function CountryPage() {
         </div>
       </section>
 
-      {/* Quick Calculator */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">
-            Quick Rate Check
-          </h2>
-          <p className="text-gray-600 mb-8">
-            Enter an amount to see current rates for transfers to {name}
-          </p>
-          
-          <div className="max-w-2xl mx-auto">
-            <CurrencyCalculator 
-              toCurrency={currency}
-              redirectPath={`/send-money-to-${country}`}
-            />
-          </div>
-        </div>
-      </section>
+
 
       {/* SEO Content */}
       <section className="py-16 bg-gray-50">

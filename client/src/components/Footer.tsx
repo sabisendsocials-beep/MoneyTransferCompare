@@ -174,63 +174,65 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Popular Corridors</h3>
+            <h3 className="text-lg font-semibold mb-4">Money Transfer Guides</h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li>
-                <Link href="/compare?from=GBP&to=NGN">
+                <Link href="/send-money-to-nigeria">
                   <a className="hover:text-primary transition duration-200 flex items-center">
                     <span className="bg-gray-800 p-1 rounded-full mr-2">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
                         <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                       </svg>
                     </span>
-                    UK (£) to Nigeria (₦)
+                    Send Money to Nigeria
                   </a>
                 </Link>
               </li>
               <li>
-                <Link href="/compare?from=GBP&to=GHS">
+                <Link href="/send-money-to-ghana">
                   <a className="hover:text-primary transition duration-200 flex items-center">
                     <span className="bg-gray-800 p-1 rounded-full mr-2">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
                         <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                       </svg>
                     </span>
-                    UK (£) to Ghana (₵)
+                    Send Money to Ghana
                   </a>
                 </Link>
               </li>
               <li>
-                <Link href="/compare?from=EUR&to=NGN">
+                <Link href="/gbp-to-ngn">
                   <a className="hover:text-primary transition duration-200 flex items-center">
                     <span className="bg-gray-800 p-1 rounded-full mr-2">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
                         <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                       </svg>
                     </span>
-                    Europe (€) to Nigeria (₦)
+                    GBP to NGN Exchange Rate
                   </a>
                 </Link>
               </li>
               <li>
-                <Link href="/compare?from=EUR&to=GHS">
+                <Link href="/eur-to-ngn">
                   <a className="hover:text-primary transition duration-200 flex items-center">
                     <span className="bg-gray-800 p-1 rounded-full mr-2">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
                         <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                       </svg>
                     </span>
-                    Europe (€) to Ghana (₵)
+                    EUR to NGN Exchange Rate
                   </a>
                 </Link>
               </li>
               <li>
-                <Link href="/compare">
-                  <a className="text-primary hover:underline transition duration-200 flex items-center">
-                    View all corridors
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 ml-1">
-                      <path fillRule="evenodd" d="M5 10a.75.75 0 01.75-.75h6.638L10.23 7.29a.75.75 0 111.04-1.08l3.5 3.25a.75.75 0 010 1.08l-3.5 3.25a.75.75 0 11-1.04-1.08l2.158-1.96H5.75A.75.75 0 015 10z" clipRule="evenodd" />
-                    </svg>
+                <Link href="/gbp-to-ghs">
+                  <a className="hover:text-primary transition duration-200 flex items-center">
+                    <span className="bg-gray-800 p-1 rounded-full mr-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    GBP to GHS Exchange Rate
                   </a>
                 </Link>
               </li>

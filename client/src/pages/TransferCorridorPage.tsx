@@ -1,6 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { SEO } from '@/components/SEO';
-import CurrencyCalculator from '@/components/CurrencyCalculator';
+import HeroSection from '@/components/HeroSection';
 import HorizontalResults from './HorizontalResults';
 import { useState, useEffect } from 'react';
 
@@ -116,29 +116,8 @@ export default function TransferCorridorPage() {
         structuredData={structuredData}
       />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">
-              Send Money from {fromCountry} to {toCountry}
-            </h1>
-            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              Compare live {fromCurrency} to {toCurrency} exchange rates from trusted providers. 
-              Find the best deal for your money transfer.
-            </p>
-          </div>
-
-          {/* Calculator */}
-          <div className="max-w-2xl mx-auto">
-            <CurrencyCalculator 
-              fromCurrency={fromCurrency} 
-              toCurrency={toCurrency}
-              redirectPath={`/transfer/${corridor}`}
-            />
-          </div>
-        </div>
-      </section>
+      {/* Hero Section with Calculator */}
+      <HeroSection />
 
       {/* Results Section */}
       {showResults && (
