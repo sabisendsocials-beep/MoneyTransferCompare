@@ -23,12 +23,15 @@ type CalculationMode = "send" | "receive";
 
 interface CurrencyCalculatorProps {
   onValuesChange?: (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => void;
+  fromCurrency?: string;
+  toCurrency?: string;
+  redirectPath?: string;
 }
 
-const CurrencyCalculator = ({ onValuesChange }: CurrencyCalculatorProps) => {
+const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency, toCurrency: defaultToCurrency, redirectPath }: CurrencyCalculatorProps) => {
   const [amount, setAmount] = useState<string>("100");
-  const [fromCurrency, setFromCurrency] = useState<CurrencyCode>("GBP");
-  const [toCurrency, setToCurrency] = useState<CurrencyCode>("NGN");
+  const [fromCurrency, setFromCurrency] = useState<CurrencyCode>((defaultFromCurrency as CurrencyCode) || "GBP");
+  const [toCurrency, setToCurrency] = useState<CurrencyCode>((defaultToCurrency as CurrencyCode) || "NGN");
   const [calculationMode, setCalculationMode] = useState<CalculationMode>("send");
   const [result, setResult] = useState<number | null>(null);
   const [exchangeRates, setExchangeRates] = useState<Record<RateKey, number>>({} as Record<RateKey, number>);
