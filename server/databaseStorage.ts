@@ -153,11 +153,11 @@ export class DatabaseStorage implements IStorage {
     const providers = await this.getActiveProviders();
     const providerIds = providers.map(p => p.id);
     
-    // Calculate 24-hour cutoff
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // Calculate 72-hour cutoff
+    const seventyTwoHoursAgo = new Date();
+    seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
     
-    // For each provider, get the latest rate within 24 hours
+    // For each provider, get the latest rate within 72 hours
     const latestRatesPromises = providerIds.map(async providerId => {
       const [rate] = await db
         .select()
@@ -167,7 +167,7 @@ export class DatabaseStorage implements IStorage {
             eq(schema.exchangeRates.provider_id, providerId),
             eq(schema.exchangeRates.from_currency, fromCurrency),
             eq(schema.exchangeRates.to_currency, toCurrency),
-            gte(schema.exchangeRates.timestamp, twentyFourHoursAgo)
+            gte(schema.exchangeRates.timestamp, seventyTwoHoursAgo)
           )
         )
         .orderBy(desc(schema.exchangeRates.timestamp))
