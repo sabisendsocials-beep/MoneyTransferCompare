@@ -54,10 +54,19 @@ const corridorConfigs: Record<string, CorridorConfig> = {
 };
 
 export default function TransferCorridorPage() {
-  const { corridor } = useParams<{ corridor: string }>();
   const [location] = useLocation();
   const [showResults, setShowResults] = useState(false);
 
+  // Extract corridor from the URL path
+  const getCorridorFromPath = (path: string): string | null => {
+    if (path.includes('gbp-to-ngn')) return 'gbp-to-ngn';
+    if (path.includes('eur-to-ngn')) return 'eur-to-ngn';
+    if (path.includes('gbp-to-ghs')) return 'gbp-to-ghs';
+    if (path.includes('eur-to-ghs')) return 'eur-to-ghs';
+    return null;
+  };
+
+  const corridor = getCorridorFromPath(location);
   const config = corridor ? corridorConfigs[corridor] : null;
 
   useEffect(() => {
@@ -82,8 +91,8 @@ export default function TransferCorridorPage() {
 
   const { fromCurrency, toCurrency, fromCountry, toCountry, banks, providers, deliveryMethods } = config;
 
-  const seoTitle = `Send Money from ${fromCountry} to ${toCountry} | ${fromCurrency} to ${toCurrency} | SabiSend`;
-  const seoDescription = `Compare the best ${fromCurrency} to ${toCurrency} exchange rates from ${providers.join(', ')}. Send money from ${fromCountry} to ${toCountry} with live rates updated every 6 hours.`;
+  const seoTitle = `${fromCurrency} to ${toCurrency} Exchange Rate | Best Money Transfer Rates | SabiSend`;
+  const seoDescription = `Compare live ${fromCurrency} to ${toCurrency} exchange rates from top providers. Find the cheapest way to send money from ${fromCountry} to ${toCountry} with rates updated every 6 hours.`;
 
   const structuredData = {
     "@context": "https://schema.org",

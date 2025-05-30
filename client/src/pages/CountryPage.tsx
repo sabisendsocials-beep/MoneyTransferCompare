@@ -25,13 +25,13 @@ const countryConfigs: Record<string, CountryConfig> = {
       {
         from: 'UK',
         fromCurrency: 'GBP',
-        path: '/transfer/gbp-to-ngn',
+        path: '/gbp-to-ngn',
         description: 'Send British Pounds to Nigerian Naira'
       },
       {
         from: 'Europe',
         fromCurrency: 'EUR',
-        path: '/transfer/eur-to-ngn',
+        path: '/eur-to-ngn',
         description: 'Send Euros to Nigerian Naira'
       }
     ],
@@ -46,13 +46,13 @@ const countryConfigs: Record<string, CountryConfig> = {
       {
         from: 'UK',
         fromCurrency: 'GBP',
-        path: '/transfer/gbp-to-ghs',
+        path: '/gbp-to-ghs',
         description: 'Send British Pounds to Ghanaian Cedis'
       },
       {
         from: 'Europe',
         fromCurrency: 'EUR',
-        path: '/transfer/eur-to-ghs',
+        path: '/eur-to-ghs',
         description: 'Send Euros to Ghanaian Cedis'
       }
     ],
@@ -88,8 +88,8 @@ export default function CountryPage() {
 
   const { name, currency, corridors, banks, deliveryMethods, regulations } = config;
 
-  const seoTitle = `Send Money to ${name} | Compare Best ${currency} Transfer Rates | SabiSend`;
-  const seoDescription = `Compare the best money transfer rates to ${name}. Send money to ${currency} with live exchange rates from trusted providers. Fast, secure, and affordable transfers.`;
+  const seoTitle = `Send Money to ${name} | Best ${currency} Exchange Rates | SabiSend`;
+  const seoDescription = `Compare live exchange rates for sending money to ${name}. Find the cheapest way to transfer money to ${currency} with rates from trusted providers updated every 6 hours.`;
 
   const structuredData = {
     "@context": "https://schema.org",

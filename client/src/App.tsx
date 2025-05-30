@@ -58,7 +58,10 @@ function Router() {
           {/* SEO Landing Pages */}
           <Route path="/send-money-to-nigeria" component={CountryPage} />
           <Route path="/send-money-to-ghana" component={CountryPage} />
-          <Route path="/transfer/:corridor" component={TransferCorridorPage} />
+          <Route path="/gbp-to-ngn" component={TransferCorridorPage} />
+          <Route path="/eur-to-ngn" component={TransferCorridorPage} />
+          <Route path="/gbp-to-ghs" component={TransferCorridorPage} />
+          <Route path="/eur-to-ghs" component={TransferCorridorPage} />
 
           <Route component={NotFound} />
         </Switch>
