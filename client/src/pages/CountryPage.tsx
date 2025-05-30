@@ -1,4 +1,4 @@
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { SEO } from '@/components/SEO';
 import CurrencyCalculator from '@/components/CurrencyCalculator';
 import { Link } from 'wouter';
@@ -63,8 +63,16 @@ const countryConfigs: Record<string, CountryConfig> = {
 };
 
 export default function CountryPage() {
-  const { country } = useParams<{ country: string }>();
+  const [location] = useLocation();
   
+  // Extract country from the URL path
+  const getCountryFromPath = (path: string): string | null => {
+    if (path.includes('nigeria')) return 'nigeria';
+    if (path.includes('ghana')) return 'ghana';
+    return null;
+  };
+  
+  const country = getCountryFromPath(location);
   const config = country ? countryConfigs[country] : null;
 
   if (!config) {

@@ -369,6 +369,27 @@ const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency,
           </div>
         )}
       </div>
+
+      {/* CTA Button */}
+      <div className="mt-6 text-center">
+        <Button 
+          onClick={() => {
+            const params = new URLSearchParams({
+              amount,
+              from: fromCurrency,
+              to: toCurrency,
+              mode: calculationMode
+            });
+            const targetPath = redirectPath || "/results";
+            window.location.href = `${targetPath}?${params.toString()}`;
+          }}
+          className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+        >
+          <Sparkles className="mr-2" size={18} />
+          Get Best Rate Now
+          <ArrowRight className="ml-2" size={18} />
+        </Button>
+      </div>
     </div>
   );
 };
