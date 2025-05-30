@@ -16,7 +16,7 @@ import { RateSourceType, ExchangeRate, InsertExchangeRate, Provider } from '@sha
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 
 // Maximum age for rate data to be considered "fresh"
-const MAX_DATA_AGE_HOURS = 24; 
+const MAX_DATA_AGE_HOURS = 72; 
 
 /**
  * Options for collecting exchange rates
