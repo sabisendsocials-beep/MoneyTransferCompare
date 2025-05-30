@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CurrencyCalculator } from "@/components/CurrencyCalculator";
+import CurrencyCalculator from "@/components/CurrencyCalculator";
 import { SEO, createFinancialServiceSchema, createCurrencyExchangeSchema } from "@/components/SEO";
 import { ArrowRight, TrendingUp, Shield, Clock } from "lucide-react";
 
@@ -33,10 +33,10 @@ export default function GbpToNgn() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <SEO
-        title="GBP to NGN - Best Pound to Naira Exchange Rates | Send Money to Nigeria | SabiSend"
-        description={`Compare live GBP to NGN rates from 15+ providers. Current rate: 1 GBP = ${currentRate.toFixed(2)} NGN. Save money on transfers to Nigeria with SabiSend's rate comparison.`}
-        keywords="GBP to NGN, Pound to Naira, send money to Nigeria, UK to Nigeria transfer, best GBP NGN rates, money transfer Nigeria"
-        canonicalUrl="https://sabisend.com/gbp-to-ngn"
+        title="Send Money to Nigeria - Best UK to Nigeria Transfer Rates | Compare Pound to Naira"
+        description={`Send money from UK to Nigeria with the best rates. Compare 15+ providers including Wise, Remitly, Western Union. Current rate: £1 = ₦${currentRate.toFixed(2)}. Save up to £50 per transfer.`}
+        keywords="send money to Nigeria, UK to Nigeria money transfer, pound to naira rate, money transfer Nigeria, remittance to Nigeria, transfer money Nigeria, best rates Nigeria, GBP NGN exchange rate"
+        canonicalUrl="https://sabisend.com/send-money-to-nigeria"
         structuredData={structuredData}
       />
       
@@ -44,11 +44,11 @@ export default function GbpToNgn() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Best <span className="text-blue-600">GBP to NGN</span> Exchange Rates
+            Send Money to <span className="text-blue-600">Nigeria</span> - Best UK Transfer Rates
           </h1>
           <p className="text-xl text-gray-600 mb-6 max-w-3xl mx-auto">
-            Compare live Pound Sterling to Nigerian Naira rates from 15+ trusted providers. 
-            Find the cheapest way to send money from UK to Nigeria.
+            Compare money transfer rates from UK to Nigeria. Find the cheapest way to send pounds to naira 
+            with trusted providers like Wise, Remitly, and Western Union.
           </p>
           
           <div className="bg-white rounded-lg shadow-lg p-6 inline-block mb-8">
@@ -134,37 +134,54 @@ export default function GbpToNgn() {
 
         {/* SEO Content Section */}
         <div className="prose max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Why Compare GBP to NGN Rates?</h2>
+          <h2 className="text-3xl font-bold mb-6">How to Send Money from UK to Nigeria</h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <div>
-              <h3 className="text-xl font-semibold mb-3">Save Money on Every Transfer</h3>
+              <h3 className="text-xl font-semibold mb-3">Compare Money Transfer Services</h3>
               <p className="text-gray-600">
-                Exchange rates can vary significantly between providers. By comparing rates, 
-                you can ensure your recipients in Nigeria get the most Naira for your Pounds.
+                Different providers offer varying exchange rates and fees. Comparing rates ensures 
+                your family in Nigeria receives more naira for your pounds, potentially saving you £50+ per transfer.
               </p>
             </div>
             
             <div>
-              <h3 className="text-xl font-semibold mb-3">Transparent Pricing</h3>
+              <h3 className="text-xl font-semibold mb-3">Fast and Secure Transfers</h3>
               <p className="text-gray-600">
-                We show you the real exchange rate and all fees upfront, so you know 
-                exactly how much your transfer will cost before you send.
+                Most transfers arrive within minutes to 1 business day. All providers are 
+                FCA-regulated in the UK, ensuring your money is protected during the transfer process.
               </p>
             </div>
           </div>
 
-          <h3 className="text-2xl font-semibold mb-4">Best Providers for UK to Nigeria Transfers</h3>
+          <h3 className="text-2xl font-semibold mb-4">Best Money Transfer Apps and Services to Nigeria</h3>
           <p className="text-gray-600 mb-4">
-            Our platform compares leading money transfer services including Wise (formerly TransferWise), 
-            Western Union, Remitly, WorldRemit, and many others. Each provider offers different advantages:
+            These are the most popular ways to send money from the UK to Nigeria, each with unique benefits:
           </p>
           
+          <ul className="list-disc pl-6 text-gray-600 space-y-2 mb-8">
+            <li><strong>Wise (formerly TransferWise):</strong> Real exchange rate with transparent fees, usually 0.4-0.7%</li>
+            <li><strong>Remitly:</strong> Fast transfers with promotional rates for new customers</li>
+            <li><strong>Western Union:</strong> Cash pickup at 3,000+ locations across Nigeria</li>
+            <li><strong>WorldRemit:</strong> Mobile money transfers and airtime top-ups</li>
+            <li><strong>Sendwave:</strong> Zero fees on first transfers, good for small amounts</li>
+          </ul>
+
+          <h3 className="text-2xl font-semibold mb-4">What You Need to Send Money to Nigeria</h3>
+          <ul className="list-disc pl-6 text-gray-600 space-y-2 mb-8">
+            <li>Valid UK ID (passport or driving license)</li>
+            <li>Nigerian recipient's full name and address</li>
+            <li>Bank account details or mobile money number</li>
+            <li>Reason for sending money (required by UK regulations)</li>
+          </ul>
+
+          <h3 className="text-2xl font-semibold mb-4">Delivery Options in Nigeria</h3>
+          <p className="text-gray-600 mb-4">Choose how your recipient receives the money:</p>
           <ul className="list-disc pl-6 text-gray-600 space-y-2">
-            <li><strong>Wise:</strong> Often offers mid-market rates with transparent fees</li>
-            <li><strong>Remitly:</strong> Competitive rates with fast delivery options</li>
-            <li><strong>Western Union:</strong> Extensive cash pickup network in Nigeria</li>
-            <li><strong>WorldRemit:</strong> Good for mobile money and bank transfers</li>
+            <li><strong>Bank Transfer:</strong> Direct to Nigerian bank accounts (GTBank, Zenith, UBA, etc.)</li>
+            <li><strong>Mobile Money:</strong> Instant delivery to mobile wallets</li>
+            <li><strong>Cash Pickup:</strong> Available at Western Union and MoneyGram locations</li>
+            <li><strong>Airtime Top-up:</strong> Send mobile credit directly to Nigerian phone numbers</li>
           </ul>
         </div>
       </div>
