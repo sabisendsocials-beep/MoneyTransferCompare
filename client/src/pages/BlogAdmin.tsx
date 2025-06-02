@@ -429,6 +429,19 @@ const BlogAdmin = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => {
+                            const previewUrl = post.status === 'published' 
+                              ? `/blog/${post.slug}` 
+                              : `/blog/${post.slug}?preview=true`;
+                            window.open(previewUrl, '_blank');
+                          }}
+                          title={post.status === 'published' ? 'View post' : 'Preview draft'}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => openEditDialog(post)}
                         >
                           <Edit className="h-4 w-4" />

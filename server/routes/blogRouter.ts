@@ -35,13 +35,20 @@ blogRouter.get("/featured", async (req: Request, res: Response) => {
   }
 });
 
-// Get a single blog post by slug
+// Get a single blog post by slug (including drafts for preview)
 blogRouter.get("/:slug", async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
+    const { preview } = req.query;
+    
     const post = await storage.getBlogPostBySlug(slug);
     
     if (!post) {
+      return res.status(404).json({ message: "Blog post not found" });
+    }
+    
+    // Only allow draft posts to be viewed if preview=true
+    if (post.status !== 'published' && !preview) {
       return res.status(404).json({ message: "Blog post not found" });
     }
     
