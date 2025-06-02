@@ -9,7 +9,8 @@ import {
   InsertRateTrend,
   ContactSubmission, InsertContactSubmission,
   NewsletterSubscription, InsertNewsletterSubscription,
-  contactSubmissions, newsletterSubscriptions
+  BlogPost, InsertBlogPost,
+  contactSubmissions, newsletterSubscriptions, blogPosts
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';

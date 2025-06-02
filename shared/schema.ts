@@ -241,3 +241,53 @@ export const contactFormSchema = z.object({
   topic: z.string().min(1, { message: "Please select a topic" }),
   message: z.string().min(10, { message: "Message must be at least 10 characters" }).max(1000, { message: "Message cannot exceed 1000 characters" }),
 });
+
+// Blog Posts schema - for SEO and content marketing
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  excerpt: text("excerpt").notNull(),
+  content: text("content").notNull(),
+  featured_image: text("featured_image"),
+  author: text("author").notNull(),
+  status: text("status").default('draft').notNull(), // 'draft', 'published', 'archived'
+  published_at: timestamp("published_at"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+  // SEO fields
+  meta_description: text("meta_description"),
+  meta_keywords: text("meta_keywords"),
+  // Blog categorization
+  category: text("category").notNull(), // e.g., 'money-transfer-guides', 'market-analysis', 'provider-reviews'
+  tags: text("tags").array(), // Array of tags for filtering
+  // Analytics
+  view_count: integer("view_count").default(0),
+  featured: boolean("featured").default(false),
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  view_count: true,
+});
+
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
+
+// Blog form validation schema for frontend
+export const blogPostFormSchema = z.object({
+  title: z.string().min(5, { message: "Title must be at least 5 characters" }).max(200, { message: "Title cannot exceed 200 characters" }),
+  slug: z.string().min(3, { message: "Slug must be at least 3 characters" }).max(100, { message: "Slug cannot exceed 100 characters" }).regex(/^[a-z0-9-]+$/, { message: "Slug can only contain lowercase letters, numbers, and hyphens" }),
+  excerpt: z.string().min(50, { message: "Excerpt must be at least 50 characters" }).max(500, { message: "Excerpt cannot exceed 500 characters" }),
+  content: z.string().min(200, { message: "Content must be at least 200 characters" }),
+  featured_image: z.string().url({ message: "Featured image must be a valid URL" }).optional(),
+  author: z.string().min(2, { message: "Author name must be at least 2 characters" }),
+  status: z.enum(['draft', 'published', 'archived']),
+  meta_description: z.string().max(160, { message: "Meta description cannot exceed 160 characters" }).optional(),
+  meta_keywords: z.string().optional(),
+  category: z.string().min(1, { message: "Category is required" }),
+  tags: z.array(z.string()).optional(),
+  featured: z.boolean().optional(),
+});
