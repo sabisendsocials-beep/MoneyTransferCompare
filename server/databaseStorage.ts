@@ -762,4 +762,121 @@ export class DatabaseStorage implements IStorage {
     
     return updatedSubmission;
   }
+
+  // Blog post methods
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const postData = {
+      ...post,
+      published_at: post.status === 'published' ? new Date() : null
+    };
+    
+    const [newPost] = await db.insert(blogPosts)
+      .values(postData)
+      .returning();
+    
+    console.log(`New blog post created: "${newPost.title}" (${newPost.status})`);
+    return newPost;
+  }
+
+  async getBlogPosts(status?: string, limit: number = 50): Promise<BlogPost[]> {
+    let query = db.select().from(blogPosts);
+    
+    if (status) {
+      query = query.where(eq(blogPosts.status, status));
+    }
+    
+    return await query
+      .orderBy(desc(blogPosts.created_at))
+      .limit(limit);
+  }
+
+  async getPublishedBlogPosts(limit: number = 50): Promise<BlogPost[]> {
+    return await db.select()
+      .from(blogPosts)
+      .where(eq(blogPosts.status, 'published'))
+      .orderBy(desc(blogPosts.published_at))
+      .limit(limit);
+  }
+
+  async getFeaturedBlogPosts(limit: number = 3): Promise<BlogPost[]> {
+    return await db.select()
+      .from(blogPosts)
+      .where(and(
+        eq(blogPosts.status, 'published'),
+        eq(blogPosts.featured, true)
+      ))
+      .orderBy(desc(blogPosts.published_at))
+      .limit(limit);
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select()
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, slug));
+    
+    if (post) {
+      // Increment view count
+      await this.incrementBlogPostViews(post.id);
+    }
+    
+    return post;
+  }
+
+  async getBlogPost(id: number): Promise<BlogPost | undefined> {
+    const [post] = await db.select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id));
+    
+    return post;
+  }
+
+  async updateBlogPost(id: number, updates: Partial<InsertBlogPost>): Promise<BlogPost | undefined> {
+    const updateData = {
+      ...updates,
+      updated_at: new Date(),
+      published_at: updates.status === 'published' ? new Date() : undefined
+    };
+    
+    const [updatedPost] = await db.update(blogPosts)
+      .set(updateData)
+      .where(eq(blogPosts.id, id))
+      .returning();
+    
+    return updatedPost;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+    console.log(`Blog post deleted: ID ${id}`);
+  }
+
+  async incrementBlogPostViews(id: number): Promise<void> {
+    await db.update(blogPosts)
+      .set({ 
+        view_count: sql`${blogPosts.view_count} + 1` 
+      })
+      .where(eq(blogPosts.id, id));
+  }
+
+  async getBlogPostsByCategory(category: string, limit: number = 20): Promise<BlogPost[]> {
+    return await db.select()
+      .from(blogPosts)
+      .where(and(
+        eq(blogPosts.status, 'published'),
+        eq(blogPosts.category, category)
+      ))
+      .orderBy(desc(blogPosts.published_at))
+      .limit(limit);
+  }
+
+  async searchBlogPosts(query: string, limit: number = 20): Promise<BlogPost[]> {
+    return await db.select()
+      .from(blogPosts)
+      .where(and(
+        eq(blogPosts.status, 'published'),
+        sql`(${blogPosts.title} ILIKE ${'%' + query + '%'} OR ${blogPosts.content} ILIKE ${'%' + query + '%'} OR ${blogPosts.excerpt} ILIKE ${'%' + query + '%'})`
+      ))
+      .orderBy(desc(blogPosts.published_at))
+      .limit(limit);
+  }
 }
