@@ -57,7 +57,11 @@ const BlogPost = () => {
   };
 
   const formatContent = (content: string) => {
-    // Convert line breaks to paragraphs
+    // If content contains HTML tags, render as HTML, otherwise format as plain text
+    if (content.includes('<') && content.includes('>')) {
+      return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+    // Fallback for plain text content
     return content.split('\n\n').map((paragraph, index) => (
       <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
         {paragraph}

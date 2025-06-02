@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Eye, Calendar } from "lucide-react";
 import { blogPostFormSchema } from "@shared/schema";
 import { z } from "zod";
+import RichTextEditor from "@/components/RichTextEditor";
 
 type BlogPostForm = z.infer<typeof blogPostFormSchema>;
 
@@ -268,7 +269,11 @@ const BlogAdmin = () => {
                     <FormItem>
                       <FormLabel>Content</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={12} />
+                        <RichTextEditor
+                          content={field.value}
+                          onChange={field.onChange}
+                          placeholder="Write your blog post content here..."
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
