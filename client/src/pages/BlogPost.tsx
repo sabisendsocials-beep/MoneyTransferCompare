@@ -30,7 +30,11 @@ const BlogPost = () => {
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['/api/blog', slug],
     queryFn: async () => {
-      const response = await fetch(`/api/blog/${slug}`);
+      const searchParams = new URLSearchParams(window.location.search);
+      const isPreview = searchParams.get('preview') === 'true';
+      const url = isPreview ? `/api/blog/${slug}?preview=true` : `/api/blog/${slug}`;
+      
+      const response = await fetch(url);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Post not found');
@@ -147,6 +151,17 @@ const BlogPost = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
+            {/* Preview Banner for Draft Posts */}
+            {post.status === 'draft' && (
+              <div className="bg-orange-100 border border-orange-200 text-orange-800 px-4 py-3 rounded-lg mb-6">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  <span className="font-medium">Draft Preview</span>
+                  <span className="text-sm">This post is not yet published and only visible to you.</span>
+                </div>
+              </div>
+            )}
+            
             {/* Back Button */}
             <Button 
               variant="ghost" 
