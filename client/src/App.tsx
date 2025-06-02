@@ -16,6 +16,9 @@ import AdminPage from "@/pages/AdminPage";
 import BulkRateManager from "@/pages/BulkRateManager";
 import TransferCorridorPage from "@/pages/TransferCorridorPage";
 import CountryPage from "@/pages/CountryPage";
+import Blog from "@/pages/Blog";
+import BlogPost from "@/pages/BlogPost";
+import BlogAdmin from "@/pages/BlogAdmin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { NewsletterPopupContainer } from "@/components/NewsletterPopupContainer";
@@ -54,6 +57,11 @@ function Router() {
           <Route path="/contact" component={ContactUs} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/bulk-rates" component={BulkRateManager} />
+          
+          {/* Blog Routes */}
+          <Route path="/blog" component={Blog} />
+          <Route path="/blog/:slug" component={BlogPost} />
+          <Route path="/blog-admin" component={BlogAdmin} />
           
           {/* SEO Landing Pages */}
           <Route path="/send-money-to-nigeria" component={CountryPage} />
