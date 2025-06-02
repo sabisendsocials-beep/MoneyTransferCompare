@@ -59,6 +59,17 @@ blogRouter.get("/:slug", async (req: Request, res: Response) => {
   }
 });
 
+// Get all blog posts for admin (including drafts)
+blogRouter.get("/admin", async (req: Request, res: Response) => {
+  try {
+    const posts = await storage.getBlogPosts(); // No status filter = get all posts
+    res.json(posts);
+  } catch (error) {
+    console.error("Error fetching admin blog posts:", error);
+    res.status(500).json({ message: "Failed to fetch admin blog posts" });
+  }
+});
+
 // Create a new blog post (admin only)
 blogRouter.post("/", async (req: Request, res: Response) => {
   try {

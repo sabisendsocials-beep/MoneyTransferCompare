@@ -51,7 +51,7 @@ const BlogAdmin = () => {
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ['/api/blog/admin'],
     queryFn: async () => {
-      const response = await fetch('/api/blog?status=all');
+      const response = await fetch('/api/blog/admin');
       if (!response.ok) throw new Error('Failed to fetch posts');
       return response.json();
     }
