@@ -5,18 +5,18 @@ const Trends = () => {
   return (
     <>
       <Helmet>
-        <title>GBP to NGN Exchange Rate Trends | SabiSend</title>
+        <title>Exchange Rate Trends - GBP, EUR, USD to NGN, GHS, KES, INR, PKR | SabiSend</title>
         <meta 
           name="description" 
-          content="View historical exchange rate trends for GBP to NGN. Monitor rate changes, set rate alerts, and make informed decisions for your money transfers."
+          content="View historical exchange rate trends for GBP, EUR, USD to NGN, GHS, KES, INR, PKR. Monitor rate changes, set rate alerts, and make informed decisions for your money transfers."
         />
       </Helmet>
       
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-10">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-4 text-center">GBP to NGN Exchange Rate Trends</h1>
+          <h1 className="text-3xl font-bold mb-4 text-center">Exchange Rate Trends</h1>
           <p className="text-center text-blue-100 max-w-2xl mx-auto">
-            Monitor historical exchange rates, track market movements, and set alerts for favorable rates.
+            Monitor historical exchange rates across all supported currency corridors, track market movements, and set alerts for favorable rates.
           </p>
         </div>
       </div>
@@ -29,15 +29,16 @@ const Trends = () => {
           
           <div className="space-y-6 prose prose-lg dark:prose-invert max-w-none">
             <p>
-              Exchange rates between the British Pound (GBP) and Nigerian Naira (NGN) are influenced by various factors including:
+              Exchange rates across our supported corridors (GBP/EUR/USD to NGN/GHS/KES/INR/PKR) are influenced by various economic factors:
             </p>
             
             <ul>
-              <li>Economic indicators in both the UK and Nigeria</li>
+              <li>Economic indicators and GDP growth in source and destination countries</li>
               <li>Political stability and policy changes</li>
-              <li>Oil prices (due to Nigeria's oil-dependent economy)</li>
-              <li>Interest rate differentials between the countries</li>
-              <li>Market speculation and investor sentiment</li>
+              <li>Commodity prices (oil for Nigeria, gold for Ghana, agriculture for Kenya)</li>
+              <li>Interest rate differentials between central banks</li>
+              <li>International trade relationships and remittance flows</li>
+              <li>Market sentiment and global economic conditions</li>
             </ul>
             
             <p>
