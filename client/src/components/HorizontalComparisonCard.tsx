@@ -192,7 +192,7 @@ export const HorizontalComparisonCard = ({
           {difference && (
             <div className="text-xs text-red-500 mt-1 flex items-center justify-center">
               <TrendingDown className="h-3 w-3 mr-1" />
-              <span>{formatCurrency(difference.amount, toCurrency)} less</span>
+              <span>{formatCurrency(difference.amount, toCurrency)} less than best rate</span>
             </div>
           )}
         </div>
