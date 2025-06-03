@@ -249,6 +249,11 @@ export default function AdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [collecting, setCollecting] = useState(false);
   
+  // Filter state for manual rates
+  const [selectedProvider, setSelectedProvider] = useState("all");
+  const [selectedFromCurrency, setSelectedFromCurrency] = useState("all");
+  const [selectedToCurrency, setSelectedToCurrency] = useState("all");
+  
   // Get providers for the dropdown
   const { data: providers, isLoading: loadingProviders } = useQuery({
     queryKey: ["/api/providers"],
@@ -500,97 +505,201 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle>Manual Provider Rates</CardTitle>
               <CardDescription>
-                Update rates for providers that require manual entry (Pesa and Sendwave)
+                Update rates for providers that require manual entry. Use filters to focus on specific providers or currency pairs.
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Filter Controls */}
+              <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+                <h4 className="text-sm font-medium mb-3">Filters</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Provider</label>
+                    <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All providers" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Providers</SelectItem>
+                        {Array.isArray(providers) ? providers
+                          .filter((provider: any) => provider.preferred_collection === 'MANUAL')
+                          .map((provider: any) => (
+                            <SelectItem key={provider.id} value={provider.id.toString()}>
+                              {provider.name}
+                            </SelectItem>
+                          )) : null}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">From Currency</label>
+                    <Select value={selectedFromCurrency} onValueChange={setSelectedFromCurrency}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All currencies" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Currencies</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">To Currency</label>
+                    <Select value={selectedToCurrency} onValueChange={setSelectedToCurrency}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All currencies" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Currencies</SelectItem>
+                        <SelectItem value="NGN">NGN (₦)</SelectItem>
+                        <SelectItem value="GHS">GHS (₵)</SelectItem>
+                        <SelectItem value="KES">KES (KSh)</SelectItem>
+                        <SelectItem value="INR">INR (₹)</SelectItem>
+                        <SelectItem value="PKR">PKR (₨)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedProvider("all");
+                      setSelectedFromCurrency("all");
+                      setSelectedToCurrency("all");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    {Array.isArray(providers) && providers
+                      .filter((provider: any) => provider.preferred_collection === 'MANUAL')
+                      .filter((provider: any) => selectedProvider === "all" || provider.id.toString() === selectedProvider)
+                      .length} provider(s) shown
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-6">
-                {/* Filter providers to show only manual ones */}
+                {/* Filter and display providers */}
                 {providers && Array.isArray(providers) && providers
                   .filter((provider: any) => provider.preferred_collection === 'MANUAL')
+                  .filter((provider: any) => selectedProvider === "all" || provider.id.toString() === selectedProvider)
                   .map((provider: any) => (
                     <div key={provider.id} className="border rounded-lg p-4">
                       <h3 className="text-lg font-semibold mb-4">{provider.name}</h3>
                       
                       {/* Currency pairs grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          { from: 'GBP', to: 'NGN' },
-                          { from: 'EUR', to: 'NGN' },
-                          { from: 'USD', to: 'NGN' },
-                          { from: 'GBP', to: 'GHS' },
-                          { from: 'EUR', to: 'GHS' },
-                          { from: 'USD', to: 'GHS' },
-                          { from: 'GBP', to: 'KES' },
-                          { from: 'EUR', to: 'KES' },
-                          { from: 'USD', to: 'KES' },
-                          { from: 'GBP', to: 'INR' },
-                          { from: 'EUR', to: 'INR' },
-                          { from: 'USD', to: 'INR' },
-                          { from: 'GBP', to: 'PKR' },
-                          { from: 'EUR', to: 'PKR' },
-                          { from: 'USD', to: 'PKR' }
-                        ].map(pair => (
-                          <div key={`${pair.from}-${pair.to}`} className="border rounded p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium">{pair.from} → {pair.to}</span>
-                              <Badge variant="outline">Manual</Badge>
-                            </div>
-                            
-                            <form 
-                              onSubmit={async (e) => {
-                                e.preventDefault();
-                                const formData = new FormData(e.target as HTMLFormElement);
-                                const rate = formData.get('rate') as string;
-                                
-                                if (!rate || isNaN(parseFloat(rate))) {
-                                  toast({ title: "Please enter a valid rate", variant: "destructive" });
-                                  return;
-                                }
-                                
-                                try {
-                                  const response = await fetch('/api/rates/manual', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      providerId: provider.id,
-                                      fromCurrency: pair.from,
-                                      toCurrency: pair.to,
-                                      rate: parseFloat(rate),
-                                      notes: `Manual entry for ${provider.name} ${pair.from}/${pair.to}`
-                                    })
-                                  });
-                                  
-                                  if (response.ok) {
-                                    toast({ title: `${provider.name} rate updated successfully` });
-                                    (e.target as HTMLFormElement).reset();
-                                    queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
-                                  } else {
-                                    throw new Error('Failed to update rate');
-                                  }
-                                } catch (error) {
-                                  toast({ 
-                                    title: "Error updating rate", 
-                                    description: error instanceof Error ? error.message : "Failed to update",
-                                    variant: "destructive" 
-                                  });
-                                }
-                              }}
-                              className="flex gap-2"
-                            >
-                              <Input
-                                name="rate"
-                                type="number"
-                                step="0.0001"
-                                placeholder="Enter rate"
-                                className="flex-1"
-                              />
-                              <Button type="submit" size="sm">
-                                Update
-                              </Button>
-                            </form>
-                          </div>
-                        ))}
+                      <div className="space-y-4">
+                        {(() => {
+                          const allPairs = [
+                            { from: 'GBP', to: 'NGN' },
+                            { from: 'EUR', to: 'NGN' },
+                            { from: 'USD', to: 'NGN' },
+                            { from: 'GBP', to: 'GHS' },
+                            { from: 'EUR', to: 'GHS' },
+                            { from: 'USD', to: 'GHS' },
+                            { from: 'GBP', to: 'KES' },
+                            { from: 'EUR', to: 'KES' },
+                            { from: 'USD', to: 'KES' },
+                            { from: 'GBP', to: 'INR' },
+                            { from: 'EUR', to: 'INR' },
+                            { from: 'USD', to: 'INR' },
+                            { from: 'GBP', to: 'PKR' },
+                            { from: 'EUR', to: 'PKR' },
+                            { from: 'USD', to: 'PKR' }
+                          ];
+                          
+                          const filteredPairs = allPairs
+                            .filter(pair => selectedFromCurrency === "all" || pair.from === selectedFromCurrency)
+                            .filter(pair => selectedToCurrency === "all" || pair.to === selectedToCurrency);
+                          
+                          if (filteredPairs.length === 0) {
+                            return (
+                              <div className="text-center py-8 text-muted-foreground">
+                                <p>No currency pairs match your filter criteria.</p>
+                                <p className="text-sm mt-1">Try adjusting your filters to see more options.</p>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <>
+                              <div className="text-sm text-muted-foreground">
+                                Showing {filteredPairs.length} of {allPairs.length} currency pairs
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {filteredPairs.map(pair => (
+                                  <div key={`${pair.from}-${pair.to}`} className="border rounded p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="font-medium">{pair.from} → {pair.to}</span>
+                                      <Badge variant="outline">Manual</Badge>
+                                    </div>
+                                    
+                                    <form 
+                                      onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target as HTMLFormElement);
+                                        const rate = formData.get('rate') as string;
+                                        
+                                        if (!rate || isNaN(parseFloat(rate))) {
+                                          toast({ title: "Please enter a valid rate", variant: "destructive" });
+                                          return;
+                                        }
+                                        
+                                        try {
+                                          const response = await fetch('/api/rates/manual', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                              providerId: provider.id,
+                                              fromCurrency: pair.from,
+                                              toCurrency: pair.to,
+                                              rate: parseFloat(rate),
+                                              notes: `Manual entry for ${provider.name} ${pair.from}/${pair.to}`
+                                            })
+                                          });
+                                          
+                                          if (response.ok) {
+                                            toast({ title: `${provider.name} rate updated successfully` });
+                                            (e.target as HTMLFormElement).reset();
+                                            queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
+                                          } else {
+                                            throw new Error('Failed to update rate');
+                                          }
+                                        } catch (error) {
+                                          toast({ 
+                                            title: "Error updating rate", 
+                                            description: error instanceof Error ? error.message : "Failed to update",
+                                            variant: "destructive" 
+                                          });
+                                        }
+                                      }}
+                                      className="flex gap-2"
+                                    >
+                                      <Input
+                                        name="rate"
+                                        type="number"
+                                        step="0.0001"
+                                        placeholder="Enter rate"
+                                        className="flex-1"
+                                      />
+                                      <Button type="submit" size="sm">
+                                        Update
+                                      </Button>
+                                    </form>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
