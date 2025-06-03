@@ -17,7 +17,7 @@ import {
   trackFeatureUsage
 } from "./analytics/EventTracking";
 
-type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS";
+type CurrencyCode = "GBP" | "EUR" | "USD" | "NGN" | "GHS" | "KES" | "INR" | "PKR";
 type RateKey = `${CurrencyCode}-${CurrencyCode}`;
 type CalculationMode = "send" | "receive";
 

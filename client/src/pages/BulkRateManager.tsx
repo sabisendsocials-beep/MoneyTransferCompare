@@ -36,8 +36,19 @@ interface RateUpdate {
 const CURRENCY_PAIRS = [
   { from: 'GBP', to: 'NGN', label: 'GBP → NGN' },
   { from: 'EUR', to: 'NGN', label: 'EUR → NGN' },
+  { from: 'USD', to: 'NGN', label: 'USD → NGN' },
   { from: 'GBP', to: 'GHS', label: 'GBP → GHS' },
-  { from: 'EUR', to: 'GHS', label: 'EUR → GHS' }
+  { from: 'EUR', to: 'GHS', label: 'EUR → GHS' },
+  { from: 'USD', to: 'GHS', label: 'USD → GHS' },
+  { from: 'GBP', to: 'KES', label: 'GBP → KES' },
+  { from: 'EUR', to: 'KES', label: 'EUR → KES' },
+  { from: 'USD', to: 'KES', label: 'USD → KES' },
+  { from: 'GBP', to: 'INR', label: 'GBP → INR' },
+  { from: 'EUR', to: 'INR', label: 'EUR → INR' },
+  { from: 'USD', to: 'INR', label: 'USD → INR' },
+  { from: 'GBP', to: 'PKR', label: 'GBP → PKR' },
+  { from: 'EUR', to: 'PKR', label: 'EUR → PKR' },
+  { from: 'USD', to: 'PKR', label: 'USD → PKR' }
 ];
 
 const BulkRateManager = () => {

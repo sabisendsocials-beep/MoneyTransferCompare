@@ -233,7 +233,8 @@ const currencies = [
   { value: "NGN", label: "Nigerian Naira (NGN)" },
   { value: "GHS", label: "Ghanaian Cedi (GHS)" },
   { value: "KES", label: "Kenyan Shilling (KES)" },
-  { value: "UGX", label: "Ugandan Shilling (UGX)" },
+  { value: "INR", label: "Indian Rupee (INR)" },
+  { value: "PKR", label: "Pakistani Rupee (PKR)" },
 ];
 
 export default function AdminPage() {
@@ -516,8 +517,19 @@ export default function AdminPage() {
                         {[
                           { from: 'GBP', to: 'NGN' },
                           { from: 'EUR', to: 'NGN' },
+                          { from: 'USD', to: 'NGN' },
                           { from: 'GBP', to: 'GHS' },
-                          { from: 'EUR', to: 'GHS' }
+                          { from: 'EUR', to: 'GHS' },
+                          { from: 'USD', to: 'GHS' },
+                          { from: 'GBP', to: 'KES' },
+                          { from: 'EUR', to: 'KES' },
+                          { from: 'USD', to: 'KES' },
+                          { from: 'GBP', to: 'INR' },
+                          { from: 'EUR', to: 'INR' },
+                          { from: 'USD', to: 'INR' },
+                          { from: 'GBP', to: 'PKR' },
+                          { from: 'EUR', to: 'PKR' },
+                          { from: 'USD', to: 'PKR' }
                         ].map(pair => (
                           <div key={`${pair.from}-${pair.to}`} className="border rounded p-3">
                             <div className="flex items-center justify-between mb-2">
