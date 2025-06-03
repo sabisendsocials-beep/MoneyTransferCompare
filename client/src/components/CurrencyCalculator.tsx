@@ -265,6 +265,9 @@ const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency,
                   <>
                     <SelectItem value="NGN">NGN (₦)</SelectItem>
                     <SelectItem value="GHS">GHS (₵)</SelectItem>
+                    <SelectItem value="KES">KES (KSh)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                    <SelectItem value="PKR">PKR (₨)</SelectItem>
                   </>
                 )}
               </SelectContent>

@@ -407,11 +407,11 @@ export default function AdminPage() {
                       <SelectValue placeholder="Select provider" />
                     </SelectTrigger>
                     <SelectContent>
-                      {providers?.map((provider: any) => (
+                      {Array.isArray(providers) ? providers.map((provider: any) => (
                         <SelectItem key={provider.id} value={provider.id.toString()}>
                           {provider.name}
                         </SelectItem>
-                      ))}
+                      )) : null}
                     </SelectContent>
                   </Select>
                 </div>
@@ -507,8 +507,8 @@ export default function AdminPage() {
               <div className="space-y-6">
                 {/* Filter providers to show only manual ones */}
                 {providers && Array.isArray(providers) && providers
-                  .filter(provider => provider.preferred_collection === 'MANUAL')
-                  .map(provider => (
+                  .filter((provider: any) => provider.preferred_collection === 'MANUAL')
+                  .map((provider: any) => (
                     <div key={provider.id} className="border rounded-lg p-4">
                       <h3 className="text-lg font-semibold mb-4">{provider.name}</h3>
                       

@@ -129,15 +129,42 @@ const TransferCalculator = ({ onCompare }: CalculatorProps) => {
           </div>
         </div>
       )
+    },
+    { 
+      code: "INR", 
+      name: "Indian Rupee", 
+      symbol: "₹",
+      flag: (
+        <div className="w-6 h-4 mr-2 bg-white relative overflow-hidden rounded border border-gray-200">
+          <div className="absolute inset-0">
+            <div className="w-full h-1/3 bg-orange-500 absolute top-0"></div>
+            <div className="w-full h-1/3 bg-white absolute top-1/3"></div>
+            <div className="w-full h-1/3 bg-green-600 absolute top-2/3"></div>
+          </div>
+        </div>
+      )
+    },
+    { 
+      code: "PKR", 
+      name: "Pakistani Rupee", 
+      symbol: "₨",
+      flag: (
+        <div className="w-6 h-4 mr-2 bg-white relative overflow-hidden rounded border border-gray-200">
+          <div className="absolute inset-0">
+            <div className="w-full h-full bg-green-600 absolute"></div>
+            <div className="w-1/4 h-full bg-white absolute left-0"></div>
+          </div>
+        </div>
+      )
     }
   ];
 
   // Get exchange rate based on currency pair
   const getExchangeRate = (from: string, to: string): number => {
     const rates: Record<string, Record<string, number>> = {
-      "GBP": { "NGN": 1523, "GHS": 17.8, "KES": 166.5 },
-      "EUR": { "NGN": 1298, "GHS": 15.2, "KES": 142.3 },
-      "USD": { "NGN": 1178, "GHS": 13.8, "KES": 129.5 }
+      "GBP": { "NGN": 2140, "GHS": 16.8, "KES": 172, "INR": 106, "PKR": 362 },
+      "EUR": { "NGN": 1342, "GHS": 14.3, "KES": 144, "INR": 89, "PKR": 304 },
+      "USD": { "NGN": 1618, "GHS": 15.2, "KES": 129, "INR": 83, "PKR": 279 }
     };
     
     return rates[from]?.[to] || 1;
