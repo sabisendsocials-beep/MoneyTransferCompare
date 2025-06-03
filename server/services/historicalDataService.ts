@@ -57,23 +57,22 @@ async function getLastDataDate(fromCurrency: string, toCurrency: string): Promis
   }
 }
 
-// Fetch historical rate for a specific date from API
-async function fetchHistoricalRate(
+// Fetch current rate from API (builds historical data over time through daily collection)
+async function fetchCurrentRate(
   fromCurrency: string, 
-  toCurrency: string, 
-  date: string
+  toCurrency: string
 ): Promise<number | null> {
   if (!EXCHANGE_API_KEY) {
-    console.error('EXCHANGE_API_KEY not available for historical data fetch');
+    console.error('EXCHANGE_API_KEY not available for rate fetch');
     return null;
   }
 
   try {
-    const url = `${EXCHANGERATE_API_URL}/${EXCHANGE_API_KEY}/history/${fromCurrency}/${date}`;
+    const url = `${EXCHANGERATE_API_URL}/${EXCHANGE_API_KEY}/latest/${fromCurrency}`;
     
     const response = await fetch(url);
     if (!response.ok) {
-      console.error(`API request failed for ${fromCurrency}/${toCurrency} on ${date}: ${response.status}`);
+      console.log(`API request failed for ${fromCurrency}/${toCurrency}: ${response.status}`);
       return null;
     }
 
@@ -81,74 +80,62 @@ async function fetchHistoricalRate(
     
     if (data.result === "success" && data.conversion_rates && data.conversion_rates[toCurrency]) {
       const rate = data.conversion_rates[toCurrency];
+      console.log(`✓ Current ${fromCurrency}/${toCurrency}: ${rate}`);
       return rate;
     } else {
-      console.error(`No rate data for ${fromCurrency}/${toCurrency} on ${date}`);
+      console.log(`No rate data for ${fromCurrency}/${toCurrency}`);
       return null;
     }
   } catch (error) {
-    console.error(`Error fetching rate for ${fromCurrency}/${toCurrency} on ${date}:`, error);
+    console.error(`Error fetching rate for ${fromCurrency}/${toCurrency}:`, error);
     return null;
   }
 }
 
-// Update historical data for a single currency pair
-async function updateCurrencyPairHistory(fromCurrency: string, toCurrency: string): Promise<number> {
-  console.log(`Updating historical data for ${fromCurrency}/${toCurrency}...`);
+// Daily update for a single currency pair (stores today's current rate)
+async function updateCurrencyPairDaily(fromCurrency: string, toCurrency: string): Promise<number> {
+  console.log(`Daily update for ${fromCurrency}/${toCurrency}...`);
   
-  const lastDataDate = await getLastDataDate(fromCurrency, toCurrency);
+  const today = formatDate(new Date());
   
-  // Determine start date for updates
-  let startDate: Date;
-  if (lastDataDate) {
-    // Start from the day after the last data point
-    startDate = new Date(lastDataDate);
-    startDate.setDate(startDate.getDate() + 1);
-  } else {
-    // No existing data, start from 1 year ago
-    startDate = new Date();
-    startDate.setDate(startDate.getDate() - 365);
+  // Check if we already have today's data
+  const existingData = await db
+    .select()
+    .from(rateTrends)
+    .where(
+      and(
+        eq(rateTrends.date, today),
+        eq(rateTrends.from_currency, fromCurrency),
+        eq(rateTrends.to_currency, toCurrency)
+      )
+    )
+    .limit(1);
+  
+  if (existingData.length > 0) {
+    console.log(`Today's data already exists for ${fromCurrency}/${toCurrency}`);
+    return 0;
   }
   
-  const endDate = new Date();
-  const rateData: Array<{ date: string; rate: number; from_currency: string; to_currency: string }> = [];
+  // Fetch current rate from API
+  const rate = await fetchCurrentRate(fromCurrency, toCurrency);
   
-  console.log(`Fetching ${fromCurrency}/${toCurrency} from ${formatDate(startDate)} to ${formatDate(endDate)}`);
-  
-  // Fetch data for each day in the range
-  const currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    const dateStr = formatDate(currentDate);
-    const rate = await fetchHistoricalRate(fromCurrency, toCurrency, dateStr);
-    
-    if (rate !== null) {
-      rateData.push({
-        date: dateStr,
+  if (rate !== null) {
+    try {
+      await db.insert(rateTrends).values({
+        date: today,
         rate: rate,
         from_currency: fromCurrency,
-        to_currency: toCurrency
+        to_currency: toCurrency,
+        source: 'exchange_api'
       });
-    }
-    
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
-    
-    // Add delay to respect API rate limits
-    await new Promise(resolve => setTimeout(resolve, 200));
-  }
-  
-  // Store the data in database
-  if (rateData.length > 0) {
-    try {
-      await db.insert(rateTrends).values(rateData);
-      console.log(`✓ Added ${rateData.length} new data points for ${fromCurrency}/${toCurrency}`);
-      return rateData.length;
+      console.log(`✓ Stored ${fromCurrency}/${toCurrency}: ${rate} for ${today}`);
+      return 1;
     } catch (error) {
-      console.error(`Error storing data for ${fromCurrency}/${toCurrency}:`, error);
+      console.error(`Error storing rate for ${fromCurrency}/${toCurrency}:`, error);
       return 0;
     }
   } else {
-    console.log(`No new data available for ${fromCurrency}/${toCurrency}`);
+    console.log(`No rate data available for ${fromCurrency}/${toCurrency}`);
     return 0;
   }
 }
@@ -169,9 +156,12 @@ export async function updateAllHistoricalData(): Promise<void> {
   // Process each currency pair
   for (const pair of CURRENCY_PAIRS) {
     try {
-      const updatedCount = await updateCurrencyPairHistory(pair.from, pair.to);
+      const updatedCount = await updateCurrencyPairDaily(pair.from, pair.to);
       totalUpdated += updatedCount;
       successCount++;
+      
+      // Add delay to respect API rate limits
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error(`Failed to update ${pair.from}/${pair.to}:`, error);
       errorCount++;

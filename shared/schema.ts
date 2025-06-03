@@ -141,9 +141,10 @@ export const rateTrends = pgTable("rate_trends", {
   id: serial("id").primaryKey(),
   from_currency: text("from_currency").notNull(),
   to_currency: text("to_currency").notNull(),
-  date: date("date").notNull(),
+  date: text("date").notNull(),
   rate: real("rate").notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
+  source: text("source"),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const insertRateTrendSchema = createInsertSchema(rateTrends).omit({
