@@ -1,16 +1,32 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet";
-import TransferCalculator from "@/components/TransferCalculator";
+import CurrencyCalculator from "@/components/CurrencyCalculator";
 import ComparisonResults from "@/components/ComparisonResults";
 import { TransferResult } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { ArrowRight } from "lucide-react";
 
 const Compare = () => {
   const [comparisonResults, setComparisonResults] = useState<TransferResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [calculatorValues, setCalculatorValues] = useState({
+    amount: "1000",
+    fromCurrency: "GBP",
+    toCurrency: "NGN",
+    calculationMode: "send"
+  });
 
   const handleComparisonResults = (results: TransferResult[]) => {
     setComparisonResults(results);
     setShowResults(true);
+  };
+
+  const handleCalculatorChange = (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => {
+    setCalculatorValues({
+      ...values,
+      calculationMode: values.calculationMode || "send"
+    });
   };
 
   return (
@@ -25,14 +41,35 @@ const Compare = () => {
       
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-10">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-4 text-center">Compare UK to Nigeria Money Transfers</h1>
+          <h1 className="text-3xl font-bold mb-4 text-center">Compare Money Transfer Options</h1>
           <p className="text-center text-blue-100 max-w-2xl mx-auto">
-            Find the best exchange rates, lowest fees, and fastest transfer times for sending money from the UK to Nigeria.
+            Find the best exchange rates, lowest fees, and fastest transfer times for your international money transfers.
           </p>
         </div>
       </div>
       
-      <TransferCalculator onCompare={handleComparisonResults} />
+      {/* Calculator Section */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg border p-6">
+            <h2 className="text-2xl font-bold text-center mb-6">Transfer Calculator</h2>
+            
+            <CurrencyCalculator onValuesChange={handleCalculatorChange} />
+            
+            <div className="mt-6 text-center">
+              <Link href={`/results?amount=${calculatorValues.amount.replace(/,/g, '')}&from=${calculatorValues.fromCurrency}&to=${calculatorValues.toCurrency}&mode=${calculatorValues.calculationMode}`}>
+                <Button 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl transition-all text-lg"
+                >
+                  Compare All Providers
+                  <ArrowRight size={18} className="ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      
       <ComparisonResults results={comparisonResults} visible={showResults} />
       
       {!showResults && (
