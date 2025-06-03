@@ -49,17 +49,17 @@ const Compare = () => {
       </div>
       
       {/* Calculator Section */}
-      <section className="py-12 bg-white">
+      <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg border p-6">
-            <h2 className="text-2xl font-bold text-center mb-6">Transfer Calculator</h2>
+          <div className="max-w-2xl mx-auto bg-gradient-to-br from-blue-600 via-purple-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
+            <h2 className="text-2xl font-bold text-center mb-6 text-white">Transfer Calculator</h2>
             
             <CurrencyCalculator onValuesChange={handleCalculatorChange} />
             
             <div className="mt-6 text-center">
               <Link href={`/results?amount=${calculatorValues.amount.replace(/,/g, '')}&from=${calculatorValues.fromCurrency}&to=${calculatorValues.toCurrency}&mode=${calculatorValues.calculationMode}`}>
                 <Button 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl transition-all text-lg"
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl transition-all text-lg"
                 >
                   Compare All Providers
                   <ArrowRight size={18} className="ml-2" />
