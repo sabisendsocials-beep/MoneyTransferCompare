@@ -11,6 +11,7 @@ import updateProviderList from "./updateProviderList";
 import updateProviderInfo from "./scrapers/providerInfo";
 import dataSourceRoutes from "./routes/dataSourceRoutes";
 import { initializeRateCollectionScheduler } from "./scheduler/rateCollectionScheduler";
+import { initializeHistoricalDataScheduler } from "./scheduler/historicalDataScheduler";
 
 const app = express();
 app.use(express.json());
