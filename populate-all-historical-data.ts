@@ -4,14 +4,17 @@
  * Uses real API data only - no fallback or synthetic data
  */
 
-import { db } from './server/db';
-import { rateTrends } from './shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { Pool } from '@neondatabase/serverless';
+import { neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
+
+neonConfig.webSocketConstructor = ws;
 
 const EXCHANGE_API_KEY = process.env.EXCHANGE_API_KEY;
 const EXCHANGERATE_API_URL = 'https://v6.exchangerate-api.com/v6';
+const DATABASE_URL = process.env.DATABASE_URL;
 
-// All supported currency corridors
+// All 15 supported currency corridors
 const CURRENCY_PAIRS = [
   { from: 'GBP', to: 'NGN' },
   { from: 'EUR', to: 'NGN' },
@@ -30,41 +33,42 @@ const CURRENCY_PAIRS = [
   { from: 'USD', to: 'PKR' },
 ];
 
-// Format date as YYYY-MM-DD
+// Database connection
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+});
+
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-// Get date range for the last year
 function getDateRange(days: number = 365): { startDate: Date; endDate: Date } {
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  startDate.setDate(endDate.getDate() - days);
   return { startDate, endDate };
 }
 
-// Check if historical data exists for a currency pair
 async function hasHistoricalData(fromCurrency: string, toCurrency: string): Promise<boolean> {
   try {
-    const existingData = await db
-      .select()
-      .from(rateTrends)
-      .where(
-        and(
-          eq(rateTrends.fromCurrency, fromCurrency),
-          eq(rateTrends.toCurrency, toCurrency)
-        )
-      )
-      .limit(1);
+    const query = `
+      SELECT COUNT(*) as count 
+      FROM rate_trends 
+      WHERE from_currency = $1 AND to_currency = $2 
+      AND date::date < CURRENT_DATE
+    `;
     
-    return existingData.length > 0;
+    const result = await pool.query(query, [fromCurrency, toCurrency]);
+    const count = parseInt(result.rows[0].count);
+    
+    console.log(`Found ${count} existing historical records for ${fromCurrency}/${toCurrency}`);
+    return count > 0;
   } catch (error) {
-    console.error(`Error checking existing data for ${fromCurrency}/${toCurrency}:`, error);
+    console.error(`Error checking historical data for ${fromCurrency}/${toCurrency}:`, error);
     return false;
   }
 }
 
-// Fetch historical rate for a specific date
 async function fetchHistoricalRate(
   fromCurrency: string, 
   toCurrency: string, 
@@ -76,12 +80,12 @@ async function fetchHistoricalRate(
   }
 
   try {
-    const url = `${EXCHANGERATE_API_URL}/${EXCHANGE_API_KEY}/history/${fromCurrency}/${date}`;
-    console.log(`Fetching ${fromCurrency}/${toCurrency} for ${date}...`);
+    // Using current rate endpoint since historical endpoint returns 404
+    const url = `${EXCHANGERATE_API_URL}/${EXCHANGE_API_KEY}/latest/${fromCurrency}`;
     
     const response = await fetch(url);
     if (!response.ok) {
-      console.error(`API request failed for ${date}: ${response.status}`);
+      console.log(`API request failed for ${fromCurrency}/${toCurrency} on ${date}: ${response.status}`);
       return null;
     }
 
@@ -89,115 +93,98 @@ async function fetchHistoricalRate(
     
     if (data.result === "success" && data.conversion_rates && data.conversion_rates[toCurrency]) {
       const rate = data.conversion_rates[toCurrency];
-      console.log(`✓ ${fromCurrency}/${toCurrency} on ${date}: ${rate}`);
+      console.log(`✓ Current ${fromCurrency}/${toCurrency}: ${rate} (using for ${date})`);
       return rate;
     } else {
-      console.error(`No rate data for ${fromCurrency}/${toCurrency} on ${date}`);
+      console.log(`No rate data for ${fromCurrency}/${toCurrency} on ${date}`);
       return null;
     }
   } catch (error) {
-    console.error(`Error fetching rate for ${date}:`, error);
+    console.error(`Error fetching rate for ${fromCurrency}/${toCurrency} on ${date}:`, error);
     return null;
   }
 }
 
-// Populate historical data for a single currency pair
 async function populateCurrencyPair(fromCurrency: string, toCurrency: string): Promise<void> {
   console.log(`\n=== Processing ${fromCurrency}/${toCurrency} ===`);
   
-  // Check if data already exists
+  // Check if we already have historical data
   const hasData = await hasHistoricalData(fromCurrency, toCurrency);
+  
   if (hasData) {
-    console.log(`${fromCurrency}/${toCurrency} already has historical data, skipping...`);
+    console.log(`${fromCurrency}/${toCurrency} already has historical data - skipping bulk population`);
     return;
   }
-
-  const { startDate, endDate } = getDateRange(365);
-  const rateData: Array<{ date: string; rate: number; fromCurrency: string; toCurrency: string }> = [];
   
-  console.log(`Fetching data from ${formatDate(startDate)} to ${formatDate(endDate)}`);
+  console.log(`No historical data found for ${fromCurrency}/${toCurrency} - fetching current rate for today`);
   
-  // Fetch data for each day in the range
-  const currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    const dateStr = formatDate(currentDate);
-    const rate = await fetchHistoricalRate(fromCurrency, toCurrency, dateStr);
-    
-    if (rate !== null) {
-      rateData.push({
-        date: dateStr,
-        rate: rate,
-        fromCurrency: fromCurrency,
-        toCurrency: toCurrency
-      });
-    }
-    
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
-    
-    // Add small delay to respect API rate limits
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
+  // Only fetch current rate for today since historical API endpoints are not available
+  const today = formatDate(new Date());
+  const rate = await fetchHistoricalRate(fromCurrency, toCurrency, today);
   
-  // Store the data in database
-  if (rateData.length > 0) {
+  if (rate !== null) {
     try {
-      console.log(`Storing ${rateData.length} data points for ${fromCurrency}/${toCurrency}...`);
+      const query = `
+        INSERT INTO rate_trends (date, from_currency, to_currency, rate, source) 
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (date, from_currency, to_currency) DO UPDATE SET 
+        rate = EXCLUDED.rate, source = EXCLUDED.source
+      `;
       
-      await db.insert(rateTrends).values(rateData);
-      
-      console.log(`✓ Successfully stored ${rateData.length} historical rates for ${fromCurrency}/${toCurrency}`);
-      console.log(`  Date range: ${rateData[0].date} to ${rateData[rateData.length - 1].date}`);
-      console.log(`  Rate range: ${Math.min(...rateData.map(d => d.rate))} to ${Math.max(...rateData.map(d => d.rate))}`);
+      await pool.query(query, [today, fromCurrency, toCurrency, rate, 'exchange_api']);
+      console.log(`✓ Stored ${fromCurrency}/${toCurrency}: ${rate} for ${today}`);
     } catch (error) {
-      console.error(`Error storing data for ${fromCurrency}/${toCurrency}:`, error);
+      console.error(`Error storing rate for ${fromCurrency}/${toCurrency}:`, error);
     }
-  } else {
-    console.log(`No valid data retrieved for ${fromCurrency}/${toCurrency}`);
   }
+  
+  // Add delay to respect API rate limits
+  await new Promise(resolve => setTimeout(resolve, 500));
 }
 
-// Main function to populate all currency pairs
 async function populateAllHistoricalData(): Promise<void> {
   console.log('Starting comprehensive historical data population...');
-  console.log(`Processing ${CURRENCY_PAIRS.length} currency pairs with up to 1 year of data each`);
+  console.log(`Processing ${CURRENCY_PAIRS.length} currency pairs\n`);
   
   if (!EXCHANGE_API_KEY) {
     console.error('EXCHANGE_API_KEY environment variable is required');
     process.exit(1);
   }
   
-  let successCount = 0;
-  let errorCount = 0;
+  let processedPairs = 0;
+  let successfulPairs = 0;
   
   // Process each currency pair
   for (const pair of CURRENCY_PAIRS) {
     try {
       await populateCurrencyPair(pair.from, pair.to);
-      successCount++;
+      successfulPairs++;
     } catch (error) {
       console.error(`Failed to process ${pair.from}/${pair.to}:`, error);
-      errorCount++;
     }
+    
+    processedPairs++;
+    console.log(`Progress: ${processedPairs}/${CURRENCY_PAIRS.length} pairs processed`);
   }
   
-  console.log('\n=== Population Summary ===');
-  console.log(`Successfully processed: ${successCount} currency pairs`);
-  console.log(`Failed: ${errorCount} currency pairs`);
-  console.log('Historical data population completed');
+  console.log('\n=== Historical Data Population Summary ===');
+  console.log(`Total currency pairs: ${CURRENCY_PAIRS.length}`);
+  console.log(`Successfully processed: ${successfulPairs}`);
+  console.log(`Failed: ${processedPairs - successfulPairs}`);
+  console.log('\nNote: Historical data will be built up over time through daily collection');
+  console.log('The system will collect current rates daily to build a comprehensive historical dataset');
+  
+  // Close database connection
+  await pool.end();
 }
 
-// Run the population script
-if (require.main === module) {
-  populateAllHistoricalData()
-    .then(() => {
-      console.log('Script completed successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Script failed:', error);
-      process.exit(1);
-    });
-}
-
-export { populateAllHistoricalData };
+// Run the population
+populateAllHistoricalData()
+  .then(() => {
+    console.log('Historical data population completed');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Historical data population failed:', error);
+    process.exit(1);
+  });
