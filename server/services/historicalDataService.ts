@@ -194,7 +194,7 @@ export async function populateInitialHistoricalData(): Promise<void> {
       
       if (!lastDataDate) {
         console.log(`No existing data for ${pair.from}/${pair.to}, populating initial data...`);
-        const updatedCount = await updateCurrencyPairHistory(pair.from, pair.to);
+        const updatedCount = await updateCurrencyPairDaily(pair.from, pair.to);
         totalPopulated += updatedCount;
       } else {
         console.log(`${pair.from}/${pair.to} already has data (latest: ${lastDataDate})`);
