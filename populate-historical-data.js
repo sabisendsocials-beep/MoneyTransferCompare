@@ -3,11 +3,12 @@
  * Fetches up to 1 year of real exchange rate data from API
  */
 
-import { Pool } from 'pg';
-import 'dotenv/config';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 const EXCHANGE_API_KEY = process.env.EXCHANGE_API_KEY;
 const EXCHANGERATE_API_URL = 'https://v6.exchangerate-api.com/v6';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 // All 15 supported currency corridors
 const CURRENCY_PAIRS = [
@@ -30,7 +31,7 @@ const CURRENCY_PAIRS = [
 
 // Database connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL,
 });
 
 function formatDate(date) {
