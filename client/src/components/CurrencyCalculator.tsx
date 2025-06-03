@@ -204,34 +204,38 @@ const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency,
     // Track this feature usage in analytics
     trackFeatureUsage('calculator_mode_toggle', `${calculationMode}_to_${newMode}`);
     
-    // For simple toggle, just swap input and output
-    if (calculationMode === "send") {
-      // Switching from Send to Receive mode
-      if (result !== null) {
-        // Use the current calculated result as the new input
+    // Simple swap: current result becomes new input, current input becomes new result
+    if (result !== null) {
+      if (newMode === "receive") {
+        // Now in receive mode: display result as input amount (what they want to receive)
         setAmount(formatInputWithCommas(Math.round(result).toString()));
-        // The new result should be the original input
         setResult(numericAmount);
       } else {
-        // Calculate fresh based on rate: GBP → NGN
-        const ngnAmount = numericAmount * rate;
-        setAmount(formatInputWithCommas(Math.round(ngnAmount).toString()));
+        // Now in send mode: display result as input amount (what you send)
+        setAmount(formatInputWithCommas(result.toFixed(2)));
         setResult(numericAmount);
       }
     } else {
-      // Switching from Receive to Send mode
-      if (result !== null) {
-        // Use the current calculated result as the new input
-        // For GBP amounts, show with 2 decimal places
-        setAmount(formatInputWithCommas(result.toFixed(2)));
-        // The new result should be the original input
+      // Recalculate based on new mode
+      if (newMode === "receive") {
+        const convertedAmount = numericAmount * rate;
+        setAmount(formatInputWithCommas(Math.round(convertedAmount).toString()));
         setResult(numericAmount);
       } else {
-        // Calculate fresh based on rate: NGN → GBP
-        const gbpAmount = numericAmount / rate;
-        setAmount(formatInputWithCommas(gbpAmount.toFixed(2)));
+        const convertedAmount = numericAmount / rate;
+        setAmount(formatInputWithCommas(convertedAmount.toFixed(2)));
         setResult(numericAmount);
       }
+    }
+    
+    // Notify parent component of the change
+    if (onValuesChange) {
+      onValuesChange({
+        amount: amount,
+        fromCurrency,
+        toCurrency,
+        calculationMode: newMode
+      });
     }
   };
 
