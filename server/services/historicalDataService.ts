@@ -140,14 +140,82 @@ async function updateCurrencyPairDaily(fromCurrency: string, toCurrency: string)
   }
 }
 
-// Daily update function for all currency pairs
+// Daily update function using Alpha Vantage for authentic historical data
 export async function updateAllHistoricalData(): Promise<void> {
-  console.log('Starting daily historical data update for all currency pairs...');
+  console.log('Starting daily historical data update using Alpha Vantage...');
   
-  if (!EXCHANGE_API_KEY) {
-    console.error('EXCHANGE_API_KEY environment variable is required for historical data updates');
+  const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
+  if (!ALPHA_VANTAGE_API_KEY) {
+    console.log('HISTORICAL_EXCHANGE_API_KEY not available, falling back to current rate API');
+    await updateAllHistoricalDataFallback();
     return;
   }
+  
+  let totalUpdated = 0;
+  let successCount = 0;
+  let errorCount = 0;
+  
+  const today = formatDate(new Date());
+  
+  // Process each currency pair with Alpha Vantage
+  for (const pair of CURRENCY_PAIRS) {
+    try {
+      // Check if today's data already exists
+      const existingData = await db
+        .select()
+        .from(rateTrends)
+        .where(
+          and(
+            eq(rateTrends.date, today),
+            eq(rateTrends.from_currency, pair.from),
+            eq(rateTrends.to_currency, pair.to)
+          )
+        )
+        .limit(1);
+      
+      if (existingData.length > 0) {
+        console.log(`${pair.from}/${pair.to}: Today's data already exists`);
+        successCount++;
+        continue;
+      }
+      
+      // Fetch from Alpha Vantage
+      const rate = await fetchAlphaVantageRate(pair.from, pair.to);
+      if (rate !== null) {
+        await db.insert(rateTrends).values({
+          date: today,
+          rate: rate,
+          from_currency: pair.from,
+          to_currency: pair.to,
+          source: 'alpha_vantage_daily'
+        });
+        
+        console.log(`✓ Updated ${pair.from}/${pair.to}: ${rate} for ${today}`);
+        totalUpdated++;
+        successCount++;
+      } else {
+        console.error(`Failed to fetch Alpha Vantage rate for ${pair.from}/${pair.to}`);
+        errorCount++;
+      }
+      
+      // Rate limiting for Alpha Vantage (5 requests per minute)
+      await new Promise(resolve => setTimeout(resolve, 13000));
+      
+    } catch (error) {
+      console.error(`Failed to update ${pair.from}/${pair.to}:`, error);
+      errorCount++;
+    }
+  }
+  
+  console.log(`Daily Alpha Vantage update completed:`);
+  console.log(`- Successfully processed: ${successCount} currency pairs`);
+  console.log(`- Failed: ${errorCount} currency pairs`);
+  console.log(`- Total new data points added: ${totalUpdated}`);
+}
+
+// Fallback function using current rate API
+async function updateAllHistoricalDataFallback(): Promise<void> {
+  console.log('Using fallback rate collection...');
   
   let totalUpdated = 0;
   let successCount = 0;
@@ -168,10 +236,43 @@ export async function updateAllHistoricalData(): Promise<void> {
     }
   }
   
-  console.log(`Daily historical data update completed:`);
+  console.log(`Daily fallback update completed:`);
   console.log(`- Successfully processed: ${successCount} currency pairs`);
   console.log(`- Failed: ${errorCount} currency pairs`);
   console.log(`- Total new data points added: ${totalUpdated}`);
+}
+
+// Alpha Vantage rate fetching function
+async function fetchAlphaVantageRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
+  const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
+  if (!ALPHA_VANTAGE_API_KEY) return null;
+  
+  try {
+    const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=compact`;
+    
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    
+    if (data['Error Message'] || data['Note']) return null;
+    
+    const timeSeries = data['Time Series FX (Daily)'];
+    if (!timeSeries) return null;
+    
+    // Get the most recent rate
+    const dates = Object.keys(timeSeries).sort().reverse();
+    if (dates.length === 0) return null;
+    
+    const latestData = timeSeries[dates[0]];
+    const rate = parseFloat(latestData['4. close']);
+    
+    return !isNaN(rate) ? rate : null;
+    
+  } catch (error) {
+    console.error(`Alpha Vantage fetch error for ${fromCurrency}/${toCurrency}:`, error);
+    return null;
+  }
 }
 
 // Initial population function for new currency pairs
