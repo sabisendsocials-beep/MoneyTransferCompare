@@ -11,215 +11,161 @@ import ws from 'ws';
 neonConfig.webSocketConstructor = ws;
 
 const EXCHANGE_API_KEY = process.env.EXCHANGE_API_KEY;
-const EXCHANGERATE_API_URL = 'https://v6.exchangerate-api.com/v6';
+const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// All 15 supported currency corridors
 const CURRENCY_PAIRS = [
-  { from: 'GBP', to: 'NGN' },
-  { from: 'EUR', to: 'NGN' },
-  { from: 'USD', to: 'NGN' },
-  { from: 'GBP', to: 'GHS' },
-  { from: 'EUR', to: 'GHS' },
-  { from: 'USD', to: 'GHS' },
-  { from: 'GBP', to: 'KES' },
-  { from: 'EUR', to: 'KES' },
-  { from: 'USD', to: 'KES' },
-  { from: 'GBP', to: 'INR' },
-  { from: 'EUR', to: 'INR' },
-  { from: 'USD', to: 'INR' },
-  { from: 'GBP', to: 'PKR' },
-  { from: 'EUR', to: 'PKR' },
-  { from: 'USD', to: 'PKR' },
+  ['GBP', 'NGN'], ['EUR', 'NGN'], ['USD', 'NGN'],
+  ['GBP', 'GHS'], ['EUR', 'GHS'], ['USD', 'GHS'],
+  ['GBP', 'KES'], ['EUR', 'KES'], ['USD', 'KES'],
+  ['GBP', 'INR'], ['EUR', 'INR'], ['USD', 'INR'],
+  ['GBP', 'PKR'], ['EUR', 'PKR'], ['USD', 'PKR']
 ];
 
-// Database connection
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-});
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
 async function getCurrentRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  if (!EXCHANGE_API_KEY) {
-    console.error('EXCHANGE_API_KEY not available');
-    return null;
-  }
-
   try {
-    const url = `${EXCHANGERATE_API_URL}/${EXCHANGE_API_KEY}/latest/${fromCurrency}`;
-    const response = await fetch(url);
+    // First try Alpha Vantage for current rate
+    const alphaUrl = `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${fromCurrency}&to_currency=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}`;
     
-    if (!response.ok) {
-      console.error(`API request failed for ${fromCurrency}/${toCurrency}: ${response.status}`);
-      return null;
+    const alphaResponse = await fetch(alphaUrl);
+    const alphaData = await alphaResponse.json();
+    
+    if (alphaData['Realtime Currency Exchange Rate']) {
+      const rate = parseFloat(alphaData['Realtime Currency Exchange Rate']['5. Exchange Rate']);
+      if (!isNaN(rate) && rate > 0) {
+        console.log(`Got current rate from Alpha Vantage: ${fromCurrency}/${toCurrency} = ${rate}`);
+        return rate;
+      }
     }
 
-    const data = await response.json();
+    // Fallback to exchange rate API
+    const exchangeUrl = `https://api.exchangerate.host/latest?base=${fromCurrency}&symbols=${toCurrency}`;
+    const exchangeResponse = await fetch(exchangeUrl);
+    const exchangeData = await exchangeResponse.json();
     
-    if (data.result === "success" && data.conversion_rates && data.conversion_rates[toCurrency]) {
-      return data.conversion_rates[toCurrency];
+    if (exchangeData.success && exchangeData.rates[toCurrency]) {
+      const rate = exchangeData.rates[toCurrency];
+      console.log(`Got current rate from Exchange API: ${fromCurrency}/${toCurrency} = ${rate}`);
+      return rate;
     }
-    
+
+    console.log(`No current rate available for ${fromCurrency}/${toCurrency}`);
     return null;
+    
   } catch (error) {
-    console.error(`Error fetching rate for ${fromCurrency}/${toCurrency}:`, error);
+    console.error(`Error fetching current rate for ${fromCurrency}/${toCurrency}:`, error.message);
     return null;
   }
 }
 
 function generateRealisticHistoricalRate(baseRate: number, daysAgo: number): number {
-  // Create realistic market variations based on time
-  const volatilityFactor = 0.02 + (Math.random() * 0.01); // 2-3% base volatility
-  const trendFactor = (Math.random() - 0.5) * 0.001 * daysAgo; // Long-term trend
-  const dailyVariation = (Math.random() - 0.5) * volatilityFactor;
+  // Create realistic market fluctuations
+  const volatility = 0.02; // 2% daily volatility
+  const trend = Math.sin(daysAgo / 30) * 0.05; // 30-day cycles with 5% variation
+  const randomFluctuation = (Math.random() - 0.5) * volatility;
   
-  // Apply seasonal and economic factors
-  const seasonalFactor = Math.sin((daysAgo / 365) * 2 * Math.PI) * 0.005;
-  
-  const historicalRate = baseRate * (1 + trendFactor + dailyVariation + seasonalFactor);
-  return Math.round(historicalRate * 10000) / 10000; // 4 decimal places
+  return baseRate * (1 + trend + randomFluctuation);
 }
 
 async function checkExistingData(fromCurrency: string, toCurrency: string): Promise<number> {
-  try {
-    const query = 'SELECT COUNT(*) as count FROM rate_trends WHERE from_currency = $1 AND to_currency = $2';
-    const result = await pool.query(query, [fromCurrency, toCurrency]);
-    return parseInt(result.rows[0].count);
-  } catch (error) {
-    console.error(`Error checking existing data for ${fromCurrency}/${toCurrency}:`, error);
-    return 0;
-  }
+  const result = await pool.query(
+    'SELECT COUNT(*) as count FROM rate_trends WHERE from_currency = $1 AND to_currency = $2',
+    [fromCurrency, toCurrency]
+  );
+  return parseInt(result.rows[0].count);
 }
 
 async function populateHistoricalData(fromCurrency: string, toCurrency: string, days: number = 365): Promise<void> {
-  console.log(`\n=== Populating ${fromCurrency}/${toCurrency} with ${days} days of data ===`);
-  
   const existingCount = await checkExistingData(fromCurrency, toCurrency);
-  if (existingCount >= days * 0.8) { // If we have 80% or more of target days
-    console.log(`${fromCurrency}/${toCurrency} already has sufficient data (${existingCount} records)`);
+  
+  if (existingCount > 300) {
+    console.log(`${fromCurrency}/${toCurrency}: Already has ${existingCount} records, skipping`);
     return;
   }
-  
-  // Get current rate as baseline
+
+  console.log(`${fromCurrency}/${toCurrency}: Populating ${days} days of data (currently has ${existingCount} records)`);
+
   const currentRate = await getCurrentRate(fromCurrency, toCurrency);
   if (!currentRate) {
-    console.error(`Failed to get current rate for ${fromCurrency}/${toCurrency}`);
+    console.log(`${fromCurrency}/${toCurrency}: Cannot get current rate, skipping`);
     return;
   }
-  
-  console.log(`Current ${fromCurrency}/${toCurrency} rate: ${currentRate}`);
-  
-  const batchData: Array<{ date: string; rate: number; from_currency: string; to_currency: string; source: string }> = [];
+
+  const records: string[] = [];
   const today = new Date();
-  
-  // Generate historical data for the past year
-  for (let daysAgo = days; daysAgo >= 0; daysAgo--) {
-    const targetDate = new Date(today);
-    targetDate.setDate(today.getDate() - daysAgo);
-    const dateStr = formatDate(targetDate);
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = formatDate(date);
     
-    // Skip weekends for more realistic data patterns
-    const dayOfWeek = targetDate.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-    
-    const historicalRate = daysAgo === 0 ? currentRate : generateRealisticHistoricalRate(currentRate, daysAgo);
-    
-    batchData.push({
-      date: dateStr,
-      rate: historicalRate,
-      from_currency: fromCurrency,
-      to_currency: toCurrency,
-      source: 'exchange_api_historical'
-    });
+    const historicalRate = generateRealisticHistoricalRate(currentRate, i);
+    records.push(`('${dateStr}', '${fromCurrency}', '${toCurrency}', ${historicalRate.toFixed(6)}, 'generated')`);
   }
-  
-  // Insert data in batches
+
+  // Insert in batches
   const batchSize = 50;
-  let insertedCount = 0;
-  
-  for (let i = 0; i < batchData.length; i += batchSize) {
-    const batch = batchData.slice(i, i + batchSize);
+  let inserted = 0;
+
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
     
     try {
-      const values = batch.map((_, index) => 
-        `($${index * 5 + 1}, $${index * 5 + 2}, $${index * 5 + 3}, $${index * 5 + 4}, $${index * 5 + 5})`
-      ).join(', ');
-      
-      const query = `
+      await pool.query(`
         INSERT INTO rate_trends (date, from_currency, to_currency, rate, source)
-        VALUES ${values}
+        VALUES ${batch.join(', ')}
         ON CONFLICT (date, from_currency, to_currency) DO UPDATE SET 
         rate = EXCLUDED.rate, source = EXCLUDED.source
-      `;
-      
-      const params = batch.flatMap(item => [
-        item.date, item.from_currency, item.to_currency, item.rate, item.source
-      ]);
-      
-      await pool.query(query, params);
-      insertedCount += batch.length;
-      
-      console.log(`✓ Inserted batch ${Math.ceil((i + batch.length) / batchSize)} for ${fromCurrency}/${toCurrency} (${insertedCount}/${batchData.length} records)`);
-      
+      `);
+      inserted += batch.length;
     } catch (error) {
-      console.error(`Error inserting batch for ${fromCurrency}/${toCurrency}:`, error);
+      console.error(`Error inserting batch for ${fromCurrency}/${toCurrency}:`, error.message);
     }
   }
-  
-  console.log(`✓ Completed ${fromCurrency}/${toCurrency}: ${insertedCount} historical records added`);
+
+  console.log(`${fromCurrency}/${toCurrency}: Added ${inserted} historical records`);
 }
 
 async function populateAllCurrencyPairs(): Promise<void> {
-  console.log('Starting comprehensive historical data population for all 15 currency corridors...');
-  console.log(`Target: Up to 1 year of data for each corridor\n`);
-  
-  if (!EXCHANGE_API_KEY) {
-    console.error('EXCHANGE_API_KEY environment variable is required');
-    process.exit(1);
+  console.log('Starting comprehensive historical data population for all 15 currency corridors...\n');
+
+  for (const [fromCurrency, toCurrency] of CURRENCY_PAIRS) {
+    await populateHistoricalData(fromCurrency, toCurrency, 365);
+    
+    // Small delay between pairs
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
-  
-  let totalProcessed = 0;
-  let totalRecords = 0;
-  
-  for (const pair of CURRENCY_PAIRS) {
-    try {
-      await populateHistoricalData(pair.from, pair.to, 365);
-      totalProcessed++;
-      
-      // Add delay to respect API rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-    } catch (error) {
-      console.error(`Failed to populate ${pair.from}/${pair.to}:`, error);
-    }
+
+  // Final summary
+  const result = await pool.query(`
+    SELECT 
+      from_currency || '/' || to_currency as pair,
+      COUNT(*) as records,
+      source,
+      MIN(date) as earliest,
+      MAX(date) as latest
+    FROM rate_trends 
+    GROUP BY from_currency, to_currency, source
+    ORDER BY COUNT(*) DESC
+  `);
+
+  console.log('\n=== Historical Data Population Summary ===');
+  for (const row of result.rows) {
+    console.log(`${row.pair}: ${row.records} records (${row.source}) [${row.earliest} to ${row.latest}]`);
   }
-  
-  // Final verification
-  console.log('\n=== Final Verification ===');
-  for (const pair of CURRENCY_PAIRS) {
-    const count = await checkExistingData(pair.from, pair.to);
-    totalRecords += count;
-    console.log(`${pair.from}/${pair.to}: ${count} records`);
-  }
-  
-  console.log('\n=== Population Summary ===');
-  console.log(`Currency pairs processed: ${totalProcessed}/${CURRENCY_PAIRS.length}`);
-  console.log(`Total historical records: ${totalRecords}`);
-  console.log('Historical data population completed successfully!');
-  
+
   await pool.end();
+  console.log('\nHistorical data population completed successfully!');
 }
 
-// Run the comprehensive population
 populateAllCurrencyPairs()
-  .then(() => {
-    console.log('\nAll currency corridors now have comprehensive historical data');
-    process.exit(0);
-  })
-  .catch((error) => {
+  .catch(error => {
     console.error('Population failed:', error);
     process.exit(1);
   });
