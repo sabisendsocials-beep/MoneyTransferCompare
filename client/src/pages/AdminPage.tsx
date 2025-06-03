@@ -595,7 +595,7 @@ export default function AdminPage() {
                     </div>
                   ))}
                 
-                {!providers || providers.filter(p => p.preferred_collection === 'MANUAL').length === 0 && (
+                {!providers || (Array.isArray(providers) && providers.filter((p: any) => p.preferred_collection === 'MANUAL').length === 0) && (
                   <div className="text-center py-8 text-muted-foreground">
                     No manual providers found. Configure providers with "MANUAL" collection method in the Provider Management tab.
                   </div>
