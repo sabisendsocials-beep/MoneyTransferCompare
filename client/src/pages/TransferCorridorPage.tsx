@@ -15,41 +15,145 @@ interface CorridorConfig {
 }
 
 const corridorConfigs: Record<string, CorridorConfig> = {
+  // GBP Corridors
   'gbp-to-ngn': {
     fromCurrency: 'GBP',
     toCurrency: 'NGN',
     fromCountry: 'UK',
     toCountry: 'Nigeria',
-    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank', 'Fidelity Bank'],
-    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit'],
-    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup']
-  },
-  'eur-to-ngn': {
-    fromCurrency: 'EUR',
-    toCurrency: 'NGN',
-    fromCountry: 'Europe',
-    toCountry: 'Nigeria',
-    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank'],
-    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit'],
-    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup']
+    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank', 'Fidelity Bank', 'Sterling Bank', 'FCMB'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'Sendwave', 'Lemfi', 'Afriexapp'],
+    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup', 'Debit card top-up']
   },
   'gbp-to-ghs': {
     fromCurrency: 'GBP',
     toCurrency: 'GHS',
     fromCountry: 'UK',
     toCountry: 'Ghana',
-    banks: ['GCB Bank', 'Ecobank', 'Standard Chartered', 'Absa Bank'],
-    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit'],
-    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup']
+    banks: ['GCB Bank', 'Ecobank', 'Standard Chartered', 'Absa Bank', 'Fidelity Bank', 'ADB Bank', 'Cal Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'Sendwave', 'Afriexapp'],
+    deliveryMethods: ['Bank transfer', 'Mobile money (MTN, Vodafone)', 'Cash pickup', 'Debit card top-up']
+  },
+  'gbp-to-kes': {
+    fromCurrency: 'GBP',
+    toCurrency: 'KES',
+    fromCountry: 'UK',
+    toCountry: 'Kenya',
+    banks: ['KCB Bank', 'Equity Bank', 'Standard Chartered', 'NCBA Bank', 'Absa Bank', 'Co-operative Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'Sendwave'],
+    deliveryMethods: ['Bank transfer', 'M-Pesa', 'Cash pickup', 'Airtel Money']
+  },
+  'gbp-to-inr': {
+    fromCurrency: 'GBP',
+    toCurrency: 'INR',
+    fromCountry: 'UK',
+    toCountry: 'India',
+    banks: ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Punjab National Bank', 'Bank of Baroda'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'Xoom'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'UPI transfer', 'Wallet transfer']
+  },
+  'gbp-to-pkr': {
+    fromCurrency: 'GBP',
+    toCurrency: 'PKR',
+    fromCountry: 'UK',
+    toCountry: 'Pakistan',
+    banks: ['HBL', 'UBL', 'MCB Bank', 'Allied Bank', 'Bank Alfalah', 'Standard Chartered'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'MoneyGram'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'Mobile wallet', 'Home delivery']
+  },
+  
+  // EUR Corridors
+  'eur-to-ngn': {
+    fromCurrency: 'EUR',
+    toCurrency: 'NGN',
+    fromCountry: 'Europe',
+    toCountry: 'Nigeria',
+    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank', 'Fidelity Bank', 'Sterling Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'Sendwave', 'Lemfi'],
+    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup', 'Debit card top-up']
   },
   'eur-to-ghs': {
     fromCurrency: 'EUR',
     toCurrency: 'GHS',
     fromCountry: 'Europe',
     toCountry: 'Ghana',
-    banks: ['GCB Bank', 'Ecobank', 'Standard Chartered', 'Absa Bank'],
+    banks: ['GCB Bank', 'Ecobank', 'Standard Chartered', 'Absa Bank', 'Fidelity Bank', 'Cal Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'Sendwave'],
+    deliveryMethods: ['Bank transfer', 'Mobile money (MTN, Vodafone)', 'Cash pickup']
+  },
+  'eur-to-kes': {
+    fromCurrency: 'EUR',
+    toCurrency: 'KES',
+    fromCountry: 'Europe',
+    toCountry: 'Kenya',
+    banks: ['KCB Bank', 'Equity Bank', 'Standard Chartered', 'NCBA Bank', 'Co-operative Bank'],
     providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit'],
-    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup']
+    deliveryMethods: ['Bank transfer', 'M-Pesa', 'Cash pickup', 'Airtel Money']
+  },
+  'eur-to-inr': {
+    fromCurrency: 'EUR',
+    toCurrency: 'INR',
+    fromCountry: 'Europe',
+    toCountry: 'India',
+    banks: ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Punjab National Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'UPI transfer']
+  },
+  'eur-to-pkr': {
+    fromCurrency: 'EUR',
+    toCurrency: 'PKR',
+    fromCountry: 'Europe',
+    toCountry: 'Pakistan',
+    banks: ['HBL', 'UBL', 'MCB Bank', 'Allied Bank', 'Bank Alfalah'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'Mobile wallet']
+  },
+  
+  // USD Corridors
+  'usd-to-ngn': {
+    fromCurrency: 'USD',
+    toCurrency: 'NGN',
+    fromCountry: 'United States',
+    toCountry: 'Nigeria',
+    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank', 'Fidelity Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'MoneyGram', 'Xoom'],
+    deliveryMethods: ['Bank transfer', 'Mobile money', 'Cash pickup', 'Debit card top-up']
+  },
+  'usd-to-ghs': {
+    fromCurrency: 'USD',
+    toCurrency: 'GHS',
+    fromCountry: 'United States',
+    toCountry: 'Ghana',
+    banks: ['GCB Bank', 'Ecobank', 'Standard Chartered', 'Absa Bank', 'Fidelity Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'MoneyGram'],
+    deliveryMethods: ['Bank transfer', 'Mobile money (MTN, Vodafone)', 'Cash pickup']
+  },
+  'usd-to-kes': {
+    fromCurrency: 'USD',
+    toCurrency: 'KES',
+    fromCountry: 'United States',
+    toCountry: 'Kenya',
+    banks: ['KCB Bank', 'Equity Bank', 'Standard Chartered', 'NCBA Bank', 'Absa Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'MoneyGram'],
+    deliveryMethods: ['Bank transfer', 'M-Pesa', 'Cash pickup', 'Airtel Money']
+  },
+  'usd-to-inr': {
+    fromCurrency: 'USD',
+    toCurrency: 'INR',
+    fromCountry: 'United States',
+    toCountry: 'India',
+    banks: ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Punjab National Bank'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'MoneyGram', 'Xoom'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'UPI transfer', 'Wallet transfer']
+  },
+  'usd-to-pkr': {
+    fromCurrency: 'USD',
+    toCurrency: 'PKR',
+    fromCountry: 'United States',
+    toCountry: 'Pakistan',
+    banks: ['HBL', 'UBL', 'MCB Bank', 'Allied Bank', 'Bank Alfalah', 'Standard Chartered'],
+    providers: ['Wise', 'Western Union', 'Remitly', 'WorldRemit', 'MoneyGram'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'Mobile wallet', 'Home delivery']
   }
 };
 
@@ -59,10 +163,13 @@ export default function TransferCorridorPage() {
 
   // Extract corridor from the URL path
   const getCorridorFromPath = (path: string): string | null => {
-    if (path.includes('gbp-to-ngn')) return 'gbp-to-ngn';
-    if (path.includes('eur-to-ngn')) return 'eur-to-ngn';
-    if (path.includes('gbp-to-ghs')) return 'gbp-to-ghs';
-    if (path.includes('eur-to-ghs')) return 'eur-to-ghs';
+    // Check all 15 currency corridors
+    const corridorKeys = Object.keys(corridorConfigs);
+    for (const key of corridorKeys) {
+      if (path.includes(key)) {
+        return key;
+      }
+    }
     return null;
   };
 

@@ -63,13 +63,34 @@ function Router() {
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/blog-admin" component={BlogAdmin} />
           
-          {/* SEO Landing Pages */}
+          {/* SEO Landing Pages - Country Pages */}
           <Route path="/send-money-to-nigeria" component={CountryPage} />
           <Route path="/send-money-to-ghana" component={CountryPage} />
+          <Route path="/send-money-to-kenya" component={CountryPage} />
+          <Route path="/send-money-to-india" component={CountryPage} />
+          <Route path="/send-money-to-pakistan" component={CountryPage} />
+          
+          {/* SEO Landing Pages - All Currency Corridors */}
+          {/* GBP Corridors */}
           <Route path="/gbp-to-ngn" component={TransferCorridorPage} />
-          <Route path="/eur-to-ngn" component={TransferCorridorPage} />
           <Route path="/gbp-to-ghs" component={TransferCorridorPage} />
+          <Route path="/gbp-to-kes" component={TransferCorridorPage} />
+          <Route path="/gbp-to-inr" component={TransferCorridorPage} />
+          <Route path="/gbp-to-pkr" component={TransferCorridorPage} />
+          
+          {/* EUR Corridors */}
+          <Route path="/eur-to-ngn" component={TransferCorridorPage} />
           <Route path="/eur-to-ghs" component={TransferCorridorPage} />
+          <Route path="/eur-to-kes" component={TransferCorridorPage} />
+          <Route path="/eur-to-inr" component={TransferCorridorPage} />
+          <Route path="/eur-to-pkr" component={TransferCorridorPage} />
+          
+          {/* USD Corridors */}
+          <Route path="/usd-to-ngn" component={TransferCorridorPage} />
+          <Route path="/usd-to-ghs" component={TransferCorridorPage} />
+          <Route path="/usd-to-kes" component={TransferCorridorPage} />
+          <Route path="/usd-to-inr" component={TransferCorridorPage} />
+          <Route path="/usd-to-pkr" component={TransferCorridorPage} />
 
           <Route component={NotFound} />
         </Switch>

@@ -33,10 +33,16 @@ const countryConfigs: Record<string, CountryConfig> = {
         fromCurrency: 'EUR',
         path: '/eur-to-ngn',
         description: 'Send Euros to Nigerian Naira'
+      },
+      {
+        from: 'United States',
+        fromCurrency: 'USD',
+        path: '/usd-to-ngn',
+        description: 'Send US Dollars to Nigerian Naira'
       }
     ],
-    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank', 'Fidelity Bank', 'Sterling Bank'],
-    deliveryMethods: ['Bank transfer', 'Mobile money (Opay, PalmPay)', 'Cash pickup'],
+    banks: ['GTBank', 'Zenith Bank', 'UBA', 'First Bank', 'Access Bank', 'Fidelity Bank', 'Sterling Bank', 'FCMB'],
+    deliveryMethods: ['Bank transfer', 'Mobile money (Opay, PalmPay)', 'Cash pickup', 'Debit card top-up'],
     regulations: 'Central Bank of Nigeria (CBN)'
   },
   ghana: {
@@ -54,11 +60,98 @@ const countryConfigs: Record<string, CountryConfig> = {
         fromCurrency: 'EUR',
         path: '/eur-to-ghs',
         description: 'Send Euros to Ghanaian Cedis'
+      },
+      {
+        from: 'United States',
+        fromCurrency: 'USD',
+        path: '/usd-to-ghs',
+        description: 'Send US Dollars to Ghanaian Cedis'
       }
     ],
-    banks: ['GCB Bank', 'Ecobank Ghana', 'Standard Chartered', 'Absa Bank Ghana', 'Fidelity Bank Ghana'],
-    deliveryMethods: ['Bank transfer', 'Mobile money (MTN, Vodafone)', 'Cash pickup'],
+    banks: ['GCB Bank', 'Ecobank Ghana', 'Standard Chartered', 'Absa Bank Ghana', 'Fidelity Bank Ghana', 'Cal Bank', 'ADB Bank'],
+    deliveryMethods: ['Bank transfer', 'Mobile money (MTN, Vodafone)', 'Cash pickup', 'Debit card top-up'],
     regulations: 'Bank of Ghana (BoG)'
+  },
+  kenya: {
+    name: 'Kenya',
+    currency: 'KES',
+    corridors: [
+      {
+        from: 'UK',
+        fromCurrency: 'GBP',
+        path: '/gbp-to-kes',
+        description: 'Send British Pounds to Kenyan Shillings'
+      },
+      {
+        from: 'Europe',
+        fromCurrency: 'EUR',
+        path: '/eur-to-kes',
+        description: 'Send Euros to Kenyan Shillings'
+      },
+      {
+        from: 'United States',
+        fromCurrency: 'USD',
+        path: '/usd-to-kes',
+        description: 'Send US Dollars to Kenyan Shillings'
+      }
+    ],
+    banks: ['KCB Bank', 'Equity Bank', 'Standard Chartered', 'NCBA Bank', 'Absa Bank Kenya', 'Co-operative Bank'],
+    deliveryMethods: ['Bank transfer', 'M-Pesa', 'Cash pickup', 'Airtel Money'],
+    regulations: 'Central Bank of Kenya (CBK)'
+  },
+  india: {
+    name: 'India',
+    currency: 'INR',
+    corridors: [
+      {
+        from: 'UK',
+        fromCurrency: 'GBP',
+        path: '/gbp-to-inr',
+        description: 'Send British Pounds to Indian Rupees'
+      },
+      {
+        from: 'Europe',
+        fromCurrency: 'EUR',
+        path: '/eur-to-inr',
+        description: 'Send Euros to Indian Rupees'
+      },
+      {
+        from: 'United States',
+        fromCurrency: 'USD',
+        path: '/usd-to-inr',
+        description: 'Send US Dollars to Indian Rupees'
+      }
+    ],
+    banks: ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Punjab National Bank', 'Bank of Baroda'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'UPI transfer', 'Digital wallet transfer'],
+    regulations: 'Reserve Bank of India (RBI)'
+  },
+  pakistan: {
+    name: 'Pakistan',
+    currency: 'PKR',
+    corridors: [
+      {
+        from: 'UK',
+        fromCurrency: 'GBP',
+        path: '/gbp-to-pkr',
+        description: 'Send British Pounds to Pakistani Rupees'
+      },
+      {
+        from: 'Europe',
+        fromCurrency: 'EUR',
+        path: '/eur-to-pkr',
+        description: 'Send Euros to Pakistani Rupees'
+      },
+      {
+        from: 'United States',
+        fromCurrency: 'USD',
+        path: '/usd-to-pkr',
+        description: 'Send US Dollars to Pakistani Rupees'
+      }
+    ],
+    banks: ['HBL', 'UBL', 'MCB Bank', 'Allied Bank', 'Bank Alfalah', 'Standard Chartered Pakistan'],
+    deliveryMethods: ['Bank transfer', 'Cash pickup', 'Mobile wallet (JazzCash, Easypaisa)', 'Home delivery'],
+    regulations: 'State Bank of Pakistan (SBP)'
   }
 };
 
@@ -69,6 +162,9 @@ export default function CountryPage() {
   const getCountryFromPath = (path: string): string | null => {
     if (path.includes('nigeria')) return 'nigeria';
     if (path.includes('ghana')) return 'ghana';
+    if (path.includes('kenya')) return 'kenya';
+    if (path.includes('india')) return 'india';
+    if (path.includes('pakistan')) return 'pakistan';
     return null;
   };
   
