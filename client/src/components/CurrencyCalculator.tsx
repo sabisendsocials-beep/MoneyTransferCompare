@@ -87,10 +87,19 @@ const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency,
       const fallbackRates: Record<RateKey, number> = {
         "GBP-NGN": 2189.17,
         "GBP-GHS": 16.85,
+        "GBP-KES": 185.42,
+        "GBP-INR": 107.25,
+        "GBP-PKR": 354.80,
         "EUR-NGN": 1354.45,
         "EUR-GHS": 14.37,
+        "EUR-KES": 158.20,
+        "EUR-INR": 91.50,
+        "EUR-PKR": 302.40,
         "USD-NGN": 1456.78,
-        "USD-GHS": 15.40
+        "USD-GHS": 15.40,
+        "USD-KES": 135.80,
+        "USD-INR": 83.45,
+        "USD-PKR": 278.90
       } as Record<RateKey, number>;
       
       setExchangeRates(fallbackRates);
@@ -327,6 +336,9 @@ const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency,
                   <>
                     <SelectItem value="NGN">NGN (₦)</SelectItem>
                     <SelectItem value="GHS">GHS (₵)</SelectItem>
+                    <SelectItem value="KES">KES (KSh)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                    <SelectItem value="PKR">PKR (₨)</SelectItem>
                   </>
                 ) : (
                   <>
