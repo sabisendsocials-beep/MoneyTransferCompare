@@ -146,12 +146,8 @@ export const HorizontalComparisonCard = ({
             {normalizedRate.toFixed(4)}
           </div>
           
-          <div className="text-sm text-gray-700 mb-2">
-            1 {fromCurrency} = {normalizedRate.toFixed(4)} {toCurrency}
-          </div>
-          
           {provider.comment && (
-            <div className="text-sm mb-1">
+            <div className="text-sm mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800">
               {provider.comment}
             </div>
           )}
@@ -164,7 +160,7 @@ export const HorizontalComparisonCard = ({
             {provider.lastUpdated && (
               <div className="flex items-center">
                 <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                {formatTimeStamp(provider.lastUpdated)}
+                <span>Rate updated at {formatTimeStamp(provider.lastUpdated)}</span>
               </div>
             )}
           </div>
@@ -185,7 +181,7 @@ export const HorizontalComparisonCard = ({
           {difference && (
             <div className="text-xs text-red-500 mt-1 flex items-center justify-center">
               <TrendingDown className="h-3 w-3 mr-1" />
-              {formatCurrency(difference.amount, toCurrency)}
+              <span>Receive {formatCurrency(difference.amount, toCurrency)} less than best provider</span>
             </div>
           )}
         </div>
