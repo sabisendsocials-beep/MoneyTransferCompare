@@ -745,7 +745,15 @@ export function ProviderManagement() {
                     placeholder="Enter additional information about this provider to display on results page"
                     className="h-20"
                   />
-                  <p className="text-sm text-gray-500">This comment will be displayed on the results page when users compare providers</p>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>This comment will be displayed on the results page when users compare providers</p>
+                    <p className="text-xs">
+                      <strong>Formatting:</strong> Use **bold text** for emphasis and *italic text* for subtle emphasis
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Example: **New User:** Unlock promo exchange rates + *£10 off your first £200+ transfer*
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -78,6 +78,21 @@ export const HorizontalComparisonCard = ({
       </div>
     );
   };
+
+  // Render formatted comment with HTML support
+  const renderFormattedComment = (comment: string) => {
+    // Simple HTML parsing for basic formatting
+    const formattedComment = comment
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
+      .replace(/\*(.*?)\*/g, '<em>$1</em>'); // *italic*
+    
+    return (
+      <div 
+        className="text-sm mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800"
+        dangerouslySetInnerHTML={{ __html: formattedComment }}
+      />
+    );
+  };
   
   return (
     <div 
@@ -142,15 +157,11 @@ export const HorizontalComparisonCard = ({
         <div className="p-4 md:w-2/5 border-b md:border-b-0 md:border-r">
           <div className="text-xs text-gray-500 uppercase mb-2">FEE & EXCHANGE RATE</div>
           
-          <div className="text-lg font-medium mb-1">
-            {normalizedRate.toFixed(4)}
+          <div className="text-xl font-bold mb-1">
+            {normalizedRate.toFixed(2)}
           </div>
           
-          {provider.comment && (
-            <div className="text-sm mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800">
-              {provider.comment}
-            </div>
-          )}
+          {provider.comment && renderFormattedComment(provider.comment)}
           
           <div className="flex justify-between items-center text-xs text-gray-500 mt-1.5">
             <div>
@@ -181,7 +192,7 @@ export const HorizontalComparisonCard = ({
           {difference && (
             <div className="text-xs text-red-500 mt-1 flex items-center justify-center">
               <TrendingDown className="h-3 w-3 mr-1" />
-              <span>Receive {formatCurrency(difference.amount, toCurrency)} less than best provider</span>
+              <span>{formatCurrency(difference.amount, toCurrency)} less</span>
             </div>
           )}
         </div>
