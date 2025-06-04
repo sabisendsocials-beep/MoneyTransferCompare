@@ -52,21 +52,11 @@ async function populateHistoricalRates(): Promise<boolean> {
     const existingCount = await db.execute(sql`SELECT COUNT(*) FROM rate_trends`);
     const count = parseInt(String(existingCount.rows[0].count));
     
-    if (count > 30) {
-      console.log(`Rate trends table already has ${count} records. Use --force to overwrite.`);
-      if (!process.argv.includes('--force')) {
-        return false;
-      }
-      console.log('Force flag detected. Clearing existing data...');
+    if (count > 1000) {
+      console.log(`SAFETY STOP: Found ${count} existing records. This script would destroy historical data.`);
+      console.log('Historical data preservation is critical - aborting operation.');
+      throw new Error('Prevented destructive operation on existing historical data');
     }
-    
-    // Clear existing rate trends to avoid duplicates
-    await db.execute(sql`DELETE FROM rate_trends`);
-    console.log('Cleared rate trends table');
-    
-    // Clear existing rate cache
-    await db.execute(sql`DELETE FROM rate_cache`);
-    console.log('Cleared rate cache table');
     
     // Get today's date
     const today = new Date();

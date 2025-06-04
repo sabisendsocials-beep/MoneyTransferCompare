@@ -28,10 +28,15 @@ async function fixRateTrends() {
     console.log('rate_trends structure:');
     console.table(tableStructure.rows);
     
-    // Clear all existing trend data
-    console.log('Clearing existing rate trend data...');
-    await db.execute(sql`DELETE FROM rate_trends;`);
-    console.log('Cleared existing trend data.');
+    // SAFETY CHECK: Prevent accidental data deletion
+    const existingCount = await db.execute(sql`SELECT COUNT(*) FROM rate_trends`);
+    const totalRecords = parseInt(String(existingCount.rows[0].count));
+    
+    if (totalRecords > 1000) {
+      console.log(`SAFETY STOP: Found ${totalRecords} existing records. This script would destroy historical data.`);
+      console.log('Historical data preservation is critical - aborting operation.');
+      throw new Error('Prevented destructive operation on existing historical data');
+    }
     
     // Check if we have any exchange rates in the table
     const countBefore = await db.execute(sql`SELECT COUNT(*) FROM rate_trends;`);

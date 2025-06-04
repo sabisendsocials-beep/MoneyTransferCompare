@@ -50,11 +50,10 @@ async function main() {
     const count = parseInt(String(existingCount.rows[0].count));
     console.log(`Found ${count} existing rate trend records`);
     
-    if (count > 0) {
-      console.log('Data already exists, clearing it to start fresh...');
-      await db.execute(sql`DELETE FROM rate_trends`);
-      await db.execute(sql`DELETE FROM rate_cache`);
-      console.log('Existing data cleared');
+    if (count > 1000) {
+      console.log(`SAFETY STOP: Found ${count} existing records. This script would destroy historical data.`);
+      console.log('Historical data preservation is critical - aborting operation.');
+      throw new Error('Prevented destructive operation on existing historical data');
     }
     
     // Base rates for each pair (realistic values)

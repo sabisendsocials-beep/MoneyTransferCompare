@@ -25,15 +25,15 @@ async function populateTrends() {
       'EUR-GHS': 16.95    // Based on typical EUR/GBP relationship
     };
     
-    // Clear existing rate trends
-    console.log('Clearing existing rate trend data...');
-    await db.execute(sql`DELETE FROM rate_trends`);
-    console.log('Cleared rate trends table');
+    // SAFETY CHECK: Prevent accidental data deletion
+    const existingCount = await db.execute(sql`SELECT COUNT(*) FROM rate_trends`);
+    const totalRecords = parseInt(String(existingCount.rows[0].count));
     
-    // Clear existing rate cache
-    console.log('Clearing rate cache...');
-    await db.execute(sql`DELETE FROM rate_cache`);
-    console.log('Cleared rate cache table');
+    if (totalRecords > 1000) {
+      console.log(`SAFETY STOP: Found ${totalRecords} existing records. This script would destroy historical data.`);
+      console.log('Use targeted updates instead of bulk deletion.');
+      throw new Error('Prevented destructive operation on existing historical data');
+    }
     
     // Get today's date
     const today = new Date();
