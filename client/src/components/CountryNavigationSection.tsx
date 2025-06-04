@@ -1,5 +1,5 @@
 import { Link } from 'wouter';
-import { Globe, ArrowRight, TrendingUp } from 'lucide-react';
+import { Globe, ArrowRight } from 'lucide-react';
 
 const countryPages = [
   { 
@@ -39,14 +39,7 @@ const countryPages = [
   },
 ];
 
-const popularCorridors = [
-  { href: '/gbp-to-ngn', title: 'GBP to NGN', description: 'British Pound to Nigerian Naira' },
-  { href: '/eur-to-ngn', title: 'EUR to NGN', description: 'Euro to Nigerian Naira' },
-  { href: '/usd-to-ngn', title: 'USD to NGN', description: 'US Dollar to Nigerian Naira' },
-  { href: '/gbp-to-inr', title: 'GBP to INR', description: 'British Pound to Indian Rupee' },
-  { href: '/usd-to-inr', title: 'USD to INR', description: 'US Dollar to Indian Rupee' },
-  { href: '/gbp-to-ghs', title: 'GBP to GHS', description: 'British Pound to Ghanaian Cedi' },
-];
+
 
 export default function CountryNavigationSection() {
   return (
@@ -63,7 +56,7 @@ export default function CountryNavigationSection() {
         </div>
 
         {/* Country Pages */}
-        <div className="mb-16">
+        <div>
           <div className="flex items-center mb-8">
             <Globe className="w-6 h-6 text-blue-600 mr-3" />
             <h3 className="text-2xl font-bold text-gray-900">Popular Destinations</h3>
@@ -90,30 +83,6 @@ export default function CountryNavigationSection() {
                   <div className="flex items-center text-blue-600 font-medium text-sm">
                     <span>View transfer options</span>
                     <ArrowRight className="w-4 h-4 ml-2" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Popular Currency Corridors */}
-        <div>
-          <div className="flex items-center mb-8">
-            <TrendingUp className="w-6 h-6 text-green-600 mr-3" />
-            <h3 className="text-2xl font-bold text-gray-900">Popular Exchange Rates</h3>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {popularCorridors.map((corridor, index) => (
-              <Link key={index} href={corridor.href}>
-                <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-green-300 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900">{corridor.title}</h4>
-                      <p className="text-gray-600 text-sm">{corridor.description}</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-green-600" />
                   </div>
                 </div>
               </Link>

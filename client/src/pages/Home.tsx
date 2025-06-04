@@ -44,9 +44,9 @@ const Home = () => {
 
 
       {/* Other sections remain unchanged */}
-      <CountryNavigationSection />
       <RateTrends />
       <NewsSection />
+      <CountryNavigationSection />
       <FeatureSection />
     </div>
   );
