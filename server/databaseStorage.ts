@@ -455,21 +455,10 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats> {
-    console.log(`Calculating rate stats for ${fromCurrency} to ${toCurrency} from rate_trends...`);
+    console.log(`Calculating rate stats for ${fromCurrency} to ${toCurrency}...`);
     
     try {
-      // First, try to get the latest rate from exchange_rates
-      const latestRates = await this.getLatestRates(fromCurrency, toCurrency);
-      // Filter out any suspicious rates (like 20000 which seems to be an error)
-      const validRates = latestRates.filter(rate => {
-        if (fromCurrency === 'GBP' && toCurrency === 'NGN') {
-          return rate.rate > 1000 && rate.rate < 5000; // Normal range for GBP-NGN
-        }
-        return true;
-      });
-      const liveRate = validRates.length > 0 ? validRates[0].rate : null;
-      
-      // Get all trend data for this currency pair, ordered by date
+      // Single efficient query to get all needed historical data
       const trendsResult = await db.execute<{ 
         date: string;
         rate: number;
@@ -477,15 +466,15 @@ export class DatabaseStorage implements IStorage {
         SELECT date, rate
         FROM rate_trends
         WHERE from_currency = ${fromCurrency} AND to_currency = ${toCurrency}
-        ORDER BY date ASC
+        AND date >= (CURRENT_DATE - INTERVAL '400 days')
+        ORDER BY date DESC
       `);
       
-      console.log(`Found ${trendsResult.rows.length} trend data points`);
+      console.log(`Found ${trendsResult.rows.length} recent trend data points`);
       
-      // Return stats with current rate if no historical data
       if (!trendsResult.rows.length) {
         return {
-          currentRate: liveRate,
+          currentRate: null,
           thirtyDayHigh: null,
           thirtyDayHighDate: null,
           thirtyDayLow: null,
@@ -498,140 +487,100 @@ export class DatabaseStorage implements IStorage {
         };
       }
       
-      // Map the data for easier use
+      // Data is ordered DESC, so first item is most recent
       const trendData = trendsResult.rows.map(row => ({
         date: row.date as string,
         rate: row.rate as number
-      }));
+      })).filter(row => row.rate > 0); // Filter out invalid rates
       
-      // Get the latest 30 entries for 30-day calculations
-      const last30Days = trendData.slice(-30);
-      
-      // Calculate 30-day high/low/average
-      let thirtyDayHigh = -Infinity;
-      let thirtyDayHighDate = '';
-      let thirtyDayLow = Infinity;
-      let thirtyDayLowDate = '';
-      let thirtyDaySum = 0;
-      
-      for (const point of last30Days) {
-        if (point.rate > thirtyDayHigh) {
-          thirtyDayHigh = point.rate;
-          thirtyDayHighDate = point.date;
-        }
-        if (point.rate < thirtyDayLow) {
-          thirtyDayLow = point.rate;
-          thirtyDayLowDate = point.date;
-        }
-        thirtyDaySum += point.rate;
+      if (!trendData.length) {
+        return {
+          currentRate: null,
+          thirtyDayHigh: null,
+          thirtyDayHighDate: null,
+          thirtyDayLow: null,
+          thirtyDayLowDate: null,
+          thirtyDayAverage: null,
+          oneMonthChange: null,
+          threeMonthChange: null,
+          oneYearChange: null,
+          lastUpdated: new Date().toISOString()
+        };
       }
       
-      const thirtyDayAverage = last30Days.length > 0 ? thirtyDaySum / last30Days.length : null;
+      const currentRate = trendData[0].rate;
+      const currentDate = new Date(trendData[0].date);
       
-      // Get the latest trend rate (this appears more reliable)
-      const trendRate = trendData[trendData.length - 1].rate;
+      // Simple and efficient: find rates at specific time intervals
+      const oneMonthAgo = new Date(currentDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const threeMonthsAgo = new Date(currentDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = new Date(currentDate.getTime() - 365 * 24 * 60 * 60 * 1000);
       
-      // For GBP-NGN, the trend data seems more reliable than the live rates
-      // so prioritize it to avoid the incorrect rate value
-      let currentRate;
-      if (fromCurrency === 'GBP' && toCurrency === 'NGN') {
-        currentRate = trendRate; // Use the trend data which shows ~2166
-        console.log(`Using trend rate for ${fromCurrency}-${toCurrency}: ${trendRate}`);
-      } else {
-        currentRate = liveRate !== null ? liveRate : trendRate;
-      }
+      // Find historical rates using efficient single-pass algorithm
+      let oneMonthRate = null;
+      let threeMonthRate = null;  
+      let oneYearRate = null;
       
-      // Calculate historical comparison rates using actual date ranges
-      const now = new Date();
-      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      let oneMonthDiff = Infinity;
+      let threeMonthDiff = Infinity;
+      let oneYearDiff = Infinity;
       
-      // Find closest rates by actual dates
-      let oneMonthAgoRate = currentRate;
-      let threeMonthAgoRate = currentRate;
-      let oneYearAgoRate = currentRate;
-      
-      if (trendData.length >= 2) {
-        // Find rate closest to 1 month ago
-        let minDiff = Infinity;
-        for (const point of trendData) {
-          const pointDate = new Date(point.date);
-          const diff = Math.abs(pointDate.getTime() - oneMonthAgo.getTime());
-          if (diff < minDiff) {
-            minDiff = diff;
-            oneMonthAgoRate = point.rate;
-          }
+      // Single pass through data to find all historical points
+      for (const point of trendData) {
+        const pointDate = new Date(point.date);
+        
+        // Check 1 month ago
+        const diff1 = Math.abs(pointDate.getTime() - oneMonthAgo.getTime());
+        if (diff1 < oneMonthDiff) {
+          oneMonthDiff = diff1;
+          oneMonthRate = point.rate;
         }
         
-        // Find rate closest to 3 months ago
-        minDiff = Infinity;
-        for (const point of trendData) {
-          const pointDate = new Date(point.date);
-          const diff = Math.abs(pointDate.getTime() - threeMonthsAgo.getTime());
-          if (diff < minDiff) {
-            minDiff = diff;
-            threeMonthAgoRate = point.rate;
-          }
+        // Check 3 months ago
+        const diff3 = Math.abs(pointDate.getTime() - threeMonthsAgo.getTime());
+        if (diff3 < threeMonthDiff) {
+          threeMonthDiff = diff3;
+          threeMonthRate = point.rate;
         }
         
-        // Find rate closest to 1 year ago
-        minDiff = Infinity;
-        let foundDate = '';
-        for (const point of trendData) {
-          const pointDate = new Date(point.date);
-          const diff = Math.abs(pointDate.getTime() - oneYearAgo.getTime());
-          if (diff < minDiff) {
-            minDiff = diff;
-            oneYearAgoRate = point.rate;
-            foundDate = point.date;
-          }
+        // Check 1 year ago
+        const diff12 = Math.abs(pointDate.getTime() - oneYearAgo.getTime());
+        if (diff12 < oneYearDiff) {
+          oneYearDiff = diff12;
+          oneYearRate = point.rate;
         }
-        
-        // Debug output for troubleshooting
-        console.log(`1-year calculation debug for ${fromCurrency}-${toCurrency}:`);
-        console.log(`Current rate: ${currentRate}`);
-        console.log(`Target date: ${oneYearAgo.toISOString().split('T')[0]}`);
-        console.log(`Found closest: ${foundDate} (rate: ${oneYearAgoRate})`);
-        console.log(`Calculated change: ${((currentRate - oneYearAgoRate) / oneYearAgoRate * 100).toFixed(2)}%`);
       }
       
-      // Calculate percentage changes with proper validation
-      let oneMonthChange = null;
-      let threeMonthChange = null; 
-      let oneYearChange = null;
-
-      if (oneMonthAgoRate > 0) {
-        const change = ((currentRate - oneMonthAgoRate) / oneMonthAgoRate) * 100;
-        oneMonthChange = isFinite(change) ? parseFloat(change.toFixed(2)) : null;
-      }
-
-      if (threeMonthAgoRate > 0) {
-        const change = ((currentRate - threeMonthAgoRate) / threeMonthAgoRate) * 100;
-        threeMonthChange = isFinite(change) ? parseFloat(change.toFixed(2)) : null;
-      }
-
-      if (oneYearAgoRate > 0) {
-        const change = ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100;
-        oneYearChange = isFinite(change) ? parseFloat(change.toFixed(2)) : null;
-      }
+      // Calculate 30-day statistics from recent data
+      const last30Days = trendData.slice(0, Math.min(30, trendData.length));
+      let thirtyDayHigh = Math.max(...last30Days.map(p => p.rate));
+      let thirtyDayLow = Math.min(...last30Days.map(p => p.rate));
+      let thirtyDayAverage = last30Days.reduce((sum, p) => sum + p.rate, 0) / last30Days.length;
+      
+      // Find dates for high/low
+      const highPoint = last30Days.find(p => p.rate === thirtyDayHigh);
+      const lowPoint = last30Days.find(p => p.rate === thirtyDayLow);
+      
+      // Calculate percentage changes efficiently
+      const oneMonthChange = oneMonthRate ? ((currentRate - oneMonthRate) / oneMonthRate * 100) : null;
+      const threeMonthChange = threeMonthRate ? ((currentRate - threeMonthRate) / threeMonthRate * 100) : null;
+      const oneYearChange = oneYearRate ? ((currentRate - oneYearRate) / oneYearRate * 100) : null;
       
       return {
         currentRate,
-        thirtyDayHigh: thirtyDayHigh !== -Infinity ? thirtyDayHigh : null,
-        thirtyDayHighDate: thirtyDayHighDate || null,
-        thirtyDayLow: thirtyDayLow !== Infinity ? thirtyDayLow : null,
-        thirtyDayLowDate: thirtyDayLowDate || null,
-        thirtyDayAverage,
-        oneMonthChange,
-        threeMonthChange,
-        oneYearChange,
+        thirtyDayHigh,
+        thirtyDayHighDate: highPoint?.date || null,
+        thirtyDayLow,
+        thirtyDayLowDate: lowPoint?.date || null,
+        thirtyDayAverage: parseFloat(thirtyDayAverage.toFixed(2)),
+        oneMonthChange: oneMonthChange ? parseFloat(oneMonthChange.toFixed(2)) : null,
+        threeMonthChange: threeMonthChange ? parseFloat(threeMonthChange.toFixed(2)) : null,
+        oneYearChange: oneYearChange ? parseFloat(oneYearChange.toFixed(2)) : null,
         lastUpdated: new Date().toISOString()
       };
     } catch (error) {
       console.error(`Error calculating stats for ${fromCurrency}-${toCurrency}:`, error);
       
-      // Return empty stats on error, but try to include current rate if we have it
       return {
         currentRate: null, 
         thirtyDayHigh: null,
