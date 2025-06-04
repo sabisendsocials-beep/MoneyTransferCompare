@@ -1,4 +1,5 @@
 import { useParams, useLocation } from 'wouter';
+import { useEffect } from 'react';
 import { SEO } from '@/components/SEO';
 import HeroSection from '@/components/HeroSection';
 import { Link } from 'wouter';
@@ -157,6 +158,11 @@ const countryConfigs: Record<string, CountryConfig> = {
 
 export default function CountryPage() {
   const [location] = useLocation();
+  
+  // Scroll to top when component mounts or location changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
   
   // Extract country from the URL path
   const getCountryFromPath = (path: string): string | null => {

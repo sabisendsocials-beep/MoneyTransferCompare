@@ -161,6 +161,11 @@ export default function TransferCorridorPage() {
   const [location] = useLocation();
   const [showResults, setShowResults] = useState(false);
 
+  // Scroll to top when component mounts or location changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
   // Extract corridor from the URL path
   const getCorridorFromPath = (path: string): string | null => {
     // Check all 15 currency corridors
