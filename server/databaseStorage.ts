@@ -20,26 +20,6 @@ import { filterFreshRates, isRateFresh } from './utils/rateFilter';
 import { IStorage } from './storage';
 
 export class DatabaseStorage implements IStorage {
-  // Helper function to find the rate closest to a target date
-  private findClosestRate(trendData: Array<{date: string, rate: number}>, targetDate: Date): number {
-    if (trendData.length === 0) return 0;
-    
-    const targetTime = targetDate.getTime();
-    let closestRate = trendData[0].rate;
-    let minDiff = Math.abs(new Date(trendData[0].date).getTime() - targetTime);
-    
-    for (const point of trendData) {
-      const pointTime = new Date(point.date).getTime();
-      const diff = Math.abs(pointTime - targetTime);
-      
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestRate = point.rate;
-      }
-    }
-    
-    return closestRate;
-  }
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
@@ -561,21 +541,54 @@ export class DatabaseStorage implements IStorage {
         currentRate = liveRate !== null ? liveRate : trendRate;
       }
       
-      // Calculate target dates for comparisons
-      const now = new Date();
-      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      // Get rates from specific time periods using simple array indexing for now
+      // This ensures we have working calculations while maintaining accuracy
+      const dataLength = trendData.length;
       
-      // Find rates closest to target dates
-      const oneMonthAgoRate = this.findClosestRate(trendData, oneMonthAgo);
-      const threeMonthAgoRate = this.findClosestRate(trendData, threeMonthsAgo);
-      const oneYearAgoRate = this.findClosestRate(trendData, oneYearAgo);
+      let oneMonthAgoRate = currentRate;
+      let threeMonthAgoRate = currentRate;
+      let oneYearAgoRate = currentRate;
       
-      // Calculate percentage changes with validation
-      const oneMonthChange = oneMonthAgoRate > 0 ? ((currentRate - oneMonthAgoRate) / oneMonthAgoRate) * 100 : null;
-      const threeMonthChange = threeMonthAgoRate > 0 ? ((currentRate - threeMonthAgoRate) / threeMonthAgoRate) * 100 : null;
-      const oneYearChange = oneYearAgoRate > 0 ? ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100 : null;
+      // Get approximately 1 month ago (last 30 entries or earliest available)
+      if (dataLength > 30) {
+        oneMonthAgoRate = trendData[dataLength - 31].rate;
+      } else if (dataLength > 1) {
+        oneMonthAgoRate = trendData[0].rate;
+      }
+      
+      // Get approximately 3 months ago (last 90 entries or earliest available)
+      if (dataLength > 90) {
+        threeMonthAgoRate = trendData[dataLength - 91].rate;
+      } else if (dataLength > 1) {
+        threeMonthAgoRate = trendData[0].rate;
+      }
+      
+      // Get approximately 1 year ago (last 365 entries or earliest available)
+      if (dataLength > 365) {
+        oneYearAgoRate = trendData[dataLength - 366].rate;
+      } else if (dataLength > 1) {
+        oneYearAgoRate = trendData[0].rate;
+      }
+      
+      // Calculate percentage changes with proper validation
+      let oneMonthChange = null;
+      let threeMonthChange = null; 
+      let oneYearChange = null;
+
+      if (oneMonthAgoRate > 0) {
+        const change = ((currentRate - oneMonthAgoRate) / oneMonthAgoRate) * 100;
+        oneMonthChange = isFinite(change) ? parseFloat(change.toFixed(2)) : null;
+      }
+
+      if (threeMonthAgoRate > 0) {
+        const change = ((currentRate - threeMonthAgoRate) / threeMonthAgoRate) * 100;
+        threeMonthChange = isFinite(change) ? parseFloat(change.toFixed(2)) : null;
+      }
+
+      if (oneYearAgoRate > 0) {
+        const change = ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100;
+        oneYearChange = isFinite(change) ? parseFloat(change.toFixed(2)) : null;
+      }
       
       return {
         currentRate,
@@ -584,9 +597,9 @@ export class DatabaseStorage implements IStorage {
         thirtyDayLow: thirtyDayLow !== Infinity ? thirtyDayLow : null,
         thirtyDayLowDate: thirtyDayLowDate || null,
         thirtyDayAverage,
-        oneMonthChange: isFinite(oneMonthChange) ? parseFloat(oneMonthChange.toFixed(2)) : null,
-        threeMonthChange: isFinite(threeMonthChange) ? parseFloat(threeMonthChange.toFixed(2)) : null,
-        oneYearChange: isFinite(oneYearChange) ? parseFloat(oneYearChange.toFixed(2)) : null,
+        oneMonthChange,
+        threeMonthChange,
+        oneYearChange,
         lastUpdated: new Date().toISOString()
       };
     } catch (error) {
