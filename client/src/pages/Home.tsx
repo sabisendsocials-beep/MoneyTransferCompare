@@ -46,7 +46,6 @@ const Home = () => {
       {/* Other sections remain unchanged */}
       <RateTrends />
       <NewsSection />
-      <SitemapSection />
       <FeatureSection />
     </div>
   );
