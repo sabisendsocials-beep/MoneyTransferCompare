@@ -466,8 +466,8 @@ export class DatabaseStorage implements IStorage {
         SELECT date, rate
         FROM rate_trends
         WHERE from_currency = ${fromCurrency} AND to_currency = ${toCurrency}
-        AND date >= (CURRENT_DATE - INTERVAL '400 days')
         ORDER BY date DESC
+        LIMIT 500
       `);
       
       console.log(`Found ${trendsResult.rows.length} recent trend data points`);

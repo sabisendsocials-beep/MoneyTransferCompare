@@ -460,7 +460,7 @@ async function getHistoricalRateData(
       .where(
         sql`from_currency = ${fromCurrency} AND 
             to_currency = ${toCurrency} AND 
-            date >= ${formattedStartDate}`
+            date::date >= ${formattedStartDate}::date`
       )
       .orderBy(sql`date`);
     
