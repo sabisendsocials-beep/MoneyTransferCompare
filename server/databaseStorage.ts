@@ -541,34 +541,58 @@ export class DatabaseStorage implements IStorage {
         currentRate = liveRate !== null ? liveRate : trendRate;
       }
       
-      // Get rates from specific time periods using simple array indexing for now
-      // This ensures we have working calculations while maintaining accuracy
-      const dataLength = trendData.length;
+      // Calculate target dates for historical comparisons
+      const now = new Date();
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
       
+      // Find closest rates by actual dates, not array positions
       let oneMonthAgoRate = currentRate;
       let threeMonthAgoRate = currentRate;
       let oneYearAgoRate = currentRate;
       
-      // Get approximately 1 month ago (last 30 entries or earliest available)
-      if (dataLength > 30) {
-        oneMonthAgoRate = trendData[dataLength - 31].rate;
-      } else if (dataLength > 1) {
-        oneMonthAgoRate = trendData[0].rate;
+      // Find rate closest to 1 month ago
+      let minDiff = Infinity;
+      for (const point of trendData) {
+        const pointDate = new Date(point.date);
+        const diff = Math.abs(pointDate.getTime() - oneMonthAgo.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          oneMonthAgoRate = point.rate;
+        }
       }
       
-      // Get approximately 3 months ago (last 90 entries or earliest available)
-      if (dataLength > 90) {
-        threeMonthAgoRate = trendData[dataLength - 91].rate;
-      } else if (dataLength > 1) {
-        threeMonthAgoRate = trendData[0].rate;
+      // Find rate closest to 3 months ago
+      minDiff = Infinity;
+      for (const point of trendData) {
+        const pointDate = new Date(point.date);
+        const diff = Math.abs(pointDate.getTime() - threeMonthsAgo.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          threeMonthAgoRate = point.rate;
+        }
       }
       
-      // Get approximately 1 year ago (last 365 entries or earliest available)
-      if (dataLength > 365) {
-        oneYearAgoRate = trendData[dataLength - 366].rate;
-      } else if (dataLength > 1) {
-        oneYearAgoRate = trendData[0].rate;
+      // Find rate closest to 1 year ago
+      minDiff = Infinity;
+      let oneYearAgoDate = '';
+      for (const point of trendData) {
+        const pointDate = new Date(point.date);
+        const diff = Math.abs(pointDate.getTime() - oneYearAgo.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          oneYearAgoRate = point.rate;
+          oneYearAgoDate = point.date;
+        }
       }
+      
+      // Debug logging for percentage calculations
+      console.log(`Debug ${fromCurrency}-${toCurrency} calculations:`);
+      console.log(`Current rate: ${currentRate}`);
+      console.log(`1 year ago target: ${oneYearAgo.toISOString().split('T')[0]}`);
+      console.log(`1 year ago actual: ${oneYearAgoDate} (rate: ${oneYearAgoRate})`);
+      console.log(`Expected 1-year change: ${((currentRate - oneYearAgoRate) / oneYearAgoRate * 100).toFixed(2)}%`);
       
       // Calculate percentage changes with proper validation
       let oneMonthChange = null;
