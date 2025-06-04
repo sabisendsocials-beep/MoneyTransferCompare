@@ -568,14 +568,14 @@ export class DatabaseStorage implements IStorage {
       const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
       
       // Find rates closest to target dates
-      const oneMonthAgoRate = findClosestRate(trendData, oneMonthAgo);
-      const threeMonthAgoRate = findClosestRate(trendData, threeMonthsAgo);
-      const oneYearAgoRate = findClosestRate(trendData, oneYearAgo);
+      const oneMonthAgoRate = this.findClosestRate(trendData, oneMonthAgo);
+      const threeMonthAgoRate = this.findClosestRate(trendData, threeMonthsAgo);
+      const oneYearAgoRate = this.findClosestRate(trendData, oneYearAgo);
       
-      // Calculate percentage changes
-      const oneMonthChange = ((currentRate - oneMonthAgoRate) / oneMonthAgoRate) * 100;
-      const threeMonthChange = ((currentRate - threeMonthAgoRate) / threeMonthAgoRate) * 100;
-      const oneYearChange = ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100;
+      // Calculate percentage changes with validation
+      const oneMonthChange = oneMonthAgoRate > 0 ? ((currentRate - oneMonthAgoRate) / oneMonthAgoRate) * 100 : null;
+      const threeMonthChange = threeMonthAgoRate > 0 ? ((currentRate - threeMonthAgoRate) / threeMonthAgoRate) * 100 : null;
+      const oneYearChange = oneYearAgoRate > 0 ? ((currentRate - oneYearAgoRate) / oneYearAgoRate) * 100 : null;
       
       return {
         currentRate,
