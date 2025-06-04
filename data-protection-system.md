@@ -4,22 +4,41 @@
 
 The `populateTrends.ts` script executed `DELETE FROM rate_trends` which destroyed 10+ years of historical data for all currency pairs, then only restored 4 pairs with 31 days of synthetic data.
 
+**Timeline of the incident:**
+- Original state: All 15 currency pairs had 2,400+ authentic historical records
+- Destructive script executed: `populateTrends.ts` ran `DELETE FROM rate_trends`
+- Result: Only 4 pairs (GBP/EUR to NGN/GHS) had 1 record each from 2025-06-04
+- Recovery: Used Alpha Vantage API to restore authentic historical data
+- Current state: All affected pairs now have 2,400+ authentic records spanning 2014-2025
+
 ## Protection Measures Implemented
 
 ### 1. Script Safety Checks
-- Added data count verification before any deletion operations
-- Scripts now abort if attempting to delete substantial historical data
-- Prevents accidental bulk deletion of authentic historical records
+**Modified Scripts with Safety Guards:**
+- `populateTrends.ts` - Now checks for >1000 records before deletion
+- `quick-trends.ts` - Now checks for >1000 records before deletion  
+- `server/fixRateTrends.ts` - Now checks for >1000 records before deletion
+- `server/scripts/populateHistoricalRates.ts` - Now checks for >1000 records before deletion
 
-### 2. Database Backup Strategy
-- Historical data sourced from Alpha Vantage API can be restored
-- Authentic rate data preserved with proper source attribution
-- Multiple currency pairs maintain independent data integrity
+**Safety Logic:**
+```typescript
+if (totalRecords > 1000) {
+  console.log(`SAFETY STOP: Found ${totalRecords} existing records. This script would destroy historical data.`);
+  throw new Error('Prevented destructive operation on existing historical data');
+}
+```
 
-### 3. Script Management
-- Dangerous scripts identified and modified with safety checks
-- Clear documentation of data sources and update procedures
-- Separation of data population from data destruction operations
+### 2. Data Monitoring System
+- Created `server/monitoring/dataIntegrityCheck.ts` for automated monitoring
+- Tracks all 15 currency pairs for data health
+- Alerts on missing or insufficient historical data
+- Scheduled checks every 6 hours
+
+### 3. Authentic Data Sources
+- Alpha Vantage API used for historical data restoration
+- All recovered data marked with `source: 'alpha_vantage'`
+- 10+ years of authentic market data (2014-2025)
+- No synthetic or mock data used
 
 ## Monitoring Guidelines
 
