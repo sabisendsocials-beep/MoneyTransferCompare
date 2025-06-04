@@ -166,6 +166,16 @@ const RateTrends = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Debug logging for stats data
+  if (stats) {
+    console.log('Frontend received stats:', {
+      oneMonth: stats.oneMonthChange,
+      threeMonth: stats.threeMonthChange,
+      oneYear: stats.oneYearChange,
+      currentRate: stats.currentRate
+    });
+  }
+
   const handleRateAlert = () => {
     const rate = parseFloat(targetRate);
     if (isNaN(rate) || rate <= 0) {
