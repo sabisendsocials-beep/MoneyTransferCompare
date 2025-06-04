@@ -636,8 +636,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get rate statistics
   apiRouter.get("/api/rate-stats", async (req: Request, res: Response) => {
     try {
-      const fromCurrency = (req.query.from as string) || "GBP";
-      const toCurrency = (req.query.to as string) || "NGN";
+      const fromCurrency = (req.query.from as string) || (req.query.fromCurrency as string) || "GBP";
+      const toCurrency = (req.query.to as string) || (req.query.toCurrency as string) || "NGN";
       
       const stats = await storage.getRateStats(fromCurrency, toCurrency);
       res.json(stats);
