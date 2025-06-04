@@ -15,6 +15,7 @@ import {
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import { filterFreshRates, isRateFresh } from './utils/rateFilter';
+import { rateStatsService } from './services/rateStatsService';
 
 // Import the storage interface
 import { IStorage } from './storage';
@@ -455,6 +456,10 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getRateStats(fromCurrency: string, toCurrency: string): Promise<RateStats> {
+    return rateStatsService.getRateStats(fromCurrency, toCurrency);
+  }
+
+  async getRateStatsLegacy(fromCurrency: string, toCurrency: string): Promise<RateStats> {
     console.log(`Calculating rate stats for ${fromCurrency} to ${toCurrency}...`);
     
     try {
