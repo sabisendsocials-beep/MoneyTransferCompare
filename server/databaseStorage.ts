@@ -20,6 +20,26 @@ import { filterFreshRates, isRateFresh } from './utils/rateFilter';
 import { IStorage } from './storage';
 
 export class DatabaseStorage implements IStorage {
+  // Helper function to find the rate closest to a target date
+  private findClosestRate(trendData: Array<{date: string, rate: number}>, targetDate: Date): number {
+    if (trendData.length === 0) return 0;
+    
+    const targetTime = targetDate.getTime();
+    let closestRate = trendData[0].rate;
+    let minDiff = Math.abs(new Date(trendData[0].date).getTime() - targetTime);
+    
+    for (const point of trendData) {
+      const pointTime = new Date(point.date).getTime();
+      const diff = Math.abs(pointTime - targetTime);
+      
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestRate = point.rate;
+      }
+    }
+    
+    return closestRate;
+  }
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
@@ -541,14 +561,16 @@ export class DatabaseStorage implements IStorage {
         currentRate = liveRate !== null ? liveRate : trendRate;
       }
       
-      // Get the rate from 30 days ago (or the first available)
-      const oneMonthAgoRate = trendData.length > 30 ? trendData[trendData.length - 31].rate : trendData[0].rate;
+      // Calculate target dates for comparisons
+      const now = new Date();
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
       
-      // Get the rate from 90 days ago (or the first available)
-      const threeMonthAgoRate = trendData.length > 90 ? trendData[trendData.length - 91].rate : trendData[0].rate;
-      
-      // Get the rate from 365 days ago (or the first available)
-      const oneYearAgoRate = trendData.length > 365 ? trendData[trendData.length - 366].rate : trendData[0].rate;
+      // Find rates closest to target dates
+      const oneMonthAgoRate = findClosestRate(trendData, oneMonthAgo);
+      const threeMonthAgoRate = findClosestRate(trendData, threeMonthsAgo);
+      const oneYearAgoRate = findClosestRate(trendData, oneYearAgo);
       
       // Calculate percentage changes
       const oneMonthChange = ((currentRate - oneMonthAgoRate) / oneMonthAgoRate) * 100;
