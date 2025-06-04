@@ -4,7 +4,7 @@ import ComparisonResults from "@/components/ComparisonResults";
 import RateTrends from "@/components/RateTrends";
 import NewsSection from "@/components/NewsSection";
 import FeatureSection from "@/components/FeatureSection";
-import SitemapSection from "@/components/SitemapSection";
+import CountryNavigationSection from "@/components/CountryNavigationSection";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
 
@@ -44,6 +44,7 @@ const Home = () => {
 
 
       {/* Other sections remain unchanged */}
+      <CountryNavigationSection />
       <RateTrends />
       <NewsSection />
       <FeatureSection />
