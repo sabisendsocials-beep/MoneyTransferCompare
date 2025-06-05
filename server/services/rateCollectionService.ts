@@ -14,9 +14,7 @@ import { log } from '../vite';
 import { storage } from '../storage';
 import { RateSourceType, ExchangeRate, InsertExchangeRate, Provider } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
-
-// Maximum age for rate data to be considered "fresh"
-const MAX_DATA_AGE_HOURS = 72; 
+import { getMaxRateAgeHours } from '../utils/rateFilter'; 
 
 /**
  * Options for collecting exchange rates
@@ -35,7 +33,7 @@ export class RateCollectionService {
   /**
    * Get the best available exchange rate for a provider and currency pair
    * Uses the prioritization logic: API > Manual > Scraper
-   * Only returns rates newer than MAX_DATA_AGE_HOURS
+   * Only returns rates newer than the configured rate age threshold
    */
   async getBestRate(
     providerId: number, 
@@ -46,8 +44,9 @@ export class RateCollectionService {
       log(`Getting best rate for provider ${providerId} (${fromCurrency} to ${toCurrency})`);
       
       // Get the cutoff timestamp for fresh data
+      const maxAgeHours = getMaxRateAgeHours();
       const cutoffTime = new Date();
-      cutoffTime.setHours(cutoffTime.getHours() - MAX_DATA_AGE_HOURS);
+      cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
       
       // Get all rates for this provider/currency pair newer than cutoff time
       const { db } = await import('../db');

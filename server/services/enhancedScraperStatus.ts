@@ -9,9 +9,12 @@
 
 import { storage } from '../storage';
 import { recordScraperRun } from './scraperStatus';
+import { getMaxRateAgeHours } from '../utils/rateFilter';
 
-// Maximum age for rates to be considered current (24 hours)
-const MAX_RATE_AGE_MS = 24 * 60 * 60 * 1000;
+// Get maximum age for rates to be considered current
+function getMaxRateAgeMs(): number {
+  return getMaxRateAgeHours() * 60 * 60 * 1000;
+}
 
 /**
  * Updates scraper status based on actual exchange rate data
@@ -43,7 +46,7 @@ export async function updateScraperStatusFromRates(): Promise<boolean> {
       if (allRates.length > 0) {
         const latestRate = allRates[0];
         const rateAgeMs = Date.now() - new Date(latestRate.timestamp).getTime();
-        const isRateCurrent = rateAgeMs < MAX_RATE_AGE_MS;
+        const isRateCurrent = rateAgeMs < getMaxRateAgeMs();
         
         const fromCurrency = latestRate.from_currency;
         const toCurrency = latestRate.to_currency;

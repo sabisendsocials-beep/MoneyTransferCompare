@@ -292,3 +292,20 @@ export const blogPostFormSchema = z.object({
   tags: z.array(z.string()).optional(),
   featured: z.boolean().optional(),
 });
+
+// System settings table for configurable parameters
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  setting_key: text("setting_key").notNull().unique(),
+  setting_value: text("setting_value").notNull(),
+  description: text("description"),
+  last_updated: timestamp("last_updated").defaultNow(),
+});
+
+export const insertSystemSettingSchema = createInsertSchema(systemSettings).omit({
+  id: true,
+  last_updated: true,
+});
+
+export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
+export type SystemSetting = typeof systemSettings.$inferSelect;
