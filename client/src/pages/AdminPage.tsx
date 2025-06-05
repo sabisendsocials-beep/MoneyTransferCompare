@@ -957,16 +957,16 @@ const SystemSettingsPanel = () => {
               <>
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Current setting: {rateFreshnessSetting?.setting_value || "Not set"} hours 
-                    {rateFreshnessSetting?.setting_value && (
+                    Current setting: {rateSetting?.setting_value || "Not set"} hours 
+                    {rateSetting?.setting_value && (
                       <span className="ml-1">
-                        ({Math.round(parseInt(rateFreshnessSetting.setting_value) / 24)} days)
+                        ({Math.round(parseInt(rateSetting.setting_value) / 24)} days)
                       </span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Last updated: {rateFreshnessSetting?.last_updated 
-                      ? format(new Date(rateFreshnessSetting.last_updated), 'PPp')
+                    Last updated: {rateSetting?.last_updated 
+                      ? format(new Date(rateSetting.last_updated), 'PPp')
                       : 'Never'
                     }
                   </p>
@@ -1038,8 +1038,8 @@ const SystemSettingsPanel = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {settings && settings.length > 0 ? (
-                  settings.map((setting: any) => (
+                {settingsArray && settingsArray.length > 0 ? (
+                  settingsArray.map((setting: any) => (
                     <TableRow key={setting.id}>
                       <TableCell className="font-medium">{setting.setting_key}</TableCell>
                       <TableCell>{setting.setting_value}</TableCell>
