@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -388,6 +388,7 @@ export default function AdminPage() {
           <TabsTrigger value="sources">Data Sources</TabsTrigger>
           <TabsTrigger value="providers">Provider Management</TabsTrigger>
           <TabsTrigger value="scraper-status">Scraper Status</TabsTrigger>
+          <TabsTrigger value="system-settings">System Settings</TabsTrigger>
         </TabsList>
         
         {/* Manual Entry Tab */}
@@ -843,7 +844,228 @@ export default function AdminPage() {
         <TabsContent value="scraper-status">
           <ScraperStatusPanel />
         </TabsContent>
+        
+        {/* System Settings Tab */}
+        <TabsContent value="system-settings">
+          <SystemSettingsPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+// System Settings Panel Component
+const SystemSettingsPanel = () => {
+  const [rateFreshness, setRateFreshness] = useState("");
+  const [updating, setUpdating] = useState(false);
+  
+  // Query to fetch current system settings
+  const { data: settings, isLoading, error, refetch } = useQuery({
+    queryKey: ["/api/system-settings"],
+  });
+  
+  // Query to fetch specific rate freshness setting
+  const { data: rateFreshnessSetting, isLoading: rateFreshnessLoading } = useQuery({
+    queryKey: ["/api/system-settings/max_rate_age_hours"],
+  });
+  
+  // Type-safe access to settings data
+  const settingsArray = Array.isArray(settings) ? settings : [];
+  const rateSetting = rateFreshnessSetting as any;
+  
+  // Update rate freshness mutation
+  const updateRateFreshness = useMutation({
+    mutationFn: async (hours: string) => {
+      const response = await fetch('/api/system-settings/max_rate_age_hours', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          value: hours,
+          description: `Maximum age in hours for exchange rates to be considered fresh (${hours} = ${Math.round(parseInt(hours) / 24)} days)`
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update rate freshness setting');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rate freshness updated",
+        description: `Rates will now be considered fresh for ${rateFreshness} hours (${Math.round(parseInt(rateFreshness) / 24)} days)`,
+      });
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/compare"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating setting",
+        description: error instanceof Error ? error.message : "Failed to update rate freshness",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const handleUpdateRateFreshness = async () => {
+    if (!rateFreshness || parseInt(rateFreshness) <= 0) {
+      toast({
+        title: "Invalid value",
+        description: "Please enter a valid number of hours greater than 0",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setUpdating(true);
+    try {
+      await updateRateFreshness.mutateAsync(rateFreshness);
+    } finally {
+      setUpdating(false);
+    }
+  };
+  
+  // Set initial value when data loads
+  useEffect(() => {
+    if (rateSetting?.setting_value && !rateFreshness) {
+      setRateFreshness(rateSetting.setting_value);
+    }
+  }, [rateSetting, rateFreshness]);
+  
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Rate Freshness Configuration</CardTitle>
+          <CardDescription>
+            Control how long exchange rates remain valid before being considered stale
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {rateFreshnessLoading ? (
+              <div className="flex items-center space-x-2">
+                <Spinner />
+                <span>Loading current settings...</span>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Current setting: {rateFreshnessSetting?.setting_value || "Not set"} hours 
+                    {rateFreshnessSetting?.setting_value && (
+                      <span className="ml-1">
+                        ({Math.round(parseInt(rateFreshnessSetting.setting_value) / 24)} days)
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Last updated: {rateFreshnessSetting?.last_updated 
+                      ? format(new Date(rateFreshnessSetting.last_updated), 'PPp')
+                      : 'Never'
+                    }
+                  </p>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 max-w-sm">
+                    <Input
+                      type="number"
+                      placeholder="Hours (e.g., 168 for 7 days)"
+                      value={rateFreshness}
+                      onChange={(e) => setRateFreshness(e.target.value)}
+                      min="1"
+                      max="8760"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleUpdateRateFreshness}
+                    disabled={updating || !rateFreshness}
+                  >
+                    {updating ? "Updating..." : "Update"}
+                  </Button>
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  {rateFreshness && parseInt(rateFreshness) > 0 && (
+                    <p>
+                      Setting to {rateFreshness} hours = {Math.round(parseInt(rateFreshness) / 24)} days
+                    </p>
+                  )}
+                  <p className="mt-2">
+                    Common values: 24 hours (1 day), 72 hours (3 days), 168 hours (7 days)
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>All System Settings</CardTitle>
+          <CardDescription>
+            View and manage all system configuration settings
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center space-x-2">
+              <Spinner />
+              <span>Loading settings...</span>
+            </div>
+          ) : error ? (
+            <Alert>
+              <AlertTitle>Error loading settings</AlertTitle>
+              <AlertDescription>
+                Failed to load system settings. Please try again.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Setting Key</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {settings && settings.length > 0 ? (
+                  settings.map((setting: any) => (
+                    <TableRow key={setting.id}>
+                      <TableCell className="font-medium">{setting.setting_key}</TableCell>
+                      <TableCell>{setting.setting_value}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {setting.description || "No description"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {setting.last_updated 
+                          ? format(new Date(setting.last_updated), 'PPp')
+                          : 'Never'
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                      No system settings found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
