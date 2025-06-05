@@ -220,6 +220,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // System settings management routes
+  apiRouter.get("/api/system-settings", async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.getAllSystemSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching system settings:", error);
+      res.status(500).json({ error: "Failed to fetch system settings" });
+    }
+  });
+
+  apiRouter.get("/api/system-settings/:key", async (req: Request, res: Response) => {
+    try {
+      const { key } = req.params;
+      const setting = await storage.getSystemSetting(key);
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error("Error fetching system setting:", error);
+      res.status(500).json({ error: "Failed to fetch system setting" });
+    }
+  });
+
+  apiRouter.put("/api/system-settings/:key", async (req: Request, res: Response) => {
+    try {
+      const { key } = req.params;
+      const { value, description } = req.body;
+      
+      if (!value) {
+        return res.status(400).json({ error: "Setting value is required" });
+      }
+      
+      const setting = await storage.updateSystemSetting(key, value, description);
+      res.json(setting);
+    } catch (error) {
+      console.error("Error updating system setting:", error);
+      res.status(500).json({ error: "Failed to update system setting" });
+    }
+  });
+
+  apiRouter.delete("/api/system-settings/:key", async (req: Request, res: Response) => {
+    try {
+      const { key } = req.params;
+      await storage.deleteSystemSetting(key);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting system setting:", error);
+      res.status(500).json({ error: "Failed to delete system setting" });
+    }
+  });
+
   // Get all providers
   apiRouter.get("/api/providers", async (req: Request, res: Response) => {
     try {
