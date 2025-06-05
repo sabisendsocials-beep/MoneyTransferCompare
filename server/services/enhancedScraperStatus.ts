@@ -9,11 +9,11 @@
 
 import { storage } from '../storage';
 import { recordScraperRun } from './scraperStatus';
-import { getMaxRateAgeHours } from '../utils/rateFilter';
+import { getMaxRateAgeHoursSync } from '../utils/rateFilter';
 
 // Get maximum age for rates to be considered current
 function getMaxRateAgeMs(): number {
-  return getMaxRateAgeHours() * 60 * 60 * 1000;
+  return getMaxRateAgeHoursSync() * 60 * 60 * 1000;
 }
 
 /**

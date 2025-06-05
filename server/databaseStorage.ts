@@ -10,7 +10,8 @@ import {
   ContactSubmission, InsertContactSubmission,
   NewsletterSubscription, InsertNewsletterSubscription,
   BlogPost, InsertBlogPost,
-  contactSubmissions, newsletterSubscriptions, blogPosts
+  SystemSetting, InsertSystemSetting,
+  contactSubmissions, newsletterSubscriptions, blogPosts, systemSettings
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -893,5 +894,49 @@ export class DatabaseStorage implements IStorage {
       ))
       .orderBy(desc(blogPosts.published_at))
       .limit(limit);
+  }
+
+  // System Settings methods
+  async getSystemSetting(key: string): Promise<SystemSetting | undefined> {
+    const [setting] = await db.select()
+      .from(systemSettings)
+      .where(eq(systemSettings.setting_key, key));
+    return setting;
+  }
+
+  async getAllSystemSettings(): Promise<SystemSetting[]> {
+    return await db.select()
+      .from(systemSettings)
+      .orderBy(systemSettings.setting_key);
+  }
+
+  async updateSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
+    const existingSetting = await this.getSystemSetting(key);
+    
+    if (existingSetting) {
+      const [updated] = await db.update(systemSettings)
+        .set({ 
+          setting_value: value, 
+          description: description || existingSetting.description,
+          last_updated: new Date()
+        })
+        .where(eq(systemSettings.setting_key, key))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(systemSettings)
+        .values({
+          setting_key: key,
+          setting_value: value,
+          description: description || null
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async deleteSystemSetting(key: string): Promise<void> {
+    await db.delete(systemSettings)
+      .where(eq(systemSettings.setting_key, key));
   }
 }

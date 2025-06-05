@@ -14,7 +14,7 @@ import { log } from '../vite';
 import { storage } from '../storage';
 import { RateSourceType, ExchangeRate, InsertExchangeRate, Provider } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
-import { getMaxRateAgeHours } from '../utils/rateFilter'; 
+import { getMaxRateAgeHoursSync } from '../utils/rateFilter'; 
 
 /**
  * Options for collecting exchange rates
@@ -44,7 +44,7 @@ export class RateCollectionService {
       log(`Getting best rate for provider ${providerId} (${fromCurrency} to ${toCurrency})`);
       
       // Get the cutoff timestamp for fresh data
-      const maxAgeHours = getMaxRateAgeHours();
+      const maxAgeHours = getMaxRateAgeHoursSync();
       const cutoffTime = new Date();
       cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
       

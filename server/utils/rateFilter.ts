@@ -15,18 +15,66 @@ export interface RateWithTimestamp {
 // Default rate freshness threshold in hours (7 days = 168 hours)
 const DEFAULT_MAX_RATE_AGE_HOURS = 168;
 
+// Cache for database setting to avoid repeated queries
+let cachedMaxRateAge: number | null = null;
+let lastCacheTime = 0;
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 /**
- * Get the current rate freshness threshold from environment or default
+ * Get the current rate freshness threshold from database, environment, or default
  * This can be configured via admin panel or environment variable
  */
-export function getMaxRateAgeHours(): number {
-  // Check for environment variable first (for easy configuration)
-  const envHours = process.env.MAX_RATE_AGE_HOURS;
-  if (envHours && !isNaN(parseInt(envHours))) {
-    return parseInt(envHours);
+export async function getMaxRateAgeHours(): Promise<number> {
+  // Check cache first
+  const now = Date.now();
+  if (cachedMaxRateAge !== null && (now - lastCacheTime) < CACHE_DURATION_MS) {
+    return cachedMaxRateAge;
+  }
+
+  try {
+    // Try to get from database first
+    const { db } = await import('../db');
+    const { systemSettings } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const setting = await db.select()
+      .from(systemSettings)
+      .where(eq(systemSettings.setting_key, 'max_rate_age_hours'))
+      .limit(1);
+    
+    if (setting.length > 0) {
+      const dbValue = parseInt(setting[0].setting_value);
+      if (!isNaN(dbValue) && dbValue > 0) {
+        cachedMaxRateAge = dbValue;
+        lastCacheTime = now;
+        return dbValue;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not fetch max_rate_age_hours from database:', error);
   }
   
+  // Fallback to environment variable
+  const envHours = process.env.MAX_RATE_AGE_HOURS;
+  if (envHours && !isNaN(parseInt(envHours))) {
+    const envValue = parseInt(envHours);
+    cachedMaxRateAge = envValue;
+    lastCacheTime = now;
+    return envValue;
+  }
+  
+  // Final fallback to default
+  cachedMaxRateAge = DEFAULT_MAX_RATE_AGE_HOURS;
+  lastCacheTime = now;
   return DEFAULT_MAX_RATE_AGE_HOURS;
+}
+
+/**
+ * Synchronous version for backwards compatibility
+ * Returns cached value or default if no cache available
+ */
+export function getMaxRateAgeHoursSync(): number {
+  return cachedMaxRateAge || DEFAULT_MAX_RATE_AGE_HOURS;
 }
 
 /**
@@ -35,7 +83,7 @@ export function getMaxRateAgeHours(): number {
  * @returns Filtered array containing only fresh rates
  */
 export function filterFreshRates<T extends RateWithTimestamp>(rates: T[]): T[] {
-  const maxAgeHours = getMaxRateAgeHours();
+  const maxAgeHours = getMaxRateAgeHoursSync();
   const cutoffTime = new Date();
   cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
   
@@ -51,7 +99,7 @@ export function filterFreshRates<T extends RateWithTimestamp>(rates: T[]): T[] {
  * @returns True if the rate is fresh, false otherwise
  */
 export function isRateFresh(lastUpdated: Date | string): boolean {
-  const maxAgeHours = getMaxRateAgeHours();
+  const maxAgeHours = getMaxRateAgeHoursSync();
   const cutoffTime = new Date();
   cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
   
