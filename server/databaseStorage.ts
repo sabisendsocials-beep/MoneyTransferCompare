@@ -898,45 +898,89 @@ export class DatabaseStorage implements IStorage {
 
   // System Settings methods
   async getSystemSetting(key: string): Promise<SystemSetting | undefined> {
-    const [setting] = await db.select()
-      .from(systemSettings)
-      .where(eq(systemSettings.setting_key, key));
-    return setting;
+    try {
+      const result = await db.execute(sql`
+        SELECT setting_key, setting_value, description, last_updated 
+        FROM system_settings 
+        WHERE setting_key = ${key}
+        LIMIT 1
+      `);
+      
+      if (result.rows.length > 0) {
+        const row = result.rows[0] as any;
+        return {
+          id: row.id,
+          setting_key: row.setting_key,
+          setting_value: row.setting_value,
+          description: row.description,
+          last_updated: row.last_updated
+        };
+      }
+      return undefined;
+    } catch (error) {
+      console.error('Error fetching system setting:', error);
+      return undefined;
+    }
   }
 
   async getAllSystemSettings(): Promise<SystemSetting[]> {
-    return await db.select()
-      .from(systemSettings)
-      .orderBy(systemSettings.setting_key);
+    try {
+      const result = await db.execute(sql`
+        SELECT id, setting_key, setting_value, description, last_updated 
+        FROM system_settings 
+        ORDER BY setting_key
+      `);
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        setting_key: row.setting_key,
+        setting_value: row.setting_value,
+        description: row.description,
+        last_updated: row.last_updated
+      }));
+    } catch (error) {
+      console.error('Error fetching all system settings:', error);
+      return [];
+    }
   }
 
   async updateSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
-    const existingSetting = await this.getSystemSetting(key);
-    
-    if (existingSetting) {
-      const [updated] = await db.update(systemSettings)
-        .set({ 
-          setting_value: value, 
-          description: description || existingSetting.description,
-          last_updated: new Date()
-        })
-        .where(eq(systemSettings.setting_key, key))
-        .returning();
-      return updated;
-    } else {
-      const [created] = await db.insert(systemSettings)
-        .values({
-          setting_key: key,
-          setting_value: value,
-          description: description || null
-        })
-        .returning();
-      return created;
+    try {
+      const existingSetting = await this.getSystemSetting(key);
+      
+      if (existingSetting) {
+        await db.execute(sql`
+          UPDATE system_settings 
+          SET setting_value = ${value}, 
+              description = ${description || existingSetting.description},
+              last_updated = CURRENT_TIMESTAMP
+          WHERE setting_key = ${key}
+        `);
+      } else {
+        await db.execute(sql`
+          INSERT INTO system_settings (setting_key, setting_value, description)
+          VALUES (${key}, ${value}, ${description || null})
+        `);
+      }
+      
+      // Return the updated setting
+      const updated = await this.getSystemSetting(key);
+      return updated!;
+    } catch (error) {
+      console.error('Error updating system setting:', error);
+      throw error;
     }
   }
 
   async deleteSystemSetting(key: string): Promise<void> {
-    await db.delete(systemSettings)
-      .where(eq(systemSettings.setting_key, key));
+    try {
+      await db.execute(sql`
+        DELETE FROM system_settings 
+        WHERE setting_key = ${key}
+      `);
+    } catch (error) {
+      console.error('Error deleting system setting:', error);
+      throw error;
+    }
   }
 }
