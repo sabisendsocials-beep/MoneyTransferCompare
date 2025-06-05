@@ -156,11 +156,15 @@ export class DatabaseStorage implements IStorage {
     const providers = await this.getActiveProviders();
     const providerIds = providers.map(p => p.id);
     
-    // Calculate 72-hour cutoff
-    const seventyTwoHoursAgo = new Date();
-    seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
+    // Get configurable rate freshness threshold
+    const { getMaxRateAgeHours } = await import('./utils/rateFilter');
+    const maxAgeHours = await getMaxRateAgeHours();
     
-    // For each provider, get the latest rate within 72 hours
+    // Calculate cutoff time using configurable threshold
+    const cutoffTime = new Date();
+    cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
+    
+    // For each provider, get the latest rate within the configured freshness window
     const latestRatesPromises = providerIds.map(async providerId => {
       const [rate] = await db
         .select()
@@ -170,7 +174,7 @@ export class DatabaseStorage implements IStorage {
             eq(schema.exchangeRates.provider_id, providerId),
             eq(schema.exchangeRates.from_currency, fromCurrency),
             eq(schema.exchangeRates.to_currency, toCurrency),
-            gte(schema.exchangeRates.timestamp, seventyTwoHoursAgo)
+            gte(schema.exchangeRates.timestamp, cutoffTime)
           )
         )
         .orderBy(desc(schema.exchangeRates.timestamp))
