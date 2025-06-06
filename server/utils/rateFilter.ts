@@ -21,6 +21,14 @@ let lastCacheTime = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
+ * Force cache refresh - useful when settings are updated
+ */
+export function clearRateAgeCache(): void {
+  cachedMaxRateAge = null;
+  lastCacheTime = 0;
+}
+
+/**
  * Get the current rate freshness threshold from database, environment, or default
  * This can be configured via admin panel or environment variable
  */
@@ -71,10 +79,19 @@ export async function getMaxRateAgeHours(): Promise<number> {
 
 /**
  * Synchronous version for backwards compatibility
- * Returns cached value or default if no cache available
+ * Returns cached value or triggers async load if no cache available
  */
 export function getMaxRateAgeHoursSync(): number {
-  return cachedMaxRateAge || DEFAULT_MAX_RATE_AGE_HOURS;
+  // If we have a cached value, use it
+  if (cachedMaxRateAge !== null) {
+    return cachedMaxRateAge;
+  }
+  
+  // If no cache, trigger async load for next time
+  getMaxRateAgeHours().catch(console.warn);
+  
+  // Return default for this call
+  return DEFAULT_MAX_RATE_AGE_HOURS;
 }
 
 /**

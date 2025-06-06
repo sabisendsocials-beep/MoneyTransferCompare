@@ -198,9 +198,13 @@ export class DatabaseStorage implements IStorage {
     toCurrency: string, 
     limit: number
   ): Promise<ExchangeRate[]> {
-    // Calculate 24-hour cutoff
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // Get configurable rate freshness threshold
+    const { getMaxRateAgeHours } = await import('./utils/rateFilter');
+    const maxAgeHours = await getMaxRateAgeHours();
+    
+    // Calculate cutoff time using configurable threshold
+    const cutoffTime = new Date();
+    cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
     
     return await db
       .select()
@@ -210,7 +214,7 @@ export class DatabaseStorage implements IStorage {
           eq(schema.exchangeRates.provider_id, providerId),
           eq(schema.exchangeRates.from_currency, fromCurrency),
           eq(schema.exchangeRates.to_currency, toCurrency),
-          gte(schema.exchangeRates.timestamp, twentyFourHoursAgo)
+          gte(schema.exchangeRates.timestamp, cutoffTime)
         )
       )
       .orderBy(desc(schema.exchangeRates.timestamp))

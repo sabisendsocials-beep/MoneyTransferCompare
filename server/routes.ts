@@ -255,6 +255,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const setting = await storage.updateSystemSetting(key, value, description);
+      
+      // Clear rate filter cache when rate freshness setting is updated
+      if (key === 'max_rate_age_hours') {
+        const { clearRateAgeCache } = await import('./utils/rateFilter');
+        clearRateAgeCache();
+        console.log(`Rate filter cache cleared after updating ${key} to ${value} hours`);
+      }
+      
       res.json(setting);
     } catch (error) {
       console.error("Error updating system setting:", error);
