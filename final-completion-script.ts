@@ -4,85 +4,113 @@
  */
 
 import { db } from './server/db';
+import { rateTrends } from './shared/schema';
+import { sql } from 'drizzle-orm';
 
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
-const FINAL_PAIRS = [
-  ['GBP', 'INR'], ['GBP', 'PKR'],
-  ['EUR', 'NGN'], ['EUR', 'GHS'], ['EUR', 'KES'], ['EUR', 'INR'], ['EUR', 'PKR'],
-  ['USD', 'NGN'], ['USD', 'GHS'], ['USD', 'KES'], ['USD', 'INR'], ['USD', 'PKR']
+const TARGET_PAIRS = [
+  'EUR/PKR', 'USD/PKR', 'EUR/INR', 'USD/INR'
 ];
 
 async function populatePair(fromCurrency: string, toCurrency: string): Promise<number> {
-  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
-  
   console.log(`Processing ${fromCurrency}/${toCurrency}...`);
+  
+  // Check existing count
+  const existing = await db.execute(sql`
+    SELECT COUNT(*) as count FROM rate_trends 
+    WHERE from_currency = ${fromCurrency} AND to_currency = ${toCurrency}
+  `);
+  
+  const currentCount = existing.rows[0].count as number;
+  if (currentCount > 1000) {
+    console.log(`${fromCurrency}/${toCurrency}: Already complete with ${currentCount} records`);
+    return currentCount;
+  }
+  
+  // Clear incomplete data
+  await db.delete(rateTrends).where(sql`from_currency = ${fromCurrency} AND to_currency = ${toCurrency}`);
+  
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&outputsize=full&apikey=${ALPHA_VANTAGE_API_KEY}`;
   
   try {
     const response = await fetch(url);
     const data = await response.json();
     
     if (!data['Time Series FX (Daily)']) {
-      console.log(`No data available for ${fromCurrency}/${toCurrency}`);
+      console.log(`${fromCurrency}/${toCurrency}: No data from Alpha Vantage`);
       return 0;
     }
     
     const timeSeries = data['Time Series FX (Daily)'];
-    let count = 0;
+    const records = Object.entries(timeSeries).map(([date, values]) => ({
+      date,
+      from_currency: fromCurrency,
+      to_currency: toCurrency,
+      rate: parseFloat((values as any)['4. close']),
+      source: 'alpha_vantage'
+    }));
     
-    for (const [date, values] of Object.entries(timeSeries)) {
-      const rate = parseFloat(values['4. close']);
-      if (!isNaN(rate) && rate > 0) {
-        try {
-          await db.execute(
-            `INSERT INTO rate_trends (date, from_currency, to_currency, rate) VALUES ('${date}', '${fromCurrency}', '${toCurrency}', ${rate})`
-          );
-          count++;
-        } catch {
-          // Skip duplicates
-        }
-      }
+    if (records.length > 0) {
+      await db.insert(rateTrends).values(records);
+      console.log(`${fromCurrency}/${toCurrency}: Added ${records.length} records`);
+      return records.length;
     }
     
-    console.log(`✓ ${fromCurrency}/${toCurrency}: ${count} records added`);
-    return count;
-    
+    return 0;
   } catch (error) {
-    console.error(`Error with ${fromCurrency}/${toCurrency}:`, error.message);
+    console.log(`${fromCurrency}/${toCurrency}: Error - ${error}`);
     return 0;
   }
 }
 
 async function completeAllPairs(): Promise<void> {
-  console.log('Final completion of all 12 remaining currency pairs...');
+  console.log('Completing all remaining currency pairs...');
   
   let totalAdded = 0;
+  let completedPairs = 0;
   
-  for (const [from, to] of FINAL_PAIRS) {
-    const added = await populatePair(from, to);
-    totalAdded += added;
+  for (const pair of TARGET_PAIRS) {
+    const [from, to] = pair.split('/');
+    const records = await populatePair(from, to);
     
-    // API rate limiting
-    console.log('Waiting 12 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 12000));
+    if (records > 1000) {
+      completedPairs++;
+    }
+    totalAdded += records;
+    
+    // Rate limiting
+    await new Promise(resolve => setTimeout(resolve, 15000));
   }
   
-  console.log(`\nTotal records added: ${totalAdded}`);
-  
-  // Final verification
-  const finalCount = await db.execute('SELECT COUNT(*) as total FROM rate_trends');
-  console.log(`Total historical records: ${finalCount.rows[0].total}`);
-  
-  const pairSummary = await db.execute(`
-    SELECT from_currency, to_currency, COUNT(*) as count 
+  // Final comprehensive check
+  const allPairs = await db.execute(sql`
+    SELECT from_currency, to_currency, COUNT(*) as count
     FROM rate_trends 
-    GROUP BY from_currency, to_currency 
-    ORDER BY from_currency, to_currency
+    GROUP BY from_currency, to_currency
+    ORDER BY count DESC
   `);
   
-  console.log('\nCurrency Pair Summary:');
-  for (const row of pairSummary.rows) {
-    console.log(`${row.from_currency}/${row.to_currency}: ${row.count} records`);
+  console.log('\n=== FINAL COMPLETION STATUS ===');
+  let totalComplete = 0;
+  
+  for (const row of allPairs.rows) {
+    const count = row.count as number;
+    if (count > 1000) {
+      console.log(`${row.from_currency}/${row.to_currency}: COMPLETE (${count} records)`);
+      totalComplete++;
+    } else {
+      console.log(`${row.from_currency}/${row.to_currency}: INCOMPLETE (${count} records)`);
+    }
+  }
+  
+  console.log(`\nCompleted currency pairs: ${totalComplete}/15`);
+  console.log(`Records added in this session: ${totalAdded}`);
+  
+  if (totalComplete >= 13) {
+    console.log('SUCCESS: Major currency corridors completed with authentic Alpha Vantage data');
+  } else {
+    console.log(`Progress: ${totalComplete} pairs completed, ${15 - totalComplete} remaining`);
   }
 }
 
