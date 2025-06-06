@@ -3,78 +3,84 @@
  * Final push to complete all 15 currency corridors
  */
 
-import { Pool } from '@neondatabase/serverless';
-import { neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+import { db } from './server/db';
 
-neonConfig.webSocketConstructor = ws;
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
-const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
-const DATABASE_URL = process.env.DATABASE_URL;
-
-const REMAINING = ['USD/KES', 'GBP/INR', 'EUR/INR', 'USD/INR', 'GBP/PKR', 'EUR/PKR', 'USD/PKR'];
-
-const pool = new Pool({ connectionString: DATABASE_URL });
+const PAIRS_TO_COMPLETE = [
+  'GBP/PKR',
+  'EUR/NGN', 'EUR/GHS', 'EUR/KES', 'EUR/INR', 'EUR/PKR',
+  'USD/NGN', 'USD/GHS', 'USD/KES', 'USD/INR', 'USD/PKR'
+];
 
 async function populatePair(pair: string) {
   const [from, to] = pair.split('/');
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
+  
+  console.log(`Fetching ${pair}...`);
   
   try {
-    const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
-    
     const response = await fetch(url);
     const data = await response.json();
     
     if (!data['Time Series FX (Daily)']) {
-      console.log(`${pair}: No data available`);
+      console.log(`No data for ${pair}`);
       return 0;
     }
     
     const timeSeries = data['Time Series FX (Daily)'];
-    const records = [];
+    let count = 0;
     
     for (const [date, values] of Object.entries(timeSeries)) {
-      const rate = parseFloat((values as any)['4. close']);
-      if (!isNaN(rate)) {
-        records.push(`('${date}', '${from}', '${to}', ${rate}, 'alpha_vantage')`);
+      const rate = parseFloat(values['4. close']);
+      if (!isNaN(rate) && rate > 0) {
+        try {
+          await db.execute(`INSERT INTO rate_trends (date, from_currency, to_currency, rate) VALUES ('${date}', '${from}', '${to}', ${rate})`);
+          count++;
+        } catch {
+          // Skip duplicates
+        }
       }
     }
     
-    if (records.length === 0) return 0;
-    
-    await pool.query(`
-      INSERT INTO rate_trends (date, from_currency, to_currency, rate, source)
-      VALUES ${records.join(', ')}
-      ON CONFLICT (date, from_currency, to_currency) DO UPDATE SET 
-      rate = EXCLUDED.rate, source = EXCLUDED.source
-    `);
-    
-    console.log(`${pair}: ${records.length} records added`);
-    return records.length;
+    console.log(`✓ ${pair}: ${count} records`);
+    return count;
     
   } catch (error) {
-    console.error(`${pair}: Error -`, error.message);
+    console.error(`Error with ${pair}:`, error.message);
     return 0;
   }
 }
 
 async function main() {
-  console.log('Completing remaining 7 currency pairs...');
+  console.log('Completing remaining currency pairs...');
   
-  let completed = 0;
-  let totalRecords = 0;
-  
-  for (const pair of REMAINING) {
-    const records = await populatePair(pair);
-    if (records > 0) {
-      completed++;
-      totalRecords += records;
-    }
-    await new Promise(resolve => setTimeout(resolve, 15000));
+  let total = 0;
+  for (const pair of PAIRS_TO_COMPLETE) {
+    const added = await populatePair(pair);
+    total += added;
+    
+    // API rate limiting
+    await new Promise(resolve => setTimeout(resolve, 12000));
   }
   
-  console.log(`Final: ${completed}/7 pairs completed, ${totalRecords} records added`);
-  await pool.end();
+  console.log(`\nTotal added: ${total}`);
+  
+  // Final summary
+  const summary = await db.execute(`
+    SELECT from_currency, to_currency, COUNT(*) as count 
+    FROM rate_trends 
+    GROUP BY from_currency, to_currency 
+    ORDER BY from_currency, to_currency
+  `);
+  
+  console.log('\nAll Currency Pairs:');
+  for (const row of summary.rows) {
+    console.log(`${row.from_currency}/${row.to_currency}: ${row.count} records`);
+  }
+  
+  const total_count = await db.execute('SELECT COUNT(*) as total FROM rate_trends');
+  console.log(`\nTotal historical records: ${total_count.rows[0].total}`);
 }
 
 main().catch(console.error);
