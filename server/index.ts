@@ -153,19 +153,21 @@ app.use((req, res, next) => {
       }
     }, SIX_HOURS);
     
-    // Update exchange rate trends 3 times per day - SCHEDULED ONLY, not on restart
-    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+    // Daily Alpha Vantage historical data update - SCHEDULED ONLY, not on restart
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
     setInterval(async () => {
       try {
-        log("Running SCHEDULED exchange rate trends update (8-hour interval)...");
-        await updateRealRateTrends();
-        log("Exchange rate trends updated from real APIs");
+        log("Running SCHEDULED Alpha Vantage historical data update (daily)...");
+        const { runDailyAlphaVantageUpdate } = await import('../automated-daily-alpha-vantage-updater');
+        await runDailyAlphaVantageUpdate();
+        log("Daily Alpha Vantage update completed - all 15 currency pairs maintained");
       } catch (error) {
-        log(`Error updating exchange rate trends: ${error}`);
+        log(`Error in daily Alpha Vantage update: ${error}`);
       }
-    }, EIGHT_HOURS);
+    }, TWENTY_FOUR_HOURS);
     
     // Update news every 8 hours - SCHEDULED ONLY, not on restart
+    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
     setInterval(async () => {
       try {
         log("Running SCHEDULED news update (8-hour interval)...");
