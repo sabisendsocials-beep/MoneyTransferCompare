@@ -3,113 +3,104 @@
  * Focuses on pairs that still need historical data
  */
 
-import { Pool } from '@neondatabase/serverless';
-import { neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+import { db } from './server/db';
+import { rateTrends } from './shared/schema';
 
-neonConfig.webSocketConstructor = ws;
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
-const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
-const DATABASE_URL = process.env.DATABASE_URL;
+if (!ALPHA_VANTAGE_API_KEY) {
+  console.error('ALPHA_VANTAGE_API_KEY is required');
+  process.exit(1);
+}
 
-const pool = new Pool({ connectionString: DATABASE_URL });
+// All 15 currency corridors
+const CURRENCY_PAIRS = [
+  ['GBP', 'GHS'], ['GBP', 'KES'], ['GBP', 'INR'], ['GBP', 'PKR'],
+  ['EUR', 'NGN'], ['EUR', 'GHS'], ['EUR', 'KES'], ['EUR', 'INR'], ['EUR', 'PKR'],
+  ['USD', 'NGN'], ['USD', 'GHS'], ['USD', 'KES'], ['USD', 'INR'], ['USD', 'PKR']
+];
 
 async function checkExistingData(fromCurrency: string, toCurrency: string): Promise<number> {
-  const result = await pool.query(
-    'SELECT COUNT(*) as count FROM rate_trends WHERE from_currency = $1 AND to_currency = $2',
-    [fromCurrency, toCurrency]
-  );
+  const result = await db.execute(`
+    SELECT COUNT(*) as count 
+    FROM rate_trends 
+    WHERE from_currency = $1 AND to_currency = $2
+  `, [fromCurrency, toCurrency]);
+  
   return parseInt(result.rows[0].count);
 }
 
 async function fetchAndStoreHistoricalData(fromCurrency: string, toCurrency: string): Promise<boolean> {
-  const existing = await checkExistingData(fromCurrency, toCurrency);
-  if (existing > 1000) {
-    console.log(`${fromCurrency}/${toCurrency}: Already has ${existing} records`);
-    return true;
-  }
-
-  console.log(`${fromCurrency}/${toCurrency}: Fetching data (currently has ${existing} records)...`);
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
   
   try {
-    const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
-    
     const response = await fetch(url);
     const data = await response.json();
     
-    if (data['Information']) {
-      console.log(`${fromCurrency}/${toCurrency}: Rate limit - ${data['Information']}`);
-      return false;
-    }
-    
     if (!data['Time Series FX (Daily)']) {
-      console.log(`${fromCurrency}/${toCurrency}: No data available`);
+      console.log(`No Alpha Vantage data for ${fromCurrency}/${toCurrency}`);
       return false;
     }
     
     const timeSeries = data['Time Series FX (Daily)'];
-    const records: string[] = [];
+    const historicalData = [];
     
     for (const [date, values] of Object.entries(timeSeries)) {
-      const rate = parseFloat((values as any)['4. close']);
+      const rate = parseFloat(values['4. close']);
       if (!isNaN(rate) && rate > 0) {
-        records.push(`('${date}', '${fromCurrency}', '${toCurrency}', ${rate}, 'alpha_vantage')`);
+        historicalData.push([date, fromCurrency, toCurrency, rate]);
       }
     }
     
-    if (records.length === 0) return false;
-    
-    // Insert in batches
-    const batchSize = 100;
-    for (let i = 0; i < records.length; i += batchSize) {
-      const batch = records.slice(i, i + batchSize);
-      
-      await pool.query(`
-        INSERT INTO rate_trends (date, from_currency, to_currency, rate, source)
-        VALUES ${batch.join(', ')}
-        ON CONFLICT (date, from_currency, to_currency) DO UPDATE SET 
-        rate = EXCLUDED.rate, source = EXCLUDED.source
-      `);
+    // Insert data using raw SQL to avoid type issues
+    for (const [date, from_currency, to_currency, rate] of historicalData) {
+      await db.execute(
+        'INSERT INTO rate_trends (date, from_currency, to_currency, rate) VALUES ($1, $2, $3, $4)',
+        [date, from_currency, to_currency, rate]
+      );
     }
     
-    console.log(`${fromCurrency}/${toCurrency}: Added ${records.length} records`);
+    console.log(`✓ ${fromCurrency}/${toCurrency}: ${historicalData.length} data points stored`);
     return true;
     
   } catch (error) {
-    console.error(`${fromCurrency}/${toCurrency}: Error -`, error.message);
+    console.error(`Error with ${fromCurrency}/${toCurrency}:`, error);
     return false;
   }
 }
 
 async function populateRemainingPairs(): Promise<void> {
-  const pairs = [
-    ['USD', 'INR'], ['USD', 'PKR'], ['EUR', 'PKR'], ['GBP', 'PKR']
-  ];
+  console.log('Continuing Alpha Vantage historical data population for remaining currency pairs...');
   
-  console.log('Populating remaining currency pairs...\n');
-  
-  for (const [from, to] of pairs) {
-    await fetchAndStoreHistoricalData(from, to);
+  for (const [fromCurrency, toCurrency] of CURRENCY_PAIRS) {
+    console.log(`\nProcessing ${fromCurrency}/${toCurrency}...`);
+    
+    const existingCount = await checkExistingData(fromCurrency, toCurrency);
+    if (existingCount > 0) {
+      console.log(`Skipping ${fromCurrency}/${toCurrency} - already has ${existingCount} records`);
+      continue;
+    }
+    
+    await fetchAndStoreHistoricalData(fromCurrency, toCurrency);
+    
+    // Rate limiting - wait 12 seconds between API calls
     await new Promise(resolve => setTimeout(resolve, 12000));
   }
   
-  // Summary
-  const result = await pool.query(`
-    SELECT 
-      from_currency || '/' || to_currency as pair,
-      COUNT(*) as records
+  console.log('\nHistorical data population completed for all remaining currency pairs.');
+  
+  // Final summary
+  const summary = await db.execute(`
+    SELECT from_currency, to_currency, COUNT(*) as record_count 
     FROM rate_trends 
     GROUP BY from_currency, to_currency 
-    ORDER BY COUNT(*) DESC
+    ORDER BY from_currency, to_currency
   `);
   
   console.log('\nFinal Summary:');
-  for (const row of result.rows) {
-    const status = row.records > 1000 ? 'Complete' : 'Incomplete';
-    console.log(`${row.pair}: ${row.records} records (${status})`);
+  for (const row of summary.rows) {
+    console.log(`${row.from_currency}/${row.to_currency}: ${row.record_count} records`);
   }
-  
-  await pool.end();
 }
 
 populateRemainingPairs().catch(console.error);

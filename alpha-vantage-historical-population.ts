@@ -6,6 +6,7 @@
 
 import { db } from './server/db';
 import { rateTrends } from './shared/schema';
+import { eq, and } from 'drizzle-orm';
 
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
@@ -30,9 +31,9 @@ async function checkExistingData(fromCurrency: string, toCurrency: string): Prom
     .select()
     .from(rateTrends)
     .where(
-      db.and(
-        db.eq(rateTrends.from_currency, fromCurrency),
-        db.eq(rateTrends.to_currency, toCurrency)
+      and(
+        eq(rateTrends.from_currency, fromCurrency),
+        eq(rateTrends.to_currency, toCurrency)
       )
     );
   return result.length;

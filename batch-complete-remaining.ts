@@ -1,100 +1,83 @@
 /**
  * Batch Complete Remaining Currency Pairs
- * Fast completion for the 8 pairs that still need data
+ * Fast completion for the 14 pairs that still need data
  */
 
-import { Pool } from '@neondatabase/serverless';
-import { neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+import { db } from './server/db';
 
-neonConfig.webSocketConstructor = ws;
-
-const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
-const ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query';
-const DATABASE_URL = process.env.DATABASE_URL;
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
 const REMAINING_PAIRS = [
-  'EUR/KES', 'USD/KES', 'GBP/INR', 'EUR/INR', 'USD/INR', 'GBP/PKR', 'EUR/PKR', 'USD/PKR'
+  'GBP/GHS', 'GBP/KES', 'GBP/INR', 'GBP/PKR',
+  'EUR/NGN', 'EUR/GHS', 'EUR/KES', 'EUR/INR', 'EUR/PKR',
+  'USD/NGN', 'USD/GHS', 'USD/KES', 'USD/INR', 'USD/PKR'
 ];
 
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-});
-
 async function quickPopulate(pair: string): Promise<number> {
-  const [from, to] = pair.split('/');
-  console.log(`Processing ${pair}...`);
+  const [fromCurrency, toCurrency] = pair.split('/');
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
   
   try {
-    const url = `${ALPHA_VANTAGE_URL}?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
-    
     const response = await fetch(url);
     const data = await response.json();
     
     if (!data['Time Series FX (Daily)']) {
-      console.log(`${pair}: No data available`);
+      console.log(`No data for ${pair}`);
       return 0;
     }
     
     const timeSeries = data['Time Series FX (Daily)'];
-    const records: string[] = [];
-    let count = 0;
+    let inserted = 0;
     
     for (const [date, values] of Object.entries(timeSeries)) {
-      const rate = parseFloat((values as any)['4. close']);
-      if (!isNaN(rate)) {
-        records.push(`('${date}', '${from}', '${to}', ${rate}, 'alpha_vantage')`);
-        count++;
+      const rate = parseFloat(values['4. close']);
+      if (!isNaN(rate) && rate > 0) {
+        try {
+          await db.execute(
+            `INSERT INTO rate_trends (date, from_currency, to_currency, rate) 
+             VALUES ('${date}', '${fromCurrency}', '${toCurrency}', ${rate})`
+          );
+          inserted++;
+        } catch (error) {
+          // Skip duplicates
+        }
       }
     }
     
-    if (records.length === 0) return 0;
-    
-    // Single large insert
-    const query = `
-      INSERT INTO rate_trends (date, from_currency, to_currency, rate, source)
-      VALUES ${records.join(', ')}
-      ON CONFLICT (date, from_currency, to_currency) DO UPDATE SET 
-      rate = EXCLUDED.rate, source = EXCLUDED.source
-    `;
-    
-    await pool.query(query);
-    console.log(`${pair}: Added ${count} records`);
-    return count;
+    console.log(`✓ ${pair}: ${inserted} data points`);
+    return inserted;
     
   } catch (error) {
-    console.error(`${pair}: Error -`, error);
+    console.error(`Error with ${pair}:`, error);
     return 0;
   }
 }
 
 async function batchComplete(): Promise<void> {
-  console.log('Batch completing remaining currency pairs...\n');
-  
-  let total = 0;
-  let completed = 0;
+  console.log('Completing historical data for remaining 14 currency pairs...');
   
   for (const pair of REMAINING_PAIRS) {
-    const added = await quickPopulate(pair);
-    if (added > 0) {
-      total += added;
-      completed++;
-    }
-    
-    // Shorter wait time for faster completion
-    await new Promise(resolve => setTimeout(resolve, 8000));
+    await quickPopulate(pair);
+    // 12 second delay for API rate limiting
+    await new Promise(resolve => setTimeout(resolve, 12000));
   }
   
-  console.log(`\nBatch completion summary:`);
-  console.log(`Completed: ${completed}/${REMAINING_PAIRS.length} pairs`);
-  console.log(`Total records: ${total}`);
+  // Final count
+  const result = await db.execute('SELECT COUNT(*) as total FROM rate_trends');
+  console.log(`\nCompleted! Total historical records: ${result.rows[0].total}`);
   
-  await pool.end();
+  // Summary by pair
+  const summary = await db.execute(`
+    SELECT from_currency, to_currency, COUNT(*) as count 
+    FROM rate_trends 
+    GROUP BY from_currency, to_currency 
+    ORDER BY from_currency, to_currency
+  `);
+  
+  console.log('\nCurrency Pair Summary:');
+  for (const row of summary.rows) {
+    console.log(`${row.from_currency}/${row.to_currency}: ${row.count} records`);
+  }
 }
 
-batchComplete()
-  .then(() => process.exit(0))
-  .catch(error => {
-    console.error('Batch completion failed:', error);
-    process.exit(1);
-  });
+batchComplete().catch(console.error);
