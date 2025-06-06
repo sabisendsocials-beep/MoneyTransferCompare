@@ -9,27 +9,31 @@ import { sql } from 'drizzle-orm';
 
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
-// All 15 currency corridors - prioritize missing ones
-const ALL_PAIRS = [
-  'USD/NGN', 'EUR/GHS', 'USD/GHS', 'EUR/KES', 'USD/KES',
-  'GBP/PKR', 'EUR/PKR', 'USD/PKR', 'EUR/INR', 'USD/INR',
-  'GBP/INR' // Complete this one too
+const REMAINING_PAIRS = [
+  'USD/KES', 'GBP/PKR', 'EUR/PKR', 'USD/PKR', 
+  'EUR/INR', 'USD/INR'
 ];
 
 async function checkExisting(from: string, to: string): Promise<number> {
-  const result = await db.select().from(rateTrends)
-    .where(sql`from_currency = ${from} AND to_currency = ${to}`);
-  return result.length;
+  const result = await db.execute(sql`
+    SELECT COUNT(*) as count FROM rate_trends 
+    WHERE from_currency = ${from} AND to_currency = ${to}
+  `);
+  return result.rows[0].count as number;
 }
 
 async function populatePair(from: string, to: string): Promise<number> {
   const existing = await checkExisting(from, to);
-  if (existing > 500) {
-    console.log(`${from}/${to}: Already has ${existing} records - skipping`);
+  
+  if (existing > 1000) {
+    console.log(`${from}/${to}: Already complete with ${existing} records`);
     return existing;
   }
-
-  console.log(`Fetching ${from}/${to} from Alpha Vantage...`);
+  
+  console.log(`Populating ${from}/${to} with Alpha Vantage data...`);
+  
+  // Clear any partial data
+  await db.delete(rateTrends).where(sql`from_currency = ${from} AND to_currency = ${to}`);
   
   const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&outputsize=full&apikey=${ALPHA_VANTAGE_API_KEY}`;
   
@@ -38,7 +42,7 @@ async function populatePair(from: string, to: string): Promise<number> {
     const data = await response.json();
     
     if (!data['Time Series FX (Daily)']) {
-      console.log(`${from}/${to}: No data available`);
+      console.log(`${from}/${to}: No data available from Alpha Vantage`);
       return 0;
     }
     
@@ -52,11 +56,12 @@ async function populatePair(from: string, to: string): Promise<number> {
     }));
     
     if (records.length > 0) {
-      await db.insert(rateTrends).values(records).onConflictDoNothing();
-      console.log(`${from}/${to}: Added ${records.length} records ✓`);
+      await db.insert(rateTrends).values(records);
+      console.log(`${from}/${to}: Added ${records.length} authentic records`);
+      return records.length;
     }
     
-    return records.length;
+    return 0;
   } catch (error) {
     console.log(`${from}/${to}: Error - ${error}`);
     return 0;
@@ -64,32 +69,48 @@ async function populatePair(from: string, to: string): Promise<number> {
 }
 
 async function main() {
-  console.log('Final batch completion started...');
+  console.log('Final batch completion starting...');
   
-  for (const pair of ALL_PAIRS) {
+  let totalAdded = 0;
+  let completedCount = 0;
+  
+  for (const pair of REMAINING_PAIRS) {
     const [from, to] = pair.split('/');
-    await populatePair(from, to);
+    const records = await populatePair(from, to);
+    
+    if (records > 1000) {
+      completedCount++;
+    }
+    totalAdded += records;
     
     // Rate limiting
-    console.log('Waiting 12 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 12000));
+    await new Promise(resolve => setTimeout(resolve, 15000));
   }
   
-  // Final verification
-  const final = await db.execute(sql`
-    SELECT from_currency, to_currency, COUNT(*) as count 
+  // Final status check
+  const allPairs = await db.execute(sql`
+    SELECT from_currency, to_currency, COUNT(*) as count
     FROM rate_trends 
-    GROUP BY from_currency, to_currency 
+    GROUP BY from_currency, to_currency
     ORDER BY count DESC
   `);
   
   console.log('\n=== FINAL STATUS ===');
-  for (const row of final.rows) {
-    console.log(`${row.from_currency}/${row.to_currency}: ${row.count} records`);
+  let totalComplete = 0;
+  
+  for (const row of allPairs.rows) {
+    const count = row.count as number;
+    const status = count > 1000 ? 'COMPLETE' : 'INCOMPLETE';
+    console.log(`${row.from_currency}/${row.to_currency}: ${count} records (${status})`);
+    if (count > 1000) totalComplete++;
   }
   
-  const complete = final.rows.filter(row => row.count > 500).length;
-  console.log(`\nCompleted pairs: ${complete}/15`);
+  console.log(`\nCompleted pairs: ${totalComplete}/15`);
+  console.log(`Records added: ${totalAdded}`);
+  
+  if (totalComplete >= 12) {
+    console.log('SUCCESS: Major currency corridors completed with authentic data');
+  }
 }
 
 main().catch(console.error);
