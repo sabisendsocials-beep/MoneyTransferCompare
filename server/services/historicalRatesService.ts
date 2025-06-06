@@ -183,33 +183,39 @@ async function initializeHistoricalRates(): Promise<void> {
     }
     
     if (!hasFullYearData) {
-      console.log('Insufficient historical data found, generating full year dataset...');
+      console.log('Insufficient historical data found, checking for Alpha Vantage protection...');
       
-      // Use our data generator to create a full year of data
-      const { populateYearOfHistoricalData } = await import('../generateHistoricalData');
-      await populateYearOfHistoricalData();
-      
-      console.log('Full year of historical data has been generated');
-    } else {
-      console.log(`Found sufficient historical rate records, checking for recent updates...`);
-      
-      // Try to get the most recent real API data to keep the dataset current
-      const { fetchHistoricalRates, storeHistoricalRates } = await import('./exchangeRateApiService');
-      
-      // Only update the most recent 30 days from the API
+      // Check if any pairs have Alpha Vantage data that should be protected
+      let hasProtectedData = false;
       for (const pair of CURRENCY_PAIRS) {
-        try {
-          console.log(`Updating recent historical data for ${pair.from}/${pair.to}...`);
-          const recentRates = await fetchHistoricalRates(pair.from, pair.to, 30);
-          
-          if (recentRates && recentRates.length > 0) {
-            await storeHistoricalRates(recentRates);
-            console.log(`Updated ${recentRates.length} recent rates for ${pair.from}/${pair.to}`);
-          }
-        } catch (error) {
-          console.error(`Error updating recent data for ${pair.from}/${pair.to}: ${error}`);
+        const alphaVantageData = await db.select({ count: sql`COUNT(*)` })
+          .from(rateTrends)
+          .where(
+            and(
+              eq(rateTrends.from_currency, pair.from),
+              eq(rateTrends.to_currency, pair.to),
+              eq(rateTrends.source, 'alpha_vantage')
+            )
+          );
+        
+        const alphaCount = typeof alphaVantageData[0]?.count === 'number' ? alphaVantageData[0].count : 
+                          typeof alphaVantageData[0]?.count === 'string' ? parseInt(alphaVantageData[0].count) : 0;
+        
+        if (alphaCount > 1000) {
+          console.log(`PROTECTED: ${pair.from}/${pair.to} has ${alphaCount} Alpha Vantage records - skipping data generation`);
+          hasProtectedData = true;
         }
       }
+      
+      if (!hasProtectedData) {
+        // Use our data generator to create a full year of data only if no protected data exists
+        const { populateYearOfHistoricalData } = await import('../generateHistoricalData');
+        await populateYearOfHistoricalData();
+        console.log('Full year of historical data has been generated');
+      }
+    } else {
+      console.log(`Found sufficient historical rate records, skipping automatic updates to protect authentic data`);
+      console.log('Alpha Vantage data protection active - no automatic overwrites will occur');
     }
     
     console.log('Historical rates service initialized successfully');

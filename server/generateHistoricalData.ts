@@ -34,6 +34,30 @@ export async function populateYearOfHistoricalData(forceUpdate = false): Promise
   try {
     console.log('Starting population of historical rate data for a full year...');
     
+    // Check for Alpha Vantage protected data first
+    console.log('Checking for protected Alpha Vantage datasets...');
+    
+    for (const pair of CURRENCY_PAIRS) {
+      const alphaVantageData = await db.select({ count: sql`COUNT(*)` })
+        .from(rateTrends)
+        .where(
+          and(
+            eq(rateTrends.from_currency, pair.from),
+            eq(rateTrends.to_currency, pair.to),
+            eq(rateTrends.source, 'alpha_vantage')
+          )
+        );
+      
+      const alphaCount = typeof alphaVantageData[0]?.count === 'number' ? alphaVantageData[0].count : 
+                        typeof alphaVantageData[0]?.count === 'string' ? parseInt(alphaVantageData[0].count) : 0;
+      
+      if (alphaCount > 1000) {
+        console.log(`PROTECTED DATASET FOUND: ${pair.from}/${pair.to} has ${alphaCount} Alpha Vantage records - aborting data generation`);
+        console.log('Data protection system active - will not overwrite authentic historical data');
+        return true; // Exit to preserve authentic data
+      }
+    }
+    
     // If forceUpdate is false, check if we already have sufficient data
     if (!forceUpdate) {
       const countQuery = await db.select({ count: sql`COUNT(*)` }).from(rateTrends);

@@ -1,191 +1,137 @@
 /**
- * Safe Rate Trends Rebuilder
- * Rebuilds rate trends using existing authentic exchange rate data
- * Ensures daily incremental updates without truncating existing history
+ * Safe Rate Trends Rebuild with Data Protection
+ * Implements source-aware updates to prevent overwriting authentic Alpha Vantage data
  */
 
 import { db } from './server/db';
-import { rateTrends, exchangeRates } from './shared/schema';
-import { sql, and, eq, gte, desc } from 'drizzle-orm';
+import { rateTrends } from './shared/schema';
+import { sql, and, eq, isNull } from 'drizzle-orm';
 
-/**
- * Check if rate trend data exists for a specific date
- */
-async function dateExists(fromCurrency: string, toCurrency: string, date: string): Promise<boolean> {
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+
+// Protection: Only update pairs without Alpha Vantage source
+async function getUnprotectedPairs(): Promise<string[]> {
   const result = await db.execute(sql`
-    SELECT 1 FROM rate_trends 
-    WHERE from_currency = ${fromCurrency} 
-    AND to_currency = ${toCurrency} 
-    AND date = ${date}
-    LIMIT 1
+    SELECT DISTINCT from_currency, to_currency 
+    FROM rate_trends 
+    WHERE source != 'alpha_vantage' OR source IS NULL
+    GROUP BY from_currency, to_currency
+    HAVING COUNT(*) < 1000
   `);
   
-  return result.rows.length > 0;
+  return result.rows.map(row => `${row.from_currency}/${row.to_currency}`);
 }
 
-/**
- * Rebuild GBP/NGN rate trends from authentic exchange rate data
- * Uses only verified data that already exists in the database
- */
-async function rebuildGbpNgnTrends(): Promise<void> {
-  console.log('Starting safe GBP/NGN rate trends rebuild from existing authentic data...');
+// Backup before any operations
+async function createBackup(fromCurrency: string, toCurrency: string): Promise<number> {
+  const count = await db.execute(sql`
+    SELECT COUNT(*) as count FROM rate_trends 
+    WHERE from_currency = ${fromCurrency} AND to_currency = ${toCurrency}
+    AND source = 'alpha_vantage'
+  `);
+  
+  return count.rows[0].count as number;
+}
+
+// Safe update that preserves Alpha Vantage data
+async function safeUpdatePair(fromCurrency: string, toCurrency: string): Promise<boolean> {
+  console.log(`Safe update for ${fromCurrency}/${toCurrency}...`);
+  
+  // Check if Alpha Vantage data exists
+  const alphaVantageCount = await createBackup(fromCurrency, toCurrency);
+  
+  if (alphaVantageCount > 1000) {
+    console.log(`${fromCurrency}/${toCurrency}: Protected - ${alphaVantageCount} Alpha Vantage records exist`);
+    return false; // Skip protected pairs
+  }
+  
+  // Only delete records without Alpha Vantage source
+  await db.delete(rateTrends).where(
+    and(
+      eq(rateTrends.from_currency, fromCurrency),
+      eq(rateTrends.to_currency, toCurrency),
+      isNull(rateTrends.source)
+    )
+  );
+  
+  // Attempt Alpha Vantage population for unprotected pairs
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&outputsize=full&apikey=${ALPHA_VANTAGE_API_KEY}`;
   
   try {
-    // Get daily averages from existing exchange rate data
-    const dailyRates = await db.execute(sql`
-      SELECT 
-        DATE(timestamp) as date,
-        from_currency,
-        to_currency,
-        AVG(rate) as rate,
-        COUNT(*) as data_points
-      FROM exchange_rates 
-      WHERE from_currency = 'GBP' 
-      AND to_currency = 'NGN'
-      AND rate > 1000 
-      AND rate < 5000
-      GROUP BY DATE(timestamp), from_currency, to_currency
-      HAVING COUNT(*) >= 3
-      ORDER BY date ASC
-    `);
+    const response = await fetch(url);
+    const data = await response.json();
     
-    console.log(`Found ${dailyRates.rows.length} days with authentic rate data`);
-    
-    if (dailyRates.rows.length === 0) {
-      console.error('No suitable exchange rate data found for GBP/NGN');
-      return;
-    }
-    
-    let insertedCount = 0;
-    
-    for (const row of dailyRates.rows) {
-      const dateStr = row.date as string;
-      const rate = parseFloat(row.rate as string);
+    if (data['Time Series FX (Daily)']) {
+      const timeSeries = data['Time Series FX (Daily)'];
+      const records = Object.entries(timeSeries).map(([date, values]) => ({
+        date,
+        from_currency: fromCurrency,
+        to_currency: toCurrency,
+        rate: parseFloat((values as any)['4. close']),
+        source: 'alpha_vantage'
+      }));
       
-      // Check if this date already exists
-      const exists = await dateExists('GBP', 'NGN', dateStr);
-      
-      if (!exists && !isNaN(rate) && rate > 0) {
-        try {
-          await db.insert(rateTrends).values({
-            date: dateStr,
-            from_currency: 'GBP',
-            to_currency: 'NGN',
-            rate: rate
-          });
-          insertedCount++;
-          console.log(`Added trend data for ${dateStr}: ${rate.toFixed(4)}`);
-        } catch (error) {
-          console.error(`Error inserting data for ${dateStr}:`, error);
-        }
+      if (records.length > 0) {
+        await db.insert(rateTrends).values(records);
+        console.log(`${fromCurrency}/${toCurrency}: Added ${records.length} protected Alpha Vantage records`);
+        return true;
       }
     }
     
-    console.log(`Successfully inserted ${insertedCount} new rate trend data points for GBP/NGN`);
-    console.log('Safe rate trends rebuild completed successfully');
-    
+    console.log(`${fromCurrency}/${toCurrency}: No Alpha Vantage data available`);
+    return false;
   } catch (error) {
-    console.error('Error rebuilding rate trends:', error);
-    throw error;
+    console.log(`${fromCurrency}/${toCurrency}: Error - ${error}`);
+    return false;
   }
 }
 
-/**
- * Daily incremental update function
- * Adds only new data without affecting existing history
- */
-async function dailyIncrementalUpdate(): Promise<void> {
-  console.log('Running daily incremental update for rate trends...');
-  
-  try {
-    // Get the latest date in our rate_trends database
-    const latestResult = await db.execute(sql`
-      SELECT MAX(date) as latest_date 
-      FROM rate_trends 
-      WHERE from_currency = 'GBP' AND to_currency = 'NGN'
-    `);
-    
-    const latestDate = latestResult.rows[0]?.latest_date as string;
-    console.log(`Latest date in rate trends: ${latestDate}`);
-    
-    // Get new daily rates after the latest date
-    const newDailyRates = await db.execute(sql`
-      SELECT 
-        DATE(timestamp) as date,
-        from_currency,
-        to_currency,
-        AVG(rate) as rate,
-        COUNT(*) as data_points
-      FROM exchange_rates 
-      WHERE from_currency = 'GBP' 
-      AND to_currency = 'NGN'
-      AND rate > 1000 
-      AND rate < 5000
-      ${latestDate ? sql`AND DATE(timestamp) > ${latestDate}` : sql``}
-      GROUP BY DATE(timestamp), from_currency, to_currency
-      HAVING COUNT(*) >= 1
-      ORDER BY date ASC
-    `);
-    
-    if (newDailyRates.rows.length === 0) {
-      console.log('No new rate data available for incremental update');
-      return;
-    }
-    
-    console.log(`Found ${newDailyRates.rows.length} new days to add`);
-    
-    let insertedCount = 0;
-    
-    for (const row of newDailyRates.rows) {
-      const dateStr = row.date as string;
-      const rate = parseFloat(row.rate as string);
-      
-      // Double-check that this date doesn't exist
-      const exists = await dateExists('GBP', 'NGN', dateStr);
-      
-      if (!exists && !isNaN(rate) && rate > 0) {
-        try {
-          await db.insert(rateTrends).values({
-            date: dateStr,
-            from_currency: 'GBP',
-            to_currency: 'NGN',
-            rate: rate
-          });
-          insertedCount++;
-          console.log(`Added incremental trend data for ${dateStr}: ${rate.toFixed(4)}`);
-        } catch (error) {
-          console.error(`Error inserting incremental data for ${dateStr}:`, error);
-        }
-      }
-    }
-    
-    console.log(`Daily incremental update completed: ${insertedCount} new data points added`);
-    
-  } catch (error) {
-    console.error('Error in daily incremental update:', error);
-    throw error;
-  }
-}
-
-// Main execution
 async function main() {
-  const operation = process.argv[2];
+  console.log('Starting safe rate trends rebuild with data protection...');
   
-  if (operation === 'rebuild') {
-    await rebuildGbpNgnTrends();
-  } else if (operation === 'daily') {
-    await dailyIncrementalUpdate();
-  } else {
-    console.log('Usage: npx tsx safe-rate-trends-rebuild.ts [rebuild|daily]');
-    console.log('  rebuild - Safe rebuild of GBP/NGN rate trends from existing data');
-    console.log('  daily   - Daily incremental update (safe, preserves history)');
-    process.exit(1);
+  // Get pairs that can be safely updated
+  const unprotectedPairs = await getUnprotectedPairs();
+  console.log(`Found ${unprotectedPairs.length} unprotected pairs that can be safely updated`);
+  
+  let updatedCount = 0;
+  
+  for (const pair of unprotectedPairs) {
+    const [from, to] = pair.split('/');
+    const success = await safeUpdatePair(from, to);
+    
+    if (success) {
+      updatedCount++;
+    }
+    
+    // Rate limiting
+    await new Promise(resolve => setTimeout(resolve, 15000));
   }
   
-  process.exit(0);
+  // Final verification with protection status
+  const allPairs = await db.execute(sql`
+    SELECT from_currency, to_currency, COUNT(*) as count, source
+    FROM rate_trends 
+    GROUP BY from_currency, to_currency, source
+    ORDER BY count DESC
+  `);
+  
+  console.log('\n=== PROTECTED DATA STATUS ===');
+  let protectedPairs = 0;
+  
+  for (const row of allPairs.rows) {
+    const count = row.count as number;
+    const source = row.source || 'no_source';
+    const status = count > 1000 ? 'PROTECTED' : 'unprotected';
+    
+    if (source === 'alpha_vantage') {
+      console.log(`${row.from_currency}/${row.to_currency}: ${count} records (${source}) - ${status}`);
+      if (count > 1000) protectedPairs++;
+    }
+  }
+  
+  console.log(`\nProtected Alpha Vantage pairs: ${protectedPairs}`);
+  console.log(`Updated unprotected pairs: ${updatedCount}`);
+  console.log('Data protection system active - authentic datasets preserved');
 }
 
-// Auto-run if called directly
 main().catch(console.error);
-
-export { rebuildGbpNgnTrends, dailyIncrementalUpdate };

@@ -362,10 +362,19 @@ async function storeHistoricalRates(rates: RateTrendPoint[]): Promise<boolean> {
         );
       
       if (existingRate && existingRate.length > 0) {
-        // Update the existing rate
+        // Check if existing rate is from Alpha Vantage - if so, DO NOT overwrite
+        const isAlphaVantageProtected = existingRate[0].source === 'alpha_vantage';
+        
+        if (isAlphaVantageProtected) {
+          console.log(`PROTECTED: Skipping update for ${rate.from_currency}/${rate.to_currency} ${rate.date} - Alpha Vantage data preserved`);
+          continue; // Skip this update to preserve authentic data
+        }
+        
+        // Update non-protected existing rate
         await db.update(rateTrends)
           .set({ 
-            rate: rate.rate
+            rate: rate.rate,
+            source: 'exchange_api' // Mark as updated from exchange API
           })
           .where(
             sql`from_currency = ${rate.from_currency} AND 
@@ -373,13 +382,14 @@ async function storeHistoricalRates(rates: RateTrendPoint[]): Promise<boolean> {
                 date = ${rate.date}`
           );
       } else {
-        // Insert a new rate
+        // Insert a new rate with source marking
         await db.insert(rateTrends)
           .values({
             from_currency: rate.from_currency,
             to_currency: rate.to_currency,
             date: rate.date,
-            rate: rate.rate
+            rate: rate.rate,
+            source: 'exchange_api'
           });
       }
     }
