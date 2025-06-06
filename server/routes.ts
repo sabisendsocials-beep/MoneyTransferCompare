@@ -1540,6 +1540,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       updateFinancialNews().catch(err => console.error("Failed to update news:", err));
     }, 6 * 60 * 60 * 1000); // Every 6 hours
     
+    // Schedule daily rate trends incremental updates
+    setInterval(async () => {
+      try {
+        console.log('Running scheduled daily rate trends update...');
+        const { dailyIncrementalUpdate } = await import('../safe-rate-trends-rebuild');
+        await dailyIncrementalUpdate();
+        console.log('Daily rate trends update completed successfully');
+      } catch (error) {
+        console.error("Failed to update rate trends:", error);
+      }
+    }, 24 * 60 * 60 * 1000); // Every 24 hours
+    
     // Note: Historical rate updates are now handled by the historicalRatesService scheduler
   }, 5000); // Start after 5 seconds to allow server to fully initialize
 
