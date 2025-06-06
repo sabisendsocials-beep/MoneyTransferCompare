@@ -1,130 +1,89 @@
 /**
  * Final Completion Script for All Currency Pairs
- * Completes historical data for the 6 remaining pairs with minimal data
+ * Completes historical data for the 12 remaining pairs with minimal data
  */
 
-import { Pool } from '@neondatabase/serverless';
-import { neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+import { db } from './server/db';
 
-neonConfig.webSocketConstructor = ws;
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
-const ALPHA_VANTAGE_API_KEY = process.env.HISTORICAL_EXCHANGE_API_KEY;
-const DATABASE_URL = process.env.DATABASE_URL;
-
-const FINAL_PAIRS = ['GBP/INR', 'EUR/INR', 'USD/INR', 'GBP/PKR', 'EUR/PKR', 'USD/PKR'];
-
-const pool = new Pool({ connectionString: DATABASE_URL });
+const FINAL_PAIRS = [
+  ['GBP', 'INR'], ['GBP', 'PKR'],
+  ['EUR', 'NGN'], ['EUR', 'GHS'], ['EUR', 'KES'], ['EUR', 'INR'], ['EUR', 'PKR'],
+  ['USD', 'NGN'], ['USD', 'GHS'], ['USD', 'KES'], ['USD', 'INR'], ['USD', 'PKR']
+];
 
 async function populatePair(fromCurrency: string, toCurrency: string): Promise<number> {
-  console.log(`\nPopulating ${fromCurrency}/${toCurrency}...`);
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
+  
+  console.log(`Processing ${fromCurrency}/${toCurrency}...`);
   
   try {
-    const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&apikey=${ALPHA_VANTAGE_API_KEY}&outputsize=full`;
-    
     const response = await fetch(url);
     const data = await response.json();
     
-    if (data['Information']) {
-      console.log(`${fromCurrency}/${toCurrency}: API rate limit - ${data['Information']}`);
-      return 0;
-    }
-    
     if (!data['Time Series FX (Daily)']) {
-      console.log(`${fromCurrency}/${toCurrency}: No time series data available`);
+      console.log(`No data available for ${fromCurrency}/${toCurrency}`);
       return 0;
     }
     
     const timeSeries = data['Time Series FX (Daily)'];
-    const records: string[] = [];
+    let count = 0;
     
     for (const [date, values] of Object.entries(timeSeries)) {
-      const rate = parseFloat((values as any)['4. close']);
+      const rate = parseFloat(values['4. close']);
       if (!isNaN(rate) && rate > 0) {
-        records.push(`('${date}', '${fromCurrency}', '${toCurrency}', ${rate}, 'alpha_vantage')`);
+        try {
+          await db.execute(
+            `INSERT INTO rate_trends (date, from_currency, to_currency, rate) VALUES ('${date}', '${fromCurrency}', '${toCurrency}', ${rate})`
+          );
+          count++;
+        } catch {
+          // Skip duplicates
+        }
       }
     }
     
-    if (records.length === 0) {
-      console.log(`${fromCurrency}/${toCurrency}: No valid rate data found`);
-      return 0;
-    }
-    
-    // Insert in batches to avoid query length limits
-    const batchSize = 500;
-    let totalInserted = 0;
-    
-    for (let i = 0; i < records.length; i += batchSize) {
-      const batch = records.slice(i, i + batchSize);
-      
-      await pool.query(`
-        INSERT INTO rate_trends (date, from_currency, to_currency, rate, source)
-        VALUES ${batch.join(', ')}
-        ON CONFLICT (date, from_currency, to_currency) DO UPDATE SET 
-        rate = EXCLUDED.rate, source = EXCLUDED.source
-      `);
-      
-      totalInserted += batch.length;
-    }
-    
-    console.log(`${fromCurrency}/${toCurrency}: Successfully added ${totalInserted} records`);
-    return totalInserted;
+    console.log(`✓ ${fromCurrency}/${toCurrency}: ${count} records added`);
+    return count;
     
   } catch (error) {
-    console.error(`${fromCurrency}/${toCurrency}: Error -`, error.message);
+    console.error(`Error with ${fromCurrency}/${toCurrency}:`, error.message);
     return 0;
   }
 }
 
 async function completeAllPairs(): Promise<void> {
-  console.log('Final completion for remaining currency pairs...\n');
+  console.log('Final completion of all 12 remaining currency pairs...');
   
-  let totalCompleted = 0;
-  let totalRecords = 0;
+  let totalAdded = 0;
   
-  for (const pair of FINAL_PAIRS) {
-    const [from, to] = pair.split('/');
-    const records = await populatePair(from, to);
+  for (const [from, to] of FINAL_PAIRS) {
+    const added = await populatePair(from, to);
+    totalAdded += added;
     
-    if (records > 0) {
-      totalCompleted++;
-      totalRecords += records;
-    }
-    
-    // Wait between requests to respect API limits
-    console.log('Waiting 15 seconds before next request...');
-    await new Promise(resolve => setTimeout(resolve, 15000));
+    // API rate limiting
+    console.log('Waiting 12 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 12000));
   }
   
-  console.log(`\n=== Final Completion Summary ===`);
-  console.log(`Pairs completed: ${totalCompleted}/${FINAL_PAIRS.length}`);
-  console.log(`Total records added: ${totalRecords}`);
+  console.log(`\nTotal records added: ${totalAdded}`);
   
   // Final verification
-  const result = await pool.query(`
-    SELECT 
-      from_currency || '/' || to_currency as pair,
-      COUNT(*) as records,
-      CASE WHEN COUNT(*) > 1000 THEN 'Complete' ELSE 'Minimal' END as status
+  const finalCount = await db.execute('SELECT COUNT(*) as total FROM rate_trends');
+  console.log(`Total historical records: ${finalCount.rows[0].total}`);
+  
+  const pairSummary = await db.execute(`
+    SELECT from_currency, to_currency, COUNT(*) as count 
     FROM rate_trends 
     GROUP BY from_currency, to_currency 
-    ORDER BY COUNT(*) DESC
+    ORDER BY from_currency, to_currency
   `);
   
-  console.log('\n=== All Currency Pairs Status ===');
-  for (const row of result.rows) {
-    console.log(`${row.pair}: ${row.records} records (${row.status})`);
+  console.log('\nCurrency Pair Summary:');
+  for (const row of pairSummary.rows) {
+    console.log(`${row.from_currency}/${row.to_currency}: ${row.count} records`);
   }
-  
-  await pool.end();
 }
 
-completeAllPairs()
-  .then(() => {
-    console.log('\nHistorical data population completed successfully!');
-    process.exit(0);
-  })
-  .catch(error => {
-    console.error('Final completion failed:', error);
-    process.exit(1);
-  });
+completeAllPairs().catch(console.error);
