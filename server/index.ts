@@ -11,6 +11,7 @@ import updateProviderList from "./updateProviderList";
 import updateProviderInfo from "./scrapers/providerInfo";
 import dataSourceRoutes from "./routes/dataSourceRoutes";
 import { initializeRateCollectionScheduler } from "./scheduler/rateCollectionScheduler";
+import { initializeDailyIncrementScheduler } from "./scheduler/dailyIncrementScheduler";
 // DISABLED: Historical data scheduler causes Alpha Vantage data conflicts
 // import { initializeHistoricalDataScheduler } from "./scheduler/historicalDataScheduler";
 
@@ -102,6 +103,16 @@ app.use((req, res, next) => {
       log("⚠️ No immediate data collection during server restart");
     } catch (schedulerError) {
       log(`Error setting up rate collection scheduler: ${schedulerError}`);
+    }
+    
+    // Initialize daily increment scheduler for Alpha Vantage data
+    try {
+      log("📊 Setting up daily increment scheduler for Alpha Vantage data");
+      await initializeDailyIncrementScheduler();
+      log("✓ Daily increment scheduler initialized (runs at 3 AM UTC daily)");
+      log("📋 Daily increments add new data without affecting historical Alpha Vantage data");
+    } catch (incrementError) {
+      log(`Error setting up daily increment scheduler: ${incrementError}`);
     }
     
     // Strictly defer ALL operations until after server startup
