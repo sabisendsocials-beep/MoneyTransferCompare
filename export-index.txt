@@ -1,0 +1,24 @@
+# Rate History Export Index
+# Export Date: 2025-06-09T13:01:21.686Z
+# Total Records: 21599
+# Currency Pairs: 12
+# Alpha Vantage Records: 21505
+
+File,Description,Records
+rate-history-complete.csv,All rate history data,21599
+rate-history-alpha-vantage-only.csv,Alpha Vantage data only,21505
+rate-history-summary.csv,Statistical summary by pair and source,N/A
+
+# Individual Currency Pair Files:
+rate-history-EUR-GHS.csv,EUR/GHS rate history,2
+rate-history-EUR-KES.csv,EUR/KES rate history,2757
+rate-history-EUR-NGN.csv,EUR/NGN rate history,2
+rate-history-EUR-PKR.csv,EUR/PKR rate history,2756
+rate-history-GBP-GHS.csv,GBP/GHS rate history,2
+rate-history-GBP-INR.csv,GBP/INR rate history,87
+rate-history-GBP-KES.csv,GBP/KES rate history,2758
+rate-history-GBP-NGN.csv,GBP/NGN rate history,2493
+rate-history-GBP-PKR.csv,GBP/PKR rate history,2758
+rate-history-USD-GHS.csv,USD/GHS rate history,2736
+rate-history-USD-KES.csv,USD/KES rate history,2759
+rate-history-USD-NGN.csv,USD/NGN rate history,2489
