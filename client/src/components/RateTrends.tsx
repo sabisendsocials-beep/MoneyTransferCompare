@@ -95,7 +95,7 @@ const RateTrends = () => {
   const { data: trendData, isLoading: trendsLoading, error: trendsError } = useQuery<RateTrendResponse[]>({
     queryKey: [`/api/rate-trends?from=${currencyPair.from}&to=${currencyPair.to}&days=${selectedPeriod.days}`],
     retry: 2, // Retry failed requests a couple of times
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: 0, // Always refetch to get latest data
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
   
