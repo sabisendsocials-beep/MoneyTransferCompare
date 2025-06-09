@@ -12,6 +12,7 @@ import updateProviderInfo from "./scrapers/providerInfo";
 import dataSourceRoutes from "./routes/dataSourceRoutes";
 import { initializeRateCollectionScheduler } from "./scheduler/rateCollectionScheduler";
 import { initializeDailyIncrementScheduler } from "./scheduler/dailyIncrementScheduler";
+import { initializeRateAlertScheduler } from "./scheduler/rateAlertScheduler";
 // DISABLED: Historical data scheduler causes Alpha Vantage data conflicts
 // import { initializeHistoricalDataScheduler } from "./scheduler/historicalDataScheduler";
 

@@ -196,6 +196,30 @@ export const rateStatsSchema = z.object({
 
 export type RateStats = z.infer<typeof rateStatsSchema>;
 
+// Rate Alerts schema - for storing user rate alert preferences
+export const rateAlerts = pgTable("rate_alerts", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  from_currency: text("from_currency").notNull(),
+  to_currency: text("to_currency").notNull(),
+  alert_basis: text("alert_basis").notNull(), // 'official' or 'best_provider'
+  trigger_type: text("trigger_type").notNull(), // 'absolute' or 'percentage'
+  target_value: real("target_value").notNull(),
+  current_rate_at_creation: real("current_rate_at_creation").notNull(),
+  alert_status: text("alert_status").default("pending").notNull(), // 'pending', 'triggered', 'cancelled'
+  triggered_at: timestamp("triggered_at"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRateAlertSchema = createInsertSchema(rateAlerts).omit({
+  id: true,
+  created_at: true,
+  triggered_at: true,
+});
+
+export type InsertRateAlert = z.infer<typeof insertRateAlertSchema>;
+export type RateAlert = typeof rateAlerts.$inferSelect;
+
 // Newsletter Subscriptions schema - for storing email subscriptions
 export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
   id: serial("id").primaryKey(),
