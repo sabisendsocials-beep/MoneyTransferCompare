@@ -11,7 +11,8 @@ import updateProviderList from "./updateProviderList";
 import updateProviderInfo from "./scrapers/providerInfo";
 import dataSourceRoutes from "./routes/dataSourceRoutes";
 import { initializeRateCollectionScheduler } from "./scheduler/rateCollectionScheduler";
-import { initializeHistoricalDataScheduler } from "./scheduler/historicalDataScheduler";
+// DISABLED: Historical data scheduler causes Alpha Vantage data conflicts
+// import { initializeHistoricalDataScheduler } from "./scheduler/historicalDataScheduler";
 
 const app = express();
 app.use(express.json());
@@ -153,18 +154,19 @@ app.use((req, res, next) => {
       }
     }, SIX_HOURS);
     
-    // Daily Alpha Vantage historical data update - SCHEDULED ONLY, not on restart
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-    setInterval(async () => {
-      try {
-        log("Running SCHEDULED Alpha Vantage historical data update (daily)...");
-        const { runDailyAlphaVantageUpdate } = await import('../automated-daily-alpha-vantage-updater');
-        await runDailyAlphaVantageUpdate();
-        log("Daily Alpha Vantage update completed - all 15 currency pairs maintained");
-      } catch (error) {
-        log(`Error in daily Alpha Vantage update: ${error}`);
-      }
-    }, TWENTY_FOUR_HOURS);
+    // DISABLED: Daily Alpha Vantage update causes data conflicts with protected datasets
+    // This function conflicts with existing Alpha Vantage data and causes overwrites
+    // const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    // setInterval(async () => {
+    //   try {
+    //     log("Running SCHEDULED Alpha Vantage historical data update (daily)...");
+    //     const { runDailyAlphaVantageUpdate } = await import('../automated-daily-alpha-vantage-updater');
+    //     await runDailyAlphaVantageUpdate();
+    //     log("Daily Alpha Vantage update completed - all 15 currency pairs maintained");
+    //   } catch (error) {
+    //     log(`Error in daily Alpha Vantage update: ${error}`);
+    //   }
+    // }, TWENTY_FOUR_HOURS);
     
     // Update news every 8 hours - SCHEDULED ONLY, not on restart
     const EIGHT_HOURS = 8 * 60 * 60 * 1000;
