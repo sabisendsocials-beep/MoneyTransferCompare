@@ -23,7 +23,7 @@ const Header = () => {
     { href: "/compare", label: "Compare", icon: <Banknote size={18} /> },
     { href: "/trends", label: "Trends", icon: <TrendingUp size={18} /> },
     { href: "/news", label: "News", icon: <Newspaper size={18} /> },
-    { href: "/alerts", label: "Rate Alerts", icon: <Bell size={18} /> },
+
     { href: "/blog", label: "Blog", icon: <BookOpen size={18} /> },
     { href: "/how-it-works", label: "How It Works", icon: <HelpCircle size={18} /> },
     { href: "/contact", label: "Feedback", icon: <MessageSquare size={18} /> }

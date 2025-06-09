@@ -176,7 +176,35 @@ const RateTrends = () => {
     });
   }
 
-  const handleRateAlert = () => {
+  // Enhanced rate alert functionality
+  const [alertEmail, setAlertEmail] = useState("");
+  const [isCreatingAlert, setIsCreatingAlert] = useState(false);
+  const [showAlertForm, setShowAlertForm] = useState(false);
+  const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('best_provider');
+
+  // Fetch current rates for rate alert context
+  const { data: currentRates } = useQuery({
+    queryKey: ['current-rates', currencyPair.from, currencyPair.to],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/rate-alerts/current-rates?fromCurrency=${currencyPair.from}&toCurrency=${currencyPair.to}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return data.success ? data.data : null;
+      }
+      return null;
+    },
+    enabled: !!(currencyPair.from && currencyPair.to),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleRateAlert = async () => {
+    if (!showAlertForm) {
+      setShowAlertForm(true);
+      return;
+    }
+
     const rate = parseFloat(targetRate);
     if (isNaN(rate) || rate <= 0) {
       toast({
@@ -187,11 +215,69 @@ const RateTrends = () => {
       return;
     }
 
-    toast({
-      title: "Rate Alert Set",
-      description: `We'll notify you when the rate reaches ${rate} ${currencyPair.toSymbol}`,
-    });
-    setTargetRate("");
+    if (!alertEmail || !alertEmail.includes('@')) {
+      toast({
+        title: "Email required",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get the current rate for validation
+    const currentRate = alertBasis === 'official' 
+      ? currentRates?.officialRate 
+      : currentRates?.bestProviderRate;
+
+    if (currentRate && rate <= currentRate) {
+      toast({
+        title: "Invalid target",
+        description: `Target rate must be higher than current ${alertBasis === 'official' ? 'official' : 'provider'} rate (${currentRate.toLocaleString()})`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingAlert(true);
+    try {
+      const response = await fetch('/api/rate-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: alertEmail,
+          fromCurrency: currencyPair.from,
+          toCurrency: currencyPair.to,
+          targetRate: rate,
+          alertBasis: alertBasis
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Rate Alert Created",
+          description: `We'll email you when ${currencyPair.from}/${currencyPair.to} reaches ${rate.toLocaleString()} ${currencyPair.toSymbol}`,
+        });
+        setTargetRate("");
+        setAlertEmail("");
+        setShowAlertForm(false);
+      } else {
+        toast({
+          title: "Alert Failed",
+          description: result.error || "Failed to create rate alert",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create rate alert. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingAlert(false);
+    }
   };
 
   const handlePeriodChange = (value: string) => {
@@ -456,25 +542,69 @@ const RateTrends = () => {
 
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm">
                 <h4 className="font-medium text-sm mb-4 text-gray-800 dark:text-gray-200">Set Rate Alert</h4>
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col space-y-3">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    We'll notify you when the {currencyPair.from} to {currencyPair.to} rate reaches your target.
+                    Get email notifications when {currencyPair.from}/{currencyPair.to} reaches your target rate.
                   </p>
+                  
+                  {/* Current Rates Display */}
+                  {currentRates && (
+                    <div className="text-xs text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 p-2 rounded border">
+                      <div className="grid grid-cols-1 gap-1">
+                        <div>Official: {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}</div>
+                        <div>Best Provider: {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {showAlertForm && (
+                    <>
+                      {/* Email Input */}
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={alertEmail}
+                        onChange={(e) => setAlertEmail(e.target.value)}
+                        className="text-sm"
+                      />
+                      
+                      {/* Rate Basis Selection */}
+                      <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
+                        <SelectTrigger className="text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="official">Official Rate</SelectItem>
+                          <SelectItem value="best_provider">Best Provider Rate</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
+
+                  {/* Target Rate Input */}
                   <div className="flex">
                     <Input
                       type="number"
                       placeholder={`Target rate (${currencyPair.toSymbol})`}
                       value={targetRate}
                       onChange={(e) => setTargetRate(e.target.value)}
-                      className="flex-1 rounded-r-none"
+                      className="flex-1 rounded-r-none text-sm"
+                      step="0.01"
                     />
                     <Button
                       className="rounded-l-none bg-primary hover:bg-primary/90"
                       onClick={handleRateAlert}
+                      disabled={isCreatingAlert}
                     >
-                      Alert Me
+                      {isCreatingAlert ? "Creating..." : showAlertForm ? "Create Alert" : "Alert Me"}
                     </Button>
                   </div>
+
+                  {showAlertForm && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Target rate must be higher than current {alertBasis === 'official' ? 'official' : 'provider'} rate.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -19,7 +19,7 @@ import CountryPage from "@/pages/CountryPage";
 import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
 import BlogAdmin from "@/pages/BlogAdmin";
-import RateAlerts from "@/pages/RateAlerts";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { NewsletterPopupContainer } from "@/components/NewsletterPopupContainer";
@@ -54,7 +54,7 @@ function Router() {
           <Route path="/results" component={HorizontalResults} />
           <Route path="/trends" component={Trends} />
           <Route path="/news" component={News} />
-          <Route path="/alerts" component={RateAlerts} />
+
           <Route path="/how-it-works" component={HowItWorks} />
           <Route path="/contact" component={ContactUs} />
           <Route path="/admin" component={AdminPage} />
