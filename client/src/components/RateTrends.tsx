@@ -247,8 +247,9 @@ const RateTrends = () => {
           email: alertEmail,
           fromCurrency: currencyPair.from,
           toCurrency: currencyPair.to,
-          targetRate: rate,
-          alertBasis: alertBasis
+          alertBasis: alertBasis,
+          triggerType: 'absolute',
+          targetValue: rate
         }),
       });
 

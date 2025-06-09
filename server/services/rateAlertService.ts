@@ -40,35 +40,46 @@ async function getOfficialRate(fromCurrency: string, toCurrency: string): Promis
 }
 
 /**
- * Get current best provider rate
+ * Get current best provider rate using exact same logic as calculator
  */
 async function getBestProviderRate(fromCurrency: string, toCurrency: string): Promise<{
   rate: number | null;
   providerName: string | null;
 }> {
   try {
-    // Get the best rate from active providers
-    const bestRate = await db
-      .select({
-        rate: exchangeRates.rate,
-        providerName: providers.name,
-      })
-      .from(exchangeRates)
-      .innerJoin(providers, eq(exchangeRates.provider_id, providers.id))
-      .where(
-        and(
-          eq(exchangeRates.from_currency, fromCurrency),
-          eq(exchangeRates.to_currency, toCurrency),
-          eq(providers.active, true)
-        )
-      )
-      .orderBy(desc(exchangeRates.rate))
-      .limit(1);
+    // Import storage to use same method as calculator
+    const { storage } = await import('../storage');
+    
+    // Get all active providers (same as calculator)
+    const activeProviders = await storage.getActiveProviders();
+    
+    // Find the Sendwave provider ID to filter it out (same as calculator logic)
+    const sendwaveProvider = activeProviders.find(p => p.name === 'Sendwave');
+    const sendwaveId = sendwaveProvider ? sendwaveProvider.id : -1;
+    
+    // Get the latest rates using exact same method as calculator
+    const latestRates = await storage.getLatestRates(fromCurrency, toCurrency);
+    
+    // Filter out Sendwave and any rate over 5000 (sanity check) - same as calculator
+    const validRates = latestRates.filter(rate => 
+      rate.provider_id !== sendwaveId && 
+      rate.rate < 5000 && 
+      rate.rate > 0
+    );
 
-    if (bestRate.length > 0) {
+    if (validRates.length > 0) {
+      // Sort by rate (highest first) - same as calculator
+      validRates.sort((a, b) => b.rate - a.rate);
+      
+      // Get the best rate
+      const bestRate = validRates[0];
+      
+      // Find provider info
+      const provider = activeProviders.find(p => p.id === bestRate.provider_id);
+      
       return {
-        rate: bestRate[0].rate,
-        providerName: bestRate[0].providerName,
+        rate: bestRate.rate,
+        providerName: provider ? provider.name : 'Unknown',
       };
     }
 
