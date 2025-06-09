@@ -119,6 +119,21 @@ async function updateHistoricalRatesIfNeeded(): Promise<void> {
                             new Date(cacheEntry[0].last_updated) < oneWeekAgo;
         
         if (needsRefresh) {
+          console.log(`Checking refresh eligibility for ${pair.from}/${pair.to}`);
+          
+          // First check if this pair has protected Alpha Vantage data
+          const alphaVantageCheck = await db.execute(sql`
+            SELECT COUNT(*) as count FROM rate_trends 
+            WHERE from_currency = ${pair.from} AND to_currency = ${pair.to} AND source = 'alpha_vantage'
+          `);
+          
+          const alphaCount = alphaVantageCheck.rows[0].count as number;
+          
+          if (alphaCount > 1000) {
+            console.log(`PROTECTED: Skipping refresh for ${pair.from}/${pair.to} - ${alphaCount} Alpha Vantage records protected`);
+            continue; // Skip this pair to preserve Alpha Vantage data
+          }
+          
           console.log(`Refreshing historical data for ${pair.from}/${pair.to}`);
           // Fetch the most recent 7 days of data
           const recentRates = await fetchHistoricalRates(pair.from, pair.to, 7);
