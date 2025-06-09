@@ -116,6 +116,16 @@ app.use((req, res, next) => {
       log(`Error setting up daily increment scheduler: ${incrementError}`);
     }
     
+    // Initialize rate alert scheduler
+    try {
+      log("🔔 Setting up rate alert scheduler");
+      await initializeRateAlertScheduler();
+      log("✓ Rate alert scheduler initialized (checks hourly for triggered alerts)");
+      log("📧 Email notifications sent when target rates are reached");
+    } catch (alertError) {
+      log(`Error setting up rate alert scheduler: ${alertError}`);
+    }
+    
     // Strictly defer ALL operations until after server startup
     log("🔒 STRICT POLICY: All data operations deferred until scheduled time");
     log("📋 DATA OPERATIONS POLICY:");
