@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -67,35 +66,39 @@ export function RateAlertForm() {
   const fromCurrency = form.watch('fromCurrency');
   const toCurrency = form.watch('toCurrency');
 
-  // Use React Query to fetch current rates with proper caching
-  const { data: currentRates, isLoading: isLoadingRates } = useQuery({
-    queryKey: ['current-rates', fromCurrency, toCurrency],
-    queryFn: async () => {
-      if (!fromCurrency || !toCurrency || fromCurrency === toCurrency) {
-        return null;
+  const [currentRates, setCurrentRates] = useState<CurrentRates | null>(null);
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+
+  // Fetch current rates when currency pair changes
+  useEffect(() => {
+    if (!fromCurrency || !toCurrency || fromCurrency === toCurrency) {
+      setCurrentRates(null);
+      return;
+    }
+
+    const fetchRates = async () => {
+      setIsLoadingRates(true);
+      try {
+        const response = await fetch(
+          `/api/rate-alerts/current-rates?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setCurrentRates(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching rates:', error);
+      } finally {
+        setIsLoadingRates(false);
       }
-      
-      const response = await fetch(
-        `/api/rate-alerts/current-rates?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch rates: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch current rates');
-      }
-      
-      return data.data as CurrentRates;
-    },
-    enabled: !!(fromCurrency && toCurrency && fromCurrency !== toCurrency),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: false,
-    retry: 1,
-  });
+    };
+
+    const timeoutId = setTimeout(fetchRates, 500);
+    return () => clearTimeout(timeoutId);
+  }, [fromCurrency, toCurrency]);
 
   const validateAlert = async (formData: AlertFormData) => {
     try {
