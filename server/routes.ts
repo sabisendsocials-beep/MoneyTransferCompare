@@ -19,6 +19,7 @@ import aceRouter from "./routes/aceMoneyTransferRoutes";
 import afriexappRouter from "./routes/afriexappRoutes";
 import testRouter from './api/aceRateTest';
 import blogRouter from "./routes/blogRouter";
+import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -51,6 +52,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register blog routes
   app.use('/api/blog', blogRouter);
+  
+  // Register admin historical data routes
+  app.use('/api', adminHistoricalRouter);
   
   // Newsletter subscription endpoint
   app.post('/api/newsletter-signup', async (req: Request, res: Response) => {
@@ -456,11 +460,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[API] Fetching rate trends for ${fromCurrency}/${toCurrency} (${days} days)`);
       
-      // Import our historical rates service
-      const { getHistoricalRates } = await import('./services/historicalRatesService');
+      // Import our new chart data service (combines historical + daily increments)
+      const { getChartData } = await import('./services/chartDataService');
       
-      // Get historical rates from our service (which uses real data from ExchangeRate-API)
-      const historicalRates = await getHistoricalRates(fromCurrency, toCurrency, days);
+      // Get combined chart data (historical Alpha Vantage + daily increments)
+      const historicalRates = await getChartData(fromCurrency, toCurrency, days);
       
       if (historicalRates && historicalRates.length > 0) {
         // Ensure the data is sorted chronologically by date
