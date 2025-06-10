@@ -21,7 +21,7 @@ import testRouter from './api/aceRateTest';
 import blogRouter from "./routes/blogRouter";
 import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 import rateAlertRouter from "./routes/rateAlertRoutes";
-import { setupAuth, isAuthenticated, optionalAuth } from "./replitAuth";
+import { setupAuth, isAuthenticated, optionalAuth } from "./simpleAuth";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -61,17 +61,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register rate alert routes
   app.use('/api', rateAlertRouter);
   
-  // Authentication endpoints
+  // Authentication endpoints for email/password auth
   app.get('/api/auth/status', optionalAuth, (req: any, res) => {
     const isAuthenticated = req.isAuthenticated();
-    const user = isAuthenticated ? req.user?.claims : null;
+    const user = isAuthenticated ? req.user : null;
     res.json({ 
       user: user ? {
-        id: user.sub,
+        id: user.id,
         email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        profileImageUrl: user.profile_image_url
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl
       } : null, 
       isAuthenticated 
     });

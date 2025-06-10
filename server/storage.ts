@@ -16,10 +16,11 @@ import {
 } from '@shared/schema';
 
 export interface IStorage {
-  // User methods - updated for Replit Auth
+  // User methods - updated for email/password auth
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(insertUser: InsertUser): Promise<User>;
+  createUser(userData: { email: string; password: string; firstName?: string; lastName?: string }): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   
   // User preferences methods
