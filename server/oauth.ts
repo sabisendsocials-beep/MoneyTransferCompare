@@ -16,7 +16,7 @@ export function setupOAuth(app: Express) {
         // Check if user exists by email
         const email = profile.emails?.[0]?.value;
         if (!email) {
-          return done(new Error('No email found in Google profile'), null);
+          return done(new Error('No email found in Google profile'));
         }
 
         let user = await storage.getUserByEmail(email);
@@ -46,47 +46,8 @@ export function setupOAuth(app: Express) {
     }));
   }
 
-  // GitHub OAuth Strategy
-  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-    passport.use(new GitHubStrategy({
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: "/api/auth/github/callback"
-    }, async (accessToken, refreshToken, profile, done) => {
-      try {
-        // Check if user exists by email
-        const email = profile.emails?.[0]?.value;
-        if (!email) {
-          return done(new Error('No email found in GitHub profile'), null);
-        }
-
-        let user = await storage.getUserByEmail(email);
-        
-        if (user) {
-          // Update existing user with GitHub info
-          user = await storage.updateUser(user.id, {
-            firstName: profile.displayName?.split(' ')[0] || user.firstName,
-            lastName: profile.displayName?.split(' ').slice(1).join(' ') || user.lastName,
-            profileImageUrl: profile.photos?.[0]?.value || user.profileImageUrl,
-          });
-        } else {
-          // Create new user
-          const nameParts = profile.displayName?.split(' ') || ['', ''];
-          user = await storage.createUser({
-            email,
-            firstName: nameParts[0] || '',
-            lastName: nameParts.slice(1).join(' ') || '',
-            profileImageUrl: profile.photos?.[0]?.value || null,
-            password: '', // No password needed for OAuth users
-          });
-        }
-
-        return done(null, user);
-      } catch (error) {
-        return done(error, null);
-      }
-    }));
-  }
+  // GitHub OAuth - Temporarily disabled
+  // Will be enabled when GitHub credentials are provided
 
   // OAuth Routes
   app.get('/api/auth/google',
@@ -100,14 +61,6 @@ export function setupOAuth(app: Express) {
     }
   );
 
-  app.get('/api/auth/github',
-    passport.authenticate('github', { scope: ['user:email'] })
-  );
-
-  app.get('/api/auth/github/callback',
-    passport.authenticate('github', { failureRedirect: '/login?error=github_auth_failed' }),
-    (req, res) => {
-      res.redirect('/');
-    }
-  );
+  // GitHub routes temporarily disabled
+  // Will be enabled when GitHub credentials are provided
 }

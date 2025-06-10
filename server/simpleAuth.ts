@@ -5,6 +5,7 @@ import type { Express, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import connectPg from "connect-pg-simple";
 import { storage } from "./databaseStorage";
+import { setupOAuth } from "./oauth";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -89,6 +90,9 @@ export async function setupAuth(app: Express) {
       done(error);
     }
   });
+
+  // Setup OAuth strategies and routes
+  setupOAuth(app);
 
   // Authentication routes
   app.post("/api/auth/login", passport.authenticate('local'), (req, res) => {
