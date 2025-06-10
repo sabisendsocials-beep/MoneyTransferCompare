@@ -136,9 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const alertId = parseInt(req.params.alertId);
       
-      // Verify the alert belongs to the user
-      const alert = await storage.getRateAlert(alertId);
-      if (!alert || alert.userId !== userId) {
+      // Get user's rate alerts to verify ownership
+      const userAlerts = await storage.getUserRateAlerts(userId);
+      const alert = userAlerts.find(a => a.id === alertId);
+      if (!alert) {
         return res.status(404).json({ message: "Rate alert not found" });
       }
       
@@ -170,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Direct verification endpoint
-  apiRouter.post("/api/direct-verify", async (req: Request, res: Response) => {
+  app.post("/api/direct-verify", async (req: Request, res: Response) => {
     try {
       const { id, verified } = req.body;
       
@@ -232,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Rate verification endpoint
-  apiRouter.post("/api/rate-verify", async (req: Request, res: Response) => {
+  app.post("/api/rate-verify", async (req: Request, res: Response) => {
     try {
       const { id, verified } = req.body;
       
@@ -294,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get all verified rates
-  apiRouter.get("/api/verified-rates", async (_req: Request, res: Response) => {
+  app.get("/api/verified-rates", async (_req: Request, res: Response) => {
     try {
       // Import needed dependencies
       const { db } = await import('./db');
@@ -319,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // System settings management routes
-  apiRouter.get("/api/system-settings", async (req: Request, res: Response) => {
+  app.get("/api/system-settings", async (req: Request, res: Response) => {
     try {
       const settings = await storage.getAllSystemSettings();
       res.json(settings);
@@ -329,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.get("/api/system-settings/:key", async (req: Request, res: Response) => {
+  app.get("/api/system-settings/:key", async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
       const setting = await storage.getSystemSetting(key);
@@ -343,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.put("/api/system-settings/:key", async (req: Request, res: Response) => {
+  app.put("/api/system-settings/:key", async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
       const { value, description } = req.body;
@@ -368,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.delete("/api/system-settings/:key", async (req: Request, res: Response) => {
+  app.delete("/api/system-settings/:key", async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
       await storage.deleteSystemSetting(key);
@@ -380,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all providers
-  apiRouter.get("/api/providers", async (req: Request, res: Response) => {
+  app.get("/api/providers", async (req: Request, res: Response) => {
     try {
       const providers = await storage.getActiveProviders();
       res.json(providers);
@@ -391,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Compare transfer options
-  apiRouter.post("/api/compare", async (req: Request, res: Response) => {
+  app.post("/api/compare", async (req: Request, res: Response) => {
     try {
       console.log('SERVER: Raw request body received:', req.body);
       console.log('SERVER: Request body amount:', req.body.amount);
@@ -418,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get latest exchange rates
-  apiRouter.get("/api/rates", async (req: Request, res: Response) => {
+  app.get("/api/rates", async (req: Request, res: Response) => {
     try {
       const fromCurrency = (req.query.from as string) || "GBP";
       const toCurrency = (req.query.to as string) || "NGN";
@@ -432,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current rates for manual providers
-  apiRouter.get("/api/manual-rates", async (req: Request, res: Response) => {
+  app.get("/api/manual-rates", async (req: Request, res: Response) => {
     try {
       // Get all manual providers
       const providers = await storage.getProviders();
@@ -490,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk update rates for manual providers
-  apiRouter.post("/api/bulk-update-rates", async (req: Request, res: Response) => {
+  app.post("/api/bulk-update-rates", async (req: Request, res: Response) => {
     try {
       const { updates } = req.body;
       
@@ -546,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get rate trends - uses real historical exchange rate data from ExchangeRate-API
-  apiRouter.get("/api/rate-trends", async (req: Request, res: Response) => {
+  app.get("/api/rate-trends", async (req: Request, res: Response) => {
     try {
       const fromCurrency = (req.query.from as string) || "GBP";
       const toCurrency = (req.query.to as string) || "NGN";
@@ -687,7 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get best rates for the calculator
-  apiRouter.get("/api/best-rates", async (req: Request, res: Response) => {
+  app.get("/api/best-rates", async (req: Request, res: Response) => {
     try {
       // Get all active providers
       const providers = await storage.getActiveProviders();
@@ -757,7 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Contact form submission endpoint
-  apiRouter.post("/api/contact", async (req: Request, res: Response) => {
+  app.post("/api/contact", async (req: Request, res: Response) => {
     try {
       // Validate the request data using our schema
       const { name, email, topic, message } = req.body;
@@ -793,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get rate statistics
-  apiRouter.get("/api/rate-stats", async (req: Request, res: Response) => {
+  app.get("/api/rate-stats", async (req: Request, res: Response) => {
     try {
       const fromCurrency = (req.query.from as string) || (req.query.fromCurrency as string) || "GBP";
       const toCurrency = (req.query.to as string) || (req.query.toCurrency as string) || "NGN";
@@ -807,7 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get latest news
-  apiRouter.get("/api/news", async (req: Request, res: Response) => {
+  app.get("/api/news", async (req: Request, res: Response) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
       let news = await storage.getLatestNews(limit);
@@ -872,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Manually trigger data updates (for testing purposes)
-  apiRouter.post("/api/update-rates", async (req: Request, res: Response) => {
+  app.post("/api/update-rates", async (req: Request, res: Response) => {
     try {
       // Extract option to clear existing rates from request body
       const { clearExisting = false } = req.body;
@@ -899,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // New endpoint to clear all exchange rates and refresh
-  apiRouter.post("/api/refresh-rates", async (req: Request, res: Response) => {
+  app.post("/api/refresh-rates", async (req: Request, res: Response) => {
     try {
       console.log("Clearing all exchange rates and refreshing with only scraped values...");
       
@@ -925,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Removed endpoint that added predefined GBP-NGN rates
 
-  apiRouter.post("/api/update-news", async (req: Request, res: Response) => {
+  app.post("/api/update-news", async (req: Request, res: Response) => {
     try {
       console.log("Starting BusinessDay Nigeria update process...");
       
@@ -951,7 +952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Special endpoint to force update rate trends with the API key
-  apiRouter.get("/api/update-rate-trends", async (req: Request, res: Response) => {
+  app.get("/api/update-rate-trends", async (req: Request, res: Response) => {
     try {
       const { updateRateTrends } = await import('./api/exchangeRateApi');
       await updateRateTrends();
@@ -972,7 +973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Special endpoint to test the Lemfi scraper directly
-  apiRouter.get("/api/test-lemfi", async (req: Request, res: Response) => {
+  app.get("/api/test-lemfi", async (req: Request, res: Response) => {
     try {
       console.log("Testing Lemfi rate scraper directly...");
       const success = await updateLemfiRates();
@@ -999,7 +1000,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to force update WorldRemit rate using its admin-configured scraper
-  apiRouter.post("/api/update-worldremit", async (req: Request, res: Response) => {
+  app.post("/api/update-worldremit", async (req: Request, res: Response) => {
     try {
       console.log('Triggering WorldRemit rate update using admin-configured URL and selector...');
       
@@ -1043,7 +1044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to force update Remitly rate using its admin-configured scraper
-  apiRouter.post("/api/update-remitly", async (req: Request, res: Response) => {
+  app.post("/api/update-remitly", async (req: Request, res: Response) => {
     try {
       console.log('Triggering Remitly rate update using admin-configured URL and selector...');
       
@@ -1087,7 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to force update TransferGo rate using its admin-configured scraper
-  apiRouter.post("/api/update-transfergo", async (req: Request, res: Response) => {
+  app.post("/api/update-transfergo", async (req: Request, res: Response) => {
     try {
       console.log('Triggering TransferGo rate update using admin-configured URL and selector...');
       
@@ -1131,7 +1132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to force update Nala rate using its admin-configured scraper
-  apiRouter.post("/api/update-nala", async (req: Request, res: Response) => {
+  app.post("/api/update-nala", async (req: Request, res: Response) => {
     try {
       console.log('Triggering Nala rate update using admin-configured URL and selector...');
       
@@ -1301,7 +1302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Special endpoint to update Wise rates via API only
-  apiRouter.get("/api/update-wise-rates", async (req: Request, res: Response) => {
+  app.get("/api/update-wise-rates", async (req: Request, res: Response) => {
     try {
       console.log('Performing complete Wise rate cleanup and refresh...');
       
@@ -1327,7 +1328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test endpoint for specialized scrapers
-  apiRouter.get("/api/test-specialized-scrapers", async (req: Request, res: Response) => {
+  app.get("/api/test-specialized-scrapers", async (req: Request, res: Response) => {
     try {
       console.log('Testing specialized scrapers for more providers...');
       const success = await updateAdditionalProviders();
@@ -1343,7 +1344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update SendWave CSS selector and test scraper
-  apiRouter.post("/api/update-sendwave-selector", async (req: Request, res: Response) => {
+  app.post("/api/update-sendwave-selector", async (req: Request, res: Response) => {
     try {
       // Get the SendWave provider
       const providers = await storage.getProviders();
@@ -1406,7 +1407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Test endpoint for SendWave precise CSS selector scraper
-  apiRouter.get("/api/test-sendwave-css", async (req: Request, res: Response) => {
+  app.get("/api/test-sendwave-css", async (req: Request, res: Response) => {
     try {
       console.log("Testing SendWave precise CSS selector scraper...");
       
@@ -1463,7 +1464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Keep this endpoint to compare different approaches
-  apiRouter.get("/api/test-sendwave-screenshots", async (req: Request, res: Response) => {
+  app.get("/api/test-sendwave-screenshots", async (req: Request, res: Response) => {
     try {
       return res.json({
         success: false,
@@ -1477,7 +1478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to update more providers using values from logs
-  apiRouter.get("/api/update-more-providers", async (req: Request, res: Response) => {
+  app.get("/api/update-more-providers", async (req: Request, res: Response) => {
     try {
       const { updateMoreProviders } = await import('./updateMoreProviders');
       console.log('Updating more providers with values from logs...');
@@ -1494,7 +1495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to run Puppeteer scraper for better exchange rate extraction
-  apiRouter.get("/api/run-puppeteer-scraper", async (req: Request, res: Response) => {
+  app.get("/api/run-puppeteer-scraper", async (req: Request, res: Response) => {
     try {
       const { puppeteerScrapeProviders } = await import('./scrapers/puppeteerScraper');
       console.log('Running Puppeteer-based scraper for exchange rates...');
@@ -1511,7 +1512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to update rates with verified values from screenshots
-  apiRouter.get("/api/update-verified-rates", async (req: Request, res: Response) => {
+  app.get("/api/update-verified-rates", async (req: Request, res: Response) => {
     try {
       const { updateVerifiedRates } = await import('./updateVerifiedRates');
       console.log('Updating rates with verified values from screenshots...');
@@ -1528,7 +1529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to update provider ratings with verified TrustPilot values
-  apiRouter.get("/api/update-provider-ratings", async (req: Request, res: Response) => {
+  app.get("/api/update-provider-ratings", async (req: Request, res: Response) => {
     try {
       const { updateVerifiedRatings } = await import('./updateVerifiedRatings');
       console.log('Updating provider ratings with verified TrustPilot values...');
@@ -1545,7 +1546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to update provider ratings from Trustpilot
-  apiRouter.get("/api/update-trustpilot-ratings", async (req: Request, res: Response) => {
+  app.get("/api/update-trustpilot-ratings", async (req: Request, res: Response) => {
     try {
       const { updateProviderRatingsFromTrustpilot } = await import('./scrapers/trustpilotScraper');
       console.log('Updating provider ratings from Trustpilot...');
@@ -1562,7 +1563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint to test fetching Trustpilot ratings (without updating the database)
-  apiRouter.get("/api/test-trustpilot-ratings", async (req: Request, res: Response) => {
+  app.get("/api/test-trustpilot-ratings", async (req: Request, res: Response) => {
     try {
       const { testFetchTrustpilotRatings } = await import('./scrapers/trustpilotScraper');
       console.log('Testing Trustpilot rating fetch...');
@@ -1583,7 +1584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add endpoint to update all rates from screenshots
-  apiRouter.post("/api/update-from-screenshots", async (req: Request, res: Response) => {
+  app.post("/api/update-from-screenshots", async (req: Request, res: Response) => {
     try {
       console.log('Updating all provider rates from verified screenshots...');
       
