@@ -271,7 +271,7 @@ const RateAlertModule = () => {
                       placeholder="your@email.com"
                       value={alertEmail}
                       onChange={(e) => setAlertEmail(e.target.value)}
-                      className="border-gray-300 dark:border-gray-600 focus:border-emerald-500 dark:focus:border-emerald-400"
+                      className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                     />
                   </div>
 
@@ -281,7 +281,7 @@ const RateAlertModule = () => {
                       Rate Type
                     </label>
                     <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
-                      <SelectTrigger className="border-gray-300 dark:border-gray-600 focus:border-emerald-500 dark:focus:border-emerald-400">
+                      <SelectTrigger className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -301,7 +301,7 @@ const RateAlertModule = () => {
                       placeholder={`Target rate (${currencyPair.toSymbol})`}
                       value={targetRate}
                       onChange={(e) => setTargetRate(e.target.value)}
-                      className="border-gray-300 dark:border-gray-600 focus:border-emerald-500 dark:focus:border-emerald-400"
+                      className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                       step="0.01"
                     />
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -314,7 +314,7 @@ const RateAlertModule = () => {
               {/* Action Button */}
               <div className="text-center">
                 <Button
-                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
                   onClick={handleCreateAlert}
                   disabled={createAlertMutation.isPending}
                 >
@@ -335,10 +335,10 @@ const RateAlertModule = () => {
               </div>
 
               {showForm && (
-                <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                   <div className="flex items-start">
-                    <Bell className="h-5 w-5 text-emerald-600 mt-0.5 mr-3 flex-shrink-0" />
-                    <div className="text-sm text-emerald-800 dark:text-emerald-200">
+                    <Bell className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-blue-800 dark:text-blue-200">
                       <p className="font-medium mb-1">How it works:</p>
                       <ul className="space-y-1 text-xs">
                         <li>• We monitor exchange rates every hour</li>
