@@ -211,7 +211,7 @@ const RateAlertModule = () => {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="bg-gradient-to-br from-blue-50 via-blue-100 to-blue-150 p-8 text-blue-800">
               <h3 className="text-2xl font-bold mb-6">Set Up Your Rate Alert</h3>
               
@@ -219,7 +219,7 @@ const RateAlertModule = () => {
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-3 text-blue-600">Currency Pair</label>
                 <Select value={selectedPair} onValueChange={setSelectedPair}>
-                  <SelectTrigger className="bg-white/80 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium">
+                  <SelectTrigger className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,10 +234,10 @@ const RateAlertModule = () => {
 
               {/* Current Rates Display */}
               {currentRates && (
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 mb-6 border border-blue-100">
+                <div className="bg-gray-100 backdrop-blur-sm rounded-xl p-6 mb-6 border border-blue-100">
                   <h4 className="text-lg font-semibold mb-4 text-blue-700">Current Rates</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white/90 rounded-lg p-4 border border-blue-100">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-blue-100">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
                           <span className="text-sm text-blue-600 font-medium">Official Rate:</span>
@@ -256,7 +256,7 @@ const RateAlertModule = () => {
                         )}
                       </div>
                     </div>
-                    <div className="bg-white/90 rounded-lg p-4 border border-blue-100">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-blue-100">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
                           <span className="text-sm text-blue-600 font-medium">Best Provider:</span>
