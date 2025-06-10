@@ -121,10 +121,17 @@ export class DatabaseStorage implements IStorage {
 
   // Rate alerts methods for logged-in users
   async getUserRateAlerts(userId: string): Promise<RateAlert[]> {
+    // First get user's email from their ID
+    const user = await this.getUser(userId);
+    if (!user || !user.email) {
+      return [];
+    }
+    
+    // Query rate alerts by email address (since that's how they're stored)
     return await db
       .select()
       .from(rateAlerts)
-      .where(eq(rateAlerts.userId, userId))
+      .where(eq(rateAlerts.email, user.email))
       .orderBy(desc(rateAlerts.created_at));
   }
 
