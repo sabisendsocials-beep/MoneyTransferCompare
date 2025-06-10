@@ -41,6 +41,7 @@ const UserProfile = () => {
     queryKey: ["/api/auth/user"],
     enabled: !!user,
     retry: false,
+    staleTime: 0,
   });
 
 
@@ -133,6 +134,14 @@ const UserProfile = () => {
 
   const preferences = (profileData as any)?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
   const alerts = Array.isArray(rateAlertsData) ? rateAlertsData : [];
+
+  // Debug what we're actually receiving
+  console.log('=== FRONTEND DEBUG ===');
+  console.log('Profile data received:', profileData);
+  console.log('Preferences object:', preferences);
+  console.log('Currency pairs:', preferences.preferredCurrencyPairs);
+  console.log('Providers:', preferences.preferredProviders);
+  console.log('=== END FRONTEND DEBUG ===');
 
   const addCurrencyPair = () => {
     if (!newCurrencyPair || preferences.preferredCurrencyPairs.includes(newCurrencyPair)) return;

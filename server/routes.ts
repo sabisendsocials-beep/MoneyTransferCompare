@@ -83,26 +83,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       const preferences = await storage.getUserPreferences(userId);
       
-      console.log('=== USER API DEBUG ===');
-      console.log('User ID:', userId);
-      console.log('Raw preferences from storage:', JSON.stringify(preferences, null, 2));
-      
-      if (preferences) {
-        console.log('Currency pairs type:', typeof preferences.preferredCurrencyPairs);
-        console.log('Currency pairs value:', preferences.preferredCurrencyPairs);
-        console.log('Currency pairs is array:', Array.isArray(preferences.preferredCurrencyPairs));
-        console.log('Providers type:', typeof preferences.preferredProviders);
-        console.log('Providers value:', preferences.preferredProviders);
-        console.log('Providers is array:', Array.isArray(preferences.preferredProviders));
-      }
-      
       const response = { 
         ...user,
         preferences: preferences || { preferredCurrencyPairs: [], preferredProviders: [] }
       };
       
-      console.log('Final response preferences:', JSON.stringify(response.preferences, null, 2));
-      console.log('=== END USER API DEBUG ===');
+      console.log('=== FINAL API RESPONSE ===');
+      console.log('User preferences being sent to frontend:');
+      console.log('Currency pairs:', response.preferences.preferredCurrencyPairs);
+      console.log('Providers:', response.preferences.preferredProviders);
+      console.log('=== END API RESPONSE ===');
       
       // Disable caching to force fresh data
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
