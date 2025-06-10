@@ -23,7 +23,30 @@ const Header = () => {
   };
 
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    window.location.href = "/login";
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        window.location.href = '/';
+        toast({
+          title: 'Logged out successfully',
+          description: 'See you next time!',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Logout failed',
+        description: 'Please try again',
+        variant: 'destructive'
+      });
+    }
   };
 
   const navItems = [
@@ -82,7 +105,7 @@ const Header = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.location.href = "/api/logout"}
+                    onClick={handleLogout}
                     className="flex items-center gap-2"
                   >
                     <LogOut className="h-4 w-4" />
@@ -170,7 +193,7 @@ const Header = () => {
                     <div
                       className="font-medium py-2 cursor-pointer text-gray-600 dark:text-gray-300 flex items-center space-x-2"
                       onClick={() => {
-                        window.location.href = '/api/logout';
+                        handleLogout();
                         setIsMobileMenuOpen(false);
                       }}
                     >
