@@ -36,7 +36,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(userData: { email: string; password: string; firstName?: string; lastName?: string }): Promise<User> {
+  async createUser(userData: { email: string; password: string; firstName?: string; lastName?: string; profileImageUrl?: string | null }): Promise<User> {
     const userId = crypto.randomUUID();
     const [user] = await db
       .insert(users)
@@ -46,6 +46,7 @@ export class DatabaseStorage implements IStorage {
         password: userData.password,
         firstName: userData.firstName || null,
         lastName: userData.lastName || null,
+        profileImageUrl: userData.profileImageUrl || null,
       })
       .returning();
     return user;
@@ -56,7 +57,17 @@ export class DatabaseStorage implements IStorage {
     return undefined;
   }
 
-
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...userData,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
