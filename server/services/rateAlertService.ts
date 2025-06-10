@@ -193,7 +193,7 @@ export async function createRateAlert(alertData: {
     : validation.currentRates!.bestProviderRate!;
 
   try {
-    // Check for existing pending alert with same criteria
+    // Check for existing alert with same exact target value
     const existingAlert = await db
       .select()
       .from(rateAlerts)
@@ -203,6 +203,8 @@ export async function createRateAlert(alertData: {
           eq(rateAlerts.from_currency, alertData.fromCurrency),
           eq(rateAlerts.to_currency, alertData.toCurrency),
           eq(rateAlerts.alert_basis, alertData.alertBasis),
+          eq(rateAlerts.trigger_type, alertData.triggerType),
+          eq(rateAlerts.target_value, alertData.targetValue),
           eq(rateAlerts.alert_status, 'pending')
         )
       )
@@ -211,7 +213,7 @@ export async function createRateAlert(alertData: {
     if (existingAlert.length > 0) {
       return {
         success: false,
-        error: 'You already have a pending alert for this currency pair and basis',
+        error: 'You already have a pending alert with this exact target value',
       };
     }
 
