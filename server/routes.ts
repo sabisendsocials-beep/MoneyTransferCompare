@@ -83,10 +83,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       const preferences = await storage.getUserPreferences(userId);
       
-      res.json({ 
+      console.log('User API - Raw preferences from storage:', JSON.stringify(preferences, null, 2));
+      
+      const response = { 
         ...user,
         preferences: preferences || { preferredCurrencyPairs: [], preferredProviders: [] }
-      });
+      };
+      
+      console.log('User API - Final response preferences:', JSON.stringify(response.preferences, null, 2));
+      
+      res.json(response);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

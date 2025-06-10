@@ -131,6 +131,13 @@ const UserProfile = () => {
   const preferences = (profileData as any)?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
   const alerts = Array.isArray(rateAlertsData) ? rateAlertsData : [];
 
+  // Debug logging
+  console.log('Profile data received:', profileData);
+  console.log('Raw preferences:', (profileData as any)?.preferences);
+  console.log('Processed preferences:', preferences);
+  console.log('Currency pairs:', preferences.preferredCurrencyPairs);
+  console.log('Providers:', preferences.preferredProviders);
+
   const addCurrencyPair = () => {
     if (!newCurrencyPair || preferences.preferredCurrencyPairs.includes(newCurrencyPair)) return;
     
