@@ -119,7 +119,7 @@ const RateAlertModule = () => {
       });
       setAlertEmail("");
       setTargetRate("");
-      setShowForm(false);
+      // Alert created successfully - form remains visible for additional alerts
       queryClient.invalidateQueries({ queryKey: ['/api/rate-alerts'] });
     },
     onError: (error: any) => {
