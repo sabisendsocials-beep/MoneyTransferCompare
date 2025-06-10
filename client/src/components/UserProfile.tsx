@@ -38,9 +38,11 @@ const UserProfile = () => {
 
   // Fetch user profile data
   const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/api/auth/user", Date.now()], // Force fresh data
     enabled: !!user,
     retry: false,
+    refetchOnMount: true,
+    staleTime: 0,
   });
 
   // Fetch user rate alerts
