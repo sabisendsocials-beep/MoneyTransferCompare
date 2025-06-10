@@ -53,7 +53,7 @@ const UserProfile = () => {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (preferences: { preferredCurrencyPairs: string[], preferredProviders: string[] }) => {
-      return apiRequest("/api/auth/preferences", "POST", preferences);
+      return apiRequest("POST", "/api/auth/preferences", preferences);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -74,7 +74,7 @@ const UserProfile = () => {
   // Cancel rate alert mutation
   const cancelAlertMutation = useMutation({
     mutationFn: async (alertId: number) => {
-      return apiRequest(`/api/auth/rate-alerts/${alertId}`, "DELETE");
+      return apiRequest("DELETE", `/api/auth/rate-alerts/${alertId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/rate-alerts"] });
