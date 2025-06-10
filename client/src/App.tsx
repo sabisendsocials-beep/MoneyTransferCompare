@@ -20,6 +20,8 @@ import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
 import BlogAdmin from "@/pages/BlogAdmin";
 import Profile from "@/pages/Profile";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -66,6 +68,10 @@ function Router() {
           <Route path="/blog" component={Blog} />
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/blog-admin" component={BlogAdmin} />
+          
+          {/* Authentication */}
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
           
           {/* User Profile */}
           <Route path="/profile" component={Profile} />

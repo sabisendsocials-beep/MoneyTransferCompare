@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       const preferences = await storage.getUserPreferences(userId);
       
@@ -95,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/auth/rate-alerts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const alerts = await storage.getUserRateAlerts(userId);
       res.json(alerts);
     } catch (error) {
