@@ -186,17 +186,35 @@ const RateTrends = () => {
   const { data: currentRates } = useQuery({
     queryKey: ['current-rates', currencyPair.from, currencyPair.to],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/rate-alerts/current-rates?fromCurrency=${currencyPair.from}&toCurrency=${currencyPair.to}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        return data.success ? data.data : null;
+      try {
+        const response = await fetch(
+          `/api/rate-alerts/current-rates?fromCurrency=${currencyPair.from}&toCurrency=${currencyPair.to}`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          console.warn('Empty response from current rates API');
+          return null;
+        }
+        
+        try {
+          const data = JSON.parse(text);
+          return data.success ? data.data : null;
+        } catch (jsonError) {
+          console.error('Failed to parse current rates JSON:', text);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error fetching current rates:', error);
+        return null;
       }
-      return null;
     },
     enabled: !!(currencyPair.from && currencyPair.to),
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   const handleRateAlert = async () => {
