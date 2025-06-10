@@ -21,6 +21,7 @@ import testRouter from './api/aceRateTest';
 import blogRouter from "./routes/blogRouter";
 import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 import rateAlertRouter from "./routes/rateAlertRoutes";
+import authRouter from "./routes/authRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -59,6 +60,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register rate alert routes
   app.use('/api', rateAlertRouter);
+  
+  // Register authentication routes
+  app.use(authRouter);
   
   // Newsletter subscription endpoint
   app.post('/api/newsletter-signup', async (req: Request, res: Response) => {

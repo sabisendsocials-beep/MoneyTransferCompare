@@ -1,6 +1,7 @@
 import { db } from './db';
 import { 
-  User, InsertUser, 
+  User, InsertUser, UpsertUser,
+  UserPreferences, InsertUserPreferences,
   Provider, InsertProvider, 
   ExchangeRate, InsertExchangeRate,
   News, InsertNews,
@@ -11,7 +12,9 @@ import {
   NewsletterSubscription, InsertNewsletterSubscription,
   BlogPost, InsertBlogPost,
   SystemSetting, InsertSystemSetting,
-  contactSubmissions, newsletterSubscriptions, blogPosts, systemSettings
+  RateAlert, InsertRateAlert,
+  contactSubmissions, newsletterSubscriptions, blogPosts, systemSettings,
+  users, userPreferences, rateAlerts, sessions
 } from '@shared/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -22,20 +25,101 @@ import { rateStatsService } from './services/rateStatsService';
 import { IStorage } from './storage';
 
 export class DatabaseStorage implements IStorage {
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
+  // User methods - updated for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
-    return user;
+    // Note: This method is kept for interface compatibility but not used in Replit Auth
+    return undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(schema.users).values(insertUser).returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  // User preferences methods
+  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
+    return preferences;
+  }
+
+  async updateUserPreferences(userId: string, preferences: InsertUserPreferences): Promise<UserPreferences> {
+    // Check if preferences exist
+    const existing = await this.getUserPreferences(userId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(userPreferences)
+        .set({
+          ...preferences,
+          updatedAt: new Date(),
+        })
+        .where(eq(userPreferences.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(userPreferences)
+        .values({
+          ...preferences,
+          userId,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  // Rate alerts methods for logged-in users
+  async getUserRateAlerts(userId: string): Promise<RateAlert[]> {
+    return await db
+      .select()
+      .from(rateAlerts)
+      .where(eq(rateAlerts.userId, userId))
+      .orderBy(desc(rateAlerts.created_at));
+  }
+
+  async updateRateAlert(alertId: number, userId: string, updates: Partial<InsertRateAlert>): Promise<RateAlert | undefined> {
+    const [updated] = await db
+      .update(rateAlerts)
+      .set(updates)
+      .where(and(
+        eq(rateAlerts.id, alertId),
+        eq(rateAlerts.userId, userId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async deleteRateAlert(alertId: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(rateAlerts)
+      .where(and(
+        eq(rateAlerts.id, alertId),
+        eq(rateAlerts.userId, userId)
+      ));
+    return result.rowCount !== undefined && result.rowCount > 0;
   }
   
   // Provider methods
