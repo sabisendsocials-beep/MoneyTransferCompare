@@ -38,10 +38,11 @@ const UserProfile = () => {
 
   // Fetch user profile data  
   const { data: profileData, isLoading: profileLoading, error: profileError, refetch } = useQuery({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/api/auth/user", Math.random()],
     enabled: !!user,
     retry: false,
     staleTime: 0,
+    cacheTime: 0,
   });
 
 
@@ -59,7 +60,13 @@ const UserProfile = () => {
       return apiRequest("POST", "/api/auth/preferences", preferences);
     },
     onSuccess: () => {
+      // Force cache invalidation and fresh data fetch
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.removeQueries({ queryKey: ["/api/auth/user"] });
+      // Force immediate refetch
+      setTimeout(() => {
+        refetch();
+      }, 100);
       toast({
         title: "Preferences updated",
         description: "Your preferences have been saved successfully.",
