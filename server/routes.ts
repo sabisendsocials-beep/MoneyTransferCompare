@@ -21,7 +21,7 @@ import testRouter from './api/aceRateTest';
 import blogRouter from "./routes/blogRouter";
 import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 import rateAlertRouter from "./routes/rateAlertRoutes";
-import authRouter from "./routes/authRoutes";
+// import authRouter from "./routes/authRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -61,8 +61,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register rate alert routes
   app.use('/api', rateAlertRouter);
   
-  // Register authentication routes
-  app.use(authRouter);
+  // Temporary authentication endpoints for frontend compatibility
+  app.get('/api/auth/status', (req, res) => {
+    res.json({ user: null, isAuthenticated: false });
+  });
+  
+  app.get('/api/auth/user', (req, res) => {
+    res.json({ user: null, preferences: { preferredCurrencyPairs: [], preferredProviders: [] } });
+  });
+  
+  app.get('/api/auth/rate-alerts', (req, res) => {
+    res.json([]);
+  });
   
   // Newsletter subscription endpoint
   app.post('/api/newsletter-signup', async (req: Request, res: Response) => {
