@@ -7,8 +7,8 @@ export function useAuth() {
   });
 
   return {
-    user: authData?.user,
+    user: authData?.user || null,
     isLoading,
-    isAuthenticated: authData?.isAuthenticated || false,
+    isAuthenticated: Boolean(authData?.isAuthenticated),
   };
 }

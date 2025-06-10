@@ -19,6 +19,7 @@ import CountryPage from "@/pages/CountryPage";
 import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
 import BlogAdmin from "@/pages/BlogAdmin";
+import Profile from "@/pages/Profile";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -65,6 +66,9 @@ function Router() {
           <Route path="/blog" component={Blog} />
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/blog-admin" component={BlogAdmin} />
+          
+          {/* User Profile */}
+          <Route path="/profile" component={Profile} />
           
           {/* SEO Landing Pages - Country Pages */}
           <Route path="/send-money-to-nigeria" component={CountryPage} />

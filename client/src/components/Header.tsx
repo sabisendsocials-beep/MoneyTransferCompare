@@ -1,13 +1,15 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell } from "lucide-react";
+import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 import sabiSendLogo from "@assets/SabiSend Logo with tagline short.png";
 
 const Header = () => {
   const [location] = useLocation();
   const { theme, setTheme } = useTheme();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleTheme = () => {
@@ -60,6 +62,41 @@ const Header = () => {
         </nav>
         
         <div className="flex items-center space-x-4">
+          {/* Authentication Controls */}
+          {!isLoading && (
+            <>
+              {isAuthenticated && user ? (
+                <div className="hidden md:flex items-center space-x-3">
+                  <Link href="/profile">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {user.firstName || 'Profile'}
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = "/api/logout"}
+                    className="flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Log Out
+                  </Button>
+                </div>
+              ) : (
+                <div className="hidden md:flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = "/api/login"}
+                  >
+                    Log In
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+          
           <Button
             variant="ghost"
             size="icon"
@@ -108,6 +145,47 @@ const Header = () => {
                 <span>{item.label}</span>
               </div>
             ))}
+            
+            {/* Mobile Authentication Controls */}
+            {!isLoading && (
+              <div className="border-t pt-3 mt-3">
+                {isAuthenticated && user ? (
+                  <>
+                    <div
+                      className="font-medium py-2 cursor-pointer text-gray-600 dark:text-gray-300 flex items-center space-x-2"
+                      onClick={() => {
+                        window.location.href = '/profile';
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <User size={18} />
+                      <span>Profile ({user.firstName || 'User'})</span>
+                    </div>
+                    <div
+                      className="font-medium py-2 cursor-pointer text-gray-600 dark:text-gray-300 flex items-center space-x-2"
+                      onClick={() => {
+                        window.location.href = '/api/logout';
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut size={18} />
+                      <span>Log Out</span>
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="font-medium py-2 cursor-pointer text-primary flex items-center space-x-2"
+                    onClick={() => {
+                      window.location.href = '/api/login';
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <User size={18} />
+                    <span>Log In with Replit</span>
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
         </div>
       )}
