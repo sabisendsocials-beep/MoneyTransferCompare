@@ -23,11 +23,7 @@ const Header = () => {
   };
 
   const handleLogin = () => {
-    toast({
-      title: "Authentication Coming Soon",
-      description: "User authentication with Google and Facebook login is being implemented. Check back soon!",
-      duration: 4000,
-    });
+    window.location.href = "/api/login";
   };
 
   const navItems = [

@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./databaseStorage";
 import { transferRequestSchema } from "@shared/schema";
 import { updateExchangeRates, ensureProvidersExist } from "./scrapers/providers";
 import { updateFinancialNews } from "./scrapers/news";
@@ -21,12 +21,12 @@ import testRouter from './api/aceRateTest';
 import blogRouter from "./routes/blogRouter";
 import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 import rateAlertRouter from "./routes/rateAlertRoutes";
-// import authRouter from "./routes/authRoutes";
+import { setupAuth, isAuthenticated, optionalAuth } from "./replitAuth";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // prefix all routes with /api
-  const apiRouter = app;
+  // Setup authentication first
+  await setupAuth(app);
   
   // Register rate source router
   app.use(rateSourceRouter);
@@ -62,32 +62,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', rateAlertRouter);
   
   // Authentication endpoints
-  app.get('/api/auth/status', (req, res) => {
-    res.json({ user: null, isAuthenticated: false });
-  });
-  
-  app.get('/api/auth/user', (req, res) => {
-    res.json({ user: null, preferences: { preferredCurrencyPairs: [], preferredProviders: [] } });
-  });
-  
-  app.get('/api/auth/rate-alerts', (req, res) => {
-    res.json([]);
-  });
-
-  // Login/logout routes
-  app.get('/api/login', (req, res) => {
-    // For now, redirect to a demo login page or show a message
+  app.get('/api/auth/status', optionalAuth, (req: any, res) => {
+    const isAuthenticated = req.isAuthenticated();
+    const user = isAuthenticated ? req.user?.claims : null;
     res.json({ 
-      message: 'Authentication system is being set up. Please check back soon.',
-      redirectUrl: '/' 
+      user: user ? {
+        id: user.sub,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        profileImageUrl: user.profile_image_url
+      } : null, 
+      isAuthenticated 
     });
   });
+  
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const preferences = await storage.getUserPreferences(userId);
+      
+      res.json({ 
+        user, 
+        preferences: preferences || { preferredCurrencyPairs: [], preferredProviders: [] }
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  
+  app.get('/api/auth/rate-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const alerts = await storage.getUserRateAlerts(userId);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching rate alerts:", error);
+      res.status(500).json({ message: "Failed to fetch rate alerts" });
+    }
+  });
 
-  app.get('/api/logout', (req, res) => {
-    res.json({ 
-      message: 'Logged out successfully',
-      redirectUrl: '/' 
-    });
+  app.post('/api/auth/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { preferredCurrencyPairs, preferredProviders } = req.body;
+      
+      // Validate inputs
+      if (!Array.isArray(preferredCurrencyPairs) || preferredCurrencyPairs.length > 3) {
+        return res.status(400).json({ message: "Invalid currency pairs - maximum 3 allowed" });
+      }
+      
+      if (!Array.isArray(preferredProviders) || preferredProviders.length > 3) {
+        return res.status(400).json({ message: "Invalid providers - maximum 3 allowed" });
+      }
+      
+      const preferences = await storage.updateUserPreferences(userId, {
+        userId,
+        preferredCurrencyPairs,
+        preferredProviders
+      });
+      
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  app.delete('/api/auth/rate-alerts/:alertId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const alertId = parseInt(req.params.alertId);
+      
+      // Verify the alert belongs to the user
+      const alert = await storage.getRateAlert(alertId);
+      if (!alert || alert.userId !== userId) {
+        return res.status(404).json({ message: "Rate alert not found" });
+      }
+      
+      await storage.deleteRateAlert(alertId);
+      res.json({ message: "Rate alert deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting rate alert:", error);
+      res.status(500).json({ message: "Failed to delete rate alert" });
+    }
   });
   
   // Newsletter subscription endpoint
