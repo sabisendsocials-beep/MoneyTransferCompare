@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register rate alert routes
   app.use('/api', rateAlertRouter);
   
-  // Temporary authentication endpoints for frontend compatibility
+  // Authentication endpoints
   app.get('/api/auth/status', (req, res) => {
     res.json({ user: null, isAuthenticated: false });
   });
@@ -72,6 +72,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/auth/rate-alerts', (req, res) => {
     res.json([]);
+  });
+
+  // Login/logout routes
+  app.get('/api/login', (req, res) => {
+    // For now, redirect to a demo login page or show a message
+    res.json({ 
+      message: 'Authentication system is being set up. Please check back soon.',
+      redirectUrl: '/' 
+    });
+  });
+
+  app.get('/api/logout', (req, res) => {
+    res.json({ 
+      message: 'Logged out successfully',
+      redirectUrl: '/' 
+    });
   });
   
   // Newsletter subscription endpoint

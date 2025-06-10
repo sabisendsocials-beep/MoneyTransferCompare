@@ -4,12 +4,14 @@ import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newsp
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import sabiSendLogo from "@assets/SabiSend Logo with tagline short.png";
 
 const Header = () => {
   const [location] = useLocation();
   const { theme, setTheme } = useTheme();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleTheme = () => {
@@ -18,6 +20,14 @@ const Header = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleLogin = () => {
+    toast({
+      title: "Authentication Coming Soon",
+      description: "User authentication with Google and Facebook login is being implemented. Check back soon!",
+      duration: 4000,
+    });
   };
 
   const navItems = [
@@ -88,7 +98,7 @@ const Header = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.location.href = "/api/login"}
+                    onClick={handleLogin}
                   >
                     Log In
                   </Button>
@@ -176,12 +186,12 @@ const Header = () => {
                   <div
                     className="font-medium py-2 cursor-pointer text-primary flex items-center space-x-2"
                     onClick={() => {
-                      window.location.href = '/api/login';
+                      handleLogin();
                       setIsMobileMenuOpen(false);
                     }}
                   >
                     <User size={18} />
-                    <span>Log In with Replit</span>
+                    <span>Log In</span>
                   </div>
                 )}
               </div>
