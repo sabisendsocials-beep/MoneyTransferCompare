@@ -167,19 +167,19 @@ export async function sendRateAlertEmail(data: AlertNotificationData): Promise<{
   const { alert } = data;
   
   try {
-    // Check if SendGrid is configured
-    const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-    if (!SENDGRID_API_KEY) {
-      console.error('SENDGRID_API_KEY not configured for rate alert emails');
+    // Check if Resend is configured
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY not configured for rate alert emails');
       return {
         success: false,
         error: 'Email service not configured',
       };
     }
 
-    // Import SendGrid
-    const sgMail = await import('@sendgrid/mail');
-    sgMail.default.setApiKey(SENDGRID_API_KEY);
+    // Import Resend
+    const { Resend } = await import('resend');
+    const resend = new Resend(RESEND_API_KEY);
 
     const subject = generateEmailSubject(alert);
     const htmlContent = generateEmailContent(data);
@@ -202,17 +202,19 @@ This is a one-time alert. Create a new one if you need continued monitoring.
 SabiSend - Smart Money Transfers
 `;
 
-    const msg = {
-      to: alert.email,
-      from: 'alerts@sabisend.com', // Configure this as your verified sender
+    const { data: emailData, error } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: [alert.email],
       subject,
-      text: textContent,
       html: htmlContent,
-    };
+      text: textContent,
+    });
 
-    await sgMail.default.send(msg);
+    if (error) {
+      throw error;
+    }
     
-    console.log(`Rate alert email sent to ${alert.email} for ${alert.from_currency}/${alert.to_currency}`);
+    console.log(`Rate alert email sent to ${alert.email} for ${alert.from_currency}/${alert.to_currency} (ID: ${emailData?.id})`);
     
     return { success: true };
 
