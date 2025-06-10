@@ -5,8 +5,9 @@ import { and, eq } from "drizzle-orm";
 
 // Enhanced User schema for authentication and profiles
 export const users = pgTable("users", {
-  id: text("id").primaryKey(), // Using text for Replit Auth compatibility
-  email: text("email").unique(),
+  id: text("id").primaryKey(),
+  email: text("email").unique().notNull(),
+  password: text("password"), // For email/password authentication
   firstName: text("first_name"),
   lastName: text("last_name"),
   profileImageUrl: text("profile_image_url"),

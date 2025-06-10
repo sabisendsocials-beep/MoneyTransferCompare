@@ -7,8 +7,8 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./databaseStorage";
 
-// Use default domain if REPLIT_DOMAINS not set
-const replitDomains = process.env.REPLIT_DOMAINS || `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+// Use default domain if REPLIT_DOMAINS not set  
+const replitDomains = process.env.REPLIT_DOMAINS || "localhost";
 
 const getOidcConfig = memoize(
   async () => {
@@ -22,24 +22,40 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
-  return session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key-here',
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
-      maxAge: sessionTtl,
-    },
-  });
+  
+  // Only use PostgreSQL session store if database is available
+  if (process.env.DATABASE_URL) {
+    const pgStore = connectPg(session);
+    const sessionStore = new pgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      ttl: sessionTtl,
+      tableName: "sessions",
+    });
+    return session({
+      secret: process.env.SESSION_SECRET || 'fallback-secret-key-for-development',
+      store: sessionStore,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false, // Set to true in production with HTTPS
+        maxAge: sessionTtl,
+      },
+    });
+  } else {
+    // Fallback to memory store for development
+    return session({
+      secret: process.env.SESSION_SECRET || 'fallback-secret-key-for-development',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: sessionTtl,
+      },
+    });
+  }
 }
 
 function updateUserSession(

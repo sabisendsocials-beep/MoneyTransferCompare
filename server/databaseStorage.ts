@@ -31,6 +31,26 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: { email: string; password: string; firstName?: string; lastName?: string }): Promise<User> {
+    const userId = crypto.randomUUID();
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: userId,
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+      })
+      .returning();
+    return user;
+  }
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     // Note: This method is kept for interface compatibility but not used in Replit Auth
     return undefined;
