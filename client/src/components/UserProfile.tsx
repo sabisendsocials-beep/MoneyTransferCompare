@@ -51,11 +51,7 @@ const UserProfile = () => {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (preferences: { preferredCurrencyPairs: string[], preferredProviders: string[] }) => {
-      return apiRequest("/api/auth/preferences", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
-      });
+      return apiRequest("/api/auth/preferences", "PUT", preferences);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -76,9 +72,7 @@ const UserProfile = () => {
   // Cancel rate alert mutation
   const cancelAlertMutation = useMutation({
     mutationFn: async (alertId: number) => {
-      return apiRequest(`/api/auth/rate-alerts/${alertId}`, {
-        method: "DELETE",
-      });
+      return apiRequest(`/api/auth/rate-alerts/${alertId}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/rate-alerts"] });
@@ -110,7 +104,7 @@ const UserProfile = () => {
   }
 
   const preferences = profileData?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
-  const alerts = rateAlertsData || [];
+  const alerts = Array.isArray(rateAlertsData) ? rateAlertsData : [];
 
   const addCurrencyPair = () => {
     if (!newCurrencyPair || preferences.preferredCurrencyPairs.includes(newCurrencyPair)) return;
