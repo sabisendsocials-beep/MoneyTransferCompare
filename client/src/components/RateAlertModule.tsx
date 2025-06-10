@@ -39,7 +39,7 @@ const RateAlertModule = () => {
   const [alertEmail, setAlertEmail] = useState("");
   const [targetRate, setTargetRate] = useState("");
   const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('best_provider');
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -132,11 +132,6 @@ const RateAlertModule = () => {
   });
 
   const handleCreateAlert = () => {
-    if (!showForm) {
-      setShowForm(true);
-      return;
-    }
-
     if (!alertEmail || !targetRate) {
       toast({
         title: "Missing Information",
@@ -215,166 +210,146 @@ const RateAlertModule = () => {
             <div className="bg-gradient-to-br from-blue-50 via-blue-100 to-blue-150 p-8 text-blue-800">
               <h3 className="text-2xl font-bold mb-6">Set Up Your Rate Alert</h3>
               
-              {/* Currency Pair Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-3 text-blue-600">Currency Pair</label>
-                <Select value={selectedPair} onValueChange={setSelectedPair}>
-                  <SelectTrigger className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencyPairs.map((pair) => (
-                      <SelectItem key={`${pair.from}-${pair.to}`} value={`${pair.from}-${pair.to}`}>
-                        {pair.fromSymbol} {pair.from} to {pair.toSymbol} {pair.to}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="space-y-6">
+                {/* Currency Pair Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-blue-600">Currency Pair</label>
+                  <Select value={selectedPair} onValueChange={setSelectedPair}>
+                    <SelectTrigger className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencyPairs.map((pair) => (
+                        <SelectItem key={`${pair.from}-${pair.to}`} value={`${pair.from}-${pair.to}`}>
+                          {pair.fromSymbol} {pair.from} to {pair.toSymbol} {pair.to}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Current Rates Display */}
-              {currentRates && (
-                <div className="bg-gray-100 backdrop-blur-sm rounded-xl p-6 mb-6 border border-blue-100">
-                  <h4 className="text-lg font-semibold mb-4 text-blue-700">Current Rates</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 rounded-lg p-4 border border-blue-100">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <span className="text-sm text-blue-600 font-medium">Official Rate:</span>
-                          <div className="text-2xl font-bold text-blue-800 mt-1">
-                            {currentRates.officialRate?.toLocaleString() || 'N/A'} 
-                            <span className="text-lg text-blue-500 ml-1">{currencyPair.toSymbol}</span>
-                          </div>
+                {/* Current Rates - Subtle Reference */}
+                {currentRates && (
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-blue-200/30">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-6">
+                        <div>
+                          <span className="text-blue-600/80">Official: </span>
+                          <span className="font-medium text-blue-700">
+                            {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                          </span>
                         </div>
-                        {currentRates.officialRate && (
-                          <button
-                            onClick={() => handlePrefillRate('official')}
-                            className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-3 py-2 rounded-lg transition-all font-medium"
-                          >
-                            Use +1%
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-blue-100">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <span className="text-sm text-blue-600 font-medium">Best Provider:</span>
-                          <div className="text-2xl font-bold text-blue-800 mt-1">
-                            {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} 
-                            <span className="text-lg text-blue-500 ml-1">{currencyPair.toSymbol}</span>
-                          </div>
+                        <div>
+                          <span className="text-blue-600/80">Best: </span>
+                          <span className="font-medium text-blue-700">
+                            {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                          </span>
                           {currentRates.bestProviderName && (
-                            <div className="text-sm text-blue-500 mt-1 font-medium">{currentRates.bestProviderName}</div>
+                            <span className="text-blue-600/60 ml-1">({currentRates.bestProviderName})</span>
                           )}
                         </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        {currentRates.officialRate && (
+                          <button
+                            type="button"
+                            onClick={() => handlePrefillRate('official')}
+                            className="text-xs bg-blue-400/80 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                          >
+                            Use Official +1%
+                          </button>
+                        )}
                         {currentRates.bestProviderRate && (
                           <button
+                            type="button"
                             onClick={() => handlePrefillRate('best_provider')}
-                            className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-3 py-2 rounded-lg transition-all font-medium"
+                            className="text-xs bg-blue-400/80 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
                           >
-                            Use +1%
+                            Use Best +1%
                           </button>
                         )}
                       </div>
                     </div>
                   </div>
+                )}
+
+                {/* Email Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-blue-600">Email Address</label>
+                  <Input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={alertEmail}
+                    onChange={(e) => setAlertEmail(e.target.value)}
+                    className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium focus:border-blue-300 focus:ring-2 focus:ring-blue-300"
+                  />
                 </div>
-              )}
-            </div>
 
-            <div className="p-6">
-              {showForm && (
-                <div className="space-y-4 mb-6">
-                  {/* Email Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Email Address
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={alertEmail}
-                      onChange={(e) => setAlertEmail(e.target.value)}
-                      className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-                    />
-                  </div>
-
-                  {/* Rate Basis Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Rate Type
-                    </label>
-                    <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
-                      <SelectTrigger className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="official">Official Rate</SelectItem>
-                        <SelectItem value="best_provider">Best Provider Rate</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Target Rate Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Target Rate ({currencyPair.toSymbol})
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder={`Target rate (${currencyPair.toSymbol})`}
-                      value={targetRate}
-                      onChange={(e) => setTargetRate(e.target.value)}
-                      className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-                      step="0.01"
-                    />
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Target rate must be higher than current {alertBasis === 'official' ? 'official' : 'provider'} rate.
-                    </p>
-                  </div>
+                {/* Rate Basis Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-blue-600">Rate Type</label>
+                  <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
+                    <SelectTrigger className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="official">Official Rate</SelectItem>
+                      <SelectItem value="best_provider">Best Provider Rate</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
 
-              {/* Action Button */}
-              <div className="text-center">
+                {/* Target Rate Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-blue-600">
+                    Target Rate ({currencyPair.toSymbol})
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder={`Target rate (${currencyPair.toSymbol})`}
+                    value={targetRate}
+                    onChange={(e) => setTargetRate(e.target.value)}
+                    className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium focus:border-blue-300 focus:ring-2 focus:ring-blue-300"
+                    step="0.01"
+                  />
+                  <p className="text-sm text-blue-600/70 mt-2">
+                    Target rate must be higher than current {alertBasis === 'official' ? 'official' : 'provider'} rate.
+                  </p>
+                </div>
+
+                {/* Submit Button */}
                 <Button
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+                  className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 disabled:cursor-not-allowed mt-6"
                   onClick={handleCreateAlert}
                   disabled={createAlertMutation.isPending}
                 >
                   {createAlertMutation.isPending ? (
                     "Creating Alert..."
-                  ) : showForm ? (
+                  ) : (
                     <>
                       <CheckCircle className="h-5 w-5 mr-2" />
                       Create Alert
                     </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="h-5 w-5 mr-2" />
-                      Set Rate Alert
-                    </>
                   )}
                 </Button>
               </div>
+            </div>
 
-              {showForm && (
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                  <div className="flex items-start">
-                    <Bell className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                    <div className="text-sm text-blue-800 dark:text-blue-200">
-                      <p className="font-medium mb-1">How it works:</p>
-                      <ul className="space-y-1 text-xs">
-                        <li>• We monitor exchange rates every hour</li>
-                        <li>• You'll get an email when your target is reached</li>
-                        <li>• One alert per email per currency pair</li>
-                        <li>• Alerts automatically expire after 30 days</li>
-                      </ul>
-                    </div>
+            <div className="p-6 bg-gray-50">
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <div className="flex items-start">
+                  <Bell className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                    <p className="font-medium mb-1">How it works:</p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• We monitor exchange rates every hour</li>
+                      <li>• You'll get an email when your target is reached</li>
+                      <li>• One alert per email per currency pair</li>
+                      <li>• Alerts automatically expire after 30 days</li>
+                    </ul>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
