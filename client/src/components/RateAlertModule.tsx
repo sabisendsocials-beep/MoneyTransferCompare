@@ -99,8 +99,9 @@ const RateAlertModule = () => {
       email: string;
       fromCurrency: string;
       toCurrency: string;
-      targetRate: number;
-      rateBasis: 'official' | 'best_provider';
+      targetValue: number;
+      alertBasis: 'official' | 'best_provider';
+      triggerType: 'absolute';
     }) => {
       const response = await fetch('/api/rate-alerts', {
         method: 'POST',
@@ -170,8 +171,9 @@ const RateAlertModule = () => {
       email: alertEmail,
       fromCurrency: from,
       toCurrency: to,
-      targetRate: targetValue,
-      rateBasis: alertBasis,
+      targetValue: targetValue,
+      alertBasis: alertBasis,
+      triggerType: 'absolute',
     });
   };
 
