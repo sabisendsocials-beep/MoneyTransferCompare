@@ -36,14 +36,20 @@ const UserProfile = () => {
   const [newCurrencyPair, setNewCurrencyPair] = useState("");
   const [newProvider, setNewProvider] = useState("");
 
-  // Fetch user profile data
-  const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery({
-    queryKey: ["/api/auth/user", Date.now()], // Force fresh data
+  // Fetch user profile data  
+  const { data: profileData, isLoading: profileLoading, error: profileError, refetch } = useQuery({
+    queryKey: ["/api/auth/user"],
     enabled: !!user,
     retry: false,
-    refetchOnMount: true,
     staleTime: 0,
   });
+
+  // Force a fresh fetch on component mount
+  useEffect(() => {
+    if (user) {
+      refetch();
+    }
+  }, [user, refetch]);
 
   // Fetch user rate alerts
   const { data: rateAlertsData, isLoading: alertsLoading, error: alertsError } = useQuery({
@@ -132,13 +138,6 @@ const UserProfile = () => {
 
   const preferences = (profileData as any)?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
   const alerts = Array.isArray(rateAlertsData) ? rateAlertsData : [];
-
-  // Debug logging
-  console.log('Profile data received:', profileData);
-  console.log('Raw preferences:', (profileData as any)?.preferences);
-  console.log('Processed preferences:', preferences);
-  console.log('Currency pairs:', preferences.preferredCurrencyPairs);
-  console.log('Providers:', preferences.preferredProviders);
 
   const addCurrencyPair = () => {
     if (!newCurrencyPair || preferences.preferredCurrencyPairs.includes(newCurrencyPair)) return;

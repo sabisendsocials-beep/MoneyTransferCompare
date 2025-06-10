@@ -84,6 +84,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const preferences = await storage.getUserPreferences(userId);
       
       console.log('User API - Raw preferences from storage:', JSON.stringify(preferences, null, 2));
+      console.log('User API - Preferences currency pairs type:', typeof preferences?.preferredCurrencyPairs);
+      console.log('User API - Preferences currency pairs value:', preferences?.preferredCurrencyPairs);
       
       const response = { 
         ...user,
