@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Bell, CheckCircle } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -39,7 +39,7 @@ const RateAlertModule = () => {
   const [alertEmail, setAlertEmail] = useState("");
   const [targetRate, setTargetRate] = useState("");
   const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('best_provider');
-  const [showForm, setShowForm] = useState(true);
+  const [showCurrentRates, setShowCurrentRates] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -228,50 +228,82 @@ const RateAlertModule = () => {
                   </Select>
                 </div>
 
-                {/* Current Rates - Subtle Reference */}
-                {currentRates && (
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-blue-200/30">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-6">
-                        <div>
-                          <span className="text-blue-600/80">Official: </span>
-                          <span className="font-medium text-blue-700">
-                            {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                {/* Current Rates Toggle */}
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-blue-200/30">
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentRates(!showCurrentRates)}
+                    className="w-full flex items-center justify-between p-4 text-sm hover:bg-white/10 transition-colors rounded-lg"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <span className="text-blue-600/80 font-medium">Current Rates:</span>
+                      {currentRates && (
+                        <div className="flex items-center space-x-4">
+                          <span className="text-blue-700 font-medium">
+                            Official: {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                          </span>
+                          <span className="text-blue-700 font-medium">
+                            Best: {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-blue-600/80">Best: </span>
-                          <span className="font-medium text-blue-700">
-                            {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                          </span>
-                          {currentRates.bestProviderName && (
-                            <span className="text-blue-600/60 ml-1">({currentRates.bestProviderName})</span>
-                          )}
+                      )}
+                    </div>
+                    {showCurrentRates ? (
+                      <ChevronUp className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-blue-600" />
+                    )}
+                  </button>
+                  
+                  {showCurrentRates && currentRates && (
+                    <div className="px-4 pb-4 border-t border-blue-200/20">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div className="bg-white/10 rounded-lg p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="text-xs text-blue-600/80">Official Rate</span>
+                              <div className="text-lg font-bold text-blue-700">
+                                {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                              </div>
+                            </div>
+                            {currentRates.officialRate && (
+                              <button
+                                type="button"
+                                onClick={() => handlePrefillRate('official')}
+                                className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                              >
+                                Use +1%
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        {currentRates.officialRate && (
-                          <button
-                            type="button"
-                            onClick={() => handlePrefillRate('official')}
-                            className="text-xs bg-blue-400/80 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
-                          >
-                            Use Official +1%
-                          </button>
-                        )}
-                        {currentRates.bestProviderRate && (
-                          <button
-                            type="button"
-                            onClick={() => handlePrefillRate('best_provider')}
-                            className="text-xs bg-blue-400/80 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
-                          >
-                            Use Best +1%
-                          </button>
-                        )}
+                        
+                        <div className="bg-white/10 rounded-lg p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="text-xs text-blue-600/80">Best Provider</span>
+                              <div className="text-lg font-bold text-blue-700">
+                                {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                              </div>
+                              {currentRates.bestProviderName && (
+                                <div className="text-xs text-blue-600/60">{currentRates.bestProviderName}</div>
+                              )}
+                            </div>
+                            {currentRates.bestProviderRate && (
+                              <button
+                                type="button"
+                                onClick={() => handlePrefillRate('best_provider')}
+                                className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                              >
+                                Use +1%
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Email Input */}
                 <div>
