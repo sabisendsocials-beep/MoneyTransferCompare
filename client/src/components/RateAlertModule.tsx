@@ -50,13 +50,31 @@ const RateAlertModule = () => {
   const { data: currentRates } = useQuery({
     queryKey: ['/api/rate-alerts/current-rates', selectedPair],
     queryFn: async () => {
-      const [from, to] = selectedPair.split('-');
-      const response = await fetch(`/api/rate-alerts/current-rates?from=${from}&to=${to}`);
-      if (!response.ok) throw new Error('Failed to fetch current rates');
-      const data = await response.json();
-      return data.success ? data.data : null;
+      try {
+        const [from, to] = selectedPair.split('-');
+        const response = await fetch(`/api/rate-alerts/current-rates?fromCurrency=${from.toUpperCase()}&toCurrency=${to.toUpperCase()}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Current rates API error:', errorText);
+          throw new Error('Failed to fetch current rates');
+        }
+        
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          console.warn('Empty response from current rates API');
+          return null;
+        }
+        
+        const data = JSON.parse(text);
+        return data.success ? data.data : null;
+      } catch (error) {
+        console.error('Error fetching current rates:', error);
+        return null;
+      }
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 1,
   });
 
   // Create rate alert mutation
@@ -116,10 +134,21 @@ const RateAlertModule = () => {
       ? currentRates?.officialRate 
       : currentRates?.bestProviderRate;
 
-    if (!currentRate || parseFloat(targetRate) <= currentRate) {
+    const targetValue = parseFloat(targetRate);
+    
+    if (!currentRate) {
+      toast({
+        title: "Current Rate Unavailable",
+        description: "Unable to fetch current rate. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNaN(targetValue) || targetValue <= currentRate) {
       toast({
         title: "Invalid Target Rate",
-        description: `Target rate must be higher than current ${alertBasis === 'official' ? 'official' : 'provider'} rate.`,
+        description: `Target rate must be higher than current ${alertBasis === 'official' ? 'official' : 'provider'} rate (${currentRate.toLocaleString()}).`,
         variant: "destructive",
       });
       return;
@@ -130,29 +159,44 @@ const RateAlertModule = () => {
       email: alertEmail,
       fromCurrency: from,
       toCurrency: to,
-      targetRate: parseFloat(targetRate),
+      targetRate: targetValue,
       rateBasis: alertBasis,
     });
   };
 
+  // Auto-prefill target rate when rates are available
+  const handlePrefillRate = (rateType: 'official' | 'best_provider') => {
+    if (!currentRates) return;
+    
+    const rate = rateType === 'official' 
+      ? currentRates.officialRate 
+      : currentRates.bestProviderRate;
+    
+    if (rate) {
+      // Add 1% to current rate as suggested target
+      const suggestedRate = Math.round(rate * 1.01);
+      setTargetRate(suggestedRate.toString());
+    }
+  };
+
   return (
-    <section className="py-12 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20">
+    <section className="py-12 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center mr-4">
                 <Bell className="h-6 w-6 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-blue-900 dark:text-blue-100">Exchange Rate Alerts</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Exchange Rate Alerts</h2>
             </div>
-            <p className="text-lg text-blue-800 dark:text-blue-200 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Get instant email notifications when exchange rates reach your target. Never miss a great rate again.
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-blue-200 dark:border-blue-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white">
               <h3 className="text-xl font-semibold mb-4">Set Up Your Rate Alert</h3>
               
               {/* Currency Pair Selection */}
@@ -178,16 +222,36 @@ const RateAlertModule = () => {
                   <h4 className="text-sm font-medium mb-3">Current Rates</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Official Rate:</span>
-                      <span className="font-bold">
-                        {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                      </span>
+                      <div>
+                        <span className="text-sm">Official Rate:</span>
+                        <div className="font-bold">
+                          {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                        </div>
+                      </div>
+                      {currentRates.officialRate && (
+                        <button
+                          onClick={() => handlePrefillRate('official')}
+                          className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition-colors"
+                        >
+                          Use +1%
+                        </button>
+                      )}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Best Provider:</span>
-                      <span className="font-bold">
-                        {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                      </span>
+                      <div>
+                        <span className="text-sm">Best Provider:</span>
+                        <div className="font-bold">
+                          {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                        </div>
+                      </div>
+                      {currentRates.bestProviderRate && (
+                        <button
+                          onClick={() => handlePrefillRate('best_provider')}
+                          className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition-colors"
+                        >
+                          Use +1%
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -207,7 +271,7 @@ const RateAlertModule = () => {
                       placeholder="your@email.com"
                       value={alertEmail}
                       onChange={(e) => setAlertEmail(e.target.value)}
-                      className="border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400"
+                      className="border-gray-300 dark:border-gray-600 focus:border-emerald-500 dark:focus:border-emerald-400"
                     />
                   </div>
 
