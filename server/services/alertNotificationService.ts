@@ -203,7 +203,7 @@ SabiSend - Smart Money Transfers
 `;
 
     const { data: emailData, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'SabiSend Alerts <hello@sabisend.com>',
       to: [alert.email],
       subject,
       html: htmlContent,
