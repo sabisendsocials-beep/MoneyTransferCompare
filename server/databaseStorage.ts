@@ -44,8 +44,8 @@ export class DatabaseStorage implements IStorage {
         id: userId,
         email: userData.email,
         password: userData.password,
-        firstName: userData.firstName || '',
-        lastName: userData.lastName || '',
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
       })
       .returning();
     return user;
