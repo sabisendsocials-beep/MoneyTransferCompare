@@ -201,7 +201,7 @@ const RateAlertModule = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
                 <Bell className="h-6 w-6 text-white" />
               </div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Exchange Rate Alerts</h2>
@@ -212,14 +212,14 @@ const RateAlertModule = () => {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white">
-              <h3 className="text-xl font-semibold mb-4">Set Up Your Rate Alert</h3>
+            <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-8 text-white">
+              <h3 className="text-2xl font-bold mb-6">Set Up Your Rate Alert</h3>
               
               {/* Currency Pair Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Currency Pair</label>
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3 text-blue-100">Currency Pair</label>
                 <Select value={selectedPair} onValueChange={setSelectedPair}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="bg-white/15 border-white/25 text-white backdrop-blur-sm h-12 text-base font-medium">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,40 +234,49 @@ const RateAlertModule = () => {
 
               {/* Current Rates Display */}
               {currentRates && (
-                <div className="bg-white/10 rounded-lg p-4 mb-4">
-                  <h4 className="text-sm font-medium mb-3">Current Rates</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-sm">Official Rate:</span>
-                        <div className="font-bold">
-                          {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/20">
+                  <h4 className="text-lg font-semibold mb-4 text-blue-100">Current Rates</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <span className="text-sm text-blue-100 font-medium">Official Rate:</span>
+                          <div className="text-2xl font-bold text-white mt-1">
+                            {currentRates.officialRate?.toLocaleString() || 'N/A'} 
+                            <span className="text-lg text-blue-100 ml-1">{currencyPair.toSymbol}</span>
+                          </div>
                         </div>
+                        {currentRates.officialRate && (
+                          <button
+                            onClick={() => handlePrefillRate('official')}
+                            className="text-xs bg-white/25 hover:bg-white/35 px-3 py-2 rounded-lg transition-all font-medium border border-white/30"
+                          >
+                            Use +1%
+                          </button>
+                        )}
                       </div>
-                      {currentRates.officialRate && (
-                        <button
-                          onClick={() => handlePrefillRate('official')}
-                          className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition-colors"
-                        >
-                          Use +1%
-                        </button>
-                      )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-sm">Best Provider:</span>
-                        <div className="font-bold">
-                          {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                    <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <span className="text-sm text-blue-100 font-medium">Best Provider:</span>
+                          <div className="text-2xl font-bold text-white mt-1">
+                            {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} 
+                            <span className="text-lg text-blue-100 ml-1">{currencyPair.toSymbol}</span>
+                          </div>
+                          {currentRates.bestProviderName && (
+                            <div className="text-sm text-blue-200 mt-1 font-medium">{currentRates.bestProviderName}</div>
+                          )}
                         </div>
+                        {currentRates.bestProviderRate && (
+                          <button
+                            onClick={() => handlePrefillRate('best_provider')}
+                            className="text-xs bg-white/25 hover:bg-white/35 px-3 py-2 rounded-lg transition-all font-medium border border-white/30"
+                          >
+                            Use +1%
+                          </button>
+                        )}
                       </div>
-                      {currentRates.bestProviderRate && (
-                        <button
-                          onClick={() => handlePrefillRate('best_provider')}
-                          className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition-colors"
-                        >
-                          Use +1%
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
