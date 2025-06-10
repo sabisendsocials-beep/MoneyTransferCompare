@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const preferences = await storage.getUserPreferences(userId);
       
       res.json({ 
-        user, 
+        ...user,
         preferences: preferences || { preferredCurrencyPairs: [], preferredProviders: [] }
       });
     } catch (error) {

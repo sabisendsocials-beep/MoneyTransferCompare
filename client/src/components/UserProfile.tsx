@@ -37,21 +37,23 @@ const UserProfile = () => {
   const [newProvider, setNewProvider] = useState("");
 
   // Fetch user profile data
-  const { data: profileData, isLoading: profileLoading } = useQuery({
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ["/api/auth/user"],
     enabled: !!user,
+    retry: false,
   });
 
   // Fetch user rate alerts
-  const { data: rateAlertsData, isLoading: alertsLoading } = useQuery({
+  const { data: rateAlertsData, isLoading: alertsLoading, error: alertsError } = useQuery({
     queryKey: ["/api/auth/rate-alerts"],
     enabled: !!user,
+    retry: false,
   });
 
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (preferences: { preferredCurrencyPairs: string[], preferredProviders: string[] }) => {
-      return apiRequest("/api/auth/preferences", "PUT", preferences);
+      return apiRequest("/api/auth/preferences", "POST", preferences);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -95,15 +97,38 @@ const UserProfile = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-gray-600">Please log in to view your profile.</p>
-          <Button className="mt-4" onClick={() => window.location.href = "/api/login"}>
-            Log In with Replit
+          <Button className="mt-4" onClick={() => window.location.href = "/login"}>
+            Go to Login
           </Button>
         </div>
       </div>
     );
   }
 
-  const preferences = profileData?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
+  if (profileLoading || alertsLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError || alertsError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-red-600">Error loading profile data. Please try refreshing the page.</p>
+          <Button className="mt-4" onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const preferences = (profileData as any)?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
   const alerts = Array.isArray(rateAlertsData) ? rateAlertsData : [];
 
   const addCurrencyPair = () => {
