@@ -188,6 +188,31 @@ router.get('/rate-alerts/user/:email', async (req, res) => {
   }
 });
 
+// Manual alert check endpoint for testing
+router.get('/rate-alerts/check', async (req, res) => {
+  try {
+    const { checkRateAlerts } = await import('../scheduler/rateAlertScheduler');
+    
+    console.log('Manual rate alert check triggered');
+    const result = await checkRateAlerts();
+    
+    res.json({
+      success: true,
+      message: 'Rate alert check completed',
+      alertsChecked: result.alertsChecked,
+      alertsTriggered: result.alertsTriggered,
+      notifications: result.notifications,
+    });
+    
+  } catch (error) {
+    console.error('Error running manual alert check:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check rate alerts',
+    });
+  }
+});
+
 // Cancel an alert
 router.delete('/rate-alerts/:id', async (req, res) => {
   try {
