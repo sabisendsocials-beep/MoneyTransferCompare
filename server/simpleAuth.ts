@@ -91,7 +91,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Authentication routes
-  app.post("/api/login", passport.authenticate('local'), (req, res) => {
+  app.post("/api/auth/login", passport.authenticate('local'), (req, res) => {
     res.json({ 
       success: true, 
       user: req.user,
@@ -99,7 +99,7 @@ export async function setupAuth(app: Express) {
     });
   });
 
-  app.post("/api/register", async (req, res) => {
+  app.post("/api/auth/register", async (req, res) => {
     try {
       const { email, password, firstName, lastName } = req.body;
       
@@ -141,7 +141,7 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/logout", (req, res) => {
+  app.post("/api/auth/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
