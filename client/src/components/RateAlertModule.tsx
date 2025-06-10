@@ -228,60 +228,62 @@ const RateAlertModule = () => {
                   </Select>
                 </div>
 
-                {/* Current Rates Toggle */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-blue-200/30">
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentRates(!showCurrentRates)}
-                    className="w-full flex items-center justify-between p-4 text-sm hover:bg-white/10 transition-colors rounded-lg"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <span className="text-blue-600/80 font-medium">Current Rates:</span>
-                      {currentRates && (
-                        <div className="flex items-center space-x-4">
-                          <span className="text-blue-700 font-medium">
-                            Official: {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                          </span>
-                          <span className="text-blue-700 font-medium">
-                            Best: {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {showCurrentRates ? (
-                      <ChevronUp className="h-4 w-4 text-blue-600" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-blue-600" />
-                    )}
-                  </button>
-                  
-                  {showCurrentRates && currentRates && (
-                    <div className="px-4 pb-4 border-t border-blue-200/20">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div className="bg-white/10 rounded-lg p-3">
+                {/* Rate Type Toggle with Current Rates */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-blue-600">Rate Type & Current Rates</label>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-blue-200/30">
+                    {currentRates && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+                        {/* Official Rate Option */}
+                        <button
+                          type="button"
+                          onClick={() => setAlertBasis('official')}
+                          className={`p-4 text-left border-r border-blue-200/30 transition-colors ${
+                            alertBasis === 'official' 
+                              ? 'bg-blue-400/20 border-blue-400' 
+                              : 'hover:bg-white/10'
+                          }`}
+                        >
                           <div className="flex justify-between items-center">
                             <div>
-                              <span className="text-xs text-blue-600/80">Official Rate</span>
+                              <div className="text-xs text-blue-600/80 font-medium">Official Rate</div>
                               <div className="text-lg font-bold text-blue-700">
                                 {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
                               </div>
                             </div>
-                            {currentRates.officialRate && (
-                              <button
-                                type="button"
-                                onClick={() => handlePrefillRate('official')}
-                                className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
-                              >
-                                Use +1%
-                              </button>
-                            )}
+                            <div className="flex items-center space-x-2">
+                              {currentRates.officialRate && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrefillRate('official');
+                                  }}
+                                  className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                                >
+                                  Use +1%
+                                </button>
+                              )}
+                              {alertBasis === 'official' && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="bg-white/10 rounded-lg p-3">
+                        </button>
+
+                        {/* Best Provider Rate Option */}
+                        <button
+                          type="button"
+                          onClick={() => setAlertBasis('best_provider')}
+                          className={`p-4 text-left transition-colors ${
+                            alertBasis === 'best_provider' 
+                              ? 'bg-blue-400/20 border-blue-400' 
+                              : 'hover:bg-white/10'
+                          }`}
+                        >
                           <div className="flex justify-between items-center">
                             <div>
-                              <span className="text-xs text-blue-600/80">Best Provider</span>
+                              <div className="text-xs text-blue-600/80 font-medium">Best Provider Rate</div>
                               <div className="text-lg font-bold text-blue-700">
                                 {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
                               </div>
@@ -289,20 +291,28 @@ const RateAlertModule = () => {
                                 <div className="text-xs text-blue-600/60">{currentRates.bestProviderName}</div>
                               )}
                             </div>
-                            {currentRates.bestProviderRate && (
-                              <button
-                                type="button"
-                                onClick={() => handlePrefillRate('best_provider')}
-                                className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
-                              >
-                                Use +1%
-                              </button>
-                            )}
+                            <div className="flex items-center space-x-2">
+                              {currentRates.bestProviderRate && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrefillRate('best_provider');
+                                  }}
+                                  className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                                >
+                                  Use +1%
+                                </button>
+                              )}
+                              {alertBasis === 'best_provider' && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        </button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Email Input */}
@@ -315,20 +325,6 @@ const RateAlertModule = () => {
                     onChange={(e) => setAlertEmail(e.target.value)}
                     className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium focus:border-blue-300 focus:ring-2 focus:ring-blue-300"
                   />
-                </div>
-
-                {/* Rate Basis Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-3 text-blue-600">Rate Type</label>
-                  <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
-                    <SelectTrigger className="bg-gray-100 border-blue-200 text-blue-800 backdrop-blur-sm h-12 text-base font-medium">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="official">Official Rate</SelectItem>
-                      <SelectItem value="best_provider">Best Provider Rate</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 {/* Target Rate Input */}
