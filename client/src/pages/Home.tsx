@@ -42,15 +42,17 @@ const Home = () => {
       {/* Keep comparison results for when redirected from calculator */}
       <ComparisonResults results={comparisonResults} visible={showResults} />
 
+      {/* Rate Alert Module - positioned between calculator and exchange rates */}
+      <RateAlertModule />
+
       {/* Other sections remain unchanged */}
       <RateTrends />
       
-      {/* Rate Alert Module - positioned just before News section */}
-      <RateAlertModule />
+      {/* Feature Section - positioned just before News section */}
+      <FeatureSection />
       
       <NewsSection />
       <CountryNavigationSection />
-      <FeatureSection />
     </div>
   );
 };
