@@ -228,115 +228,63 @@ const RateAlertModule = () => {
                   </Select>
                 </div>
 
-                {/* Rate Type Toggle with Current Rates */}
+                {/* Rate Type Toggle */}
                 <div>
-                  <label className="block text-sm font-medium mb-3 text-blue-600">Rate Type & Current Rates</label>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-blue-200/30">
-                    {currentRates && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-                        {/* Official Rate Option */}
-                        <button
-                          type="button"
-                          onClick={() => setAlertBasis('official')}
-                          className={`p-3 text-left border-r border-blue-200/30 transition-all rounded-l-lg ${
-                            alertBasis === 'official' 
-                              ? 'bg-blue-500 text-white border-blue-500' 
-                              : 'hover:bg-blue-100/50 text-blue-700'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <div className={`text-xs font-medium ${
-                                alertBasis === 'official' ? 'text-blue-100' : 'text-blue-600/80'
-                              }`}>
-                                Official Rate
-                              </div>
-                              <div className={`text-base font-bold ${
-                                alertBasis === 'official' ? 'text-white' : 'text-blue-700'
-                              }`}>
-                                {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {currentRates.officialRate && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePrefillRate('official');
-                                  }}
-                                  className={`text-xs px-2 py-1 rounded transition-all ${
-                                    alertBasis === 'official'
-                                      ? 'bg-white/20 hover:bg-white/30 text-white'
-                                      : 'bg-blue-400 hover:bg-blue-500 text-white'
-                                  }`}
-                                >
-                                  Use +1%
-                                </button>
-                              )}
-                              {alertBasis === 'official' && (
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* Best Provider Rate Option */}
-                        <button
-                          type="button"
-                          onClick={() => setAlertBasis('best_provider')}
-                          className={`p-3 text-left transition-all rounded-r-lg ${
-                            alertBasis === 'best_provider' 
-                              ? 'bg-blue-500 text-white border-blue-500' 
-                              : 'hover:bg-blue-100/50 text-blue-700'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <div className={`text-xs font-medium ${
-                                alertBasis === 'best_provider' ? 'text-blue-100' : 'text-blue-600/80'
-                              }`}>
-                                Best Provider Rate
-                              </div>
-                              <div className={`text-base font-bold ${
-                                alertBasis === 'best_provider' ? 'text-white' : 'text-blue-700'
-                              }`}>
-                                {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
-                              </div>
-                              {currentRates.bestProviderName && (
-                                <div className={`text-xs ${
-                                  alertBasis === 'best_provider' ? 'text-blue-200' : 'text-blue-600/60'
-                                }`}>
-                                  {currentRates.bestProviderName}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {currentRates.bestProviderRate && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePrefillRate('best_provider');
-                                  }}
-                                  className={`text-xs px-2 py-1 rounded transition-all ${
-                                    alertBasis === 'best_provider'
-                                      ? 'bg-white/20 hover:bg-white/30 text-white'
-                                      : 'bg-blue-400 hover:bg-blue-500 text-white'
-                                  }`}
-                                >
-                                  Use +1%
-                                </button>
-                              )}
-                              {alertBasis === 'best_provider' && (
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    )}
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-medium text-blue-600">Rate Type</label>
+                    <div className="inline-flex bg-gray-100 rounded-lg p-1 text-sm">
+                      <button
+                        type="button"
+                        onClick={() => setAlertBasis('official')}
+                        className={`px-3 py-1 rounded-md font-medium transition-all ${
+                          alertBasis === 'official'
+                            ? 'bg-blue-500 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-blue-600'
+                        }`}
+                      >
+                        Official
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAlertBasis('best_provider')}
+                        className={`px-3 py-1 rounded-md font-medium transition-all ${
+                          alertBasis === 'best_provider'
+                            ? 'bg-blue-500 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-blue-600'
+                        }`}
+                      >
+                        Best Provider
+                      </button>
+                    </div>
                   </div>
+                  
+                  {/* Current Rates Display */}
+                  {currentRates && (
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-blue-200/30 p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs text-blue-600/80 font-medium">
+                            {alertBasis === 'official' ? 'Official Rate' : 'Best Provider Rate'}
+                          </div>
+                          <div className="text-lg font-bold text-blue-700">
+                            {(alertBasis === 'official' ? currentRates.officialRate : currentRates.bestProviderRate)?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                          </div>
+                          {alertBasis === 'best_provider' && currentRates.bestProviderName && (
+                            <div className="text-xs text-blue-600/60">{currentRates.bestProviderName}</div>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => handlePrefillRate(alertBasis)}
+                            className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-3 py-1 rounded transition-all"
+                          >
+                            Use +1%
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Email Input */}
