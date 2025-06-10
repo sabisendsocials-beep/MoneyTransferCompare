@@ -96,12 +96,15 @@ export class DatabaseStorage implements IStorage {
     // Convert PostgreSQL arrays to JavaScript arrays
     const parsePostgresArray = (pgArray: any): string[] => {
       if (Array.isArray(pgArray)) return pgArray;
-      if (!pgArray) return [];
+      if (!pgArray || pgArray === '{}') return [];
+      
       if (typeof pgArray === 'string') {
-        // Parse PostgreSQL array format like "{item1,item2}" or "{}"
+        // Handle PostgreSQL array format like "{item1,item2}" or "{}"
         const cleaned = pgArray.replace(/^\{|\}$/g, '');
-        return cleaned === '' ? [] : cleaned.split(',');
+        if (cleaned === '') return [];
+        return cleaned.split(',').map(item => item.trim()).filter(item => item.length > 0);
       }
+      
       return [];
     };
 
