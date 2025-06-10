@@ -238,16 +238,22 @@ const RateAlertModule = () => {
                         <button
                           type="button"
                           onClick={() => setAlertBasis('official')}
-                          className={`p-4 text-left border-r border-blue-200/30 transition-colors ${
+                          className={`p-3 text-left border-r border-blue-200/30 transition-all rounded-l-lg ${
                             alertBasis === 'official' 
-                              ? 'bg-blue-400/20 border-blue-400' 
-                              : 'hover:bg-white/10'
+                              ? 'bg-blue-500 text-white border-blue-500' 
+                              : 'hover:bg-blue-100/50 text-blue-700'
                           }`}
                         >
                           <div className="flex justify-between items-center">
                             <div>
-                              <div className="text-xs text-blue-600/80 font-medium">Official Rate</div>
-                              <div className="text-lg font-bold text-blue-700">
+                              <div className={`text-xs font-medium ${
+                                alertBasis === 'official' ? 'text-blue-100' : 'text-blue-600/80'
+                              }`}>
+                                Official Rate
+                              </div>
+                              <div className={`text-base font-bold ${
+                                alertBasis === 'official' ? 'text-white' : 'text-blue-700'
+                              }`}>
                                 {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
                               </div>
                             </div>
@@ -259,13 +265,17 @@ const RateAlertModule = () => {
                                     e.stopPropagation();
                                     handlePrefillRate('official');
                                   }}
-                                  className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                                  className={`text-xs px-2 py-1 rounded transition-all ${
+                                    alertBasis === 'official'
+                                      ? 'bg-white/20 hover:bg-white/30 text-white'
+                                      : 'bg-blue-400 hover:bg-blue-500 text-white'
+                                  }`}
                                 >
                                   Use +1%
                                 </button>
                               )}
                               {alertBasis === 'official' && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
                               )}
                             </div>
                           </div>
@@ -275,20 +285,30 @@ const RateAlertModule = () => {
                         <button
                           type="button"
                           onClick={() => setAlertBasis('best_provider')}
-                          className={`p-4 text-left transition-colors ${
+                          className={`p-3 text-left transition-all rounded-r-lg ${
                             alertBasis === 'best_provider' 
-                              ? 'bg-blue-400/20 border-blue-400' 
-                              : 'hover:bg-white/10'
+                              ? 'bg-blue-500 text-white border-blue-500' 
+                              : 'hover:bg-blue-100/50 text-blue-700'
                           }`}
                         >
                           <div className="flex justify-between items-center">
                             <div>
-                              <div className="text-xs text-blue-600/80 font-medium">Best Provider Rate</div>
-                              <div className="text-lg font-bold text-blue-700">
+                              <div className={`text-xs font-medium ${
+                                alertBasis === 'best_provider' ? 'text-blue-100' : 'text-blue-600/80'
+                              }`}>
+                                Best Provider Rate
+                              </div>
+                              <div className={`text-base font-bold ${
+                                alertBasis === 'best_provider' ? 'text-white' : 'text-blue-700'
+                              }`}>
                                 {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
                               </div>
                               {currentRates.bestProviderName && (
-                                <div className="text-xs text-blue-600/60">{currentRates.bestProviderName}</div>
+                                <div className={`text-xs ${
+                                  alertBasis === 'best_provider' ? 'text-blue-200' : 'text-blue-600/60'
+                                }`}>
+                                  {currentRates.bestProviderName}
+                                </div>
                               )}
                             </div>
                             <div className="flex items-center space-x-2">
@@ -299,13 +319,17 @@ const RateAlertModule = () => {
                                     e.stopPropagation();
                                     handlePrefillRate('best_provider');
                                   }}
-                                  className="text-xs bg-blue-400 hover:bg-blue-500 text-white px-2 py-1 rounded transition-all"
+                                  className={`text-xs px-2 py-1 rounded transition-all ${
+                                    alertBasis === 'best_provider'
+                                      ? 'bg-white/20 hover:bg-white/30 text-white'
+                                      : 'bg-blue-400 hover:bg-blue-500 text-white'
+                                  }`}
                                 >
                                   Use +1%
                                 </button>
                               )}
                               {alertBasis === 'best_provider' && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
                               )}
                             </div>
                           </div>
