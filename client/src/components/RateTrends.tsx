@@ -1,9 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { RateTrend, RateStats, RateTrendResponse } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import {
   LineChart,
@@ -19,7 +16,6 @@ import {
   ArrowUp, 
   ArrowDown, 
   BarChart2, 
-  AlertTriangle, 
   Calendar,
 } from "lucide-react";
 import {
@@ -53,7 +49,6 @@ type CurrencyPair = {
 };
 
 const RateTrends = () => {
-  const [targetRate, setTargetRate] = useState<string>("");
   const [periodOption, setPeriodOption] = useState<string>("30");
   const [currencyPair, setCurrencyPair] = useState<CurrencyPair>({
     from: "GBP",
@@ -63,7 +58,6 @@ const RateTrends = () => {
     fromSymbol: "£",
     toSymbol: "₦"
   });
-  const { toast } = useToast();
 
   const periodOptions: PeriodOption[] = [
     { label: "7 days", value: "7", days: 7 },
