@@ -88,34 +88,45 @@ router.post('/rate-alerts', async (req, res) => {
 // Get current rates for a currency pair (for form hints)
 router.get('/rate-alerts/current-rates', async (req, res) => {
   try {
+    console.log('Current rates request:', req.query);
     const { fromCurrency, toCurrency } = getCurrentRatesSchema.parse(req.query);
     
     const currentRates = await getCurrentRates(fromCurrency, toCurrency);
     
-    res.json({
+    const responseData = {
       success: true,
       data: {
         fromCurrency,
         toCurrency,
-        officialRate: currentRates.officialRate,
-        bestProviderRate: currentRates.bestProviderRate,
-        bestProviderName: currentRates.bestProviderName,
+        officialRate: currentRates.officialRate || null,
+        bestProviderRate: currentRates.bestProviderRate || null,
+        bestProviderName: currentRates.bestProviderName || null,
       },
-    });
+    };
+    
+    console.log('Sending current rates response:', responseData);
+    res.setHeader('Content-Type', 'application/json');
+    return res.json(responseData);
     
   } catch (error) {
+    console.error('Current rates error:', error);
+    
     if (error instanceof z.ZodError) {
-      res.status(400).json({
+      const errorResponse = {
         success: false,
         error: 'Invalid currency parameters',
         details: error.errors,
-      });
+      };
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(400).json(errorResponse);
     } else {
-      console.error('Error getting current rates:', error);
-      res.status(500).json({
+      const errorResponse = {
         success: false,
         error: 'Failed to fetch current rates',
-      });
+        details: error instanceof Error ? error.message : 'Unknown error',
+      };
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(500).json(errorResponse);
     }
   }
 });

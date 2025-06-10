@@ -47,34 +47,50 @@ const RateAlertModule = () => {
   const currencyPair = currencyPairs.find(pair => `${pair.from}-${pair.to}` === selectedPair) || currencyPairs[0];
 
   // Fetch current rates for the selected pair
-  const { data: currentRates } = useQuery({
+  const { data: currentRates, error: currentRatesError } = useQuery({
     queryKey: ['/api/rate-alerts/current-rates', selectedPair],
     queryFn: async () => {
       try {
         const [from, to] = selectedPair.split('-');
-        const response = await fetch(`/api/rate-alerts/current-rates?fromCurrency=${from.toUpperCase()}&toCurrency=${to.toUpperCase()}`);
+        const url = `/api/rate-alerts/current-rates?fromCurrency=${from.toUpperCase()}&toCurrency=${to.toUpperCase()}`;
+        console.log('Fetching current rates from:', url);
+        
+        const response = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Current rates API error:', errorText);
-          throw new Error('Failed to fetch current rates');
-        }
-        
-        const text = await response.text();
-        if (!text || text.trim() === '') {
-          console.warn('Empty response from current rates API');
+          console.error('Current rates API error:', response.status, errorText);
           return null;
         }
         
-        const data = JSON.parse(text);
-        return data.success ? data.data : null;
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Response is not JSON:', contentType);
+          return null;
+        }
+        
+        const data = await response.json();
+        console.log('Current rates response:', data);
+        
+        if (data && data.success && data.data) {
+          return data.data;
+        }
+        
+        console.warn('Invalid response structure:', data);
+        return null;
       } catch (error) {
         console.error('Error fetching current rates:', error);
         return null;
       }
     },
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
-    retry: 1,
+    refetchInterval: 5 * 60 * 1000,
+    retry: 2,
+    staleTime: 60 * 1000, // Consider data stale after 1 minute
   });
 
   // Create rate alert mutation
