@@ -5,7 +5,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { storage } from "./storage";
+import { storage } from "./databaseStorage";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -26,18 +26,18 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+    secret: process.env.SESSION_SECRET || 'your-secret-key-here',
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Set to true in production with HTTPS
       maxAge: sessionTtl,
     },
   });
@@ -126,7 +126,7 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user?.expires_at) {
+  if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -152,12 +152,15 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   }
 };
 
-// Optional auth middleware - doesn't block request if not authenticated
 export const optionalAuth: RequestHandler = async (req, res, next) => {
+  // This middleware allows both authenticated and non-authenticated requests
+  if (!req.isAuthenticated()) {
+    return next();
+  }
+  
   const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user?.expires_at) {
-    return next(); // Continue without authentication
+  if (!user.expires_at) {
+    return next();
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -167,7 +170,7 @@ export const optionalAuth: RequestHandler = async (req, res, next) => {
 
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
-    return next(); // Continue without authentication
+    return next();
   }
 
   try {
@@ -176,6 +179,6 @@ export const optionalAuth: RequestHandler = async (req, res, next) => {
     updateUserSession(user, tokenResponse);
     return next();
   } catch (error) {
-    return next(); // Continue without authentication
+    return next();
   }
 };
