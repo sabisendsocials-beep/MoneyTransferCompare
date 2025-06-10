@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -44,12 +44,7 @@ const UserProfile = () => {
     staleTime: 0,
   });
 
-  // Force a fresh fetch on component mount
-  useEffect(() => {
-    if (user) {
-      refetch();
-    }
-  }, [user, refetch]);
+
 
   // Fetch user rate alerts
   const { data: rateAlertsData, isLoading: alertsLoading, error: alertsError } = useQuery({
