@@ -3,21 +3,33 @@
  */
 
 import {
-  User, InsertUser,
+  User, InsertUser, UpsertUser,
+  UserPreferences, InsertUserPreferences,
   Provider, InsertProvider,
   ExchangeRate, InsertExchangeRate,
   News, InsertNews,
   TransferRequest, TransferResult,
   RateTrendResponse, RateStats,
   ContactSubmission, InsertContactSubmission,
-  NewsletterSubscription, InsertNewsletterSubscription
+  NewsletterSubscription, InsertNewsletterSubscription,
+  RateAlert, InsertRateAlert
 } from '@shared/schema';
 
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
+  // User methods - updated for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(insertUser: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
+  // User preferences methods
+  getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
+  updateUserPreferences(userId: string, preferences: InsertUserPreferences): Promise<UserPreferences>;
+  
+  // Rate alerts methods for logged-in users
+  getUserRateAlerts(userId: string): Promise<RateAlert[]>;
+  updateRateAlert(alertId: number, userId: string, updates: Partial<InsertRateAlert>): Promise<RateAlert | undefined>;
+  deleteRateAlert(alertId: number, userId: string): Promise<boolean>;
   
   // Provider methods
   getProviders(): Promise<Provider[]>;

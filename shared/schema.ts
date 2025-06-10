@@ -3,20 +3,52 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 
-// User schema (keeping original)
+// Enhanced User schema for authentication and profiles
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  id: text("id").primaryKey(), // Using text for Replit Auth compatibility
+  email: text("email").unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profileImageUrl: text("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+// User preferences schema
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  preferredCurrencyPairs: text("preferred_currency_pairs").array(), // JSON array of "FROM-TO" pairs, max 3
+  preferredProviders: text("preferred_providers").array(), // JSON array of provider names, max 3
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Session storage table for Replit Auth
+export const sessions = pgTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: text("sess").notNull(), // JSON session data
+  expire: timestamp("expire").notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+
+// Upsert user type for Replit Auth
+export type UpsertUser = typeof users.$inferInsert;
 
 // Exchange rate provider schema
 export const providers = pgTable("providers", {
@@ -199,7 +231,8 @@ export type RateStats = z.infer<typeof rateStatsSchema>;
 // Rate Alerts schema - for storing user rate alert preferences
 export const rateAlerts = pgTable("rate_alerts", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull(),
+  userId: text("user_id").references(() => users.id, { onDelete: 'cascade' }), // Optional for logged-in users
+  email: text("email").notNull(), // Always required for notifications
   from_currency: text("from_currency").notNull(),
   to_currency: text("to_currency").notNull(),
   alert_basis: text("alert_basis").notNull(), // 'official' or 'best_provider'
