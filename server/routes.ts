@@ -104,9 +104,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/auth/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const preferences = await storage.getUserPreferences(userId);
+      res.json(preferences || { preferredCurrencyPairs: [], preferredProviders: [] });
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
   app.post('/api/auth/preferences', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { preferredCurrencyPairs, preferredProviders } = req.body;
       
       // Validate inputs
@@ -133,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/auth/rate-alerts/:alertId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const alertId = parseInt(req.params.alertId);
       
       // Get user's rate alerts to verify ownership
