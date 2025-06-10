@@ -90,12 +90,42 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(userPreferences)
       .where(eq(userPreferences.userId, userId));
-    return preferences;
+    
+    if (!preferences) return preferences;
+    
+    // Convert PostgreSQL arrays to JavaScript arrays
+    const parsePostgresArray = (pgArray: any): string[] => {
+      if (Array.isArray(pgArray)) return pgArray;
+      if (!pgArray) return [];
+      if (typeof pgArray === 'string') {
+        // Parse PostgreSQL array format like "{item1,item2}" or "{}"
+        const cleaned = pgArray.replace(/^\{|\}$/g, '');
+        return cleaned === '' ? [] : cleaned.split(',');
+      }
+      return [];
+    };
+
+    return {
+      ...preferences,
+      preferredCurrencyPairs: parsePostgresArray(preferences.preferredCurrencyPairs),
+      preferredProviders: parsePostgresArray(preferences.preferredProviders)
+    };
   }
 
   async updateUserPreferences(userId: string, preferences: InsertUserPreferences): Promise<UserPreferences> {
     // Check if preferences exist
     const existing = await this.getUserPreferences(userId);
+    
+    const parsePostgresArray = (pgArray: any): string[] => {
+      if (Array.isArray(pgArray)) return pgArray;
+      if (!pgArray) return [];
+      if (typeof pgArray === 'string') {
+        // Parse PostgreSQL array format like "{item1,item2}" or "{}"
+        const cleaned = pgArray.replace(/^\{|\}$/g, '');
+        return cleaned === '' ? [] : cleaned.split(',');
+      }
+      return [];
+    };
     
     if (existing) {
       const [updated] = await db
@@ -106,7 +136,13 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(userPreferences.userId, userId))
         .returning();
-      return updated;
+      
+      // Convert arrays for return value
+      return {
+        ...updated,
+        preferredCurrencyPairs: parsePostgresArray(updated.preferredCurrencyPairs),
+        preferredProviders: parsePostgresArray(updated.preferredProviders)
+      };
     } else {
       const [created] = await db
         .insert(userPreferences)
@@ -115,7 +151,13 @@ export class DatabaseStorage implements IStorage {
           userId,
         })
         .returning();
-      return created;
+      
+      // Convert arrays for return value
+      return {
+        ...created,
+        preferredCurrencyPairs: parsePostgresArray(created.preferredCurrencyPairs),
+        preferredProviders: parsePostgresArray(created.preferredProviders)
+      };
     }
   }
 
