@@ -5,6 +5,7 @@ import RateAlertModule from "@/components/RateAlertModule";
 import RateTrends from "@/components/RateTrends";
 import NewsSection from "@/components/NewsSection";
 import FeatureSection from "@/components/FeatureSection";
+import FeatureCards from "@/components/FeatureCards";
 import CountryNavigationSection from "@/components/CountryNavigationSection";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
@@ -48,11 +49,12 @@ const Home = () => {
       {/* Other sections remain unchanged */}
       <RateTrends />
       
-      {/* Feature Section - positioned just before News section */}
-      <FeatureSection />
+      {/* Feature Cards - positioned just before News section */}
+      <FeatureCards />
       
       <NewsSection />
       <CountryNavigationSection />
+      <FeatureSection />
     </div>
   );
 };
