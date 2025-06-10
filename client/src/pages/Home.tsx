@@ -1,6 +1,7 @@
 import { useState } from "react";
 import HeroSection from "@/components/HeroSection";
 import ComparisonResults from "@/components/ComparisonResults";
+import RateAlertModule from "@/components/RateAlertModule";
 import RateTrends from "@/components/RateTrends";
 import NewsSection from "@/components/NewsSection";
 import FeatureSection from "@/components/FeatureSection";
@@ -41,7 +42,8 @@ const Home = () => {
       {/* Keep comparison results for when redirected from calculator */}
       <ComparisonResults results={comparisonResults} visible={showResults} />
       
-
+      {/* Rate Alert Module - positioned between calculator and exchange rates */}
+      <RateAlertModule />
 
       {/* Other sections remain unchanged */}
       <RateTrends />

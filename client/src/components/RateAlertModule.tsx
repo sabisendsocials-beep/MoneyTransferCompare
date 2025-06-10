@@ -1,0 +1,297 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, Bell, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+
+type CurrencyPair = {
+  from: string;
+  to: string;
+  fromName: string;
+  toName: string;
+  fromSymbol: string;
+  toSymbol: string;
+};
+
+const currencyPairs: CurrencyPair[] = [
+  { from: "GBP", to: "NGN", fromName: "British Pound", toName: "Nigerian Naira", fromSymbol: "£", toSymbol: "₦" },
+  { from: "EUR", to: "NGN", fromName: "Euro", toName: "Nigerian Naira", fromSymbol: "€", toSymbol: "₦" },
+  { from: "USD", to: "NGN", fromName: "US Dollar", toName: "Nigerian Naira", fromSymbol: "$", toSymbol: "₦" },
+  { from: "GBP", to: "GHS", fromName: "British Pound", toName: "Ghanaian Cedi", fromSymbol: "£", toSymbol: "₵" },
+  { from: "EUR", to: "GHS", fromName: "Euro", toName: "Ghanaian Cedi", fromSymbol: "€", toSymbol: "₵" },
+  { from: "USD", to: "GHS", fromName: "US Dollar", toName: "Ghanaian Cedi", fromSymbol: "$", toSymbol: "₵" },
+  { from: "GBP", to: "KES", fromName: "British Pound", toName: "Kenyan Shilling", fromSymbol: "£", toSymbol: "KSh" },
+  { from: "EUR", to: "KES", fromName: "Euro", toName: "Kenyan Shilling", fromSymbol: "€", toSymbol: "KSh" },
+  { from: "USD", to: "KES", fromName: "US Dollar", toName: "Kenyan Shilling", fromSymbol: "$", toSymbol: "KSh" },
+  { from: "GBP", to: "INR", fromName: "British Pound", toName: "Indian Rupee", fromSymbol: "£", toSymbol: "₹" },
+  { from: "EUR", to: "INR", fromName: "Euro", toName: "Indian Rupee", fromSymbol: "€", toSymbol: "₹" },
+  { from: "USD", to: "INR", fromName: "US Dollar", toName: "Indian Rupee", fromSymbol: "$", toSymbol: "₹" },
+  { from: "GBP", to: "PKR", fromName: "British Pound", toName: "Pakistani Rupee", fromSymbol: "£", toSymbol: "₨" },
+  { from: "EUR", to: "PKR", fromName: "Euro", toName: "Pakistani Rupee", fromSymbol: "€", toSymbol: "₨" },
+  { from: "USD", to: "PKR", fromName: "US Dollar", toName: "Pakistani Rupee", fromSymbol: "$", toSymbol: "₨" },
+];
+
+const RateAlertModule = () => {
+  const [selectedPair, setSelectedPair] = useState<string>("GBP-NGN");
+  const [alertEmail, setAlertEmail] = useState("");
+  const [targetRate, setTargetRate] = useState("");
+  const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('best_provider');
+  const [showForm, setShowForm] = useState(false);
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const currencyPair = currencyPairs.find(pair => `${pair.from}-${pair.to}` === selectedPair) || currencyPairs[0];
+
+  // Fetch current rates for the selected pair
+  const { data: currentRates } = useQuery({
+    queryKey: ['/api/rate-alerts/current-rates', selectedPair],
+    queryFn: async () => {
+      const [from, to] = selectedPair.split('-');
+      const response = await fetch(`/api/rate-alerts/current-rates?from=${from}&to=${to}`);
+      if (!response.ok) throw new Error('Failed to fetch current rates');
+      const data = await response.json();
+      return data.success ? data.data : null;
+    },
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
+
+  // Create rate alert mutation
+  const createAlertMutation = useMutation({
+    mutationFn: async (alertData: {
+      email: string;
+      fromCurrency: string;
+      toCurrency: string;
+      targetRate: number;
+      rateBasis: 'official' | 'best_provider';
+    }) => {
+      const response = await fetch('/api/rate-alerts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(alertData),
+      });
+      if (!response.ok) throw new Error('Failed to create alert');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Alert Created!",
+        description: "You'll receive an email when your target rate is reached.",
+      });
+      setAlertEmail("");
+      setTargetRate("");
+      setShowForm(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/rate-alerts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create alert",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateAlert = () => {
+    if (!showForm) {
+      setShowForm(true);
+      return;
+    }
+
+    if (!alertEmail || !targetRate) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide your email and target rate.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const currentRate = alertBasis === 'official' 
+      ? currentRates?.officialRate 
+      : currentRates?.bestProviderRate;
+
+    if (!currentRate || parseFloat(targetRate) <= currentRate) {
+      toast({
+        title: "Invalid Target Rate",
+        description: `Target rate must be higher than current ${alertBasis === 'official' ? 'official' : 'provider'} rate.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const [from, to] = selectedPair.split('-');
+    createAlertMutation.mutate({
+      email: alertEmail,
+      fromCurrency: from,
+      toCurrency: to,
+      targetRate: parseFloat(targetRate),
+      rateBasis: alertBasis,
+    });
+  };
+
+  return (
+    <section className="py-12 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                <Bell className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-blue-900 dark:text-blue-100">Exchange Rate Alerts</h2>
+            </div>
+            <p className="text-lg text-blue-800 dark:text-blue-200 max-w-2xl mx-auto">
+              Get instant email notifications when exchange rates reach your target. Never miss a great rate again.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-blue-200 dark:border-blue-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+              <h3 className="text-xl font-semibold mb-4">Set Up Your Rate Alert</h3>
+              
+              {/* Currency Pair Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Currency Pair</label>
+                <Select value={selectedPair} onValueChange={setSelectedPair}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencyPairs.map((pair) => (
+                      <SelectItem key={`${pair.from}-${pair.to}`} value={`${pair.from}-${pair.to}`}>
+                        {pair.fromSymbol} {pair.from} to {pair.toSymbol} {pair.to}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Current Rates Display */}
+              {currentRates && (
+                <div className="bg-white/10 rounded-lg p-4 mb-4">
+                  <h4 className="text-sm font-medium mb-3">Current Rates</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Official Rate:</span>
+                      <span className="font-bold">
+                        {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Best Provider:</span>
+                      <span className="font-bold">
+                        {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6">
+              {showForm && (
+                <div className="space-y-4 mb-6">
+                  {/* Email Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={alertEmail}
+                      onChange={(e) => setAlertEmail(e.target.value)}
+                      className="border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400"
+                    />
+                  </div>
+
+                  {/* Rate Basis Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Rate Type
+                    </label>
+                    <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
+                      <SelectTrigger className="border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="official">Official Rate</SelectItem>
+                        <SelectItem value="best_provider">Best Provider Rate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Target Rate Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Target Rate ({currencyPair.toSymbol})
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder={`Target rate (${currencyPair.toSymbol})`}
+                      value={targetRate}
+                      onChange={(e) => setTargetRate(e.target.value)}
+                      className="border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400"
+                      step="0.01"
+                    />
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      Target rate must be higher than current {alertBasis === 'official' ? 'official' : 'provider'} rate.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Button */}
+              <div className="text-center">
+                <Button
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+                  onClick={handleCreateAlert}
+                  disabled={createAlertMutation.isPending}
+                >
+                  {createAlertMutation.isPending ? (
+                    "Creating Alert..."
+                  ) : showForm ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Create Alert
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-5 w-5 mr-2" />
+                      Set Rate Alert
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {showForm && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                  <div className="flex items-start">
+                    <Bell className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-blue-800 dark:text-blue-200">
+                      <p className="font-medium mb-1">How it works:</p>
+                      <ul className="space-y-1 text-xs">
+                        <li>• We monitor exchange rates every hour</li>
+                        <li>• You'll get an email when your target is reached</li>
+                        <li>• One alert per email per currency pair</li>
+                        <li>• Alerts automatically expire after 30 days</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default RateAlertModule;
