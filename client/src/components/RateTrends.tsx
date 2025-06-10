@@ -559,19 +559,30 @@ const RateTrends = () => {
                 )}
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-                <h4 className="font-medium text-sm mb-4 text-gray-800 dark:text-gray-200">Set Rate Alert</h4>
-                <div className="flex flex-col space-y-3">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Get email notifications when {currencyPair.from}/{currencyPair.to} reaches your target rate.
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 p-6 rounded-xl shadow-lg border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                    <AlertTriangle className="h-4 w-4 text-white" />
+                  </div>
+                  <h4 className="font-semibold text-lg text-blue-900 dark:text-blue-100">Set Rate Alert</h4>
+                </div>
+                <div className="flex flex-col space-y-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                    Get instant email notifications when {currencyPair.from}/{currencyPair.to} reaches your target rate.
                   </p>
                   
                   {/* Current Rates Display */}
                   {currentRates && (
-                    <div className="text-xs text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 p-2 rounded border">
-                      <div className="grid grid-cols-1 gap-1">
-                        <div>Official: {currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}</div>
-                        <div>Best Provider: {currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}</div>
+                    <div className="bg-white/80 dark:bg-gray-800/80 p-3 rounded-lg border border-blue-300 dark:border-blue-600">
+                      <div className="grid grid-cols-1 gap-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Official:</span>
+                          <span className="text-sm font-bold text-blue-900 dark:text-blue-100">{currentRates.officialRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Best Provider:</span>
+                          <span className="text-sm font-bold text-blue-900 dark:text-blue-100">{currentRates.bestProviderRate?.toLocaleString() || 'N/A'} {currencyPair.toSymbol}</span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -584,12 +595,12 @@ const RateTrends = () => {
                         placeholder="your@email.com"
                         value={alertEmail}
                         onChange={(e) => setAlertEmail(e.target.value)}
-                        className="text-sm"
+                        className="text-sm border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800"
                       />
                       
                       {/* Rate Basis Selection */}
                       <Select value={alertBasis} onValueChange={(value: 'official' | 'best_provider') => setAlertBasis(value)}>
-                        <SelectTrigger className="text-sm">
+                        <SelectTrigger className="text-sm border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -607,11 +618,11 @@ const RateTrends = () => {
                       placeholder={`Target rate (${currencyPair.toSymbol})`}
                       value={targetRate}
                       onChange={(e) => setTargetRate(e.target.value)}
-                      className="flex-1 rounded-r-none text-sm"
+                      className="flex-1 rounded-r-none text-sm border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800"
                       step="0.01"
                     />
                     <Button
-                      className="rounded-l-none bg-primary hover:bg-primary/90"
+                      className="rounded-l-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105"
                       onClick={handleRateAlert}
                       disabled={isCreatingAlert}
                     >
@@ -620,7 +631,7 @@ const RateTrends = () => {
                   </div>
 
                   {showAlertForm && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 p-2 rounded-lg">
                       Target rate must be higher than current {alertBasis === 'official' ? 'official' : 'provider'} rate.
                     </p>
                   )}
