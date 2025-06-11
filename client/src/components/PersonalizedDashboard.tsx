@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Bell, Calculator, Star, ArrowRight, Building2, Award } from "lucide-react";
+import { TrendingUp, TrendingDown, Bell, Calculator, Star, ArrowRight, Building2, Award, LineChart, Activity } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import NewsSection from "@/components/NewsSection";
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface PersonalizedDashboardProps {
   user: any;
@@ -56,6 +58,24 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     queryKey: ['/api/rate-trends', fromCurrency, toCurrency],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=2`);
+      return response.json();
+    },
+  });
+
+  // Fetch 30-day rate trends for chart
+  const { data: chartTrends } = useQuery({
+    queryKey: ['/api/rate-trends', fromCurrency, toCurrency, '30days'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=30`);
+      return response.json();
+    },
+  });
+
+  // Fetch rate stats for performance metrics
+  const { data: rateStats } = useQuery({
+    queryKey: ['/api/rate-stats', fromCurrency, toCurrency],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/rate-stats?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`);
       return response.json();
     },
   });
@@ -450,7 +470,106 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Exchange Rate Trends Tab */}
+        <TabsContent value="trends" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LineChart className="h-5 w-5" />
+                30-Day Rate Trends for {selectedPair.replace('-', '→')}
+              </CardTitle>
+              <CardDescription>
+                Track exchange rate performance over the last 30 days
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart data={chartTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis 
+                        domain={['dataMin', 'dataMax']}
+                        tickFormatter={(value) => formatRate(value)}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [formatRate(Number(value)), 'Rate']}
+                        labelFormatter={(label) => {
+                          const date = new Date(label);
+                          return date.toLocaleDateString();
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="rate" 
+                        stroke="#2563eb" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-500">
+                  Loading trend data...
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Rate Performance Stats */}
+          {rateStats && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">30-Day High</p>
+                      <p className="text-lg font-semibold">{formatRate(rateStats.thirtyDayHigh)} {toCurrency}</p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">30-Day Low</p>
+                      <p className="text-lg font-semibold">{formatRate(rateStats.thirtyDayLow)} {toCurrency}</p>
+                    </div>
+                    <TrendingDown className="h-8 w-8 text-red-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">30-Day Average</p>
+                      <p className="text-lg font-semibold">{formatRate(rateStats.thirtyDayAverage)} {toCurrency}</p>
+                    </div>
+                    <Activity className="h-8 w-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
+
+      {/* News Section */}
+      <div className="mt-8">
+        <NewsSection />
+      </div>
     </div>
   );
 }
