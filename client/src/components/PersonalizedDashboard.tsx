@@ -279,6 +279,59 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             </CardContent>
           </Card>
 
+          {/* Exchange Rate Trend Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LineChart className="h-5 w-5" />
+                7-Day Rate Trend
+              </CardTitle>
+              <CardDescription>
+                Recent exchange rate movement for {selectedPair.replace('-', '→')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
+                <div className="h-48 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart data={chartTrends.slice(-7)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis 
+                        domain={['dataMin', 'dataMax']}
+                        tickFormatter={(value) => formatRate(value)}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [formatRate(Number(value)), 'Rate']}
+                        labelFormatter={(label) => {
+                          const date = new Date(label);
+                          return date.toLocaleDateString();
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="rate" 
+                        stroke="#2563eb" 
+                        strokeWidth={2}
+                        dot={{ fill: '#2563eb', strokeWidth: 2, r: 3 }}
+                      />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-gray-500">
+                  Loading trend data...
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Preferred Providers Results */}
           <Card>
             <CardHeader>
