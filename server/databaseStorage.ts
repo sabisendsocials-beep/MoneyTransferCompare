@@ -1,7 +1,7 @@
 import { db } from './db';
 import { 
   User, InsertUser, UpsertUser,
-  UserPreferences, InsertUserPreferences,
+  UserPreferences, InsertUserPreferences, UpdateUserPreferences,
   Provider, InsertProvider, 
   ExchangeRate, InsertExchangeRate,
   News, InsertNews,
@@ -110,7 +110,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateUserPreferences(userId: string, data: InsertUserPreferences): Promise<UserPreferences> {
+  async updateUserPreferences(userId: string, data: Partial<InsertUserPreferences>): Promise<UserPreferences> {
     const existing = await db
       .select()
       .from(userPreferences)

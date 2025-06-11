@@ -43,10 +43,15 @@ export const insertUserPreferencesSchema = createInsertSchema(userPreferences).o
   updatedAt: true,
 });
 
+export const updateUserPreferencesSchema = insertUserPreferencesSchema.omit({
+  userId: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type UserPreferences = typeof userPreferences.$inferSelect;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
 
 // Upsert user type for Replit Auth
 export type UpsertUser = typeof users.$inferInsert;
