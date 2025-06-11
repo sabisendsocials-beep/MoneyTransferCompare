@@ -432,8 +432,11 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
               <Alert>
                 <Bell className="h-4 w-4" />
                 <AlertDescription>
-                  You'll receive email notifications when {selectedPair} reaches your target rate. 
-                  Current rate: {currentRate ? `${formatRate(currentRate)} ${toCurrency}` : 'Loading...'}
+                  You'll receive email notifications when {selectedPair} reaches your target rate.
+                  <div className="mt-2 text-sm">
+                    <div>Official Rate: {currentRate ? `${formatRate(currentRate)} ${toCurrency}` : 'Loading...'}</div>
+                    <div>Best Provider Rate: {bestRate ? `${formatRate(bestRate)} ${toCurrency}` : 'Loading...'} ({bestProvider})</div>
+                  </div>
                 </AlertDescription>
               </Alert>
 
