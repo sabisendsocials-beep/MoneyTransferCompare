@@ -275,10 +275,10 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
-                          {formatRate(Math.max(...preferredRates.map(p => p.receivedAmount)))} {toCurrency}
+                          ₦{formatRate(Math.max(...preferredRates.map(p => p.receivedAmount)))}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
-                          {bestProvider} • {fromCurrency}-{toCurrency}
+                          {bestProvider} • £→₦
                         </div>
                       </div>
                       <div className="text-right">
@@ -309,30 +309,15 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                         return (
                           <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gray-50 p-2 rounded-lg flex items-center justify-center">
-                                  {provider.logo ? (
-                                    <img 
-                                      src={provider.logo} 
-                                      alt={provider.name}
-                                      className="max-h-6 max-w-full object-contain"
-                                    />
-                                  ) : (
-                                    <span className="text-gray-600 font-semibold text-sm">
-                                      {provider.name.charAt(0)}
-                                    </span>
-                                  )}
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-gray-900">{provider.name}</h3>
-                                  <div className="text-xs text-gray-500">
-                                    Fee: {provider.fee} • {provider.deliverySpeed}
-                                  </div>
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900 text-sm">{provider.name}</h3>
+                                <div className="text-xs text-gray-500 mt-0.5">
+                                  {provider.fee} • {provider.deliverySpeed}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-xl font-bold text-gray-900">
-                                  {formatRate(provider.receivedAmount)} {toCurrency}
+                                <div className="text-lg font-bold text-gray-900">
+                                  ₦{formatRate(provider.receivedAmount)}
                                 </div>
                                 {isBest ? (
                                   <div className="text-green-600 text-xs font-medium">
@@ -340,7 +325,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                                   </div>
                                 ) : difference > 0 ? (
                                   <div className="text-red-500 text-xs">
-                                    -{formatRate(difference)} vs best
+                                    -₦{formatRate(difference)} vs best
                                   </div>
                                 ) : null}
                               </div>
