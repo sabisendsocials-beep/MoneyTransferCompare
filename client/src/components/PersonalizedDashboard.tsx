@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import NewsSection from "@/components/NewsSection";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AIInsights } from "./AIInsights";
 
 interface PersonalizedDashboardProps {
   user: any;
@@ -145,6 +146,15 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     setLocation(`/results?${params.toString()}`);
   };
 
+  // Smart alert creation from AI suggestions
+  const handleSmartAlertCreation = (suggestedThreshold: number) => {
+    setAlertAmount(suggestedThreshold.toString());
+    createAlertMutation.mutate({
+      targetValue: suggestedThreshold,
+      alertBasis: 'official'
+    });
+  };
+
 
 
 
@@ -253,8 +263,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
           <TabsTrigger value="alerts">Rate Alerts</TabsTrigger>
         </TabsList>
 
@@ -605,6 +616,15 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ai-insights" className="space-y-4">
+          <AIInsights 
+            fromCurrency={fromCurrency}
+            toCurrency={toCurrency}
+            amount={parseFloat(calculatorAmount) || 100}
+            onCreateAlert={handleSmartAlertCreation}
+          />
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
