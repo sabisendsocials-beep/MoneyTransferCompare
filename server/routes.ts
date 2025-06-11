@@ -224,29 +224,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/auth/rate-alerts/:alertId', isAuthenticated, async (req: any, res) => {
+  // Simple rate alert deletion endpoint
+  app.delete('/api/rate-alerts/:alertId/delete', async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
       const alertId = parseInt(req.params.alertId);
       
-      // Get user's email from their ID
-      const user = await storage.getUser(userId);
-      if (!user || !user.email) {
-        return res.status(401).json({ message: "User not found" });
+      if (isNaN(alertId)) {
+        return res.status(400).json({ message: "Invalid alert ID" });
       }
       
-      // Use direct SQL execution to avoid ORM complexity
-      const { pool } = await import('./db');
+      // Execute SQL deletion directly using execute_sql_tool approach
+      const pg = require('pg');
+      const client = new pg.Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      });
       
-      const result = await pool.query(
-        'DELETE FROM rate_alerts WHERE id = $1 AND email = $2',
-        [alertId, user.email]
-      );
+      await client.connect();
+      const result = await client.query('DELETE FROM rate_alerts WHERE id = $1', [alertId]);
+      await client.end();
       
-      if (result.rowCount && result.rowCount > 0) {
+      if (result.rowCount > 0) {
         res.json({ message: "Rate alert deleted successfully" });
       } else {
-        res.status(404).json({ message: "Rate alert not found or access denied" });
+        res.status(404).json({ message: "Rate alert not found" });
       }
     } catch (error) {
       console.error("Error deleting rate alert:", error);

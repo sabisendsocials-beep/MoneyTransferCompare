@@ -91,10 +91,10 @@ export default function UserProfileNew() {
     },
   });
 
-  // Delete rate alert mutation
+  // Delete rate alert mutation using simplified endpoint
   const deleteAlertMutation = useMutation({
     mutationFn: async (alertId: number) => {
-      return apiRequest('DELETE', `/api/auth/rate-alerts/${alertId}`);
+      return apiRequest('DELETE', `/api/rate-alerts/${alertId}/delete`);
     },
     onSuccess: () => {
       // Force complete cache refresh for rate alerts
@@ -108,7 +108,7 @@ export default function UserProfileNew() {
     },
     onError: () => {
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to delete rate alert",
         variant: "destructive",
       });
