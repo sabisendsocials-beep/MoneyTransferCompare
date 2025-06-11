@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import HeroSection from "@/components/HeroSection";
 import ComparisonResults from "@/components/ComparisonResults";
 import RateAlertModule from "@/components/RateAlertModule";
@@ -7,6 +8,7 @@ import NewsSection from "@/components/NewsSection";
 import FeatureSection from "@/components/FeatureSection";
 import FeatureCards from "@/components/FeatureCards";
 import CountryNavigationSection from "@/components/CountryNavigationSection";
+import { PersonalizedHome } from "@/components/PersonalizedHome";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
 
