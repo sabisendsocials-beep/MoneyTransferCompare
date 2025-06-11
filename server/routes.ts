@@ -890,6 +890,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // AI Prediction endpoints
+  app.get("/api/ai/rate-prediction", async (req: Request, res: Response) => {
+    try {
+      const fromCurrency = (req.query.fromCurrency as string) || "GBP";
+      const toCurrency = (req.query.toCurrency as string) || "NGN";
+      
+      const { aiPredictionService } = await import('./aiPredictionService');
+      const prediction = await aiPredictionService.predictRateMovement(fromCurrency, toCurrency);
+      
+      res.json(prediction);
+    } catch (error) {
+      console.error('Error generating rate prediction:', error);
+      res.status(500).json({ message: "Failed to generate rate prediction" });
+    }
+  });
+
+  app.get("/api/ai/optimal-timing", async (req: Request, res: Response) => {
+    try {
+      const fromCurrency = (req.query.fromCurrency as string) || "GBP";
+      const toCurrency = (req.query.toCurrency as string) || "NGN";
+      const amount = parseFloat(req.query.amount as string) || 100;
+      
+      const { aiPredictionService } = await import('./aiPredictionService');
+      const timing = await aiPredictionService.getOptimalTiming(fromCurrency, toCurrency, amount);
+      
+      res.json(timing);
+    } catch (error) {
+      console.error('Error generating optimal timing:', error);
+      res.status(500).json({ message: "Failed to generate optimal timing" });
+    }
+  });
+
+  app.get("/api/ai/smart-alert-suggestion", async (req: Request, res: Response) => {
+    try {
+      const fromCurrency = (req.query.fromCurrency as string) || "GBP";
+      const toCurrency = (req.query.toCurrency as string) || "NGN";
+      
+      const { aiPredictionService } = await import('./aiPredictionService');
+      const suggestion = await aiPredictionService.getSmartAlertSuggestion(fromCurrency, toCurrency);
+      
+      res.json(suggestion);
+    } catch (error) {
+      console.error('Error generating smart alert suggestion:', error);
+      res.status(500).json({ message: "Failed to generate smart alert suggestion" });
+    }
+  });
+
+  app.get("/api/ai/provider-rotation", async (req: Request, res: Response) => {
+    try {
+      const fromCurrency = (req.query.fromCurrency as string) || "GBP";
+      const toCurrency = (req.query.toCurrency as string) || "NGN";
+      
+      const { aiPredictionService } = await import('./aiPredictionService');
+      const rotation = await aiPredictionService.getProviderRotationSuggestions(fromCurrency, toCurrency);
+      
+      res.json(rotation);
+    } catch (error) {
+      console.error('Error generating provider rotation suggestions:', error);
+      res.status(500).json({ message: "Failed to generate provider rotation suggestions" });
+    }
+  });
+
   // Get rate statistics
   app.get("/api/rate-stats", async (req: Request, res: Response) => {
     try {
