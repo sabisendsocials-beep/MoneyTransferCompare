@@ -24,11 +24,14 @@ interface User {
 interface RateAlert {
   id: number;
   email: string;
-  fromCurrency: string;
-  toCurrency: string;
-  targetRate: number;
-  direction: 'above' | 'below';
-  createdAt: string;
+  from_currency: string;
+  to_currency: string;
+  target_value: number;
+  trigger_type: string;
+  alert_basis: string;
+  alert_status: string;
+  created_at: string;
+  current_rate_at_creation?: number;
 }
 
 const CURRENCY_PAIRS = [
@@ -311,10 +314,18 @@ export default function UserProfileNew() {
                 <div key={alert.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex-1">
                     <div className="font-medium">
-                      {alert.fromCurrency}/{alert.toCurrency}
+                      {alert.from_currency}/{alert.to_currency}
                     </div>
                     <div className="text-sm text-gray-600">
-                      Alert when rate goes {alert.direction} {alert.targetRate}
+                      Alert when {alert.alert_basis} rate reaches {alert.target_value}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Created: {new Date(alert.created_at).toLocaleDateString()}
+                      {alert.current_rate_at_creation && (
+                        <span className="ml-2">
+                          (Rate was {alert.current_rate_at_creation} when created)
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Button
