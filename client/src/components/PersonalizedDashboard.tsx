@@ -21,6 +21,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const [, setLocation] = useLocation();
   const [alertAmount, setAlertAmount] = useState("");
   const [calculatorAmount, setCalculatorAmount] = useState("100");
+  const [alertType, setAlertType] = useState<'above' | 'below'>('above');
   
   const selectedPair = user.preferences?.preferredCurrencyPair || "GBP-NGN";
   const [fromCurrency, toCurrency] = selectedPair.split("-");
@@ -384,43 +385,46 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 </div>
                 <div className="flex flex-col space-y-2">
                   <label className="text-sm font-medium">Alert When Rate Goes</label>
-                  <div className="flex space-x-2">
+                  <div className="bg-gray-100 rounded-lg p-1 flex">
                     <Button
-                      variant="outline"
+                      variant={alertType === 'above' ? 'default' : 'ghost'}
                       size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        if (alertAmount) {
-                          createAlertMutation.mutate({
-                            targetValue: parseFloat(alertAmount),
-                            alertType: 'above'
-                          });
-                        }
-                      }}
-                      disabled={!alertAmount || createAlertMutation.isPending}
+                      className="flex-1 h-10"
+                      onClick={() => setAlertType('above')}
                     >
                       <TrendingUp className="h-4 w-4 mr-1" />
-                      {createAlertMutation.isPending ? "Creating..." : "Above"}
+                      Above
                     </Button>
                     <Button
-                      variant="outline"
+                      variant={alertType === 'below' ? 'default' : 'ghost'}
                       size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        if (alertAmount) {
-                          createAlertMutation.mutate({
-                            targetValue: parseFloat(alertAmount),
-                            alertType: 'below'
-                          });
-                        }
-                      }}
-                      disabled={!alertAmount || createAlertMutation.isPending}
+                      className="flex-1 h-10"
+                      onClick={() => setAlertType('below')}
                     >
                       <TrendingDown className="h-4 w-4 mr-1" />
-                      {createAlertMutation.isPending ? "Creating..." : "Below"}
+                      Below
                     </Button>
                   </div>
                 </div>
+              </div>
+
+              {/* Create Alert Button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => {
+                    if (alertAmount) {
+                      createAlertMutation.mutate({
+                        targetValue: parseFloat(alertAmount),
+                        alertType: alertType
+                      });
+                    }
+                  }}
+                  disabled={!alertAmount || createAlertMutation.isPending}
+                  className="w-full md:w-auto px-8"
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  {createAlertMutation.isPending ? "Creating Alert..." : "Create Alert"}
+                </Button>
               </div>
 
               <Alert>
