@@ -4,7 +4,7 @@ import { storage } from "./databaseStorage";
 import { transferRequestSchema } from "@shared/schema";
 import { updateExchangeRates, ensureProvidersExist } from "./scrapers/providers";
 import { updateFinancialNews } from "./scrapers/news";
-import { initializeDatabase } from "./db";
+import { initializeDatabase, pool } from "./db";
 import { updateRateTrends } from "./api/exchangeRateApi";
 import { realProviderRates } from "./scrapers/realRates";
 import { updateLemfiRates } from "./scrapers/lemfiScraper";
@@ -224,27 +224,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple rate alert deletion endpoint
-  app.delete('/api/rate-alerts/:alertId/delete', async (req, res) => {
+  // Simple deletion endpoint without authentication chain
+  app.post('/api/delete-alert', async (req, res) => {
     try {
-      const alertId = parseInt(req.params.alertId);
+      const { alertId } = req.body;
+      const id = parseInt(alertId);
       
-      if (isNaN(alertId)) {
+      if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid alert ID" });
       }
       
-      // Execute SQL deletion directly using execute_sql_tool approach
-      const pg = require('pg');
-      const client = new pg.Client({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
-      });
+      const { deleteRateAlert } = await import('./deleteAlert');
+      const success = await deleteRateAlert(id);
       
-      await client.connect();
-      const result = await client.query('DELETE FROM rate_alerts WHERE id = $1', [alertId]);
-      await client.end();
-      
-      if (result.rowCount > 0) {
+      if (success) {
         res.json({ message: "Rate alert deleted successfully" });
       } else {
         res.status(404).json({ message: "Rate alert not found" });
