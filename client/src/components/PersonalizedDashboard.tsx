@@ -18,6 +18,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [alertAmount, setAlertAmount] = useState("");
+  const [calculatorAmount, setCalculatorAmount] = useState("100");
   
   const selectedPair = user.preferences?.preferredCurrencyPair || "GBP-NGN";
   const [fromCurrency, toCurrency] = selectedPair.split("-");
@@ -32,18 +33,19 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     },
   });
 
-  // Fetch all provider rates for comparison
+  // Fetch all provider rates for comparison using calculator amount
   const { data: allProviderRates, isLoading: providerRatesLoading } = useQuery({
-    queryKey: ['/api/compare', fromCurrency, toCurrency],
+    queryKey: ['/api/compare', fromCurrency, toCurrency, calculatorAmount],
     queryFn: async () => {
       const response = await apiRequest('POST', '/api/compare', {
         fromCurrency,
         toCurrency,
-        amount: 1000,
+        amount: parseFloat(calculatorAmount),
         type: 'send'
       });
       return response.json();
     },
+    enabled: !!calculatorAmount && !isNaN(parseFloat(calculatorAmount)),
   });
 
   // Rate alert creation
@@ -98,18 +100,39 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
       preferredProviders.includes(provider.providerName)
     );
     
-
+    // Find the best rate for comparison
+    const bestRate = Math.max(...(allProviderRates.map((p: any) => p.exchangeRate) || [0]));
     
-    return preferredRateData.map((provider: any) => ({
-      name: provider.providerName,
-      rate: provider.exchangeRate,
-      fee: provider.fee || provider.transferFee || 'Free',
-      receivedAmount: provider.receivedAmount,
-      totalCost: provider.totalCost || provider.sendAmount
-    }));
+    return preferredRateData.map((provider: any) => {
+      const rateDifference = bestRate - provider.exchangeRate;
+      const percentageDiff = bestRate > 0 ? ((rateDifference / bestRate) * 100) : 0;
+      
+      return {
+        name: provider.providerName,
+        rate: provider.exchangeRate,
+        fee: provider.fee || provider.transferFee || 'Free',
+        receivedAmount: provider.receivedAmount,
+        totalCost: provider.totalCost || provider.sendAmount,
+        logo: provider.providerLogo,
+        rateDifference,
+        percentageDiff,
+        isBest: provider.exchangeRate === bestRate
+      };
+    }).sort((a, b) => b.rate - a.rate); // Sort by best rate first
   };
 
   const preferredRates = getPreferredProviderData();
+
+  // Handle navigation to compare page with current amount
+  const navigateToCompare = () => {
+    const params = new URLSearchParams({
+      fromCurrency,
+      toCurrency,
+      amount: calculatorAmount,
+      type: 'send'
+    });
+    window.location.href = `/compare?${params.toString()}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -171,6 +194,34 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
         </TabsList>
 
         <TabsContent value="providers" className="space-y-4">
+          {/* Calculator Input */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calculator className="h-5 w-5 mr-2" />
+                Quick Calculator
+              </CardTitle>
+              <CardDescription>
+                Enter amount to see what you'll receive from your preferred providers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4">
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    value={calculatorAmount}
+                    onChange={(e) => setCalculatorAmount(e.target.value)}
+                    placeholder="100"
+                    className="text-lg"
+                  />
+                </div>
+                <span className="text-lg font-medium">{fromCurrency}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preferred Providers Results */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -178,43 +229,76 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 Your Preferred Providers for {selectedPair}
               </CardTitle>
               <CardDescription>
-                Current rates from your selected providers compared to today's best rate
+                Sending £{calculatorAmount} - sorted by best rate
               </CardDescription>
             </CardHeader>
             <CardContent>
               {preferredRates.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {preferredRates.map((provider: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold">
-                            {provider.name.charAt(0)}
-                          </span>
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          {provider.logo ? (
+                            <img 
+                              src={provider.logo} 
+                              alt={provider.name}
+                              className="w-12 h-12 rounded-lg object-contain bg-gray-50 p-1"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <span className="text-blue-600 font-semibold text-lg">
+                                {provider.name.charAt(0)}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-semibold text-lg">{provider.name}</h3>
+                            {provider.isBest && (
+                              <Badge variant="default" className="text-xs bg-green-500">
+                                Best Rate
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold">{provider.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {provider.fee ? `Fee: ${provider.fee}` : 'Fee info not available'}
-                          </p>
+                        
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-green-600">
+                            {formatRate(provider.receivedAmount / 100)} {toCurrency}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Rate: {formatRate(provider.rate)}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">
-                          {provider.rate ? `${formatRate(provider.rate)} ${toCurrency}` : 'Rate N/A'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Receive: {provider.receivedAmount ? `${formatRate(provider.receivedAmount)} ${toCurrency}` : 'N/A'}
-                        </p>
+                      
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="flex space-x-4">
+                          <span>Fee: {provider.fee}</span>
+                          {!provider.isBest && provider.rateDifference > 0 && (
+                            <span className="text-red-500">
+                              -{formatRate(provider.rateDifference * parseFloat(calculatorAmount))} {toCurrency}
+                            </span>
+                          )}
+                        </div>
+                        {!provider.isBest && (
+                          <span className="text-red-500 text-xs">
+                            {provider.percentageDiff.toFixed(2)}% less than best
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
                   
-                  {/* Quick action to see all providers */}
+                  {/* Enhanced Compare All button */}
                   <div className="pt-4 border-t">
-                    <Button variant="outline" className="w-full" onClick={() => window.location.href = '/compare'}>
+                    <Button 
+                      variant="default" 
+                      className="w-full" 
+                      onClick={navigateToCompare}
+                    >
                       <Calculator className="h-4 w-4 mr-2" />
-                      Compare All Providers
+                      Compare All Providers (£{calculatorAmount})
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
