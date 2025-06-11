@@ -53,11 +53,13 @@ export default function UserProfile() {
 
   // Fetch user data with preferences
   const { data: user, isLoading: userLoading } = useQuery<User>({
-    queryKey: ['/api/auth/user', Date.now()], // Force cache invalidation
+    queryKey: ['/api/auth/user'],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
+
+  // Debug logging
+  console.log('UserProfile user data:', user);
+  console.log('UserProfile preferences:', user?.preferences);
 
   // Fetch rate alerts
   const { data: rateAlerts = [], isLoading: alertsLoading } = useQuery<RateAlert[]>({
@@ -71,6 +73,8 @@ export default function UserProfile() {
       return apiRequest('POST', '/api/auth/preferences', data);
     },
     onSuccess: () => {
+      // Force fresh data fetch
+      queryClient.removeQueries({ queryKey: ['/api/auth/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
         title: "Success",
