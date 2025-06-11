@@ -229,15 +229,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const alertId = parseInt(req.params.alertId);
       
-      // Get user's rate alerts to verify ownership
-      const userAlerts = await storage.getUserRateAlerts(userId);
-      const alert = userAlerts.find(a => a.id === alertId);
-      if (!alert) {
-        return res.status(404).json({ message: "Rate alert not found" });
+      // Get user's email from their ID
+      const user = await storage.getUser(userId);
+      if (!user || !user.email) {
+        return res.status(401).json({ message: "User not found" });
       }
       
-      const success = await storage.deleteRateAlert(alertId, userId);
-      if (success) {
+      // Direct database deletion to avoid storage method issues
+      const { db } = await import('./db');
+      const { rateAlerts } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const result = await db
+        .delete(rateAlerts)
+        .where(and(
+          eq(rateAlerts.id, alertId),
+          eq(rateAlerts.email, user.email)
+        ));
+      
+      if ((result.rowCount ?? 0) > 0) {
         res.json({ message: "Rate alert deleted successfully" });
       } else {
         res.status(404).json({ message: "Rate alert not found or access denied" });

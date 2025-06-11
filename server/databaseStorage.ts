@@ -193,7 +193,7 @@ export class DatabaseStorage implements IStorage {
         eq(rateAlerts.id, alertId),
         eq(rateAlerts.email, user.email)
       ));
-    return result.rowCount !== undefined && result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
   
   // Provider methods
