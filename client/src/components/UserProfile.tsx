@@ -53,8 +53,10 @@ export default function UserProfile() {
 
   // Fetch user data with preferences
   const { data: user, isLoading: userLoading } = useQuery<User>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/auth/user', Date.now()], // Force cache invalidation
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Fetch rate alerts
