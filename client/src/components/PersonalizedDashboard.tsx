@@ -24,14 +24,21 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const preferredProviders = user.preferences?.preferredProviders || [];
 
   // Fetch current rates for preferred currency pair
-  const { data: currentRates } = useQuery({
+  const { data: currentRates, isLoading: currentRatesLoading } = useQuery({
     queryKey: ['/api/rate-alerts/current-rates', fromCurrency, toCurrency],
-    queryFn: () => apiRequest('GET', `/api/rate-alerts/current-rates?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/rate-alerts/current-rates?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`);
+      return response.json();
+    },
   });
 
   // Fetch best rates for comparison
-  const { data: bestRates } = useQuery({
+  const { data: bestRates, isLoading: bestRatesLoading } = useQuery({
     queryKey: ['/api/best-rates'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/best-rates');
+      return response.json();
+    },
   });
 
   // Rate alert creation
@@ -64,6 +71,8 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const currentRate = (currentRates as any)?.data?.officialRate;
   const bestProvider = (currentRates as any)?.data?.bestProviderName;
   const bestRate = (currentRates as any)?.data?.bestProviderRate;
+
+
 
 
 
