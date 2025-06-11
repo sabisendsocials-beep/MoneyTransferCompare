@@ -32,11 +32,16 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     },
   });
 
-  // Fetch best rates for comparison
-  const { data: bestRates, isLoading: bestRatesLoading } = useQuery({
-    queryKey: ['/api/best-rates'],
+  // Fetch all provider rates for comparison
+  const { data: allProviderRates, isLoading: providerRatesLoading } = useQuery({
+    queryKey: ['/api/compare', fromCurrency, toCurrency],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/best-rates');
+      const response = await apiRequest('POST', '/api/compare', {
+        fromCurrency,
+        toCurrency,
+        amount: 1000,
+        type: 'send'
+      });
       return response.json();
     },
   });
@@ -84,22 +89,23 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     }).format(rate);
   };
 
-  // Get preferred provider rates from best rates data
+  // Get preferred provider rates from all provider data
   const getPreferredProviderData = () => {
-    if (!bestRates || !Array.isArray(bestRates)) return [];
+    if (!allProviderRates || !Array.isArray(allProviderRates)) return [];
     
-    // Filter rates for the current currency pair and preferred providers
-    const pairRates = (bestRates as any[]).filter((item: any) => 
-      item.fromCurrency === fromCurrency && 
-      item.toCurrency === toCurrency &&
-      preferredProviders.includes(item.providerName)
+    // Filter providers that match user's preferences
+    const preferredRateData = allProviderRates.filter((provider: any) => 
+      preferredProviders.includes(provider.providerName)
     );
     
-    return pairRates.map((rate: any) => ({
-      name: rate.providerName,
-      rate: rate.rate,
-      fee: rate.fee || 'Fee info not available',
-      timestamp: rate.timestamp
+
+    
+    return preferredRateData.map((provider: any) => ({
+      name: provider.providerName,
+      rate: provider.exchangeRate,
+      fee: provider.fee || provider.transferFee || 'Free',
+      receivedAmount: provider.receivedAmount,
+      totalCost: provider.totalCost || provider.sendAmount
     }));
   };
 
@@ -197,9 +203,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                         <p className="text-lg font-bold">
                           {provider.rate ? `${formatRate(provider.rate)} ${toCurrency}` : 'Rate N/A'}
                         </p>
-                        {provider.name === bestProvider && (
-                          <Badge variant="default" className="text-xs">Best Rate Today</Badge>
-                        )}
+                        <p className="text-sm text-muted-foreground">
+                          Receive: {provider.receivedAmount ? `${formatRate(provider.receivedAmount)} ${toCurrency}` : 'N/A'}
+                        </p>
                       </div>
                     </div>
                   ))}
