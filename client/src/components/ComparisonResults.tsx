@@ -15,6 +15,9 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
     return null;
   }
 
+  // CACHE BREAKER - ENHANCED RESULTS VERSION 2.0
+  const enhancedVersion = "v2.0-enhanced-rankings";
+
   const formatCurrency = (value: number, currency: string) => {
     const formatter = new Intl.NumberFormat(currency === 'GBP' ? 'en-GB' : 'en-NG', {
       style: 'currency',
