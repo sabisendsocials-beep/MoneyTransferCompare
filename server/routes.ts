@@ -112,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const response = { 
         ...user,
-        preferences: preferences || { preferredCurrencyPairs: [], preferredProviders: [] }
+        preferences: preferences || { preferredCurrencyPair: null, preferredProviders: [] }
       };
       
       console.log('Final response preferences:', response.preferences);

@@ -128,7 +128,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...preferences,
-      preferredCurrencyPairs: parsePostgresArray(preferences.preferredCurrencyPairs),
+      preferredCurrencyPair: preferences.preferredCurrencyPair,
       preferredProviders: parsePostgresArray(preferences.preferredProviders)
     };
   }
@@ -161,7 +161,7 @@ export class DatabaseStorage implements IStorage {
       // Convert arrays for return value
       return {
         ...updated,
-        preferredCurrencyPairs: parsePostgresArray(updated.preferredCurrencyPairs),
+        preferredCurrencyPair: updated.preferredCurrencyPair,
         preferredProviders: parsePostgresArray(updated.preferredProviders)
       };
     } else {
@@ -176,7 +176,7 @@ export class DatabaseStorage implements IStorage {
       // Convert arrays for return value
       return {
         ...created,
-        preferredCurrencyPairs: parsePostgresArray(created.preferredCurrencyPairs),
+        preferredCurrencyPair: created.preferredCurrencyPair,
         preferredProviders: parsePostgresArray(created.preferredProviders)
       };
     }

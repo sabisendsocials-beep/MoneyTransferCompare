@@ -131,32 +131,30 @@ const UserProfile = () => {
     );
   }
 
-  const preferences = (profileData as any)?.preferences || { preferredCurrencyPairs: [], preferredProviders: [] };
+  const preferences = (profileData as any)?.preferences || { preferredCurrencyPair: null, preferredProviders: [] };
   const alerts = Array.isArray(rateAlertsData) ? rateAlertsData : [];
 
   // Debug what we're actually receiving
   console.log('=== FRONTEND DEBUG ===');
   console.log('Profile data received:', profileData);
   console.log('Preferences object:', preferences);
-  console.log('Currency pairs:', preferences.preferredCurrencyPairs);
+  console.log('Currency pair:', preferences.preferredCurrencyPair);
   console.log('Providers:', preferences.preferredProviders);
   console.log('=== END FRONTEND DEBUG ===');
 
-  const addCurrencyPair = () => {
-    if (!newCurrencyPair || preferences.preferredCurrencyPairs.includes(newCurrencyPair)) return;
+  const setCurrencyPair = () => {
+    if (!newCurrencyPair) return;
     
-    const updatedPairs = [...preferences.preferredCurrencyPairs, newCurrencyPair].slice(0, 3);
     updatePreferencesMutation.mutate({
-      preferredCurrencyPairs: updatedPairs,
+      preferredCurrencyPair: newCurrencyPair,
       preferredProviders: preferences.preferredProviders
     });
     setNewCurrencyPair("");
   };
 
-  const removeCurrencyPair = (pair: string) => {
-    const updatedPairs = preferences.preferredCurrencyPairs.filter((p: string) => p !== pair);
+  const removeCurrencyPair = () => {
     updatePreferencesMutation.mutate({
-      preferredCurrencyPairs: updatedPairs,
+      preferredCurrencyPair: null,
       preferredProviders: preferences.preferredProviders
     });
   };

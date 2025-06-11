@@ -19,7 +19,7 @@ export const users = pgTable("users", {
 export const userPreferences = pgTable("user_preferences", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  preferredCurrencyPairs: text("preferred_currency_pairs").array(), // JSON array of "FROM-TO" pairs, max 3
+  preferredCurrencyPair: text("preferred_currency_pair"), // Single "FROM-TO" pair
   preferredProviders: text("preferred_providers").array(), // JSON array of provider names, max 3
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
