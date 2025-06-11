@@ -54,7 +54,7 @@ const UserProfile = () => {
 
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
-    mutationFn: async (preferences: { preferredCurrencyPairs: string[], preferredProviders: string[] }) => {
+    mutationFn: async (preferences: { preferredCurrencyPair: string | null, preferredProviders: string[] }) => {
       return apiRequest("POST", "/api/auth/preferences", preferences);
     },
     onSuccess: () => {
@@ -164,7 +164,7 @@ const UserProfile = () => {
     
     const updatedProviders = [...preferences.preferredProviders, newProvider].slice(0, 3);
     updatePreferencesMutation.mutate({
-      preferredCurrencyPairs: preferences.preferredCurrencyPairs,
+      preferredCurrencyPair: preferences.preferredCurrencyPair,
       preferredProviders: updatedProviders
     });
     setNewProvider("");
@@ -173,7 +173,7 @@ const UserProfile = () => {
   const removeProvider = (provider: string) => {
     const updatedProviders = preferences.preferredProviders.filter((p: string) => p !== provider);
     updatePreferencesMutation.mutate({
-      preferredCurrencyPairs: preferences.preferredCurrencyPairs,
+      preferredCurrencyPair: preferences.preferredCurrencyPair,
       preferredProviders: updatedProviders
     });
   };
@@ -222,41 +222,39 @@ const UserProfile = () => {
           </CardContent>
         </Card>
 
-        {/* Preferred Currency Pairs */}
+        {/* Preferred Currency Pair */}
         <Card>
           <CardHeader>
-            <CardTitle>Preferred Currency Pairs (Max 3)</CardTitle>
+            <CardTitle>Preferred Currency Pair</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              {preferences.preferredCurrencyPairs.map((pair: string) => (
-                <Badge key={pair} variant="secondary" className="flex items-center gap-2">
-                  {formatCurrencyPair(pair)}
+              {preferences.preferredCurrencyPair && (
+                <Badge variant="secondary" className="flex items-center gap-2">
+                  {formatCurrencyPair(preferences.preferredCurrencyPair)}
                   <X 
                     className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                    onClick={() => removeCurrencyPair(pair)}
+                    onClick={() => removeCurrencyPair()}
                   />
                 </Badge>
-              ))}
+              )}
             </div>
             
-            {preferences.preferredCurrencyPairs.length < 3 && (
+            {!preferences.preferredCurrencyPair && (
               <div className="flex gap-2">
                 <Select value={newCurrencyPair} onValueChange={setNewCurrencyPair}>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Select currency pair" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CURRENCY_PAIRS
-                      .filter(pair => !preferences.preferredCurrencyPairs.includes(pair))
-                      .map(pair => (
-                        <SelectItem key={pair} value={pair}>
-                          {formatCurrencyPair(pair)}
-                        </SelectItem>
-                      ))}
+                    {CURRENCY_PAIRS.map(pair => (
+                      <SelectItem key={pair} value={pair}>
+                        {formatCurrencyPair(pair)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={addCurrencyPair} disabled={!newCurrencyPair}>
+                <Button onClick={setCurrencyPair} disabled={!newCurrencyPair}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
