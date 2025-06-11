@@ -584,20 +584,20 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-sm text-gray-600 mb-1">1 Month Change</div>
-                      <div className={`text-lg font-semibold ${(rateStats.oneMonth || 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        {(rateStats.oneMonth || 0) >= 0 ? '+' : ''}{(rateStats.oneMonth || 0).toFixed(2)}% {(rateStats.oneMonth || 0) >= 0 ? '↗' : '↘'}
+                      <div className={`text-lg font-semibold ${(rateStats.oneMonthChange ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {(rateStats.oneMonthChange ?? 0) >= 0 ? '+' : ''}{(rateStats.oneMonthChange ?? 0).toFixed(2)}% {(rateStats.oneMonthChange ?? 0) >= 0 ? '↗' : '↘'}
                       </div>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-sm text-gray-600 mb-1">3 Month Change</div>
-                      <div className={`text-lg font-semibold ${(rateStats.threeMonth || 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        {(rateStats.threeMonth || 0) >= 0 ? '+' : ''}{(rateStats.threeMonth || 0).toFixed(2)}% {(rateStats.threeMonth || 0) >= 0 ? '↗' : '↘'}
+                      <div className={`text-lg font-semibold ${(rateStats.threeMonthChange ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {(rateStats.threeMonthChange ?? 0) >= 0 ? '+' : ''}{(rateStats.threeMonthChange ?? 0).toFixed(2)}% {(rateStats.threeMonthChange ?? 0) >= 0 ? '↗' : '↘'}
                       </div>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-sm text-gray-600 mb-1">1 Year Change</div>
-                      <div className={`text-lg font-semibold ${(rateStats.oneYear || 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        {(rateStats.oneYear || 0) >= 0 ? '+' : ''}{(rateStats.oneYear || 0).toFixed(1)}% {(rateStats.oneYear || 0) >= 0 ? '↗' : '↘'}
+                      <div className={`text-lg font-semibold ${(rateStats.oneYearChange ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {(rateStats.oneYearChange ?? 0) >= 0 ? '+' : ''}{(rateStats.oneYearChange ?? 0).toFixed(1)}% {(rateStats.oneYearChange ?? 0) >= 0 ? '↗' : '↘'}
                       </div>
                     </div>
                   </div>
