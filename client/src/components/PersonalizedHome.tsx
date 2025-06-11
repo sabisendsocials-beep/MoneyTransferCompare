@@ -8,10 +8,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, TrendingDown, Bell, Calculator, Star, Target, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Bell, Calculator, Star, Target } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatPercentage } from "@/lib/utils";
 
 interface PersonalizedHomeProps {
   user: {
@@ -29,7 +28,6 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
   const queryClient = useQueryClient();
   const [alertAmount, setAlertAmount] = useState("");
   const [selectedPair, setSelectedPair] = useState(user.preferences?.preferredCurrencyPair || "GBP-NGN");
-  const [calculatorAmount, setCalculatorAmount] = useState("1000");
 
   const [fromCurrency, toCurrency] = selectedPair.split("-");
 
@@ -48,17 +46,6 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
   const { data: rateTrends } = useQuery({
     queryKey: ['/api/rate-trends', fromCurrency, toCurrency],
     queryFn: () => apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=30`),
-  });
-
-  // Fetch all providers for calculator
-  const { data: allProviders } = useQuery({
-    queryKey: ['/api/compare'],
-    queryFn: () => apiRequest('POST', '/api/compare', {
-      fromCurrency,
-      toCurrency,
-      amount: parseFloat(calculatorAmount),
-    }),
-    enabled: !!calculatorAmount && !isNaN(parseFloat(calculatorAmount)),
   });
 
   // Create rate alert mutation
@@ -103,12 +90,11 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
 
   // Calculate trend data
   const calculateTrendStats = () => {
-    const trends = rateTrends as any[];
-    if (!trends || trends.length < 2) return null;
+    if (!rateTrends || !Array.isArray(rateTrends) || rateTrends.length < 2) return null;
     
-    const latest = trends[trends.length - 1];
-    const previous = trends[trends.length - 2];
-    const weekAgo = trends[Math.max(0, trends.length - 7)];
+    const latest = rateTrends[rateTrends.length - 1];
+    const previous = rateTrends[rateTrends.length - 2];
+    const weekAgo = rateTrends[Math.max(0, rateTrends.length - 7)];
     
     const dailyChange = ((latest.rate - previous.rate) / previous.rate) * 100;
     const weeklyChange = ((latest.rate - weekAgo.rate) / weekAgo.rate) * 100;
@@ -307,12 +293,12 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
                 </div>
               </div>
 
-              {allProviders?.providers && (
+              {(allProviders as any)?.providers && (
                 <div className="space-y-3">
                   <Separator />
                   <h4 className="font-medium">All Available Providers</h4>
                   <div className="grid gap-3">
-                    {allProviders.providers.slice(0, 6).map((provider: any, index: number) => (
+                    {(allProviders as any).providers.slice(0, 6).map((provider: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">

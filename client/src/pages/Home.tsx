@@ -16,6 +16,19 @@ const Home = () => {
   const [comparisonResults, setComparisonResults] = useState<TransferResult[]>([]);
   const [showResults, setShowResults] = useState(false);
 
+  // Check authentication status
+  const { data: authStatus } = useQuery({
+    queryKey: ['/api/auth/status'],
+    retry: false,
+  });
+
+  // Get fresh user data for personalized experience
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/user-fresh'],
+    enabled: !!(authStatus as any)?.user,
+    retry: false,
+  });
+
   const handleComparisonResults = (results: TransferResult[]) => {
     setComparisonResults(results);
     setShowResults(true);
@@ -30,6 +43,25 @@ const Home = () => {
     "@graph": [financialServiceSchema, websiteSchema]
   };
 
+  // Show personalized dashboard for authenticated users
+  if ((authStatus as any)?.user && userData) {
+    return (
+      <div className="min-h-screen">
+        <SEO
+          title="SabiSend Dashboard - Your Personal Exchange Rate Hub"
+          description="Your personalized money transfer dashboard with preferred providers, rate alerts, and real-time exchange rates."
+          keywords="personal dashboard, exchange rates, money transfer, rate alerts"
+          canonicalUrl="https://sabisend.com"
+          structuredData={structuredData}
+        />
+        <div className="container mx-auto px-4 py-6">
+          <PersonalizedHome user={userData as any} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show public home page for non-authenticated users
   return (
     <div className="min-h-screen">
       <SEO
