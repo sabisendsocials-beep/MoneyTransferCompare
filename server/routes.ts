@@ -235,19 +235,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User not found" });
       }
       
-      // Direct database deletion to avoid storage method issues
-      const { db } = await import('./db');
-      const { rateAlerts } = await import('@shared/schema');
-      const { eq, and } = await import('drizzle-orm');
+      // Use direct SQL execution to avoid ORM complexity
+      const { pool } = await import('./db');
       
-      const result = await db
-        .delete(rateAlerts)
-        .where(and(
-          eq(rateAlerts.id, alertId),
-          eq(rateAlerts.email, user.email)
-        ));
+      const result = await pool.query(
+        'DELETE FROM rate_alerts WHERE id = $1 AND email = $2',
+        [alertId, user.email]
+      );
       
-      if ((result.rowCount ?? 0) > 0) {
+      if (result.rowCount && result.rowCount > 0) {
         res.json({ message: "Rate alert deleted successfully" });
       } else {
         res.status(404).json({ message: "Rate alert not found or access denied" });
