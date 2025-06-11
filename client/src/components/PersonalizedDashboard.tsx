@@ -24,7 +24,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const [alertAmount, setAlertAmount] = useState("");
   const [calculatorAmount, setCalculatorAmount] = useState("100");
   const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('official');
-  const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90'>('7');
+  const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90' | '365'>('7');
   
   const selectedPair = user.preferences?.preferredCurrencyPair || "GBP-NGN";
   const [fromCurrency, toCurrency] = selectedPair.split("-");
@@ -424,11 +424,12 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 </div>
               )}
 
-              <Tabs value={trendPeriod} onValueChange={(value) => setTrendPeriod(value as '7' | '30' | '90')} className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs value={trendPeriod} onValueChange={(value) => setTrendPeriod(value as '7' | '30' | '90' | '365')} className="space-y-4">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="7">7 Days</TabsTrigger>
                   <TabsTrigger value="30">30 Days</TabsTrigger>
                   <TabsTrigger value="90">90 Days</TabsTrigger>
+                  <TabsTrigger value="365">1 Year</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="7">
@@ -550,6 +551,47 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                   ) : (
                     <div className="h-80 flex items-center justify-center text-gray-500">
                       Loading 90-day trend data...
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="365">
+                  {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
+                    <div className="h-80 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsLineChart data={chartTrends}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }}
+                          />
+                          <YAxis 
+                            domain={['dataMin', 'dataMax']}
+                            tickFormatter={(value) => formatRate(value)}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [formatRate(Number(value)), 'Rate']}
+                            labelFormatter={(label) => {
+                              const date = new Date(label);
+                              return date.toLocaleDateString();
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="rate" 
+                            stroke="#2563eb" 
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        </RechartsLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-80 flex items-center justify-center text-gray-500">
+                      Loading 1-year trend data...
                     </div>
                   )}
                 </TabsContent>
