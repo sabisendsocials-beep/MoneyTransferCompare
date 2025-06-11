@@ -101,33 +101,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      console.log('=== USER API CALL START ===');
-      console.log('User ID:', userId);
-      
       const user = await storage.getUser(userId);
-      console.log('User from DB:', user);
-      
       const preferences = await storage.getUserPreferences(userId);
-      console.log('Raw preferences from getUserPreferences:', preferences);
       
       const response = { 
         ...user,
-        preferences: preferences || { preferredCurrencyPair: null, preferredProviders: [] }
+        preferences: preferences || { 
+          preferredCurrencyPair: null, 
+          preferredProviders: [] 
+        }
       };
       
-      console.log('Final response preferences:', response.preferences);
-      console.log('=== USER API CALL END ===');
-      
-      // Force fresh data - add timestamp to break cache
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-      res.set('ETag', Date.now().toString());
-      
-      res.json({
-        ...response,
-        _timestamp: Date.now()
-      });
+      res.json(response);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -149,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const preferences = await storage.getUserPreferences(userId);
-      res.json(preferences || { preferredCurrencyPairs: [], preferredProviders: [] });
+      res.json(preferences || { preferredCurrencyPair: null, preferredProviders: [] });
     } catch (error) {
       console.error("Error fetching preferences:", error);
       res.status(500).json({ message: "Failed to fetch preferences" });
@@ -159,21 +145,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/preferences', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { preferredCurrencyPairs, preferredProviders } = req.body;
+      const { preferredCurrencyPair, preferredProviders } = req.body;
       
-      // Validate inputs
-      if (!Array.isArray(preferredCurrencyPairs) || preferredCurrencyPairs.length > 3) {
-        return res.status(400).json({ message: "Invalid currency pairs - maximum 3 allowed" });
-      }
-      
-      if (!Array.isArray(preferredProviders) || preferredProviders.length > 3) {
-        return res.status(400).json({ message: "Invalid providers - maximum 3 allowed" });
+      // Validate providers array
+      if (preferredProviders && !Array.isArray(preferredProviders)) {
+        return res.status(400).json({ message: "Providers must be an array" });
       }
       
       const preferences = await storage.updateUserPreferences(userId, {
-        userId,
-        preferredCurrencyPairs,
-        preferredProviders
+        preferredCurrencyPair,
+        preferredProviders: preferredProviders || []
       });
       
       res.json(preferences);

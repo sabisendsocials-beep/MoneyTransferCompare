@@ -84,100 +84,70 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // User preferences methods
+  // User preferences methods - simplified and working
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
     const [preferences] = await db
       .select()
       .from(userPreferences)
       .where(eq(userPreferences.userId, userId));
     
-    if (!preferences) return preferences;
+    if (!preferences) return undefined;
     
-    // Convert PostgreSQL arrays to JavaScript arrays
-    const parsePostgresArray = (pgArray: any): string[] => {
-      // If already a JavaScript array, return as-is
-      if (Array.isArray(pgArray)) {
-        return pgArray;
-      }
-      
-      // Handle null/undefined
-      if (!pgArray) {
-        return [];
-      }
-      
-      // Handle PostgreSQL array string format like "{WorldRemit}" or "{item1,item2}"
+    // Convert PostgreSQL text arrays to JavaScript arrays
+    const convertArray = (pgArray: any): string[] => {
+      if (Array.isArray(pgArray)) return pgArray;
+      if (!pgArray) return [];
       if (typeof pgArray === 'string') {
-        // Remove curly braces
         const cleaned = pgArray.replace(/^\{|\}$/g, '');
-        
-        // If empty after cleaning, return empty array
-        if (cleaned === '') {
-          return [];
-        }
-        
-        // Split by comma and clean up each item
-        return cleaned
-          .split(',')
-          .map(item => item.trim())
-          .filter(item => item.length > 0);
+        return cleaned ? cleaned.split(',').map(item => item.trim()) : [];
       }
-      
-      // Fallback for unknown types
       return [];
     };
 
     return {
       ...preferences,
-      preferredCurrencyPair: preferences.preferredCurrencyPair,
-      preferredProviders: parsePostgresArray(preferences.preferredProviders)
+      preferredProviders: convertArray(preferences.preferredProviders)
     };
   }
 
-  async updateUserPreferences(userId: string, preferences: InsertUserPreferences): Promise<UserPreferences> {
-    // Check if preferences exist
-    const existing = await this.getUserPreferences(userId);
+  async updateUserPreferences(userId: string, data: InsertUserPreferences): Promise<UserPreferences> {
+    const existing = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
     
-    const parsePostgresArray = (pgArray: any): string[] => {
-      if (Array.isArray(pgArray)) return pgArray;
-      if (!pgArray) return [];
-      if (typeof pgArray === 'string') {
-        // Parse PostgreSQL array format like "{item1,item2}" or "{}"
-        const cleaned = pgArray.replace(/^\{|\}$/g, '');
-        return cleaned === '' ? [] : cleaned.split(',');
-      }
-      return [];
-    };
-    
-    if (existing) {
+    if (existing.length > 0) {
       const [updated] = await db
         .update(userPreferences)
         .set({
-          ...preferences,
+          preferredCurrencyPair: data.preferredCurrencyPair || null,
+          preferredProviders: data.preferredProviders || [],
           updatedAt: new Date(),
         })
         .where(eq(userPreferences.userId, userId))
         .returning();
       
-      // Convert arrays for return value
       return {
         ...updated,
-        preferredCurrencyPair: updated.preferredCurrencyPair,
-        preferredProviders: parsePostgresArray(updated.preferredProviders)
+        preferredProviders: Array.isArray(updated.preferredProviders) 
+          ? updated.preferredProviders 
+          : []
       };
     } else {
       const [created] = await db
         .insert(userPreferences)
         .values({
-          ...preferences,
           userId,
+          preferredCurrencyPair: data.preferredCurrencyPair || null,
+          preferredProviders: data.preferredProviders || [],
         })
         .returning();
       
-      // Convert arrays for return value
       return {
         ...created,
-        preferredCurrencyPair: created.preferredCurrencyPair,
-        preferredProviders: parsePostgresArray(created.preferredProviders)
+        preferredProviders: Array.isArray(created.preferredProviders) 
+          ? created.preferredProviders 
+          : []
       };
     }
   }
