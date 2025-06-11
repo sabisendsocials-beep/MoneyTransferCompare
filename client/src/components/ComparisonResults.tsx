@@ -1,13 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StarIcon, InfoIcon, Clock, CheckCircle, AlertCircle, DollarSign, ChevronsDown, ShieldCheck, BadgeCheck, CheckCircle2, Globe } from "lucide-react";
+import { StarIcon, Clock, CheckCircle, DollarSign, ShieldCheck, Globe } from "lucide-react";
 import { TransferResult } from "@shared/schema";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProviderCard } from "./ProviderCard";
-import { ProviderBadge } from "./ProviderBadge";
-import { RateSourceBadge } from "./RateSourceBadge";
 
 type ComparisonResultsProps = {
   results: TransferResult[];
@@ -28,72 +24,13 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
     });
     return formatter.format(value);
   };
-  
-  const formatLastUpdated = (dateString?: string) => {
-    if (!dateString) return 'Unknown';
-    
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMins / 60);
-      const diffDays = Math.floor(diffHours / 24);
-      
-      if (diffMins < 60) {
-        return diffMins <= 1 ? 'Just now' : `${diffMins} minutes ago`;
-      } else if (diffHours < 24) {
-        return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-      } else if (diffDays < 7) {
-        return diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
-      } else {
-        return date.toLocaleDateString('en-GB', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        });
-      }
-    } catch (e) {
-      console.error('Error formatting date:', e);
-      return 'Unknown';
-    }
-  };
 
   // Best provider is the first in the sorted results
   const bestProvider = results[0];
-  const otherProviders = results.slice(1);
 
-  // Extract currency pairs from the first result (assuming all results use the same currencies)
-  const fromCurrency = "GBP"; // This would normally come from the API response
+  // Extract currency pairs
+  const fromCurrency = "GBP";
   const toCurrency = "NGN";
-
-  // Calculate some additional stats for each provider
-  const getProviderDetails = (provider: TransferResult) => {
-    // Calculate effective exchange rate (after fees)
-    const effectiveRate = provider.receivedAmount / provider.sendAmount;
-    
-    // Calculate rate margin against mid-market
-    const midMarketRate = 1500; // This would normally come from the API
-    const rateMargin = ((midMarketRate - effectiveRate) / midMarketRate) * 100;
-    
-    // Calculate savings compared to most expensive option
-    const mostExpensiveProvider = [...results].sort((a, b) => a.receivedAmount - b.receivedAmount)[0];
-    const savings = provider.receivedAmount - mostExpensiveProvider.receivedAmount;
-    
-    // Calculate fee as percentage of send amount
-    const feePercentage = (provider.fee / provider.sendAmount) * 100;
-    
-    return {
-      effectiveRate,
-      rateMargin: Math.max(0, rateMargin).toFixed(1),
-      savings: Math.max(0, savings),
-      totalCost: provider.sendAmount.toFixed(2),
-      feePercentage: feePercentage.toFixed(1),
-    };
-  };
-
-  const bestProviderDetails = getProviderDetails(bestProvider);
 
   const renderStars = (rating: number | null | undefined) => {
     if (!rating) return null;
@@ -129,11 +66,8 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
     "Remitly": "https://static.comparetransfer.com/logos/remitly.png",
     "WorldRemit": "https://static.comparetransfer.com/logos/worldremit.png",
     "MoneyGram": "https://static.comparetransfer.com/logos/moneygram.png",
-    "Azimo": "https://static.comparetransfer.com/logos/azimo.png",
-    "TorFX": "https://static.comparetransfer.com/logos/torfx.png",
-    "Small World": "https://static.comparetransfer.com/logos/small-world.png",
-    "XE Money Transfer": "https://static.comparetransfer.com/logos/xe.png",
-    "Currencys": "https://static.comparetransfer.com/logos/currencys.png",
+    "Lemfi": "https://static.comparetransfer.com/logos/lemfi.png",
+    "Nala": "https://static.comparetransfer.com/logos/nala.png",
   };
 
   return (
@@ -146,41 +80,152 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Compare the best providers for sending money from {fromCurrency} to {toCurrency}. 
-            Rate freshness information is displayed for each provider.
+            Sorted by best value for your transfer.
           </p>
+        </div>
+
+        {/* Results Table Headers */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-4 p-4">
+          <div className="grid grid-cols-12 gap-4 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            <div className="col-span-1 text-center">Ranking</div>
+            <div className="col-span-4">Provider</div>
+            <div className="col-span-3 text-center">Receive</div>
+            <div className="col-span-2 text-center">Transfer Speed</div>
+            <div className="col-span-2 text-center">Rating</div>
+          </div>
+        </div>
+
+        {/* Best Rate Summary */}
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Best Rate Available</h3>
+              <p className="text-green-100">From {bestProvider.providerName}</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                {formatCurrency(bestProvider.receivedAmount, toCurrency)}
+              </div>
+              <div className="text-green-100 text-sm">
+                Rate: {bestProvider.exchangeRate?.toFixed(2)} {toCurrency}
+              </div>
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="results" className="mb-8">
           <TabsList className="mb-6">
-            <TabsTrigger value="results">Results</TabsTrigger>
+            <TabsTrigger value="results">All Results</TabsTrigger>
             <TabsTrigger value="comparison">Side-by-Side Comparison</TabsTrigger>
           </TabsList>
           
           <TabsContent value="results">
-            {/* Best Provider Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8 relative">
-              <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-lg text-xs font-semibold">
-                Best deal
-              </div>
-              <div className="px-6 py-4 bg-green-500 text-white flex items-center">
-                <div className="rounded-full bg-white p-1 mr-3">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                </div>
-                <span className="font-medium">Best Value Provider</span>
-                <div className="ml-auto text-sm font-medium">
-                  Save up to {formatCurrency(bestProviderDetails.savings, toCurrency)}
-                </div>
-              </div>
+            <div className="space-y-3">
+              {results.map((provider, index) => {
+                const rank = index + 1;
+                const isFirst = index === 0;
+                const difference = isFirst ? 0 : bestProvider.receivedAmount - provider.receivedAmount;
+                const percentageDiff = isFirst ? 0 : ((difference / bestProvider.receivedAmount) * 100);
+                
+                return (
+                  <div key={provider.providerId} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border-2 ${isFirst ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700'} p-4`}>
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      {/* Ranking */}
+                      <div className="col-span-1 text-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isFirst ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                          {rank}
+                        </div>
+                        {isFirst && (
+                          <Badge variant="default" className="text-xs mt-1 bg-green-500">
+                            Best
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Provider */}
+                      <div className="col-span-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 flex-shrink-0 bg-white p-1 rounded-lg shadow-sm flex items-center justify-center">
+                            {provider.providerLogo || providerLogos[provider.providerName] ? (
+                              <img
+                                src={provider.providerLogo || providerLogos[provider.providerName]}
+                                alt={`${provider.providerName} Logo`}
+                                className="max-h-10 max-w-full object-contain"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                                <span className="text-gray-600 font-semibold text-sm">
+                                  {provider.providerName.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">{provider.providerName}</h3>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Fee: {provider.fee > 0 ? formatCurrency(provider.fee, fromCurrency) : 'Free'}
+                            </div>
+                            {provider.comment && (
+                              <div className="text-xs text-blue-600 mt-1">
+                                {provider.comment}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Receive Amount */}
+                      <div className="col-span-3 text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {formatCurrency(provider.receivedAmount, toCurrency)}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          Rate: {provider.exchangeRate?.toFixed(2)}
+                        </div>
+                        {!isFirst && (
+                          <div className="text-xs text-red-500 mt-1 space-y-1">
+                            <div>-{formatCurrency(difference, toCurrency)}</div>
+                            <div>({percentageDiff.toFixed(2)}% less than best)</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Transfer Speed */}
+                      <div className="col-span-2 text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <Clock className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">1-2 days</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Delivery time
+                        </div>
+                      </div>
+                      
+                      {/* Rating */}
+                      <div className="col-span-2 text-center">
+                        {renderStars(provider.rating || 4.2)}
+                        <div className="text-xs text-gray-500 mt-1">
+                          1000+ reviews
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </TabsContent>
 
-              <div className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center">
-                  <div className="md:w-1/4 mb-6 md:mb-0 flex flex-col items-center md:items-start">
-                    <div className="flex items-center mb-3">
-                      <div className="w-16 h-16 flex-shrink-0 bg-white p-2 rounded-lg shadow-sm flex items-center justify-center">
-                        {bestProvider.providerLogo || providerLogos[bestProvider.providerName] ? (
+          <TabsContent value="comparison">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {results.slice(0, 6).map((provider, index) => (
+                <Card key={provider.providerId} className={`${index === 0 ? 'ring-2 ring-green-500' : ''}`}>
+                  <CardContent className="p-6">
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 bg-white p-2 rounded-lg shadow-sm flex items-center justify-center">
+                        {provider.providerLogo || providerLogos[provider.providerName] ? (
                           <img
-                            src={bestProvider.providerLogo || providerLogos[bestProvider.providerName]}
-                            alt={`${bestProvider.providerName} Logo`}
+                            src={provider.providerLogo || providerLogos[provider.providerName]}
+                            alt={`${provider.providerName} Logo`}
                             className="max-h-12 max-w-full object-contain"
                           />
                         ) : (
@@ -189,381 +234,62 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
                           </div>
                         )}
                       </div>
-                      <div className="ml-4">
-                        <h3 className="font-semibold text-xl text-gray-800 dark:text-white">
-                          {bestProvider.providerName}
-                        </h3>
-                        {renderStars(bestProvider.rating)}
-                      </div>
-                    </div>
-                    <div className="flex items-center flex-wrap gap-2">
-                      <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
-                        <ShieldCheck className="mr-1 h-3 w-3" /> Regulated
-                      </Badge>
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                        <BadgeCheck className="mr-1 h-3 w-3" /> Verified
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1">
-                          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">You send</h4>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <InfoIcon className="h-4 w-4 text-gray-400" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">Total amount you need to pay, including all fees</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <div className="flex items-baseline">
-                          <span className="text-2xl font-bold text-gray-800 dark:text-white">
-                            {formatCurrency(parseFloat(bestProviderDetails.totalCost), fromCurrency)}
-                          </span>
-                          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                            Total cost
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-300">Transfer amount</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {formatCurrency(bestProvider.sendAmount, fromCurrency)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-300">Fee</span>
-                          <div className="text-right">
-                            <span className={`font-medium ${bestProvider.fee === 0 ? 'text-green-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                              {bestProvider.fee === 0 ? 'FREE' : formatCurrency(bestProvider.fee, fromCurrency)}
-                            </span>
-                            <div className="text-xs text-gray-500">
-                              ({bestProviderDetails.feePercentage}% of transaction)
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1">
-                          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Recipient gets</h4>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <InfoIcon className="h-4 w-4 text-gray-400" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">Final amount your recipient will receive</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <div className="flex items-baseline">
-                          <span className="text-2xl font-bold text-green-500">
-                            {formatCurrency(bestProvider.receivedAmount, toCurrency)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-300">Exchange rate</span>
-                          <div className="text-right">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
-                                1 {fromCurrency} = {bestProvider.exchangeRate?.toFixed(2) || '-'} {toCurrency}
-                              </span>
-                              <RateSourceBadge source={bestProvider.rateSource || 'scraping'} />
-                            </div>
-                            <div className="text-xs flex items-center justify-end mt-1 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
-                              <Clock className="h-3 w-3 mr-1" />
-                              <span className="font-medium">
-                                Rate from {bestProvider.lastUpdated ? new Date(bestProvider.lastUpdated).toLocaleString('en-GB', {
-                                  month: 'short', 
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                }) : 'Unknown'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-300">Transfer time</span>
-                          <div className="flex items-center text-gray-800 dark:text-gray-200">
-                            <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-                            <span className="font-medium">{bestProvider.transferTime || "Unknown"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1 text-yellow-500" />
-                    Exchange rates and fees may change before your transfer is complete
-                  </div>
-                  <Button 
-                    className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white px-8"
-                    onClick={() => window.open(bestProvider.websiteUrl || '#', '_blank')}
-                  >
-                    Go to provider
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Other Providers Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {otherProviders.map((provider, index) => {
-                const details = getProviderDetails(provider);
-                return (
-                  <Card key={provider.providerId} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
-                    <div className="border-b p-4 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 bg-white p-2 rounded-lg shadow-sm flex items-center justify-center mr-3">
-                          {provider.providerLogo || providerLogos[provider.providerName] ? (
-                            <img
-                              src={provider.providerLogo || providerLogos[provider.providerName]}
-                              alt={`${provider.providerName} Logo`}
-                              className="max-h-8 max-w-full object-contain"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                              <DollarSign className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-800 dark:text-white">{provider.providerName}</h3>
-                          {renderStars(provider.rating)}
-                        </div>
-                      </div>
-                      <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">
-                        #{index + 2}
-                      </Badge>
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">You send</p>
-                          <p className="font-semibold">{formatCurrency(parseFloat(details.totalCost), fromCurrency)}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Fee: {provider.fee === 0 ? 'FREE' : formatCurrency(provider.fee, fromCurrency)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Recipient gets</p>
-                          <p className="font-semibold">{formatCurrency(provider.receivedAmount, toCurrency)}</p>
-                          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {provider.transferTime || "Unknown"}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-sm text-gray-600 dark:text-gray-300">Exchange rate</span>
-                        <div className="text-right">
-                          <span className="text-sm font-medium">1 {fromCurrency} = {provider.exchangeRate?.toFixed(2) || '-'} {toCurrency}</span>
-                          <div className="flex flex-row justify-between items-center mt-1">
-                            <div className="bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 text-xs flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              <span className="font-medium">
-                                {provider.lastUpdated 
-                                  ? `Updated ${new Date(provider.lastUpdated).toLocaleString('en-GB', {
-                                    month: 'short', 
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}`
-                                  : 'Rate not available'
-                                }
-                              </span>
-                            </div>
-                            
-                            {/* Data Source Badge */}
-                            <RateSourceBadge 
-                              source={provider.rateSource || 'unavailable'} 
-                              showLabel={true}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Provider Comment */}
-                      {provider.comment && (
-                        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-                          <div className="flex items-start">
-                            <InfoIcon className="h-4 w-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                            <p className="text-sm text-gray-700 dark:text-gray-300">{provider.comment}</p>
-                          </div>
-                        </div>
+                      <h3 className="font-semibold text-lg mb-1">{provider.providerName}</h3>
+                      {renderStars(provider.rating)}
+                      {index === 0 && (
+                        <Badge className="mt-2 bg-green-500">Best Deal</Badge>
                       )}
-                      
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => window.open(provider.websiteUrl || '#', '_blank')}
-                      >
-                        Go to provider
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="comparison">
-            {/* Side-by-Side Comparison Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Provider
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      You Send
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Fee
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Exchange Rate<br/>
-                      <span className="font-normal text-gray-400 normal-case text-[10px]">Including timestamp</span>
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Recipient Gets
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Transfer Time
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {[bestProvider, ...otherProviders].map((provider, index) => {
-                    const details = getProviderDetails(provider);
-                    return (
-                      <tr key={provider.providerId} className={index === 0 ? "bg-green-50 dark:bg-green-900/10" : ""}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {provider.providerLogo || providerLogos[provider.providerName] ? (
-                              <img
-                                src={provider.providerLogo || providerLogos[provider.providerName]}
-                                alt={`${provider.providerName} Logo`}
-                                className="h-8 w-8 object-contain"
-                              />
-                            ) : (
-                              <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                                <DollarSign className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                              </div>
-                            )}
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                                {provider.providerName}
-                                {index === 0 && (
-                                  <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
-                                    Best
-                                  </Badge>
-                                )}
-                              </div>
-                              {renderStars(provider.rating)}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatCurrency(parseFloat(details.totalCost), fromCurrency)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={provider.fee === 0 ? "text-green-500 font-medium" : "text-gray-500 dark:text-gray-400"}>
-                            {provider.fee === 0 ? 'FREE' : formatCurrency(provider.fee, fromCurrency)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <div>1 {fromCurrency} = {provider.exchangeRate?.toFixed(2) || '-'} {toCurrency}</div>
-                          <div className="mt-1 text-xs bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            <span className="font-medium">
-                              {provider.lastUpdated ? new Date(provider.lastUpdated).toLocaleString('en-GB', {
-                                month: 'short', 
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : 'Unknown'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {index === 0 ? (
-                            <span className="text-green-500">{formatCurrency(provider.receivedAmount, toCurrency)}</span>
-                          ) : (
-                            <span className="text-gray-900 dark:text-white">{formatCurrency(provider.receivedAmount, toCurrency)}</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center">
-                            <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-                            {provider.transferTime || "Unknown"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <Button 
-                            variant={index === 0 ? "default" : "outline"}
-                            size="sm"
-                            className={index === 0 ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-                            onClick={() => window.open(provider.websiteUrl || '#', '_blank')}
-                          >
-                            Select
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">You receive:</span>
+                        <span className="font-semibold text-green-600">
+                          {formatCurrency(provider.receivedAmount, toCurrency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Exchange rate:</span>
+                        <span className="font-medium">{provider.exchangeRate?.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Fee:</span>
+                        <span className="font-medium">
+                          {provider.fee > 0 ? formatCurrency(provider.fee, fromCurrency) : 'Free'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Transfer speed:</span>
+                        <span className="font-medium">1-2 days</span>
+                      </div>
+                    </div>
+
+                    <Button className="w-full mt-4" variant={index === 0 ? "default" : "outline"}>
+                      Choose {provider.providerName}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
         </Tabs>
-        
-        {/* Additional Information */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">About Our Comparison</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            SabiSend shows you real-time rates and fees from multiple providers, helping you find the best option for your international money transfer needs. 
-            We compare over 10 major providers including Wise, Western Union, Remitly, WorldRemit, MoneyGram, and more.
+
+        <div className="text-center mt-8">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Rates are updated regularly and may vary. Always verify the final rate with your chosen provider.
           </p>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-start">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-              <span className="text-gray-600 dark:text-gray-300">
-                Real-time exchange rates updated throughout the day
-              </span>
+          <div className="flex justify-center space-x-4 text-xs text-gray-400">
+            <div className="flex items-center">
+              <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+              Real-time rates
             </div>
-            <div className="flex items-start">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-              <span className="text-gray-600 dark:text-gray-300">
-                Transparent fee structure including all hidden costs
-              </span>
+            <div className="flex items-center">
+              <ShieldCheck className="h-4 w-4 mr-1 text-blue-500" />
+              Regulated providers
             </div>
-            <div className="flex items-start">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-              <span className="text-gray-600 dark:text-gray-300">
-                Independent and unbiased comparisons
-              </span>
+            <div className="flex items-center">
+              <Globe className="h-4 w-4 mr-1 text-purple-500" />
+              Global coverage
             </div>
           </div>
         </div>
