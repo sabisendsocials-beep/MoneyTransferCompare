@@ -101,10 +101,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log('=== USER ENDPOINT DEBUG ===');
+      console.log('Fetching user:', userId);
+      
       const user = await storage.getUser(userId);
       const preferences = await storage.getUserPreferences(userId);
       
-      console.log('=== USER ENDPOINT DEBUG ===');
+      console.log('Raw user from storage:', user);
       console.log('Raw preferences from storage:', preferences);
       
       const response = { 
@@ -115,15 +118,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      console.log('Final response preferences:', response.preferences);
+      console.log('Final response with preferences:', response);
       
+      // Force no caching
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
-      res.json({
-        ...response,
-        _timestamp: Date.now() // Force cache invalidation
-      });
+      res.set('ETag', Date.now().toString()); // Force unique response
+      
+      res.json(response);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

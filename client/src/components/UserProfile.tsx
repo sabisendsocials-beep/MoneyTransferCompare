@@ -73,11 +73,12 @@ export default function UserProfile() {
       return apiRequest('POST', '/api/auth/preferences', data);
     },
     onSuccess: () => {
-      // Force fresh data fetch
+      // Force complete cache refresh
       queryClient.removeQueries({ queryKey: ['/api/auth/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.refetchQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: "Success",
+        title: "Success", 
         description: "Preferences updated successfully",
       });
     },
