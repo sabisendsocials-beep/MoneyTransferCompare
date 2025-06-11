@@ -11,8 +11,16 @@ type EnhancedComparisonResultsProps = {
 };
 
 const EnhancedComparisonResults = ({ results, visible }: EnhancedComparisonResultsProps) => {
+  // Force visibility for debugging
+  console.log('EnhancedComparisonResults render:', { visible, resultsLength: results.length });
+  
   if (!visible || results.length === 0) {
-    return null;
+    return (
+      <div className="py-8 text-center bg-yellow-100 border-2 border-yellow-400 rounded-lg m-4">
+        <h3 className="text-xl font-bold text-yellow-800">Enhanced Component Active</h3>
+        <p className="text-yellow-700">Visible: {visible.toString()}, Results: {results.length}</p>
+      </div>
+    );
   }
 
   const formatCurrency = (value: number, currency: string) => {
@@ -67,14 +75,14 @@ const EnhancedComparisonResults = ({ results, visible }: EnhancedComparisonResul
     <section id="enhanced-comparison-results" className="py-12 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
-          <Badge variant="outline" className="mb-2 bg-green-100 text-green-700 border-green-300">
-            🎯 Enhanced Rankings Live
+          <Badge variant="outline" className="mb-2 bg-purple-100 text-purple-700 border-purple-300">
+            ENHANCED RANKINGS SYSTEM V2.0 ACTIVE
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-2 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Money Transfer Comparison Rankings
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-2 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent">
+            Enhanced Money Transfer Rankings
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
-            Ranked by best value • Live rates updated • Provider reviews included
+          <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-xl font-medium">
+            Crown ranking system • Bold receive amounts • Consolidated red comparison boxes
           </p>
         </div>
 

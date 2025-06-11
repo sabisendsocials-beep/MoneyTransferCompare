@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import axios from "axios";
-import ComparisonResults from "@/components/ComparisonResults";
+import EnhancedComparisonResults from "@/components/EnhancedComparisonResults";
 import { TransferResult, transferResultSchema } from "@shared/schema";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
@@ -136,7 +136,7 @@ const Results = () => {
       ) : (
         <>
           {/* Show comparison results */}
-          <ComparisonResults results={results} visible={true} />
+          <EnhancedComparisonResults results={results} visible={true} />
           
           {/* Back button */}
           <div className="mt-8 text-center">
