@@ -50,6 +50,15 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     enabled: !!calculatorAmount && !isNaN(parseFloat(calculatorAmount)),
   });
 
+  // Fetch rate trends for yesterday comparison
+  const { data: rateTrends } = useQuery({
+    queryKey: ['/api/rate-trends', fromCurrency, toCurrency],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=2`);
+      return response.json();
+    },
+  });
+
   // Rate alert creation
   const createAlertMutation = useMutation({
     mutationFn: async (data: { targetValue: number; alertType: string }) => {
@@ -80,6 +89,26 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const currentRate = (currentRates as any)?.data?.officialRate;
   const bestProvider = (currentRates as any)?.data?.bestProviderName;
   const bestRate = (currentRates as any)?.data?.bestProviderRate;
+
+  // Calculate rate change from yesterday
+  const calculateRateChange = () => {
+    if (!rateTrends || !Array.isArray(rateTrends) || rateTrends.length < 2) {
+      return { change: 0, percentage: 0, direction: 'neutral' };
+    }
+    
+    const today = rateTrends[rateTrends.length - 1]?.rate || 0;
+    const yesterday = rateTrends[rateTrends.length - 2]?.rate || 0;
+    
+    if (yesterday === 0) return { change: 0, percentage: 0, direction: 'neutral' };
+    
+    const change = today - yesterday;
+    const percentage = (change / yesterday) * 100;
+    const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'neutral';
+    
+    return { change, percentage, direction };
+  };
+
+  const rateChange = calculateRateChange();
 
   // Navigate to existing results page with current values
   const navigateToCompare = () => {
@@ -239,77 +268,100 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             </CardHeader>
             <CardContent>
               {preferredRates.length > 0 ? (
-                <div className="space-y-3">
-                  {preferredRates.map((provider: any, index: number) => {
-                    const rank = index + 1;
-                    const isBest = index === 0;
-                    const difference = isBest ? 0 : preferredRates[0].receivedAmount - provider.receivedAmount;
-                    
-                    return (
-                      <div key={index} className={`rounded-lg border p-3 ${isBest ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border-green-400' : 'bg-white border-gray-200'}`}>
-                        {/* Top Row: Rank, Logo, Name, Amount */}
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${isBest ? 'bg-yellow-400 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
-                              {isBest ? '👑' : rank}
+                <div className="space-y-4">
+                  {/* Best Rate Today Card */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 mb-1">Best Rate Today</div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {formatRate(Math.max(...preferredRates.map(p => p.receivedAmount)))} {toCurrency}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {bestProvider} • {fromCurrency}-{toCurrency}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-sm font-medium ${
+                          rateChange.direction === 'up' ? 'text-green-600' : 
+                          rateChange.direction === 'down' ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {rateChange.direction === 'up' ? '↗' : rateChange.direction === 'down' ? '↘' : '→'} 
+                          {rateChange.direction !== 'neutral' ? 
+                            `${rateChange.percentage > 0 ? '+' : ''}${rateChange.percentage.toFixed(2)}% today` : 
+                            'No change'
+                          }
+                        </div>
+                        <div className="text-xs text-gray-500">vs yesterday</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Your Providers Cards */}
+                  <div>
+                    <div className="text-sm text-gray-600 mb-3">Your Providers • {preferredRates.length} selected favorites</div>
+                    <div className="grid gap-3">
+                      {preferredRates.map((provider: any, index: number) => {
+                        const bestAmount = Math.max(...preferredRates.map(p => p.receivedAmount));
+                        const difference = bestAmount - provider.receivedAmount;
+                        const isBest = provider.receivedAmount === bestAmount;
+                        
+                        return (
+                          <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-gray-50 p-2 rounded-lg flex items-center justify-center">
+                                  {provider.logo ? (
+                                    <img 
+                                      src={provider.logo} 
+                                      alt={provider.name}
+                                      className="max-h-6 max-w-full object-contain"
+                                    />
+                                  ) : (
+                                    <span className="text-gray-600 font-semibold text-sm">
+                                      {provider.name.charAt(0)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                                  <div className="text-xs text-gray-500">
+                                    Fee: {provider.fee} • {provider.deliverySpeed}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xl font-bold text-gray-900">
+                                  {formatRate(provider.receivedAmount)} {toCurrency}
+                                </div>
+                                {isBest ? (
+                                  <div className="text-green-600 text-xs font-medium">
+                                    👑 Best rate
+                                  </div>
+                                ) : difference > 0 ? (
+                                  <div className="text-red-500 text-xs">
+                                    -{formatRate(difference)} vs best
+                                  </div>
+                                ) : null}
+                              </div>
                             </div>
-                            <div className="w-8 h-8 bg-white p-1 rounded-md shadow-sm flex items-center justify-center">
-                              {provider.logo ? (
-                                <img 
-                                  src={provider.logo} 
-                                  alt={provider.name}
-                                  className="max-h-6 max-w-full object-contain"
-                                />
-                              ) : (
-                                <span className="text-gray-600 font-semibold text-xs">
-                                  {provider.name.charAt(0)}
-                                </span>
-                              )}
-                            </div>
-                            <div>
-                              <h3 className={`font-semibold text-sm ${isBest ? 'text-white' : 'text-gray-900'}`}>
-                                {provider.name}
-                              </h3>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-lg font-bold ${isBest ? 'text-white' : 'text-green-600'}`}>
-                              {formatRate(provider.receivedAmount)} {toCurrency}
-                            </div>
-                            {isBest && (
-                              <div className="text-green-100 text-xs">Best Rate</div>
+                            
+                            {/* Provider Comments */}
+                            {provider.comment && (
+                              <div className="mt-3 p-2 bg-blue-50 rounded-md border-l-4 border-blue-200">
+                                <div className="text-xs text-blue-800 font-medium">
+                                  {provider.comment}
+                                </div>
+                              </div>
                             )}
                           </div>
-                        </div>
-
-                        {/* Bottom Row: Fee, Speed, Difference */}
-                        <div className={`flex items-center justify-between text-xs ${isBest ? 'text-green-100' : 'text-gray-600'}`}>
-                          <div className="flex items-center space-x-3">
-                            <span>Fee: {provider.fee}</span>
-                            <span className="flex items-center">
-                              <span className="mr-1">⏱️</span>
-                              {provider.deliverySpeed}
-                            </span>
-                          </div>
-                          {!isBest && difference > 0 && (
-                            <div className="text-red-500 font-medium">
-                              -{formatRate(difference)} less
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Provider Comments - if available */}
-                        {provider.comment && (
-                          <div className={`mt-2 text-xs ${isBest ? 'text-green-50' : 'text-blue-600'} font-medium`}>
-                            💡 {provider.comment}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  </div>
                   
                   {/* Compare All button */}
-                  <div className="pt-4 border-t">
+                  <div className="pt-2">
                     <Button 
                       variant="default" 
                       className="w-full" 
