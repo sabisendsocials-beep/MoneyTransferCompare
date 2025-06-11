@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet";
 import CurrencyCalculator from "@/components/CurrencyCalculator";
-import ComparisonResults from "@/components/ComparisonResults";
+import EnhancedComparisonResults from "@/components/EnhancedComparisonResults";
 import { TransferResult } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -70,7 +70,7 @@ const Compare = () => {
         </div>
       </section>
       
-      <ComparisonResults results={comparisonResults} visible={showResults} />
+      <EnhancedComparisonResults results={comparisonResults} visible={showResults} />
       
       {!showResults && (
         <div className="py-20 bg-gray-50 dark:bg-gray-900 text-center">
