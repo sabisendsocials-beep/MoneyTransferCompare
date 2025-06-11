@@ -98,6 +98,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a fresh endpoint that bypasses all cache
+  app.get('/api/auth/user-fresh', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('=== FRESH USER ENDPOINT ===');
+      console.log('Fetching fresh user data for:', userId);
+      
+      const user = await storage.getUser(userId);
+      const preferences = await storage.getUserPreferences(userId);
+      
+      console.log('Fresh user from storage:', user);
+      console.log('Fresh preferences from storage:', preferences);
+      
+      const response = { 
+        ...user,
+        preferences: preferences || { 
+          preferredCurrencyPair: null, 
+          preferredProviders: [] 
+        },
+        timestamp: Date.now() // Ensure uniqueness
+      };
+      
+      console.log('Fresh response with preferences:', response);
+      
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching fresh user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
