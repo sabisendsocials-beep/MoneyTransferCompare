@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/auth/rate-alerts/:alertId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const alertId = parseInt(req.params.alertId);
       
       // Get user's rate alerts to verify ownership
@@ -236,8 +236,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Rate alert not found" });
       }
       
-      await storage.deleteRateAlert(alertId);
-      res.json({ message: "Rate alert deleted successfully" });
+      const success = await storage.deleteRateAlert(alertId, userId);
+      if (success) {
+        res.json({ message: "Rate alert deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Rate alert not found or access denied" });
+      }
     } catch (error) {
       console.error("Error deleting rate alert:", error);
       res.status(500).json({ message: "Failed to delete rate alert" });

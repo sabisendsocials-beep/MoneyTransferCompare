@@ -181,11 +181,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteRateAlert(alertId: number, userId: string): Promise<boolean> {
+    // Get user's email since rate alerts are stored by email
+    const user = await this.getUser(userId);
+    if (!user || !user.email) {
+      return false;
+    }
+    
     const result = await db
       .delete(rateAlerts)
       .where(and(
         eq(rateAlerts.id, alertId),
-        eq(rateAlerts.userId, userId)
+        eq(rateAlerts.email, user.email)
       ));
     return result.rowCount !== undefined && result.rowCount > 0;
   }
