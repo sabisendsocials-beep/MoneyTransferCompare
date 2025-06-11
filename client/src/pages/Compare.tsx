@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import CurrencyCalculator from "@/components/CurrencyCalculator";
 import EnhancedComparisonResults from "@/components/EnhancedComparisonResults";
@@ -6,6 +6,7 @@ import { TransferResult } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
+import axios from "axios";
 
 const Compare = () => {
   const [comparisonResults, setComparisonResults] = useState<TransferResult[]>([]);
@@ -28,6 +29,48 @@ const Compare = () => {
       calculationMode: values.calculationMode || "send"
     });
   };
+
+  // Auto-load results if URL has parameters (from "Compare All Providers" button)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = urlParams.get('amount');
+    const fromCurrency = urlParams.get('fromCurrency');
+    const toCurrency = urlParams.get('toCurrency');
+    
+    if (amount && fromCurrency && toCurrency) {
+      // Auto-fetch comparison results
+      const fetchResults = async () => {
+        try {
+          const response = await axios.post('/api/compare', {
+            fromCurrency,
+            toCurrency,
+            amount: parseFloat(amount),
+            type: "send"
+          });
+          
+          if (response.data && Array.isArray(response.data)) {
+            const sortedResults = response.data.sort((a: TransferResult, b: TransferResult) => 
+              b.receivedAmount - a.receivedAmount
+            );
+            setComparisonResults(sortedResults);
+            setShowResults(true);
+            
+            // Update calculator values to match URL
+            setCalculatorValues({
+              amount,
+              fromCurrency,
+              toCurrency,
+              calculationMode: "send"
+            });
+          }
+        } catch (error) {
+          console.error('Error auto-loading results:', error);
+        }
+      };
+      
+      fetchResults();
+    }
+  }, []);
 
   return (
     <>
