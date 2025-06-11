@@ -238,97 +238,86 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             <CardContent>
               {preferredRates.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Enhanced Rankings Table Headers */}
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border-2 border-blue-200">
-                    <div className="grid grid-cols-12 gap-2 font-bold text-gray-800 text-xs">
-                      <div className="col-span-1 text-center">Rank</div>
-                      <div className="col-span-4">Provider</div>
-                      <div className="col-span-3 text-center">Receive</div>
-                      <div className="col-span-2 text-center">Speed</div>
-                      <div className="col-span-2 text-center">Rating</div>
+                  {/* Best Provider - Mobile Optimized */}
+                  {preferredRates.length > 0 && (
+                    <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-4 border-2 border-green-400">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-yellow-400 text-green-800 flex items-center justify-center font-bold text-sm">
+                            👑
+                          </div>
+                          <div className="w-12 h-12 bg-white p-1 rounded-lg shadow-sm flex items-center justify-center">
+                            {preferredRates[0].logo ? (
+                              <img 
+                                src={preferredRates[0].logo} 
+                                alt={preferredRates[0].name}
+                                className="max-h-10 max-w-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-gray-600 font-semibold text-sm">
+                                {preferredRates[0].name.charAt(0)}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg text-white">{preferredRates[0].name}</h3>
+                            <div className="text-green-100 text-sm">
+                              Fee: {preferredRates[0].fee}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-white">
+                            {formatRate(preferredRates[0].receivedAmount)} {toCurrency}
+                          </div>
+                          <div className="text-green-100 text-sm">Best Rate</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
+                  {/* Other Providers - Mobile Optimized */}
                   <div className="space-y-3">
-                    {preferredRates.map((provider: any, index: number) => {
-                      const rank = index + 1;
-                      const isBest = index === 0;
+                    {preferredRates.slice(1).map((provider: any, index: number) => {
+                      const rank = index + 2;
+                      const difference = preferredRates[0].receivedAmount - provider.receivedAmount;
                       
                       return (
-                        <div key={index} className={`rounded-lg border-2 p-4 ${isBest ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white'} hover:shadow-md transition-shadow`}>
-                          <div className="grid grid-cols-12 gap-2 items-center">
-                            {/* Ranking Column */}
-                            <div className="col-span-1 text-center">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isBest ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                                {isBest ? '👑' : rank}
+                        <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm">
+                                {rank}
                               </div>
-                              {isBest && (
-                                <div className="text-xs text-green-600 font-bold mt-1">BEST</div>
-                              )}
-                            </div>
-
-                            {/* Provider Column */}
-                            <div className="col-span-4">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-10 h-10 bg-white p-1 rounded-lg shadow-sm flex items-center justify-center">
-                                  {provider.logo ? (
-                                    <img 
-                                      src={provider.logo} 
-                                      alt={provider.name}
-                                      className="max-h-8 max-w-full object-contain"
-                                    />
-                                  ) : (
-                                    <span className="text-gray-600 font-semibold text-xs">
-                                      {provider.name.charAt(0)}
-                                    </span>
-                                  )}
-                                </div>
-                                <div>
-                                  <h3 className="font-bold text-sm">{provider.name}</h3>
-                                  <div className="text-xs text-gray-600">
-                                    Fee: {provider.fee}
-                                  </div>
+                              <div className="w-12 h-12 bg-white p-1 rounded-lg shadow-sm flex items-center justify-center">
+                                {provider.logo ? (
+                                  <img 
+                                    src={provider.logo} 
+                                    alt={provider.name}
+                                    className="max-h-10 max-w-full object-contain"
+                                  />
+                                ) : (
+                                  <span className="text-gray-600 font-semibold text-sm">
+                                    {provider.name.charAt(0)}
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-base">{provider.name}</h3>
+                                <div className="text-sm text-gray-600">
+                                  Fee: {provider.fee}
                                 </div>
                               </div>
                             </div>
-                            
-                            {/* Receive Amount Column */}
-                            <div className="col-span-3 text-center">
-                              <div className="text-2xl font-black text-green-600">
+                            <div className="text-right">
+                              <div className="text-xl font-bold text-green-600">
                                 {formatRate(provider.receivedAmount)} {toCurrency}
                               </div>
-                              {!isBest && provider.rateDifference > 0 && (
-                                <div className="mt-1 bg-red-50 border border-red-200 rounded-md p-1">
-                                  <div className="text-red-600 text-xs font-bold">
-                                    -{formatRate(provider.rateDifference * parseFloat(calculatorAmount))} {toCurrency}
-                                  </div>
-                                  <div className="text-red-500 text-xs">
-                                    {provider.percentageDiff?.toFixed(2)}% less
-                                  </div>
+                              {difference > 0 && (
+                                <div className="text-xs text-red-500">
+                                  -{formatRate(difference)} less
                                 </div>
                               )}
-                              {isBest && (
-                                <div className="text-green-600 text-xs font-medium mt-1">Best Available</div>
-                              )}
-                            </div>
-
-                            {/* Transfer Speed Column */}
-                            <div className="col-span-2 text-center">
-                              <div className="flex items-center justify-center space-x-1 text-blue-500">
-                                <span className="text-sm">⏱️</span>
-                                <span className="font-medium text-xs">1-2 days</span>
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">Express</div>
-                            </div>
-
-                            {/* Rating Column */}
-                            <div className="col-span-2 text-center">
-                              <div className="flex items-center justify-center text-yellow-500 mb-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <span key={i} className="text-xs">⭐</span>
-                                ))}
-                              </div>
-                              <div className="text-xs text-gray-500">4.5 • 1k+ reviews</div>
                             </div>
                           </div>
                         </div>
@@ -336,7 +325,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     })}
                   </div>
                   
-                  {/* Enhanced Compare All button */}
+                  {/* Compare All button */}
                   <div className="pt-4 border-t">
                     <Button 
                       variant="default" 
