@@ -62,6 +62,8 @@ export default function UserProfileNew() {
   const { data: rateAlerts = [], isLoading: alertsLoading } = useQuery<RateAlert[]>({
     queryKey: ['/api/auth/rate-alerts'],
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   console.log('Fresh user data:', user);
@@ -95,7 +97,10 @@ export default function UserProfileNew() {
       return apiRequest('DELETE', `/api/auth/rate-alerts/${alertId}`);
     },
     onSuccess: () => {
+      // Force complete cache refresh for rate alerts
+      queryClient.removeQueries({ queryKey: ['/api/auth/rate-alerts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/rate-alerts'] });
+      queryClient.refetchQueries({ queryKey: ['/api/auth/rate-alerts'] });
       toast({
         title: "Success",
         description: "Rate alert deleted successfully",
