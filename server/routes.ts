@@ -144,7 +144,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/preferences', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      console.log('=== PREFERENCES UPDATE DEBUG ===');
+      console.log('User object:', req.user);
+      console.log('Request body:', req.body);
+      
+      // Try multiple possible user ID locations
+      const userId = req.user?.id || req.user?.claims?.sub || req.user?.sub;
+      console.log('Extracted userId:', userId);
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      
       const { preferredCurrencyPair, preferredProviders } = req.body;
       
       // Validate providers array
@@ -157,6 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredProviders: preferredProviders || []
       });
       
+      console.log('Updated preferences:', preferences);
       res.json(preferences);
     } catch (error) {
       console.error("Error updating preferences:", error);

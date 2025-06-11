@@ -66,10 +66,7 @@ export default function UserProfile() {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data: { preferredCurrencyPair?: string; preferredProviders?: string[] }) => {
-      return apiRequest('/api/auth/preferences', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('/api/auth/preferences', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
@@ -90,9 +87,7 @@ export default function UserProfile() {
   // Delete rate alert mutation
   const deleteAlertMutation = useMutation({
     mutationFn: async (alertId: number) => {
-      return apiRequest(`/api/auth/rate-alerts/${alertId}`, {
-        method: 'DELETE',
-      });
+      return apiRequest(`/api/auth/rate-alerts/${alertId}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/rate-alerts'] });
@@ -232,7 +227,7 @@ export default function UserProfile() {
                 
                 {/* Current providers */}
                 <div className="flex flex-wrap gap-2">
-                  {user.preferences?.preferredProviders?.length > 0 ? (
+                  {user.preferences?.preferredProviders?.length ? (
                     user.preferences.preferredProviders.map((provider) => (
                       <Badge key={provider} variant="secondary" className="flex items-center gap-1">
                         {provider}
