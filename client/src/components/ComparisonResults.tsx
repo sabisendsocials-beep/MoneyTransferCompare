@@ -84,9 +84,9 @@ const ComparisonResults = ({ results, visible }: ComparisonResultsProps) => {
           </p>
         </div>
 
-        {/* Results Table Headers */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-4 p-4">
-          <div className="grid grid-cols-12 gap-4 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+        {/* Enhanced Results Table Headers */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:bg-gray-800 rounded-lg shadow-sm mb-4 p-4 border-2 border-blue-200">
+          <div className="grid grid-cols-12 gap-4 font-bold text-gray-800 dark:text-gray-300 text-sm">
             <div className="col-span-1 text-center">Ranking</div>
             <div className="col-span-4">Provider</div>
             <div className="col-span-3 text-center">Receive</div>

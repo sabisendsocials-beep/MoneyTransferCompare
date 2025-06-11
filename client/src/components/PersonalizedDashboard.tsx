@@ -264,7 +264,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                         
                         <div className="text-right">
                           <div className="text-2xl font-bold text-green-600">
-                            {formatRate(provider.receivedAmount / 100)} {toCurrency}
+                            {formatRate(provider.receivedAmount)} {toCurrency}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Rate: {formatRate(provider.rate)}
