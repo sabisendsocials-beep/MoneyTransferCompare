@@ -24,6 +24,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const [alertAmount, setAlertAmount] = useState("");
   const [calculatorAmount, setCalculatorAmount] = useState("100");
   const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('official');
+  const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90'>('7');
   
   const selectedPair = user.preferences?.preferredCurrencyPair || "GBP-NGN";
   const [fromCurrency, toCurrency] = selectedPair.split("-");
@@ -62,11 +63,11 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     },
   });
 
-  // Fetch 30-day rate trends for chart
+  // Fetch rate trends for chart based on selected period
   const { data: chartTrends } = useQuery({
-    queryKey: ['/api/rate-trends', fromCurrency, toCurrency, '30days'],
+    queryKey: ['/api/rate-trends', fromCurrency, toCurrency, `${trendPeriod}days`],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=30`);
+      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=${trendPeriod}`);
       return response.json();
     },
   });
@@ -279,58 +280,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             </CardContent>
           </Card>
 
-          {/* Exchange Rate Trend Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LineChart className="h-5 w-5" />
-                7-Day Rate Trend
-              </CardTitle>
-              <CardDescription>
-                Recent exchange rate movement for {selectedPair.replace('-', '→')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
-                <div className="h-48 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart data={chartTrends.slice(-7)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return `${date.getMonth() + 1}/${date.getDate()}`;
-                        }}
-                      />
-                      <YAxis 
-                        domain={['dataMin', 'dataMax']}
-                        tickFormatter={(value) => formatRate(value)}
-                      />
-                      <Tooltip 
-                        formatter={(value) => [formatRate(Number(value)), 'Rate']}
-                        labelFormatter={(label) => {
-                          const date = new Date(label);
-                          return date.toLocaleDateString();
-                        }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="rate" 
-                        stroke="#2563eb" 
-                        strokeWidth={2}
-                        dot={{ fill: '#2563eb', strokeWidth: 2, r: 3 }}
-                      />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-48 flex items-center justify-center text-gray-500">
-                  Loading trend data...
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
 
           {/* Preferred Providers Results */}
           <Card>
@@ -433,6 +383,151 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                   </AlertDescription>
                 </Alert>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Exchange Rate Trends Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LineChart className="h-5 w-5" />
+                Exchange Rate Trends for {selectedPair.replace('-', '→')}
+              </CardTitle>
+              <CardDescription>
+                Track rate performance over different time periods
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={trendPeriod} onValueChange={(value) => setTrendPeriod(value as '7' | '30' | '90')} className="space-y-4">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="7">7 Days</TabsTrigger>
+                  <TabsTrigger value="30">30 Days</TabsTrigger>
+                  <TabsTrigger value="90">90 Days</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="7">
+                  {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
+                    <div className="h-80 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsLineChart data={chartTrends}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }}
+                          />
+                          <YAxis 
+                            domain={['dataMin', 'dataMax']}
+                            tickFormatter={(value) => formatRate(value)}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [formatRate(Number(value)), 'Rate']}
+                            labelFormatter={(label) => {
+                              const date = new Date(label);
+                              return date.toLocaleDateString();
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="rate" 
+                            stroke="#2563eb" 
+                            strokeWidth={2}
+                            dot={{ fill: '#2563eb', strokeWidth: 2, r: 4 }}
+                          />
+                        </RechartsLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-80 flex items-center justify-center text-gray-500">
+                      Loading 7-day trend data...
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="30">
+                  {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
+                    <div className="h-80 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsLineChart data={chartTrends}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }}
+                          />
+                          <YAxis 
+                            domain={['dataMin', 'dataMax']}
+                            tickFormatter={(value) => formatRate(value)}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [formatRate(Number(value)), 'Rate']}
+                            labelFormatter={(label) => {
+                              const date = new Date(label);
+                              return date.toLocaleDateString();
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="rate" 
+                            stroke="#2563eb" 
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        </RechartsLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-80 flex items-center justify-center text-gray-500">
+                      Loading 30-day trend data...
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="90">
+                  {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
+                    <div className="h-80 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsLineChart data={chartTrends}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }}
+                          />
+                          <YAxis 
+                            domain={['dataMin', 'dataMax']}
+                            tickFormatter={(value) => formatRate(value)}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [formatRate(Number(value)), 'Rate']}
+                            labelFormatter={(label) => {
+                              const date = new Date(label);
+                              return date.toLocaleDateString();
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="rate" 
+                            stroke="#2563eb" 
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        </RechartsLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-80 flex items-center justify-center text-gray-500">
+                      Loading 90-day trend data...
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </TabsContent>
