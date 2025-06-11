@@ -8,7 +8,7 @@ import NewsSection from "@/components/NewsSection";
 import FeatureSection from "@/components/FeatureSection";
 import FeatureCards from "@/components/FeatureCards";
 import CountryNavigationSection from "@/components/CountryNavigationSection";
-import { PersonalizedHome } from "@/components/PersonalizedHome";
+import { PersonalizedDashboard } from "@/components/PersonalizedDashboard";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
 
@@ -55,7 +55,7 @@ const Home = () => {
           structuredData={structuredData}
         />
         <div className="container mx-auto px-4 py-6">
-          <PersonalizedHome user={userData as any} />
+          <PersonalizedDashboard user={userData as any} />
         </div>
       </div>
     );

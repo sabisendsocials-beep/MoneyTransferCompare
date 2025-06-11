@@ -7,20 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { TrendingUp, TrendingDown, Bell, Calculator, Star, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, Bell, Calculator, Star } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface PersonalizedHomeProps {
-  user: {
-    firstName: string;
-    lastName: string;
-    preferences?: {
-      preferredCurrencyPair: string;
-      preferredProviders: string[];
-    };
-  };
+  user: any;
 }
 
 export function PersonalizedHome({ user }: PersonalizedHomeProps) {
@@ -28,6 +20,7 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
   const queryClient = useQueryClient();
   const [alertAmount, setAlertAmount] = useState("");
   const [selectedPair, setSelectedPair] = useState(user.preferences?.preferredCurrencyPair || "GBP-NGN");
+  const [calculatorAmount, setCalculatorAmount] = useState("1000");
 
   const [fromCurrency, toCurrency] = selectedPair.split("-");
 
@@ -46,6 +39,18 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
   const { data: rateTrends } = useQuery({
     queryKey: ['/api/rate-trends', fromCurrency, toCurrency],
     queryFn: () => apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=30`),
+  });
+
+  // Fetch all providers for calculator
+  const { data: allProviders } = useQuery({
+    queryKey: ['/api/compare', fromCurrency, toCurrency, calculatorAmount],
+    queryFn: () => apiRequest('POST', '/api/compare', {
+      fromCurrency,
+      toCurrency,
+      amount: parseFloat(calculatorAmount),
+      type: 'basic'
+    }),
+    enabled: !!calculatorAmount && !isNaN(parseFloat(calculatorAmount)),
   });
 
   // Create rate alert mutation
@@ -77,7 +82,7 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
 
   const currencyPairs = [
     "GBP-NGN", "USD-NGN", "EUR-NGN",
-    "GBP-GHS", "USD-GHS", "EUR-GHS",
+    "GBP-GHS", "USD-GHS", "EUR-GHS", 
     "GBP-KES", "USD-KES", "EUR-KES",
     "GBP-INR", "USD-INR", "EUR-INR",
     "GBP-PKR", "USD-PKR", "EUR-PKR"
@@ -92,9 +97,9 @@ export function PersonalizedHome({ user }: PersonalizedHomeProps) {
   const calculateTrendStats = () => {
     if (!rateTrends || !Array.isArray(rateTrends) || rateTrends.length < 2) return null;
     
-    const latest = rateTrends[rateTrends.length - 1];
-    const previous = rateTrends[rateTrends.length - 2];
-    const weekAgo = rateTrends[Math.max(0, rateTrends.length - 7)];
+    const latest = (rateTrends as any)[rateTrends.length - 1];
+    const previous = (rateTrends as any)[rateTrends.length - 2];
+    const weekAgo = (rateTrends as any)[Math.max(0, rateTrends.length - 7)];
     
     const dailyChange = ((latest.rate - previous.rate) / previous.rate) * 100;
     const weeklyChange = ((latest.rate - weekAgo.rate) / weekAgo.rate) * 100;
