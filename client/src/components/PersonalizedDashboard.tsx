@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, Bell, Calculator, Star, ArrowRight } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface PersonalizedDashboardProps {
   user: any;
@@ -17,6 +18,7 @@ interface PersonalizedDashboardProps {
 export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [alertAmount, setAlertAmount] = useState("");
   const [calculatorAmount, setCalculatorAmount] = useState("100");
   
@@ -79,6 +81,16 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const bestProvider = (currentRates as any)?.data?.bestProviderName;
   const bestRate = (currentRates as any)?.data?.bestProviderRate;
 
+  // Navigate to existing results page with current values
+  const navigateToCompare = () => {
+    const params = new URLSearchParams({
+      amount: calculatorAmount,
+      fromCurrency,
+      toCurrency,
+      calculationMode: 'send'
+    });
+    setLocation(`/results?${params.toString()}`);
+  };
 
 
 
@@ -123,16 +135,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
 
   const preferredRates = getPreferredProviderData();
 
-  // Handle navigation to compare page with current amount
-  const navigateToCompare = () => {
-    const params = new URLSearchParams({
-      fromCurrency,
-      toCurrency,
-      amount: calculatorAmount,
-      type: 'send'
-    });
-    window.location.href = `/compare?${params.toString()}`;
-  };
+
 
   return (
     <div className="space-y-6">
@@ -234,9 +237,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             </CardHeader>
             <CardContent>
               {preferredRates.length > 0 ? (
-                <>
+                <div className="space-y-4">
                   {/* Enhanced Rankings Table Headers */}
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 mb-4 border-2 border-blue-200">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border-2 border-blue-200">
                     <div className="grid grid-cols-12 gap-2 font-bold text-gray-800 text-xs">
                       <div className="col-span-1 text-center">Rank</div>
                       <div className="col-span-4">Provider</div>
@@ -249,7 +252,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                   <div className="space-y-3">
                     {preferredRates.map((provider: any, index: number) => {
                       const rank = index + 1;
-                      const isBest = index === 0; // First provider is best
+                      const isBest = index === 0;
                       
                       return (
                         <div key={index} className={`rounded-lg border-2 p-4 ${isBest ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white'} hover:shadow-md transition-shadow`}>
@@ -289,7 +292,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                               </div>
                             </div>
                             
-                            {/* Receive Amount Column - Bold and prominent */}
+                            {/* Receive Amount Column */}
                             <div className="col-span-3 text-center">
                               <div className="text-2xl font-black text-green-600">
                                 {formatRate(provider.receivedAmount)} {toCurrency}
