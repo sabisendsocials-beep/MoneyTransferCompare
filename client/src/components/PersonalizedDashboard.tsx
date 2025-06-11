@@ -172,15 +172,22 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
       const rateDifference = bestRate - provider.exchangeRate;
       const percentageDiff = bestRate > 0 ? ((rateDifference / bestRate) * 100) : 0;
       
+      // Format fee correctly - use authentic database field
+      const formatFee = (fee: number) => {
+        if (fee === 0) return 'Free';
+        if (fee < 1) return `${(fee * 100).toFixed(0)}%`;
+        return `${fee.toFixed(2)} ${fromCurrency}`;
+      };
+      
       return {
         name: provider.providerName,
         rate: provider.exchangeRate,
-        fee: provider.fee || provider.transferFee || 'Free',
+        fee: formatFee(provider.fee),
         receivedAmount: provider.receivedAmount,
         totalCost: provider.totalCost || provider.sendAmount,
         logo: provider.providerLogo,
         comment: provider.comment,
-        deliverySpeed: provider.deliverySpeed || '1-2 days',
+        deliverySpeed: provider.transferTime, // Use authentic transfer_time from database
         rateDifference,
         percentageDiff,
         isBest: provider.exchangeRate === bestRate
