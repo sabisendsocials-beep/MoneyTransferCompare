@@ -65,6 +65,8 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const bestProvider = (currentRates as any)?.data?.bestProviderName;
   const bestRate = (currentRates as any)?.data?.bestProviderRate;
 
+
+
   // Format currency display
   const formatRate = (rate: number) => {
     return new Intl.NumberFormat('en-GB', {
@@ -77,16 +79,19 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const getPreferredProviderData = () => {
     if (!bestRates || !Array.isArray(bestRates)) return [];
     
-    const pairData = (bestRates as any[]).find((item: any) => 
-      item.fromCurrency === fromCurrency && item.toCurrency === toCurrency
+    // Filter rates for the current currency pair and preferred providers
+    const pairRates = (bestRates as any[]).filter((item: any) => 
+      item.fromCurrency === fromCurrency && 
+      item.toCurrency === toCurrency &&
+      preferredProviders.includes(item.providerName)
     );
     
-    if (!pairData?.providers) return [];
-    
-    return preferredProviders.map(providerName => {
-      const provider = pairData.providers.find((p: any) => p.name === providerName);
-      return provider || null;
-    }).filter(Boolean);
+    return pairRates.map((rate: any) => ({
+      name: rate.providerName,
+      rate: rate.rate,
+      fee: rate.fee || 'Fee info not available',
+      timestamp: rate.timestamp
+    }));
   };
 
   const preferredRates = getPreferredProviderData();
@@ -250,7 +255,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                       disabled={!alertAmount || createAlertMutation.isPending}
                     >
                       <TrendingUp className="h-4 w-4 mr-1" />
-                      Above
+                      {createAlertMutation.isPending ? "Creating..." : "Above"}
                     </Button>
                     <Button
                       variant="outline"
@@ -267,7 +272,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                       disabled={!alertAmount || createAlertMutation.isPending}
                     >
                       <TrendingDown className="h-4 w-4 mr-1" />
-                      Below
+                      {createAlertMutation.isPending ? "Creating..." : "Below"}
                     </Button>
                   </div>
                 </div>
