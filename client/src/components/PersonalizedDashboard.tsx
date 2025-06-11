@@ -275,7 +275,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
-                          ₦{formatRate(Math.max(...preferredRates.map(p => p.receivedAmount)))}
+                          ₦{formatRate(bestRate * parseFloat(calculatorAmount))}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           {bestProvider} • £→₦
@@ -302,9 +302,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="text-sm text-gray-600 mb-3">Your Providers • {preferredRates.length} selected favorites</div>
                     <div className="grid gap-3">
                       {preferredRates.map((provider: any, index: number) => {
-                        const bestAmount = Math.max(...preferredRates.map(p => p.receivedAmount));
-                        const difference = bestAmount - provider.receivedAmount;
-                        const isBest = provider.receivedAmount === bestAmount;
+                        const bestMarketAmount = bestRate * parseFloat(calculatorAmount);
+                        const difference = bestMarketAmount - provider.receivedAmount;
+                        const isBest = provider.name === bestProvider;
                         
                         return (
                           <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -330,15 +330,6 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                                 ) : null}
                               </div>
                             </div>
-                            
-                            {/* Provider Comments */}
-                            {provider.comment && (
-                              <div className="mt-3 p-2 bg-blue-50 rounded-md border-l-4 border-blue-200">
-                                <div className="text-xs text-blue-800 font-medium">
-                                  {provider.comment}
-                                </div>
-                              </div>
-                            )}
                           </div>
                         );
                       })}
