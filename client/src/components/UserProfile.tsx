@@ -66,7 +66,7 @@ export default function UserProfile() {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data: { preferredCurrencyPair?: string; preferredProviders?: string[] }) => {
-      return apiRequest('/api/auth/preferences', 'POST', data);
+      return apiRequest('POST', '/api/auth/preferences', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
@@ -87,7 +87,7 @@ export default function UserProfile() {
   // Delete rate alert mutation
   const deleteAlertMutation = useMutation({
     mutationFn: async (alertId: number) => {
-      return apiRequest(`/api/auth/rate-alerts/${alertId}`, 'DELETE');
+      return apiRequest('DELETE', `/api/auth/rate-alerts/${alertId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/rate-alerts'] });
