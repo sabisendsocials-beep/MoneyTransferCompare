@@ -95,32 +95,34 @@ export class DatabaseStorage implements IStorage {
     
     // Convert PostgreSQL arrays to JavaScript arrays
     const parsePostgresArray = (pgArray: any): string[] => {
-      console.log('Raw DB value:', pgArray, 'Type:', typeof pgArray);
-      
+      // If already a JavaScript array, return as-is
       if (Array.isArray(pgArray)) {
-        console.log('Already array, returning:', pgArray);
         return pgArray;
       }
-      if (!pgArray || pgArray === '{}') {
-        console.log('Empty or null, returning []');
+      
+      // Handle null/undefined
+      if (!pgArray) {
         return [];
       }
       
+      // Handle PostgreSQL array string format like "{WorldRemit}" or "{item1,item2}"
       if (typeof pgArray === 'string') {
-        console.log('String format, parsing:', pgArray);
-        // Handle PostgreSQL array format like "{item1,item2}" or "{WorldRemit}"
+        // Remove curly braces
         const cleaned = pgArray.replace(/^\{|\}$/g, '');
-        console.log('Cleaned string:', cleaned);
+        
+        // If empty after cleaning, return empty array
         if (cleaned === '') {
-          console.log('Empty after cleaning');
           return [];
         }
-        const result = cleaned.split(',').map(item => item.trim()).filter(item => item.length > 0);
-        console.log('Final parsed result:', result);
-        return result;
+        
+        // Split by comma and clean up each item
+        return cleaned
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
       }
       
-      console.log('Unknown type, returning []');
+      // Fallback for unknown types
       return [];
     };
 

@@ -41,7 +41,6 @@ const UserProfile = () => {
     queryKey: ["/api/auth/user"],
     enabled: !!user,
     retry: false,
-    staleTime: 0,
   });
 
 

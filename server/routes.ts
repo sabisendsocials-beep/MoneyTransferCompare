@@ -77,6 +77,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Debug endpoint to test preferences conversion
+  app.get('/api/debug/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('=== DEBUG PREFERENCES ENDPOINT ===');
+      console.log('User ID:', userId);
+      
+      const preferences = await storage.getUserPreferences(userId);
+      console.log('Raw preferences result:', preferences);
+      
+      res.json({
+        userId,
+        preferences,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error("Debug preferences error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -97,12 +118,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Final response preferences:', response.preferences);
       console.log('=== USER API CALL END ===');
       
-      // Disable caching to force fresh data
+      // Force fresh data - add timestamp to break cache
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
+      res.set('ETag', Date.now().toString());
       
-      res.json(response);
+      res.json({
+        ...response,
+        _timestamp: Date.now()
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
