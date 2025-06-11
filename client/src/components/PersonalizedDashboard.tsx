@@ -244,13 +244,14 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
         </Card>
       </div>
 
-      <Tabs defaultValue="providers" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="providers">Your Providers</TabsTrigger>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="alerts">Rate Alerts</TabsTrigger>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="providers" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4">
           {/* Calculator Input */}
           <Card>
             <CardHeader>
