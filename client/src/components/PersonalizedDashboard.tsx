@@ -246,10 +246,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="alerts">Rate Alerts</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -398,6 +397,33 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Historical Performance Info */}
+              {rateStats && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Historical Performance</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600 mb-1">1 Month Change</div>
+                      <div className={`text-lg font-semibold ${(rateStats.oneMonth || 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {(rateStats.oneMonth || 0) >= 0 ? '+' : ''}{(rateStats.oneMonth || 0).toFixed(2)}% {(rateStats.oneMonth || 0) >= 0 ? '↗' : '↘'}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600 mb-1">3 Month Change</div>
+                      <div className={`text-lg font-semibold ${(rateStats.threeMonth || 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {(rateStats.threeMonth || 0) >= 0 ? '+' : ''}{(rateStats.threeMonth || 0).toFixed(2)}% {(rateStats.threeMonth || 0) >= 0 ? '↗' : '↘'}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600 mb-1">1 Year Change</div>
+                      <div className={`text-lg font-semibold ${(rateStats.oneYear || 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {(rateStats.oneYear || 0) >= 0 ? '+' : ''}{(rateStats.oneYear || 0).toFixed(1)}% {(rateStats.oneYear || 0) >= 0 ? '↗' : '↘'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Tabs value={trendPeriod} onValueChange={(value) => setTrendPeriod(value as '7' | '30' | '90')} className="space-y-4">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="7">7 Days</TabsTrigger>
@@ -620,99 +646,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
           </Card>
         </TabsContent>
 
-        {/* Exchange Rate Trends Tab */}
-        <TabsContent value="trends" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LineChart className="h-5 w-5" />
-                30-Day Rate Trends for {selectedPair.replace('-', '→')}
-              </CardTitle>
-              <CardDescription>
-                Track exchange rate performance over the last 30 days
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart data={chartTrends}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return `${date.getMonth() + 1}/${date.getDate()}`;
-                        }}
-                      />
-                      <YAxis 
-                        domain={['dataMin', 'dataMax']}
-                        tickFormatter={(value) => formatRate(value)}
-                      />
-                      <Tooltip 
-                        formatter={(value) => [formatRate(Number(value)), 'Rate']}
-                        labelFormatter={(label) => {
-                          const date = new Date(label);
-                          return date.toLocaleDateString();
-                        }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="rate" 
-                        stroke="#2563eb" 
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-80 flex items-center justify-center text-gray-500">
-                  Loading trend data...
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Rate Performance Stats */}
-          {rateStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">30-Day High</p>
-                      <p className="text-lg font-semibold">{formatRate(rateStats.thirtyDayHigh)} {toCurrency}</p>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">30-Day Low</p>
-                      <p className="text-lg font-semibold">{formatRate(rateStats.thirtyDayLow)} {toCurrency}</p>
-                    </div>
-                    <TrendingDown className="h-8 w-8 text-red-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">30-Day Average</p>
-                      <p className="text-lg font-semibold">{formatRate(rateStats.thirtyDayAverage)} {toCurrency}</p>
-                    </div>
-                    <Activity className="h-8 w-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </TabsContent>
       </Tabs>
 
       {/* News Section */}
