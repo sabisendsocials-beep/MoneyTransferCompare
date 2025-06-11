@@ -80,19 +80,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log('=== USER API CALL START ===');
+      console.log('User ID:', userId);
+      
       const user = await storage.getUser(userId);
+      console.log('User from DB:', user);
+      
       const preferences = await storage.getUserPreferences(userId);
+      console.log('Raw preferences from getUserPreferences:', preferences);
       
       const response = { 
         ...user,
         preferences: preferences || { preferredCurrencyPairs: [], preferredProviders: [] }
       };
       
-      console.log('=== FINAL API RESPONSE ===');
-      console.log('User preferences being sent to frontend:');
-      console.log('Currency pairs:', response.preferences.preferredCurrencyPairs);
-      console.log('Providers:', response.preferences.preferredProviders);
-      console.log('=== END API RESPONSE ===');
+      console.log('Final response preferences:', response.preferences);
+      console.log('=== USER API CALL END ===');
       
       // Disable caching to force fresh data
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
