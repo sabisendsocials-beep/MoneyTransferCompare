@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Bell, Calculator, Star, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Bell, Calculator, Star, ArrowRight, Building2, Award } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -21,7 +21,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const [, setLocation] = useLocation();
   const [alertAmount, setAlertAmount] = useState("");
   const [calculatorAmount, setCalculatorAmount] = useState("100");
-  const [alertType, setAlertType] = useState<'above' | 'below'>('above');
+  const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('official');
   
   const selectedPair = user.preferences?.preferredCurrencyPair || "GBP-NGN";
   const [fromCurrency, toCurrency] = selectedPair.split("-");
@@ -62,12 +62,14 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
 
   // Rate alert creation
   const createAlertMutation = useMutation({
-    mutationFn: async (data: { targetValue: number; alertType: string }) => {
+    mutationFn: async (data: { targetValue: number; alertBasis: 'official' | 'best_provider' }) => {
       return apiRequest('POST', '/api/rate-alerts', {
+        email: user.email,
         fromCurrency,
         toCurrency,
+        alertBasis: data.alertBasis,
+        triggerType: 'absolute',
         targetValue: data.targetValue,
-        alertType: data.alertType,
       });
     },
     onSuccess: () => {
@@ -384,25 +386,25 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                   />
                 </div>
                 <div className="flex flex-col space-y-2">
-                  <label className="text-sm font-medium">Alert When Rate Goes</label>
+                  <label className="text-sm font-medium">Rate Type</label>
                   <div className="bg-gray-100 rounded-lg p-1 flex">
                     <Button
-                      variant={alertType === 'above' ? 'default' : 'ghost'}
+                      variant={alertBasis === 'official' ? 'default' : 'ghost'}
                       size="sm"
                       className="flex-1 h-10"
-                      onClick={() => setAlertType('above')}
+                      onClick={() => setAlertBasis('official')}
                     >
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      Above
+                      <Building2 className="h-4 w-4 mr-1" />
+                      Official
                     </Button>
                     <Button
-                      variant={alertType === 'below' ? 'default' : 'ghost'}
+                      variant={alertBasis === 'best_provider' ? 'default' : 'ghost'}
                       size="sm"
                       className="flex-1 h-10"
-                      onClick={() => setAlertType('below')}
+                      onClick={() => setAlertBasis('best_provider')}
                     >
-                      <TrendingDown className="h-4 w-4 mr-1" />
-                      Below
+                      <Award className="h-4 w-4 mr-1" />
+                      Best Provider
                     </Button>
                   </div>
                 </div>
@@ -415,7 +417,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     if (alertAmount) {
                       createAlertMutation.mutate({
                         targetValue: parseFloat(alertAmount),
-                        alertType: alertType
+                        alertBasis: alertBasis
                       });
                     }
                   }}
