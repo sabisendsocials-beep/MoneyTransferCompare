@@ -104,6 +104,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       const preferences = await storage.getUserPreferences(userId);
       
+      console.log('=== USER ENDPOINT DEBUG ===');
+      console.log('Raw preferences from storage:', preferences);
+      
       const response = { 
         ...user,
         preferences: preferences || { 
@@ -111,6 +114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredProviders: [] 
         }
       };
+      
+      console.log('Final response preferences:', response.preferences);
       
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(response);
