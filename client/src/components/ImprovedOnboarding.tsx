@@ -96,91 +96,9 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
   isAuthenticated = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 100, left: 100 });
   
   const steps = isAuthenticated ? authenticatedSteps : publicSteps;
   const currentStepData = steps[currentStep];
-
-  useEffect(() => {
-    if (!isVisible || !currentStepData) return;
-
-    const updatePosition = () => {
-      const targetElement = document.querySelector(currentStepData.target);
-      if (!targetElement) {
-        console.warn(`Onboarding target not found: ${currentStepData.target}`);
-        setTooltipPosition({ 
-          top: window.innerHeight / 2 - 100, 
-          left: window.innerWidth / 2 - 160 
-        });
-        return;
-      }
-
-      const rect = targetElement.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-      const tooltipWidth = 320;
-      const tooltipHeight = 220;
-
-      let top = 0;
-      let left = 0;
-
-      switch (currentStepData.position) {
-        case 'top':
-          top = rect.top + scrollTop - tooltipHeight - 20;
-          left = rect.left + scrollLeft + rect.width / 2 - tooltipWidth / 2;
-          break;
-        case 'bottom':
-          top = rect.bottom + scrollTop + 20;
-          left = rect.left + scrollLeft + rect.width / 2 - tooltipWidth / 2;
-          break;
-        case 'left':
-          top = rect.top + scrollTop + rect.height / 2 - tooltipHeight / 2;
-          left = rect.left + scrollLeft - tooltipWidth - 20;
-          break;
-        case 'right':
-          top = rect.top + scrollTop + rect.height / 2 - tooltipHeight / 2;
-          left = rect.right + scrollLeft + 20;
-          break;
-      }
-
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      if (left < 20) left = 20;
-      if (left + tooltipWidth > viewportWidth - 20) left = viewportWidth - tooltipWidth - 20;
-      if (top < 20) top = 20;
-      if (top + tooltipHeight > scrollTop + viewportHeight - 20) {
-        top = scrollTop + viewportHeight - tooltipHeight - 20;
-      }
-
-      setTooltipPosition({ top, left });
-
-      targetElement.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center',
-        inline: 'center'
-      });
-
-      setTimeout(() => {
-        targetElement.classList.add('onboarding-highlight');
-      }, 600);
-    };
-
-    document.querySelectorAll('.onboarding-highlight').forEach(el => {
-      el.classList.remove('onboarding-highlight');
-    });
-
-    const timer = setTimeout(updatePosition, 300);
-    
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
-    };
-  }, [currentStep, isVisible, currentStepData]);
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -197,9 +115,6 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
   };
 
   const skipTour = () => {
-    document.querySelectorAll('.onboarding-highlight').forEach(el => {
-      el.classList.remove('onboarding-highlight');
-    });
     setCurrentStep(0);
     onSkip();
   };
@@ -222,117 +137,118 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
   if (!isVisible || !currentStepData) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: 'auto' }}>
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-60" 
-        onClick={skipTour}
-      />
-      
-      <div
-        className="absolute"
-        style={{ 
-          top: Math.max(20, tooltipPosition.top), 
-          left: Math.max(20, tooltipPosition.left),
-          pointerEvents: 'auto'
-        }}
+    <div 
+      className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[99999]"
+      onClick={skipTour}
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)'
+      }}
+    >
+      <Card 
+        className="w-full max-w-sm md:max-w-md mx-auto shadow-2xl border-2 border-blue-500 bg-white dark:bg-gray-800 animate-in fade-in duration-300"
+        onClick={(e) => e.stopPropagation()}
       >
-        <Card className="w-80 shadow-2xl border-2 border-blue-500 bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {currentStepData.title}
-              </h3>
+        <CardContent className="p-4 md:p-6">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white pr-2">
+              {currentStepData.title}
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={skipTour}
+              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex-shrink-0"
+              title="Close tour (Esc)"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+            {currentStepData.content}
+          </p>
+          
+          {currentStepData.action && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs md:text-sm text-blue-700 dark:text-blue-300">
+              <div className="flex items-center mb-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                <span className="font-medium">Try it:</span>
+              </div>
+              <span className="ml-4">{currentStepData.action}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex space-x-1">
+              {steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index === currentStep 
+                      ? 'bg-blue-600' 
+                      : index < currentStep 
+                        ? 'bg-green-500' 
+                        : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            
+            <div className="flex space-x-2">
+              {currentStep > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevStep}
+                  className="h-8 px-2 md:px-3 text-xs md:text-sm"
+                >
+                  <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                  Back
+                </Button>
+              )}
+              
               <Button
-                variant="ghost"
                 size="sm"
-                onClick={skipTour}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                title="Close tour (Esc)"
+                onClick={nextStep}
+                className="h-8 px-2 md:px-3 bg-blue-600 hover:bg-blue-700 text-xs md:text-sm"
               >
-                <X className="h-4 w-4" />
+                {currentStep === steps.length - 1 ? (
+                  <>
+                    <Check className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                    Finish
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4 ml-1" />
+                  </>
+                )}
               </Button>
             </div>
-            
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-              {currentStepData.content}
-            </p>
-            
-            {currentStepData.action && (
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs text-blue-700 dark:text-blue-300">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-                  <span className="font-medium">Try it:</span>
-                </div>
-                <span className="ml-4">{currentStepData.action}</span>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex space-x-1">
-                {steps.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      index === currentStep 
-                        ? 'bg-blue-600' 
-                        : index < currentStep 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              
-              <div className="flex space-x-2">
-                {currentStep > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={prevStep}
-                    className="h-8 px-3"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back
-                  </Button>
-                )}
-                
-                <Button
-                  size="sm"
-                  onClick={nextStep}
-                  className="h-8 px-3 bg-blue-600 hover:bg-blue-700"
+          </div>
+          
+          <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
+              <span>Step {currentStep + 1} of {steps.length}</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-gray-400 hidden md:inline">Press Esc to exit</span>
+                <button
+                  onClick={skipTour}
+                  className="hover:text-gray-700 dark:hover:text-gray-300 font-medium"
                 >
-                  {currentStep === steps.length - 1 ? (
-                    <>
-                      <Check className="h-4 w-4 mr-1" />
-                      Finish
-                    </>
-                  ) : (
-                    <>
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </>
-                  )}
-                </Button>
+                  Skip tour
+                </button>
               </div>
             </div>
-            
-            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                <span>Step {currentStep + 1} of {steps.length}</span>
-                <div className="flex items-center space-x-3">
-                  <span className="text-gray-400">Press Esc to exit</span>
-                  <button
-                    onClick={skipTour}
-                    className="hover:text-gray-700 dark:hover:text-gray-300 font-medium"
-                  >
-                    Skip tour
-                  </button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -341,18 +257,17 @@ export const useImprovedOnboarding = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('sabisend-onboarding-completed');
-    
-    if (!hasSeenOnboarding) {
-      const timer = setTimeout(() => {
-        setShowOnboarding(true);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
+    // Force trigger for testing - remove localStorage check temporarily
+    const timer = setTimeout(() => {
+      console.log('Auto-starting onboarding tour');
+      setShowOnboarding(true);
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const handleStartOnboarding = () => {
+      console.log('Manual onboarding triggered');
       setShowOnboarding(true);
     };
 
