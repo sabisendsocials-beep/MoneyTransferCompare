@@ -33,21 +33,7 @@ const CleanResults = () => {
   const fromCurrency = urlParams.get('fromCurrency') || defaultFromCurrency;
   const toCurrency = urlParams.get('toCurrency') || defaultToCurrency;
 
-  // Currency symbol helper
-  const getCurrencySymbol = (currencyCode: string) => {
-    const symbols: { [key: string]: string } = {
-      'GBP': '£',
-      'EUR': '€',
-      'USD': '$',
-      'NGN': '₦',
-      'KES': 'KSh',
-      'GHS': '₵',
-      'INR': '₹',
-      'PKR': '₨'
-    };
-    return symbols[currencyCode] || currencyCode;
-  };
-  
+
   // Filter out results with suspiciously high rates (e.g., Sendwave 20000)
   const filterAbnormalRates = (data: TransferResult[]) => {
     return data.map(provider => {
@@ -176,7 +162,7 @@ const CleanResults = () => {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Best Money Transfer Options</h1>
             <p className="text-gray-500 mt-1">
-              For sending <strong>{getCurrencySymbol(fromCurrency)}{amount}</strong> from <strong>{fromCurrency}</strong> to <strong>{toCurrency}</strong>
+              For sending <strong>{fromCurrency === 'GBP' ? '£' : fromCurrency === 'EUR' ? '€' : fromCurrency === 'USD' ? '$' : fromCurrency}{amount}</strong> from <strong>{fromCurrency}</strong> to <strong>{toCurrency}</strong>
             </p>
           </div>
           

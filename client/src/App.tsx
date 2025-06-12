@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Compare from "@/pages/Compare";
 import Results from "@/pages/Results";
 import HorizontalResults from "@/pages/HorizontalResults";
+import CleanResults from "@/pages/CleanResults";
 import Trends from "@/pages/Trends";
 import News from "@/pages/News";
 import HowItWorks from "@/pages/HowItWorks";
@@ -55,7 +56,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/compare" component={Compare} />
-          <Route path="/results" component={HorizontalResults} />
+          <Route path="/results" component={CleanResults} />
           <Route path="/trends" component={Trends} />
           <Route path="/news" component={News} />
 
