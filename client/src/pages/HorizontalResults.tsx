@@ -26,11 +26,19 @@ const HorizontalResults = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<string>("best-value");
+  
+  // Extract URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const amount = parseFloat(urlParams.get('amount') || defaultAmount.toString());
+  const fromCurrency = urlParams.get('fromCurrency') || defaultFromCurrency;
+  const toCurrency = urlParams.get('toCurrency') || defaultToCurrency;
+  const calculationMode = urlParams.get('calculationMode') || 'send';
+  
   const [transferParams, setTransferParams] = useState({
-    amount: defaultAmount,
-    fromCurrency: defaultFromCurrency,
-    toCurrency: defaultToCurrency,
-    calculationMode: "send"
+    amount: amount,
+    fromCurrency: fromCurrency,
+    toCurrency: toCurrency,
+    calculationMode: calculationMode
   });
   
   // Filter out results with suspiciously high rates (e.g., Sendwave 20000)
@@ -77,15 +85,13 @@ const HorizontalResults = () => {
   };
   
   useEffect(() => {
-    // Get URL parameters from calculator
-    const urlParams = new URLSearchParams(window.location.search);
-    const amount = parseFloat(urlParams.get('amount') || String(defaultAmount));
-    const fromCurrency = urlParams.get('from') || defaultFromCurrency;
-    const toCurrency = urlParams.get('to') || defaultToCurrency;
-    const calculationMode = urlParams.get('mode') || 'send';
-    
-    // Store parameters for display
-    setTransferParams({ amount, fromCurrency, toCurrency, calculationMode });
+    // Update transfer params from extracted URL parameters
+    setTransferParams({ 
+      amount, 
+      fromCurrency, 
+      toCurrency, 
+      calculationMode 
+    });
     
     console.log('URL Parameters:', { amount, fromCurrency, toCurrency, calculationMode });
     
@@ -152,7 +158,7 @@ const HorizontalResults = () => {
     };
     
     fetchResults();
-  }, []);
+  }, [amount, fromCurrency, toCurrency, calculationMode]);
   
   // Re-sort results when sort option changes
   useEffect(() => {

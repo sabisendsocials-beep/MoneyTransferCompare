@@ -56,7 +56,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/compare" component={Compare} />
-          <Route path="/results" component={CleanResults} />
+          <Route path="/results" component={HorizontalResults} />
           <Route path="/trends" component={Trends} />
           <Route path="/news" component={News} />
 
