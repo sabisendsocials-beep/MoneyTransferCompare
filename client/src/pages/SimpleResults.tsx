@@ -207,8 +207,8 @@ const SimpleResults = () => {
                 key={provider.providerId}
                 provider={provider}
                 index={index}
-                fromCurrency={defaultFromCurrency}
-                toCurrency={defaultToCurrency}
+                fromCurrency={fromCurrency}
+                toCurrency={toCurrency}
               />
             ))}
           </div>
