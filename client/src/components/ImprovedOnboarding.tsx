@@ -311,12 +311,12 @@ export const useImprovedOnboarding = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    // Force trigger for testing - remove localStorage check temporarily
-    const timer = setTimeout(() => {
-      console.log('Auto-starting guided tour');
-      setShowOnboarding(true);
-    }, 2000);
-    return () => clearTimeout(timer);
+    // Tour disabled - moving to personalized wizard
+    const hasSeenOnboarding = localStorage.getItem('sabisend-onboarding-completed');
+    if (!hasSeenOnboarding) {
+      // Don't auto-start for now
+      console.log('Tour paused - personalized wizard coming soon');
+    }
   }, []);
 
   useEffect(() => {

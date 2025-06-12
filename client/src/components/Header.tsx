@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut, Navigation } from "lucide-react";
+import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut, Navigation, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";

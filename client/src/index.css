@@ -237,3 +237,39 @@
 .onboarding-highlight {
   animation: pulse-blue 2s infinite;
 }
+
+/* Wizard highlight effect - more subtle than onboarding */
+.wizard-highlight {
+  position: relative !important;
+  z-index: 99999 !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.4) !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  background: rgba(34, 197, 94, 0.05) !important;
+}
+
+.wizard-highlight::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 10px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes pulse-green {
+  0%, 100% { 
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.6);
+  }
+}
+
+.wizard-highlight {
+  animation: pulse-green 2s ease-in-out 3;
+}
