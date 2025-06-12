@@ -90,9 +90,9 @@ const NewsSection = () => {
                       </>
                     )}
                   </div>
-                  <h3 className="font-medium text-xs mb-1 text-gray-800 dark:text-white line-clamp-3 leading-tight">
+                  <p className="font-normal text-xs mb-1 text-gray-800 dark:text-white line-clamp-2 leading-tight">
                     {item.title}
-                  </h3>
+                  </p>
                   <p className="text-gray-600 dark:text-gray-300 text-xs mb-3 line-clamp-2 leading-tight">
                     {item.summary}
                   </p>

@@ -178,6 +178,18 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     }).format(rate);
   };
 
+  // Get currency symbol for selected pair
+  const getCurrencySymbol = (currencyCode: string) => {
+    const symbols: { [key: string]: string } = {
+      'NGN': '₦',
+      'KES': 'KSh',
+      'GHS': '₵',
+      'INR': '₹',
+      'PKR': '₨'
+    };
+    return symbols[currencyCode] || currencyCode;
+  };
+
   // Get preferred provider rates from all provider data
   const getPreferredProviderData = () => {
     if (!allProviderRates || !Array.isArray(allProviderRates)) return [];
@@ -195,10 +207,11 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
       const percentageDiff = bestRate > 0 ? ((rateDifference / bestRate) * 100) : 0;
       
       // Format fee correctly - use authentic database field
+      const [from] = selectedPair.split("-");
       const formatFee = (fee: number) => {
         if (fee === 0) return 'Free';
         if (fee < 1) return `${(fee * 100).toFixed(0)}%`;
-        return `${fee.toFixed(2)} ${fromCurrency}`;
+        return `${fee.toFixed(2)} ${from}`;
       };
       
       return {
@@ -306,7 +319,10 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                               </div>
                               <div className="text-right">
                                 <div className="text-lg font-bold text-gray-900">
-                                  ₦{formatRate(provider.receivedAmount)}
+                                  {provider.receivedAmount && !isNaN(provider.receivedAmount) ? 
+                                    `${getCurrencySymbol(toCurrency)}${formatRate(provider.receivedAmount)}` : 
+                                    'Loading...'
+                                  }
                                 </div>
                                 <div className="space-y-0.5">
                                   {isBest ? (
@@ -318,15 +334,17 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                                       -₦{formatRate(bestDifference)} vs best
                                     </div>
                                   ) : null}
-                                  {baseDifference > 0 ? (
-                                    <div className="text-blue-600 text-xs">
-                                      +₦{formatRate(baseDifference)} vs base rate
-                                    </div>
-                                  ) : (
-                                    <div className="text-gray-500 text-xs">
-                                      ₦{formatRate(Math.abs(baseDifference))} below base rate
-                                    </div>
-                                  )}
+                                  {currentRate && !isNaN(baseDifference) ? (
+                                    baseDifference > 0 ? (
+                                      <div className="text-blue-600 text-xs">
+                                        +{getCurrencySymbol(toCurrency)}{formatRate(baseDifference)} vs base rate
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-500 text-xs">
+                                        {getCurrencySymbol(toCurrency)}{formatRate(Math.abs(baseDifference))} below base rate
+                                      </div>
+                                    )
+                                  ) : null}
                                 </div>
                               </div>
                             </div>
