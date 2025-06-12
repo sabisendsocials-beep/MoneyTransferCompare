@@ -28,7 +28,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { NewsletterPopupContainer } from "@/components/NewsletterPopupContainer";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { OnboardingTooltip, useOnboarding } from "@/components/OnboardingTooltip";
+import { ImprovedOnboarding, useImprovedOnboarding } from "@/components/ImprovedOnboarding";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useRef } from "react";
 import { initGA, trackPageView } from "./lib/analytics";
@@ -50,7 +50,7 @@ function Router() {
   // Track page views when routes change
   useAnalytics();
   
-  const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
+  const { showOnboarding, completeOnboarding, skipOnboarding } = useImprovedOnboarding();
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -114,10 +114,11 @@ function Router() {
       </main>
       <Footer />
       <NewsletterPopupContainer />
-      <OnboardingTooltip 
+      <ImprovedOnboarding 
         isVisible={showOnboarding}
         onComplete={completeOnboarding}
         onSkip={skipOnboarding}
+        isAuthenticated={false}
       />
     </div>
   );

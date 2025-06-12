@@ -318,7 +318,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
                   </div>
 
                   {/* Your Providers Cards */}
-                  <div>
+                  <div className="preferred-providers-section">
                     <div className="text-sm text-gray-600 mb-3">Your Providers • {preferredRates.length} selected favorites</div>
                     <div className="grid gap-3">
                       {preferredRates.map((provider: any, index: number) => {

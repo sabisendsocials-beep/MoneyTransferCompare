@@ -12,63 +12,105 @@ interface TooltipStep {
   action?: string;
 }
 
-const onboardingSteps: TooltipStep[] = [
-  {
-    id: 'welcome',
-    target: '.currency-selector',
-    title: 'Welcome to SabiSend!',
-    content: 'Start by selecting your currencies and amount. We support 15 major currency corridors.',
-    position: 'bottom',
-    action: 'Select currencies'
-  },
-  {
-    id: 'compare',
-    target: '.compare-button',
-    title: 'Compare Providers',
-    content: 'Click here to see real-time rates from 15+ money transfer providers and find the best deal.',
-    position: 'top',
-    action: 'Compare rates'
-  },
-  {
-    id: 'alerts',
-    target: '.rate-alert-section',
-    title: 'Set Rate Alerts',
-    content: 'Get notified via email when exchange rates reach your target. Never miss a good rate again!',
-    position: 'left',
-    action: 'Create alert'
-  },
-  {
-    id: 'trends',
-    target: '.chart-container',
-    title: 'Track Rate Trends',
-    content: 'View historical rate data and trends to make informed decisions about when to transfer money.',
-    position: 'top',
-    action: 'View trends'
-  },
-  {
-    id: 'dashboard',
-    target: '.personalized-dashboard',
-    title: 'Your Personalized Dashboard',
-    content: 'Access your rate alerts, transfer history, and personalized insights all in one place.',
-    position: 'bottom',
-    action: 'Explore dashboard'
-  }
-];
+const getOnboardingSteps = (isAuthenticated: boolean): TooltipStep[] => {
+  const publicSteps = [
+    {
+      id: 'currency-selection',
+      target: '.currency-selector',
+      title: 'Select Your Currency Pair',
+      content: 'Choose from 15 major corridors like GBP-NGN, USD-GHS, EUR-KES. This determines which providers and rates you\'ll see.',
+      position: 'bottom' as const,
+      action: 'Try changing currency pairs'
+    },
+    {
+      id: 'compare-rates',
+      target: '.compare-button',
+      title: 'Compare All Providers',
+      content: 'See real-time rates from 15+ providers. Compare fees, exchange rates, and transfer speeds to find the best deal.',
+      position: 'top' as const,
+      action: 'Click to see all provider rates'
+    },
+    {
+      id: 'rate-alerts',
+      target: '.rate-alert-section',
+      title: 'Set Rate Alerts',
+      content: 'Get email notifications when rates hit your target. Choose between official bank rates or best provider rates.',
+      position: 'left' as const,
+      action: 'Create your first rate alert'
+    },
+    {
+      id: 'rate-trends',
+      target: '.chart-container',
+      title: 'Analyze Rate Trends',
+      content: 'View historical performance to time your transfers perfectly. See how rates fluctuate over different periods.',
+      position: 'top' as const,
+      action: 'Try different time periods'
+    }
+  ];
+
+  const authenticatedSteps = [
+    {
+      id: 'dashboard-overview',
+      target: '.personalized-dashboard',
+      title: 'Your Personal Dashboard',
+      content: 'Your customized hub shows preferred providers, active alerts, and rate performance for your chosen currency pairs.',
+      position: 'bottom' as const,
+      action: 'Explore your dashboard sections'
+    },
+    {
+      id: 'preferred-providers',
+      target: '.preferred-providers-section',
+      title: 'Your Preferred Providers',
+      content: 'These are your selected favorite providers. Compare their rates against the market best to see your potential savings.',
+      position: 'left' as const,
+      action: 'Review your provider performance'
+    },
+    {
+      id: 'provider-comparison',
+      target: '.compare-all-button',
+      title: 'Compare All Providers',
+      content: 'See how your preferred providers stack up against all 15+ available options. Find better deals instantly.',
+      position: 'top' as const,
+      action: 'Compare all providers'
+    },
+    {
+      id: 'currency-preferences',
+      target: '.currency-pair-selector',
+      title: 'Change Currency Pairs',
+      content: 'Switch between different currency corridors to see rates for various transfer destinations.',
+      position: 'bottom' as const,
+      action: 'Try different currency pairs'
+    },
+    {
+      id: 'rate-insights',
+      target: '.rate-performance-section',
+      title: 'Rate Performance Insights',
+      content: 'See daily rate changes, best vs preferred provider comparison, and historical performance data.',
+      position: 'right' as const,
+      action: 'Explore rate insights'
+    }
+  ];
+
+  return isAuthenticated ? authenticatedSteps : publicSteps;
+};
 
 interface OnboardingTooltipProps {
   isVisible: boolean;
   onComplete: () => void;
   onSkip: () => void;
+  isAuthenticated?: boolean;
 }
 
 export const OnboardingTooltip: React.FC<OnboardingTooltipProps> = ({
   isVisible,
   onComplete,
-  onSkip
+  onSkip,
+  isAuthenticated = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-
+  
+  const onboardingSteps = getOnboardingSteps(isAuthenticated);
   const currentStepData = onboardingSteps[currentStep];
 
   useEffect(() => {
@@ -80,41 +122,66 @@ export const OnboardingTooltip: React.FC<OnboardingTooltipProps> = ({
         const rect = targetElement.getBoundingClientRect();
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        const tooltipWidth = 320;
+        const tooltipHeight = 200;
 
         let top = 0;
         let left = 0;
 
         switch (currentStepData.position) {
           case 'top':
-            top = rect.top + scrollTop - 100;
-            left = rect.left + scrollLeft + rect.width / 2 - 150;
+            top = rect.top + scrollTop - tooltipHeight - 20;
+            left = rect.left + scrollLeft + rect.width / 2 - tooltipWidth / 2;
             break;
           case 'bottom':
-            top = rect.bottom + scrollTop + 10;
-            left = rect.left + scrollLeft + rect.width / 2 - 150;
+            top = rect.bottom + scrollTop + 20;
+            left = rect.left + scrollLeft + rect.width / 2 - tooltipWidth / 2;
             break;
           case 'left':
-            top = rect.top + scrollTop + rect.height / 2 - 75;
-            left = rect.left + scrollLeft - 310;
+            top = rect.top + scrollTop + rect.height / 2 - tooltipHeight / 2;
+            left = rect.left + scrollLeft - tooltipWidth - 20;
             break;
           case 'right':
-            top = rect.top + scrollTop + rect.height / 2 - 75;
-            left = rect.right + scrollLeft + 10;
+            top = rect.top + scrollTop + rect.height / 2 - tooltipHeight / 2;
+            left = rect.right + scrollLeft + 20;
             break;
+        }
+
+        // Ensure tooltip stays within viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        if (left < 10) left = 10;
+        if (left + tooltipWidth > viewportWidth - 10) left = viewportWidth - tooltipWidth - 10;
+        if (top < 10) top = 10;
+        if (top + tooltipHeight > scrollTop + viewportHeight - 10) {
+          top = scrollTop + viewportHeight - tooltipHeight - 10;
         }
 
         setTooltipPosition({ top, left });
 
+        // Scroll element into view if needed
+        targetElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'center'
+        });
+
         // Add highlight to target element
-        targetElement.classList.add('onboarding-highlight');
+        setTimeout(() => {
+          targetElement.classList.add('onboarding-highlight');
+        }, 300);
       }
     };
 
-    updatePosition();
+    // Delay initial positioning to allow for page load
+    const timer = setTimeout(updatePosition, 500);
+    
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition);
       // Remove highlight from all elements
