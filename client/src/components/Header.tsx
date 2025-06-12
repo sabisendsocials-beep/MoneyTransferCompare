@@ -97,7 +97,9 @@ const Header = () => {
             size="sm"
             onClick={() => {
               localStorage.removeItem('sabisend-onboarding-completed');
-              window.location.reload();
+              // Trigger onboarding directly without reload
+              const event = new CustomEvent('start-onboarding');
+              window.dispatchEvent(event);
             }}
             className="hidden md:flex items-center gap-1 text-gray-600 hover:text-blue-600"
           >

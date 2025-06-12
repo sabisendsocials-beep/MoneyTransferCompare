@@ -120,6 +120,19 @@ function Router() {
         onSkip={skipOnboarding}
         isAuthenticated={false}
       />
+      
+      {/* Debug button for testing onboarding */}
+      <button 
+        onClick={() => {
+          localStorage.removeItem('sabisend-onboarding-completed');
+          const event = new CustomEvent('start-onboarding');
+          window.dispatchEvent(event);
+        }}
+        className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm z-50"
+        style={{ display: process.env.NODE_ENV === 'development' ? 'block' : 'none' }}
+      >
+        Start Tour
+      </button>
     </div>
   );
 }
