@@ -55,7 +55,7 @@ const Home = () => {
           structuredData={structuredData}
         />
         <div className="container mx-auto px-4 py-6">
-          <PersonalizedDashboard user={userData as any} />
+          <PersonalizedDashboard user={userData as any} className="personalized-dashboard" />
         </div>
       </div>
     );
