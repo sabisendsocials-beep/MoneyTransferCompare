@@ -134,7 +134,7 @@ const SimpleResults = () => {
     };
     
     fetchResults();
-  }, []);
+  }, [amount, fromCurrency, toCurrency]);
   
   // Re-sort results when sort option changes
   useEffect(() => {

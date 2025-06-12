@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Loader2, ArrowLeft, Filter, RefreshCw } from "lucide-react";
 import { CleanComparisonCard } from "@/components/CleanComparisonCard";
 import { Button } from "@/components/ui/button";
+
 import {
   Select,
   SelectContent,
@@ -31,6 +32,21 @@ const CleanResults = () => {
   const amount = parseFloat(urlParams.get('amount') || '100');
   const fromCurrency = urlParams.get('fromCurrency') || defaultFromCurrency;
   const toCurrency = urlParams.get('toCurrency') || defaultToCurrency;
+
+  // Currency symbol helper
+  const getCurrencySymbol = (currencyCode: string) => {
+    const symbols: { [key: string]: string } = {
+      'GBP': '£',
+      'EUR': '€',
+      'USD': '$',
+      'NGN': '₦',
+      'KES': 'KSh',
+      'GHS': '₵',
+      'INR': '₹',
+      'PKR': '₨'
+    };
+    return symbols[currencyCode] || currencyCode;
+  };
   
   // Filter out results with suspiciously high rates (e.g., Sendwave 20000)
   const filterAbnormalRates = (data: TransferResult[]) => {
@@ -134,7 +150,7 @@ const CleanResults = () => {
     };
     
     fetchResults();
-  }, []);
+  }, [amount, fromCurrency, toCurrency]);
   
   // Re-sort results when sort option changes
   useEffect(() => {
@@ -160,7 +176,7 @@ const CleanResults = () => {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Best Money Transfer Options</h1>
             <p className="text-gray-500 mt-1">
-              For sending <strong>£{defaultAmount}</strong> from <strong>{defaultFromCurrency}</strong> to <strong>{defaultToCurrency}</strong>
+              For sending <strong>{getCurrencySymbol(fromCurrency)}{amount}</strong> from <strong>{fromCurrency}</strong> to <strong>{toCurrency}</strong>
             </p>
           </div>
           
