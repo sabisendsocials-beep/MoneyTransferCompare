@@ -263,6 +263,7 @@ const CurrencyCalculator = ({ onValuesChange, fromCurrency: defaultFromCurrency,
             <Select
               value={calculationMode === "send" ? fromCurrency : toCurrency}
               onValueChange={calculationMode === "send" ? handleSetFromCurrency : handleSetToCurrency}
+              className="currency-selector"
             >
               <SelectTrigger className="w-[100px] bg-transparent border-0 text-white hover:bg-white/10 transition-colors">
                 <SelectValue placeholder="Currency" />
