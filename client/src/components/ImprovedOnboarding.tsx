@@ -14,79 +14,71 @@ interface OnboardingStep {
 
 const publicSteps: OnboardingStep[] = [
   {
-    id: 'currency-selection',
-    target: '.currency-selector',
-    title: 'Select Your Currency Pair',
-    content: 'Choose from 15 major corridors like GBP-NGN, USD-GHS, EUR-KES. This determines which providers and rates you see.',
+    id: 'welcome',
+    target: 'body',
+    title: 'Welcome to SabiSend',
+    content: 'Compare real-time rates from 15+ money transfer providers across major corridors like GBP-NGN, USD-GHS, EUR-KES to find the best deals.',
     position: 'bottom',
-    action: 'Try changing currency pairs'
+    action: 'Let\'s explore the key features'
+  },
+  {
+    id: 'currency-calculator',
+    target: '[data-testid="currency-calculator"]',
+    title: 'Currency Calculator',
+    content: 'Enter your amount and select currencies to see live exchange rates. This calculator shows you exactly how much you\'ll receive.',
+    position: 'bottom',
+    action: 'Try changing the amount or currencies'
   },
   {
     id: 'compare-rates',
     target: '.compare-button',
     title: 'Compare All Providers',
-    content: 'See real-time rates from 15+ providers. Compare fees, exchange rates, and transfer speeds to find the best deal.',
+    content: 'Click here to see detailed rates from all 15+ providers. Compare fees, exchange rates, and transfer speeds side by side.',
     position: 'top',
-    action: 'Click to see all provider rates'
+    action: 'Click to see all provider comparisons'
   },
   {
-    id: 'rate-alerts',
-    target: '.rate-alert-section',
-    title: 'Set Rate Alerts',
-    content: 'Get email notifications when rates hit your target. Choose between official bank rates or best provider rates.',
-    position: 'left',
-    action: 'Create your first rate alert'
-  },
-  {
-    id: 'rate-trends',
-    target: '.chart-container',
-    title: 'Analyze Rate Trends',
-    content: 'View historical performance to time your transfers perfectly. See how rates fluctuate over different periods.',
+    id: 'explore-features',
+    target: '[data-testid="features-section"]',
+    title: 'Explore More Features',
+    content: 'Scroll down to discover rate alerts, trend analysis, and AI-powered insights to help you time your transfers perfectly.',
     position: 'top',
-    action: 'Try different time periods'
+    action: 'Scroll down to see more features'
   }
 ];
 
 const authenticatedSteps: OnboardingStep[] = [
   {
-    id: 'dashboard-overview',
+    id: 'dashboard-welcome',
     target: '.personalized-dashboard',
     title: 'Your Personal Dashboard',
-    content: 'Your customized hub shows preferred providers, active alerts, and rate performance for your chosen currency pairs.',
+    content: 'Welcome to your customized hub! Here you can track your preferred providers, set rate alerts, and analyze performance for your chosen currency pairs.',
     position: 'bottom',
-    action: 'Explore your dashboard sections'
+    action: 'Explore your personalized features'
   },
   {
     id: 'preferred-providers',
     target: '.preferred-providers-section',
     title: 'Your Preferred Providers',
-    content: 'These are your selected favorite providers. Compare their rates against the market best to see your potential savings.',
-    position: 'left',
+    content: 'These are your favorite providers based on your selections. See how they perform against the market best rates.',
+    position: 'bottom',
     action: 'Review your provider performance'
   },
   {
-    id: 'provider-comparison',
+    id: 'quick-compare',
     target: '.compare-all-button',
-    title: 'Compare All Providers',
-    content: 'See how your preferred providers stack up against all 15+ available options. Find better deals instantly.',
+    title: 'Quick Provider Comparison',
+    content: 'Instantly compare all 15+ providers to see if you can get better rates than your preferred ones.',
     position: 'top',
-    action: 'Compare all providers'
+    action: 'Click to compare all options'
   },
   {
-    id: 'currency-preferences',
-    target: '.currency-pair-selector',
-    title: 'Change Currency Pairs',
-    content: 'Switch between different currency corridors to see rates for various transfer destinations.',
+    id: 'rate-alerts',
+    target: '[data-testid="rate-alerts-tab"]',
+    title: 'Set Rate Alerts',
+    content: 'Get email notifications when rates hit your target. Perfect for timing your transfers when rates are favorable.',
     position: 'bottom',
-    action: 'Try different currency pairs'
-  },
-  {
-    id: 'rate-insights',
-    target: '.rate-performance-section',
-    title: 'Rate Performance Insights',
-    content: 'See daily rate changes, best vs preferred provider comparison, and historical performance data.',
-    position: 'right',
-    action: 'Explore rate insights'
+    action: 'Click Rate Alerts tab to set up notifications'
   }
 ];
 
@@ -116,6 +108,11 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
       const targetElement = document.querySelector(currentStepData.target);
       if (!targetElement) {
         console.warn(`Onboarding target not found: ${currentStepData.target}`);
+        // Use fallback position for center screen
+        setTooltipPosition({ 
+          top: window.innerHeight / 2 - 100, 
+          left: window.innerWidth / 2 - 160 
+        });
         return;
       }
 
@@ -123,7 +120,7 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
       const tooltipWidth = 320;
-      const tooltipHeight = 200;
+      const tooltipHeight = 220;
 
       let top = 0;
       let left = 0;
@@ -147,15 +144,15 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
           break;
       }
 
-      // Keep tooltip within viewport
+      // Keep tooltip within viewport with better boundaries
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       
-      if (left < 10) left = 10;
-      if (left + tooltipWidth > viewportWidth - 10) left = viewportWidth - tooltipWidth - 10;
-      if (top < 10) top = 10;
-      if (top + tooltipHeight > scrollTop + viewportHeight - 10) {
-        top = scrollTop + viewportHeight - tooltipHeight - 10;
+      if (left < 20) left = 20;
+      if (left + tooltipWidth > viewportWidth - 20) left = viewportWidth - tooltipWidth - 20;
+      if (top < 20) top = 20;
+      if (top + tooltipHeight > scrollTop + viewportHeight - 20) {
+        top = scrollTop + viewportHeight - tooltipHeight - 20;
       }
 
       setTooltipPosition({ top, left });
@@ -170,10 +167,15 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
       // Add highlight with delay
       setTimeout(() => {
         targetElement.classList.add('onboarding-highlight');
-      }, 400);
+      }, 600);
     };
 
-    const timer = setTimeout(updatePosition, 600);
+    // Clean up previous highlights
+    document.querySelectorAll('.onboarding-highlight').forEach(el => {
+      el.classList.remove('onboarding-highlight');
+    });
+
+    const timer = setTimeout(updatePosition, 300);
     
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition);
@@ -182,9 +184,6 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
       clearTimeout(timer);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition);
-      document.querySelectorAll('.onboarding-highlight').forEach(el => {
-        el.classList.remove('onboarding-highlight');
-      });
     };
   }, [currentStep, isVisible, currentStepData]);
 

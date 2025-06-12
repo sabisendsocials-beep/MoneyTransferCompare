@@ -73,7 +73,7 @@ const HeroSection = () => {
               <div className="bg-white/15 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/20 shadow-lg">
                 <h2 className="text-lg text-white font-semibold mb-3 text-center">Quick Calculator</h2>
                 
-                <div className="currency-selector">
+                <div data-testid="currency-calculator">
                   <CurrencyCalculator onValuesChange={handleCalculatorChange} />
                 </div>
                 

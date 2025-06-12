@@ -22,7 +22,7 @@ const FeatureSection = () => {
   ];
 
   return (
-    <section className="py-20 relative overflow-hidden bg-gradient-to-b from-white to-blue-100 dark:from-gray-800 dark:to-gray-950">
+    <section className="py-20 relative overflow-hidden bg-gradient-to-b from-white to-blue-100 dark:from-gray-800 dark:to-gray-950" data-testid="features-section">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden opacity-20">
         <div className="absolute -right-10 -top-10 w-80 h-80 rounded-full bg-blue-300 dark:bg-blue-700 filter blur-3xl"></div>

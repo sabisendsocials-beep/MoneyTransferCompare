@@ -263,7 +263,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
-          <TabsTrigger value="alerts">Rate Alerts</TabsTrigger>
+          <TabsTrigger value="alerts" data-testid="rate-alerts-tab">Rate Alerts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
