@@ -78,10 +78,14 @@ const Home = () => {
       <ComparisonResults results={comparisonResults} visible={showResults} />
 
       {/* Rate Alert Module - positioned between calculator and exchange rates */}
-      <RateAlertModule />
+      <div className="rate-alert-section">
+        <RateAlertModule />
+      </div>
 
       {/* Other sections remain unchanged */}
-      <RateTrends />
+      <div className="chart-container">
+        <RateTrends />
+      </div>
       
       {/* Feature Cards - positioned just before News section */}
       <FeatureCards />

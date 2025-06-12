@@ -17,9 +17,10 @@ import { AIInsights } from "./AIInsights";
 
 interface PersonalizedDashboardProps {
   user: any;
+  className?: string;
 }
 
-export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
+export function PersonalizedDashboard({ user, className }: PersonalizedDashboardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -249,7 +250,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
 
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${className || ''}`}>
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
         <h1 className="text-2xl font-bold text-white">Welcome back, {user.firstName}!</h1>
