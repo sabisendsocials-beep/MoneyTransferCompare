@@ -446,7 +446,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
               <Button 
                 variant="default" 
-                className="w-full" 
+                className="w-full compare-all-button" 
                 onClick={navigateToCompare}
               >
                 <Calculator className="h-4 w-4 mr-2" />
