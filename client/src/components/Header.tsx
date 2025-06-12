@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut } from "lucide-react";
+import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut, Navigation } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -91,6 +91,20 @@ const Header = () => {
         </nav>
         
         <div className="flex items-center space-x-4">
+          {/* Tour Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              localStorage.removeItem('sabisend-onboarding-completed');
+              window.location.reload();
+            }}
+            className="hidden md:flex items-center gap-1 text-gray-600 hover:text-blue-600"
+          >
+            <Navigation size={16} />
+            <span className="text-sm">Tour</span>
+          </Button>
+          
           {/* Authentication Controls */}
           {!isLoading && (
             <>

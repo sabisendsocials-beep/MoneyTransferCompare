@@ -78,7 +78,7 @@ const HeroSection = () => {
                 </div>
                 
                 {/* CTA Button */}
-                <div className="mt-4 text-center">
+                <div className="mt-4 text-center compare-button">
                   <Link href={`/results?amount=${calculatorValues.amount.replace(/,/g, '')}&from=${calculatorValues.fromCurrency}&to=${calculatorValues.toCurrency}&mode=${calculatorValues.calculationMode}`}>
                     <Button 
                       className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg group"
