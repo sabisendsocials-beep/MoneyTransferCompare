@@ -132,9 +132,10 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     },
   });
 
-  const currentRate = currentRatesData?.data?.officialRate;
-  const bestProvider = currentRatesData?.data?.bestProviderName;
-  const bestRate = currentRatesData?.data?.bestProviderRate;
+  // Extract current rates from the API response
+  const currentRate = currentRatesData?.data?.officialRate || currentRatesData?.officialRate;
+  const bestProvider = currentRatesData?.data?.bestProviderName || currentRatesData?.bestProviderName;
+  const bestRate = currentRatesData?.data?.bestProviderRate || currentRatesData?.bestProviderRate;
 
   // Calculate rate change from yesterday
   const calculateRateChange = () => {
@@ -317,11 +318,14 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="text-sm text-gray-600 mb-3">Your Providers • {preferredRates.length} selected favorites</div>
                     <div className="grid gap-3">
                       {preferredRates.map((provider: any, index: number) => {
-                        const bestMarketAmount = bestRate * parseFloat(calculatorAmount);
-                        const baseRateAmount = currentRate * parseFloat(calculatorAmount);
-                        const bestDifference = bestMarketAmount - provider.receivedAmount;
-                        const baseDifference = provider.receivedAmount - baseRateAmount;
+                        // Calculate comparison amounts using actual data
+                        const bestMarketAmount = bestRate ? bestRate * parseFloat(calculatorAmount) : 0;
+                        const baseRateAmount = currentRate ? currentRate * parseFloat(calculatorAmount) : 0;
+                        const bestDifference = bestMarketAmount > 0 ? bestMarketAmount - provider.receivedAmount : 0;
+                        const baseDifference = baseRateAmount > 0 ? provider.receivedAmount - baseRateAmount : 0;
                         const isBest = provider.name === bestProvider;
+                        
+
                         
                         return (
                           <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -340,23 +344,26 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                                   }
                                 </div>
                                 <div className="space-y-0.5">
+                                  {/* Best provider comparison - show for all providers */}
                                   {isBest ? (
                                     <div className="text-green-600 text-xs font-medium">
                                       👑 Best rate
                                     </div>
-                                  ) : bestDifference > 0 ? (
+                                  ) : bestRate && bestDifference > 0 ? (
                                     <div className="text-red-500 text-xs">
                                       -{getCurrencySymbol(toCurrency)}{formatRate(bestDifference)} vs best
                                     </div>
                                   ) : null}
-                                  {currentRate && !isNaN(baseDifference) ? (
+                                  
+                                  {/* Base rate comparison - show for all providers */}
+                                  {currentRate && baseRateAmount > 0 ? (
                                     baseDifference > 0 ? (
                                       <div className="text-blue-600 text-xs">
                                         +{getCurrencySymbol(toCurrency)}{formatRate(baseDifference)} vs base rate
                                       </div>
                                     ) : (
                                       <div className="text-gray-500 text-xs">
-                                        {getCurrencySymbol(toCurrency)}{formatRate(Math.abs(baseDifference))} below base rate
+                                        -{getCurrencySymbol(toCurrency)}{formatRate(Math.abs(baseDifference))} vs base rate
                                       </div>
                                     )
                                   ) : null}
