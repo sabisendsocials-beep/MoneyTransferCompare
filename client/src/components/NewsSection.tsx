@@ -79,21 +79,21 @@ const NewsSection = () => {
                     </div>
                   )}
                 </div>
-                <CardContent className="p-6">
-                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
                     <Calendar className="mr-1 h-3 w-3" />
                     <span>{item.formatted_date || formatDate(item.published_at)}</span>
                     {item.source && (
                       <>
-                        <span className="mx-2">•</span>
-                        <span>{item.source}</span>
+                        <span className="mx-1">•</span>
+                        <span className="truncate">{item.source}</span>
                       </>
                     )}
                   </div>
-                  <h3 className="font-semibold text-sm mb-2 text-gray-800 dark:text-white line-clamp-2">
+                  <h3 className="font-medium text-xs mb-1 text-gray-800 dark:text-white line-clamp-3 leading-tight">
                     {item.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mb-3 line-clamp-2 leading-tight">
                     {item.summary}
                   </p>
                   {item.url && (

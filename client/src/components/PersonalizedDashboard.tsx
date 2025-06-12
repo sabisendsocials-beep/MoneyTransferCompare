@@ -37,22 +37,24 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const [fromCurrency, toCurrency] = selectedPair.split("-");
   const preferredProviders = user.preferences?.preferredProviders || [];
 
-  // Fetch current rates for preferred currency pair
+  // Fetch current rates for selected currency pair
   const { data: currentRates, isLoading: currentRatesLoading } = useQuery({
-    queryKey: ['/api/rate-alerts/current-rates', fromCurrency, toCurrency],
+    queryKey: ['/api/rate-alerts/current-rates', selectedPair],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/rate-alerts/current-rates?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`);
+      const [from, to] = selectedPair.split("-");
+      const response = await apiRequest('GET', `/api/rate-alerts/current-rates?fromCurrency=${from}&toCurrency=${to}`);
       return response.json();
     },
   });
 
   // Fetch all provider rates for comparison using calculator amount
   const { data: allProviderRates, isLoading: providerRatesLoading } = useQuery({
-    queryKey: ['/api/compare', fromCurrency, toCurrency, calculatorAmount],
+    queryKey: ['/api/compare', selectedPair, calculatorAmount],
     queryFn: async () => {
+      const [from, to] = selectedPair.split("-");
       const response = await apiRequest('POST', '/api/compare', {
-        fromCurrency,
-        toCurrency,
+        fromCurrency: from,
+        toCurrency: to,
         amount: parseFloat(calculatorAmount),
         type: 'send'
       });
@@ -63,27 +65,30 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
 
   // Fetch rate trends for yesterday comparison
   const { data: rateTrends } = useQuery({
-    queryKey: ['/api/rate-trends', fromCurrency, toCurrency],
+    queryKey: ['/api/rate-trends', selectedPair, '2days'],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=2`);
+      const [from, to] = selectedPair.split("-");
+      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${from}&toCurrency=${to}&days=2`);
       return response.json();
     },
   });
 
   // Fetch rate trends for chart based on selected period
   const { data: chartTrends } = useQuery({
-    queryKey: ['/api/rate-trends', fromCurrency, toCurrency, `${trendPeriod}days`],
+    queryKey: ['/api/rate-trends', selectedPair, `${trendPeriod}days`],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&days=${trendPeriod}`);
+      const [from, to] = selectedPair.split("-");
+      const response = await apiRequest('GET', `/api/rate-trends?fromCurrency=${from}&toCurrency=${to}&days=${trendPeriod}`);
       return response.json();
     },
   });
 
   // Fetch rate stats for performance metrics
   const { data: rateStats } = useQuery({
-    queryKey: ['/api/rate-stats', fromCurrency, toCurrency],
+    queryKey: ['/api/rate-stats', selectedPair],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/rate-stats?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`);
+      const [from, to] = selectedPair.split("-");
+      const response = await apiRequest('GET', `/api/rate-stats?fromCurrency=${from}&toCurrency=${to}`);
       return response.json();
     },
   });
@@ -143,10 +148,11 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
 
   // Navigate to existing results page with current values
   const navigateToCompare = () => {
+    const [selectedFrom, selectedTo] = selectedPair.split("-");
     const params = new URLSearchParams({
       amount: calculatorAmount,
-      fromCurrency,
-      toCurrency,
+      fromCurrency: selectedFrom,
+      toCurrency: selectedTo,
       calculationMode: 'send'
     });
     setLocation(`/results?${params.toString()}`);
