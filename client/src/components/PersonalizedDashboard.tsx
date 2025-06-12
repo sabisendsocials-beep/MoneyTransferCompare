@@ -63,6 +63,16 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     enabled: !!calculatorAmount && !isNaN(parseFloat(calculatorAmount)),
   });
 
+  // Fetch current rates for official and best provider rates
+  const { data: currentRatesData } = useQuery({
+    queryKey: ['/api/rate-alerts/current-rates', selectedPair],
+    queryFn: async () => {
+      const [from, to] = selectedPair.split("-");
+      const response = await apiRequest('GET', `/api/rate-alerts/current-rates?fromCurrency=${from}&toCurrency=${to}`);
+      return response.json();
+    },
+  });
+
   // Fetch rate trends for yesterday comparison
   const { data: rateTrends } = useQuery({
     queryKey: ['/api/rate-trends', selectedPair, '2days'],
@@ -122,9 +132,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     },
   });
 
-  const currentRate = (currentRates as any)?.data?.officialRate;
-  const bestProvider = (currentRates as any)?.data?.bestProviderName;
-  const bestRate = (currentRates as any)?.data?.bestProviderRate;
+  const currentRate = currentRatesData?.data?.officialRate;
+  const bestProvider = currentRatesData?.data?.bestProviderName;
+  const bestRate = currentRatesData?.data?.bestProviderRate;
 
   // Calculate rate change from yesterday
   const calculateRateChange = () => {
@@ -272,7 +282,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
-                          {bestRate && !isNaN(bestRate) ? 
+                          {bestRate && bestRate > 0 ? 
                             `${getCurrencySymbol(toCurrency)}${formatRate(bestRate * parseFloat(calculatorAmount))}` : 
                             'Loading...'
                           }
