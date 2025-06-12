@@ -213,54 +213,11 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
-        <h1 className="text-2xl font-bold">Welcome back, {user.firstName}!</h1>
+        <h1 className="text-2xl font-bold text-white">Welcome back, {user.firstName}!</h1>
         <p className="text-blue-100 mt-1">Your personalized exchange rate dashboard for {selectedPair}</p>
       </div>
 
-      {/* Quick Stats Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Current Rate</CardTitle>
-              <Badge variant="outline">{selectedPair}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {currentRate ? `${formatRate(currentRate)} ${toCurrency}` : "Loading..."}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Official market rate</p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Best Rate Today</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold">
-                {bestRate ? `${formatRate(bestRate)} ${toCurrency}` : "Loading..."}
-              </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Star className="h-3 w-3 mr-1 text-yellow-500" />
-                {bestProvider || "Loading..."}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Your Providers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{preferredProviders.length}</div>
-            <p className="text-sm text-muted-foreground mt-1">Selected favorites</p>
-          </CardContent>
-        </Card>
-      </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
@@ -270,35 +227,6 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Calculator Input */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calculator className="h-5 w-5 mr-2" />
-                Quick Calculator
-              </CardTitle>
-              <CardDescription>
-                Enter amount to see what you'll receive from your preferred providers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4">
-                <div className="flex-1">
-                  <Input
-                    type="number"
-                    value={calculatorAmount}
-                    onChange={(e) => setCalculatorAmount(e.target.value)}
-                    placeholder="100"
-                    className="text-lg"
-                  />
-                </div>
-                <span className="text-lg font-medium">{fromCurrency}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-
-
           {/* Preferred Providers Results */}
           <Card>
             <CardHeader>
@@ -400,6 +328,33 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                   </AlertDescription>
                 </Alert>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Quick Calculator */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calculator className="h-5 w-5 mr-2" />
+                Quick Calculator
+              </CardTitle>
+              <CardDescription>
+                Enter amount to see what you'll receive from your preferred providers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4">
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    value={calculatorAmount}
+                    onChange={(e) => setCalculatorAmount(e.target.value)}
+                    placeholder="100"
+                    className="text-lg"
+                  />
+                </div>
+                <span className="text-lg font-medium">{fromCurrency}</span>
+              </div>
             </CardContent>
           </Card>
 
