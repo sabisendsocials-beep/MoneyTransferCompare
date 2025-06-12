@@ -90,10 +90,10 @@ const NewsSection = () => {
                       </>
                     )}
                   </div>
-                  <p className="font-normal text-xs mb-1 text-gray-800 dark:text-white line-clamp-2 leading-tight">
+                  <p className="font-medium text-[10px] mb-1 text-gray-800 dark:text-white line-clamp-2 leading-tight">
                     {item.title}
                   </p>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mb-3 line-clamp-2 leading-tight">
+                  <p className="text-gray-600 dark:text-gray-300 text-[10px] mb-3 line-clamp-2 leading-tight">
                     {item.summary}
                   </p>
                   {item.url && (

@@ -260,7 +260,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 Your Preferred Providers for {selectedPair}
               </CardTitle>
               <CardDescription>
-                Sending £{calculatorAmount} - sorted by best rate
+                Sending {getCurrencySymbol(fromCurrency)}{calculatorAmount} - sorted by best rate
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -272,14 +272,19 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
-                          ₦{formatRate(bestRate * parseFloat(calculatorAmount))}
+                          {bestRate && !isNaN(bestRate) ? 
+                            `${getCurrencySymbol(toCurrency)}${formatRate(bestRate * parseFloat(calculatorAmount))}` : 
+                            'Loading...'
+                          }
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
-                          {bestProvider} • £→₦
+                          {bestProvider} • {fromCurrency}→{toCurrency}
                         </div>
-                        <div className="text-blue-600 text-xs">
-                          +₦{formatRate((bestRate - currentRate) * parseFloat(calculatorAmount))} vs base rate
-                        </div>
+                        {currentRate && bestRate && !isNaN(currentRate) && !isNaN(bestRate) ? (
+                          <div className="text-blue-600 text-xs">
+                            +{getCurrencySymbol(toCurrency)}{formatRate((bestRate - currentRate) * parseFloat(calculatorAmount))} vs base rate
+                          </div>
+                        ) : null}
                       </div>
                       <div className="text-right">
                         <div className={`text-sm font-medium ${
@@ -331,7 +336,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                                     </div>
                                   ) : bestDifference > 0 ? (
                                     <div className="text-red-500 text-xs">
-                                      -₦{formatRate(bestDifference)} vs best
+                                      -{getCurrencySymbol(toCurrency)}{formatRate(bestDifference)} vs best
                                     </div>
                                   ) : null}
                                   {currentRate && !isNaN(baseDifference) ? (
@@ -424,7 +429,7 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 onClick={navigateToCompare}
               >
                 <Calculator className="h-4 w-4 mr-2" />
-                Compare All Providers (£{calculatorAmount})
+                Compare All Providers ({getCurrencySymbol(fromCurrency)}{calculatorAmount})
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </CardContent>
