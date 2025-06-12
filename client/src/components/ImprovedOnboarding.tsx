@@ -202,11 +202,30 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
   };
 
   const skipTour = () => {
+    // Clean up all highlights
     document.querySelectorAll('.onboarding-highlight').forEach(el => {
       el.classList.remove('onboarding-highlight');
     });
+    // Reset current step
+    setCurrentStep(0);
     onSkip();
   };
+
+  const handleEscapeKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      skipTour();
+    }
+  };
+
+  // Add escape key listener
+  useEffect(() => {
+    if (isVisible) {
+      document.addEventListener('keydown', handleEscapeKey);
+      return () => {
+        document.removeEventListener('keydown', handleEscapeKey);
+      };
+    }
+  }, [isVisible]);
 
   if (!isVisible || !currentStepData) return null;
 
@@ -217,7 +236,7 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
       
       {/* Tooltip */}
       <Card 
-        className="fixed z-50 w-80 shadow-xl border-2 border-blue-200"
+        className="fixed z-50 w-80 shadow-xl border-2 border-blue-200 bg-white dark:bg-gray-800"
         style={{ 
           top: tooltipPosition.top, 
           left: tooltipPosition.left
@@ -232,7 +251,8 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
               variant="ghost"
               size="sm"
               onClick={skipTour}
-              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              title="Close tour (Esc)"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -243,17 +263,21 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
           </p>
           
           {currentStepData.action && (
-            <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
-              💡 Try it: {currentStepData.action}
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs text-blue-700 dark:text-blue-300">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                <span className="font-medium">Try it:</span>
+              </div>
+              <span className="ml-4">{currentStepData.action}</span>
             </div>
           )}
           
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-3">
             <div className="flex space-x-1">
               {steps.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full ${
+                  className={`w-2 h-2 rounded-full transition-colors ${
                     index === currentStep 
                       ? 'bg-blue-600' 
                       : index < currentStep 
@@ -280,7 +304,7 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
               <Button
                 size="sm"
                 onClick={nextStep}
-                className="h-8 px-3"
+                className="h-8 px-3 bg-blue-600 hover:bg-blue-700"
               >
                 {currentStep === steps.length - 1 ? (
                   <>
@@ -297,15 +321,18 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
             </div>
           </div>
           
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
               <span>Step {currentStep + 1} of {steps.length}</span>
-              <button
-                onClick={skipTour}
-                className="hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                Skip tour
-              </button>
+              <div className="flex items-center space-x-3">
+                <span className="text-gray-400">Press Esc to exit</span>
+                <button
+                  onClick={skipTour}
+                  className="hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+                >
+                  Skip tour
+                </button>
+              </div>
             </div>
           </div>
         </CardContent>
