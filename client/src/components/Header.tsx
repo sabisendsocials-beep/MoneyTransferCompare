@@ -7,7 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import sabiSendLogo from "@assets/SabiSend Logo with tagline short.png";
 
-const Header = () => {
+interface HeaderProps {
+  onStartWizard?: () => void;
+}
+
+const Header = ({ onStartWizard }: HeaderProps = {}) => {
   const [location] = useLocation();
   const { theme, setTheme } = useTheme();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -91,21 +95,38 @@ const Header = () => {
         </nav>
         
         <div className="flex items-center space-x-4">
-          {/* Tour Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              localStorage.removeItem('sabisend-onboarding-completed');
-              // Trigger onboarding directly without reload
-              const event = new CustomEvent('start-onboarding');
-              window.dispatchEvent(event);
-            }}
-            className="hidden md:flex items-center gap-1 text-gray-600 hover:text-blue-600"
-          >
-            <Navigation size={16} />
-            <span className="text-sm">Tour</span>
-          </Button>
+          {/* Help Buttons */}
+          <div className="hidden md:flex items-center space-x-2">
+            {/* Smart Help Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem('sabisend-wizard-dismissed');
+                onStartWizard?.();
+              }}
+              className="flex items-center gap-1 text-gray-600 hover:text-green-600"
+            >
+              <Lightbulb size={16} />
+              <span className="text-sm">Smart Help</span>
+            </Button>
+            
+            {/* Tour Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem('sabisend-onboarding-completed');
+                // Trigger onboarding directly without reload
+                const event = new CustomEvent('start-onboarding');
+                window.dispatchEvent(event);
+              }}
+              className="flex items-center gap-1 text-gray-600 hover:text-blue-600"
+            >
+              <Navigation size={16} />
+              <span className="text-sm">Tour</span>
+            </Button>
+          </div>
           
           {/* Authentication Controls */}
           {!isLoading && (

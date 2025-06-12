@@ -56,7 +56,7 @@ function Router() {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header onStartWizard={startWizard} />
       <main className="flex-grow">
         <Switch>
           <Route path="/" component={Home} />

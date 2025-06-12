@@ -384,8 +384,9 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
                   <div className="pt-2">
                     <Button 
                       variant="default" 
-                      className="w-full" 
+                      className="w-full compare-button" 
                       onClick={navigateToCompare}
+                      data-testid="compare-providers-button"
                     >
                       <Calculator className="h-4 w-4 mr-2" />
                       Compare All Providers (£{calculatorAmount})
