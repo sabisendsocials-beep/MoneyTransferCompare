@@ -250,7 +250,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
 
   return (
-    <div className={`space-y-6 ${className || ''}`}>
+    <div className={`space-y-6 personalized-dashboard ${className || ''}`}>
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
         <h1 className="text-2xl font-bold text-white">Welcome back, {user.firstName}!</h1>
@@ -268,7 +268,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
         <TabsContent value="overview" className="space-y-4">
           {/* Preferred Providers Results */}
-          <Card>
+          <Card className="preferred-providers-section">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Star className="h-5 w-5 mr-2 text-yellow-500" />
@@ -282,7 +282,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
               {preferredRates.length > 0 ? (
                 <div className="space-y-4">
                   {/* Best Rate Today Card */}
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 rate-performance-section">
                     <div className="text-sm text-gray-600 mb-1">Best Rate Today</div>
                     <div className="flex items-center justify-between">
                       <div>
@@ -428,7 +428,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
                 <span className="text-lg font-medium">{fromCurrency}</span>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 currency-pair-selector">
                 <label className="text-sm font-medium">Currency Pair:</label>
                 <Select value={selectedPair} onValueChange={(value) => setSelectedPair(value)}>
                   <SelectTrigger className="w-48">
@@ -478,7 +478,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
                 <TabsContent value="7">
                   {chartTrends && Array.isArray(chartTrends) && chartTrends.length > 0 ? (
-                    <div className="h-80 w-full">
+                    <div className="h-80 w-full chart-container">
                       <ResponsiveContainer width="100%" height="100%">
                         <RechartsLineChart data={chartTrends}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -681,7 +681,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
-          <Card>
+          <Card className="rate-alert-section">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Bell className="h-5 w-5 mr-2" />
