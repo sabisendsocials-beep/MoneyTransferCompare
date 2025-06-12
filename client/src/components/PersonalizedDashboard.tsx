@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, TrendingDown, Bell, Calculator, Star, ArrowRight, Building2, Award, LineChart, Activity } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -26,8 +27,13 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   const [calculatorAmount, setCalculatorAmount] = useState("100");
   const [alertBasis, setAlertBasis] = useState<'official' | 'best_provider'>('official');
   const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90' | '365'>('7');
+  const [selectedPair, setSelectedPair] = useState(user.preferences?.preferredCurrencyPair || "GBP-NGN");
   
-  const selectedPair = user.preferences?.preferredCurrencyPair || "GBP-NGN";
+  const currencyPairs = [
+    "GBP-NGN", "GBP-KES", "GBP-GHS", "GBP-INR", "GBP-PKR",
+    "USD-NGN", "USD-KES", "USD-GHS", "USD-INR", "USD-PKR",
+    "EUR-NGN", "EUR-KES", "EUR-GHS", "EUR-INR", "EUR-PKR"
+  ];
   const [fromCurrency, toCurrency] = selectedPair.split("-");
   const preferredProviders = user.preferences?.preferredProviders || [];
 
@@ -252,6 +258,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                         <div className="text-sm text-gray-600 mt-1">
                           {bestProvider} • £→₦
                         </div>
+                        <div className="text-blue-600 text-xs">
+                          +₦{formatRate((bestRate - currentRate) * parseFloat(calculatorAmount))} vs base rate
+                        </div>
                       </div>
                       <div className="text-right">
                         <div className={`text-sm font-medium ${
@@ -275,7 +284,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                     <div className="grid gap-3">
                       {preferredRates.map((provider: any, index: number) => {
                         const bestMarketAmount = bestRate * parseFloat(calculatorAmount);
-                        const difference = bestMarketAmount - provider.receivedAmount;
+                        const baseRateAmount = currentRate * parseFloat(calculatorAmount);
+                        const bestDifference = bestMarketAmount - provider.receivedAmount;
+                        const baseDifference = provider.receivedAmount - baseRateAmount;
                         const isBest = provider.name === bestProvider;
                         
                         return (
@@ -291,15 +302,26 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                                 <div className="text-lg font-bold text-gray-900">
                                   ₦{formatRate(provider.receivedAmount)}
                                 </div>
-                                {isBest ? (
-                                  <div className="text-green-600 text-xs font-medium">
-                                    👑 Best rate
-                                  </div>
-                                ) : difference > 0 ? (
-                                  <div className="text-red-500 text-xs">
-                                    -₦{formatRate(difference)} vs best
-                                  </div>
-                                ) : null}
+                                <div className="space-y-0.5">
+                                  {isBest ? (
+                                    <div className="text-green-600 text-xs font-medium">
+                                      👑 Best rate
+                                    </div>
+                                  ) : bestDifference > 0 ? (
+                                    <div className="text-red-500 text-xs">
+                                      -₦{formatRate(bestDifference)} vs best
+                                    </div>
+                                  ) : null}
+                                  {baseDifference > 0 ? (
+                                    <div className="text-blue-600 text-xs">
+                                      +₦{formatRate(baseDifference)} vs base rate
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-500 text-xs">
+                                      ₦{formatRate(Math.abs(baseDifference))} below base rate
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -339,10 +361,10 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 Quick Calculator
               </CardTitle>
               <CardDescription>
-                Enter amount to see what you'll receive from your preferred providers
+                Enter amount and select currency pair to compare providers
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="flex-1">
                   <Input
@@ -355,6 +377,32 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
                 </div>
                 <span className="text-lg font-medium">{fromCurrency}</span>
               </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium">Currency Pair:</label>
+                <Select value={selectedPair} onValueChange={(value) => setSelectedPair(value)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencyPairs.map((pair: string) => (
+                      <SelectItem key={pair} value={pair}>
+                        {pair.replace('-', ' → ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button 
+                variant="default" 
+                className="w-full" 
+                onClick={navigateToCompare}
+              >
+                <Calculator className="h-4 w-4 mr-2" />
+                Compare All Providers (£{calculatorAmount})
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
             </CardContent>
           </Card>
 
@@ -363,10 +411,10 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LineChart className="h-5 w-5" />
-                Exchange Rate Trends for {selectedPair.replace('-', '→')}
+                Official Base Rate Trends for {selectedPair.replace('-', '→')}
               </CardTitle>
               <CardDescription>
-                Track rate performance over different time periods
+                Track official market rate performance over different time periods
               </CardDescription>
             </CardHeader>
             <CardContent>
