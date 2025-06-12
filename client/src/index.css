@@ -200,3 +200,40 @@
     @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
   }
 }
+
+/* Onboarding highlight effect for guided tour */
+.onboarding-highlight {
+  position: relative !important;
+  z-index: 99999 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6) !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.onboarding-highlight::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 12px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Animation for tour elements */
+@keyframes pulse-blue {
+  0%, 100% { 
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6);
+  }
+  50% { 
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.8);
+  }
+}
+
+.onboarding-highlight {
+  animation: pulse-blue 2s infinite;
+}

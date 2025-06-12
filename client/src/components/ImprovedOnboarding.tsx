@@ -47,41 +47,6 @@ const publicSteps: OnboardingStep[] = [
   }
 ];
 
-const authenticatedSteps: OnboardingStep[] = [
-  {
-    id: 'dashboard-welcome',
-    target: '.personalized-dashboard',
-    title: 'Your Personal Dashboard',
-    content: 'Welcome to your customized hub! Here you can track your preferred providers, set rate alerts, and analyze performance for your chosen currency pairs.',
-    position: 'bottom',
-    action: 'Explore your personalized features'
-  },
-  {
-    id: 'preferred-providers',
-    target: '.preferred-providers-section',
-    title: 'Your Preferred Providers',
-    content: 'These are your favorite providers based on your selections. See how they perform against the market best rates.',
-    position: 'bottom',
-    action: 'Review your provider performance'
-  },
-  {
-    id: 'quick-compare',
-    target: '.compare-all-button',
-    title: 'Quick Provider Comparison',
-    content: 'Instantly compare all 15+ providers to see if you can get better rates than your preferred ones.',
-    position: 'top',
-    action: 'Click to compare all options'
-  },
-  {
-    id: 'rate-alerts',
-    target: '[data-testid="rate-alerts-tab"]',
-    title: 'Set Rate Alerts',
-    content: 'Get email notifications when rates hit your target. Perfect for timing your transfers when rates are favorable.',
-    position: 'bottom',
-    action: 'Click Rate Alerts tab to set up notifications'
-  }
-];
-
 interface ImprovedOnboardingProps {
   isVisible: boolean;
   onComplete: () => void;
@@ -96,9 +61,80 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
   isAuthenticated = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: '50%', left: '50%' });
   
-  const steps = isAuthenticated ? authenticatedSteps : publicSteps;
+  const steps = publicSteps;
   const currentStepData = steps[currentStep];
+
+  // Function to highlight and position tooltip near target element
+  const highlightElement = () => {
+    // Remove previous highlights
+    document.querySelectorAll('.onboarding-highlight').forEach(el => {
+      el.classList.remove('onboarding-highlight');
+    });
+
+    if (!currentStepData) return;
+
+    const targetElement = document.querySelector(currentStepData.target);
+    if (!targetElement) {
+      console.warn(`Onboarding target not found: ${currentStepData.target}`);
+      setTooltipPosition({ top: '50%', left: '50%' });
+      return;
+    }
+
+    // Add highlight to target element
+    targetElement.classList.add('onboarding-highlight');
+    
+    // Scroll element into view
+    targetElement.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center',
+      inline: 'center'
+    });
+
+    // Calculate tooltip position relative to target
+    setTimeout(() => {
+      const rect = targetElement.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      let top = '50%';
+      let left = '50%';
+      
+      // Position tooltip based on target location and step position preference
+      switch (currentStepData.position) {
+        case 'bottom':
+          top = `${Math.min(rect.bottom + 20, viewportHeight - 300)}px`;
+          left = `${Math.max(20, Math.min(rect.left + rect.width / 2 - 160, viewportWidth - 340))}px`;
+          break;
+        case 'top':
+          top = `${Math.max(20, rect.top - 280)}px`;
+          left = `${Math.max(20, Math.min(rect.left + rect.width / 2 - 160, viewportWidth - 340))}px`;
+          break;
+        case 'right':
+          top = `${Math.max(20, Math.min(rect.top + rect.height / 2 - 140, viewportHeight - 300))}px`;
+          left = `${Math.min(rect.right + 20, viewportWidth - 340)}px`;
+          break;
+        case 'left':
+          top = `${Math.max(20, Math.min(rect.top + rect.height / 2 - 140, viewportHeight - 300))}px`;
+          left = `${Math.max(20, rect.left - 340)}px`;
+          break;
+        default:
+          // Center position
+          top = '50%';
+          left = '50%';
+      }
+      
+      setTooltipPosition({ top, left });
+    }, 500);
+  };
+
+  // Highlight element when step changes
+  useEffect(() => {
+    if (isVisible && currentStepData) {
+      highlightElement();
+    }
+  }, [currentStep, isVisible, currentStepData]);
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -115,6 +151,10 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
   };
 
   const skipTour = () => {
+    // Clean up highlights when exiting
+    document.querySelectorAll('.onboarding-highlight').forEach(el => {
+      el.classList.remove('onboarding-highlight');
+    });
     setCurrentStep(0);
     onSkip();
   };
@@ -136,23 +176,37 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
 
   if (!isVisible || !currentStepData) return null;
 
+  const isCenter = tooltipPosition.top === '50%' && tooltipPosition.left === '50%';
+
   return (
-    <div 
-      className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[99999]"
-      onClick={skipTour}
-      style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 99999,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)'
-      }}
-    >
+    <>
+      {/* Dark overlay with cutout effect for highlighted element */}
+      <div 
+        className="fixed inset-0 bg-black/60 z-[99998]"
+        onClick={skipTour}
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 99998,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)'
+        }}
+      />
+
+      {/* Tooltip positioned near highlighted element */}
       <Card 
-        className="w-full max-w-sm md:max-w-md mx-auto shadow-2xl border-2 border-blue-500 bg-white dark:bg-gray-800 animate-in fade-in duration-300"
+        className="fixed w-full max-w-sm md:max-w-md shadow-2xl border-2 border-blue-500 bg-white dark:bg-gray-800 animate-in fade-in duration-300 z-[99999]"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          top: tooltipPosition.top,
+          left: tooltipPosition.left,
+          transform: isCenter ? 'translate(-50%, -50%)' : 'none',
+          zIndex: 99999,
+          margin: isCenter ? '0' : '16px'
+        }}
       >
         <CardContent className="p-4 md:p-6">
           <div className="flex justify-between items-start mb-4">
@@ -249,7 +303,7 @@ export const ImprovedOnboarding: React.FC<ImprovedOnboardingProps> = ({
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 
@@ -259,7 +313,7 @@ export const useImprovedOnboarding = () => {
   useEffect(() => {
     // Force trigger for testing - remove localStorage check temporarily
     const timer = setTimeout(() => {
-      console.log('Auto-starting onboarding tour');
+      console.log('Auto-starting guided tour');
       setShowOnboarding(true);
     }, 2000);
     return () => clearTimeout(timer);
