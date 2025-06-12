@@ -192,6 +192,9 @@ export function PersonalizedDashboard({ user }: PersonalizedDashboardProps) {
   // Get currency symbol for selected pair
   const getCurrencySymbol = (currencyCode: string) => {
     const symbols: { [key: string]: string } = {
+      'GBP': '£',
+      'EUR': '€',
+      'USD': '$',
       'NGN': '₦',
       'KES': 'KSh',
       'GHS': '₵',

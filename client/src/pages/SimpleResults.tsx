@@ -26,6 +26,12 @@ const SimpleResults = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<string>("best-value");
   
+  // Extract URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const amount = parseFloat(urlParams.get('amount') || '100');
+  const fromCurrency = urlParams.get('fromCurrency') || defaultFromCurrency;
+  const toCurrency = urlParams.get('toCurrency') || defaultToCurrency;
+  
   // Filter out results with suspiciously high rates (e.g., Sendwave 20000)
   const filterAbnormalRates = (data: TransferResult[]) => {
     return data.map(provider => {
@@ -72,9 +78,9 @@ const SimpleResults = () => {
         
         // Use the API to get real provider data
         const response = await axios.post("/api/compare", {
-          amount: defaultAmount,
-          fromCurrency: defaultFromCurrency,
-          toCurrency: defaultToCurrency,
+          amount: amount,
+          fromCurrency: fromCurrency,
+          toCurrency: toCurrency,
           type: "send"
         });
         
