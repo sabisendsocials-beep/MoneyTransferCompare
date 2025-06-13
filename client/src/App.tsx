@@ -128,28 +128,7 @@ function Router() {
         onClose={closeWizard}
       />
       
-      {/* Debug buttons for testing */}
-      <div className="fixed bottom-4 right-4 space-y-2 z-50" style={{ display: process.env.NODE_ENV === 'development' ? 'block' : 'none' }}>
-        <button 
-          onClick={() => {
-            localStorage.removeItem('sabisend-wizard-dismissed');
-            startWizard();
-          }}
-          className="block w-full bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
-        >
-          Start Wizard
-        </button>
-        <button 
-          onClick={() => {
-            localStorage.removeItem('sabisend-onboarding-completed');
-            const event = new CustomEvent('start-onboarding');
-            window.dispatchEvent(event);
-          }}
-          className="block w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
-        >
-          Start Tour
-        </button>
-      </div>
+
     </div>
   );
 }

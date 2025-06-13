@@ -115,12 +115,10 @@ export const PersonalizedWizard: React.FC<PersonalizedWizardProps> = ({
     lastLogin: null
   });
 
-  // Analyze user usage patterns
+  // Analyze user usage patterns - works for both logged-in and anonymous users
   useEffect(() => {
-    if (user) {
-      const usage = analyzeUserUsage(user);
-      setUserUsage(usage);
-    }
+    const usage = analyzeUserUsage(user);
+    setUserUsage(usage);
   }, [user]);
 
   const analyzeUserUsage = (user: any): UserUsage => {
@@ -137,7 +135,7 @@ export const PersonalizedWizard: React.FC<PersonalizedWizardProps> = ({
 
     return {
       ...baseUsage,
-      preferredCurrencies: user.preferences?.preferredCurrencyPair ? 
+      preferredCurrencies: user?.preferences?.preferredCurrencyPair ? 
         [user.preferences.preferredCurrencyPair] : [],
       visitCount: baseUsage.visitCount + 1,
       lastLogin: new Date()
@@ -212,6 +210,9 @@ export const PersonalizedWizard: React.FC<PersonalizedWizardProps> = ({
   };
 
   const skipStep = () => {
+    // Mark as skipped to respect user choice
+    localStorage.setItem('sabisend-wizard-skipped', 'true');
+    
     if (currentStepIndex < relevantSteps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
@@ -315,23 +316,27 @@ export const usePersonalizedWizard = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Smart trigger logic
+    // Smart trigger logic - respectful and non-intrusive
     const shouldShowWizard = () => {
       const wizardDismissed = localStorage.getItem('sabisend-wizard-dismissed');
-      if (wizardDismissed) return false;
+      const wizardSkipped = localStorage.getItem('sabisend-wizard-skipped');
+      
+      // Respect user choice to dismiss or skip
+      if (wizardDismissed || wizardSkipped) return false;
 
       const usage = localStorage.getItem('sabisend-usage');
       const userUsage = usage ? JSON.parse(usage) : { visitCount: 0 };
 
-      // Show wizard for new users or those who haven't completed key actions
-      return userUsage.visitCount <= 3 || (!userUsage.hasComparedRates && !userUsage.hasSetAlerts);
+      // Only show for genuinely new users who haven't completed any key actions
+      return userUsage.visitCount <= 2 && !userUsage.hasComparedRates && !userUsage.hasSetAlerts;
     };
 
+    // Wait at least 30 seconds before suggesting anything
     const timer = setTimeout(() => {
       if (shouldShowWizard()) {
         setShowWizard(true);
       }
-    }, 3000);
+    }, 30000);
 
     return () => clearTimeout(timer);
   }, [user]);

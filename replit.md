@@ -94,9 +94,25 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Migration system for schema updates
 - Data seeding for initial provider configuration
 
+## Recent Changes
+
+### June 12, 2025 - Personalized Feature Discovery System
+- Replaced static onboarding tour with intelligent PersonalizedWizard component
+- Implemented context-aware help system that analyzes user behavior patterns
+- Added adaptive logic based on user preferences and completion status
+- Configured respectful trigger timing (30-second delay minimum)
+- Added user choice respect mechanism for dismissal and skipping
+- Removed visible help buttons from interface to prevent spam
+- Added CSS highlighting effects for guided feature discovery
+
 ## Changelog
-- June 12, 2025. Initial setup
+- June 12, 2025. Initial setup with personalized wizard system
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+### Communication Style
+- Simple, everyday language
+- Non-intrusive help system
+- Respect user choice to dismiss or skip suggestions
+- No spam or aggressive prompting
+- At least 30 seconds before showing any help suggestions

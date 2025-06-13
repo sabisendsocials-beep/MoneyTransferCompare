@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut, Navigation, Lightbulb } from "lucide-react";
+import { MoonIcon, SunIcon, MenuIcon, X, HelpCircle, Banknote, TrendingUp, Newspaper, Home, MessageSquare, BookOpen, Bell, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -95,38 +95,6 @@ const Header = ({ onStartWizard }: HeaderProps = {}) => {
         </nav>
         
         <div className="flex items-center space-x-4">
-          {/* Help Buttons */}
-          <div className="hidden md:flex items-center space-x-2">
-            {/* Smart Help Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                localStorage.removeItem('sabisend-wizard-dismissed');
-                onStartWizard?.();
-              }}
-              className="flex items-center gap-1 text-gray-600 hover:text-green-600"
-            >
-              <Lightbulb size={16} />
-              <span className="text-sm">Smart Help</span>
-            </Button>
-            
-            {/* Tour Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                localStorage.removeItem('sabisend-onboarding-completed');
-                // Trigger onboarding directly without reload
-                const event = new CustomEvent('start-onboarding');
-                window.dispatchEvent(event);
-              }}
-              className="flex items-center gap-1 text-gray-600 hover:text-blue-600"
-            >
-              <Navigation size={16} />
-              <span className="text-sm">Tour</span>
-            </Button>
-          </div>
           
           {/* Authentication Controls */}
           {!isLoading && (
