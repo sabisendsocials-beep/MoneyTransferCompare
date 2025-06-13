@@ -22,6 +22,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(userData: { email: string; password: string; firstName?: string; lastName?: string }): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  upsertUserWithCreationStatus(user: UpsertUser): Promise<{ user: User; isNewUser: boolean }>;
   
   // User preferences methods
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;

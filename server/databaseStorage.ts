@@ -84,6 +84,26 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async upsertUserWithCreationStatus(userData: UpsertUser): Promise<{ user: User; isNewUser: boolean }> {
+    // First check if user exists
+    const existingUser = await this.getUser(userData.id);
+    const isNewUser = !existingUser;
+    
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    
+    return { user, isNewUser };
+  }
+
   // User preferences methods - simplified and working
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
     const [preferences] = await db

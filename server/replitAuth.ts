@@ -68,14 +68,15 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(claims: any) {
-  await storage.upsertUser({
+async function upsertUser(claims: any): Promise<{ isNewUser: boolean }> {
+  const result = await storage.upsertUserWithCreationStatus({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
   });
+  return { isNewUser: result.isNewUser };
 }
 
 export async function setupAuth(app: Express) {
@@ -90,9 +91,10 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const user: any = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    const { isNewUser } = await upsertUser(tokens.claims());
+    user.isNewUser = isNewUser;
     verified(null, user);
   };
 
@@ -120,9 +122,27 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, (err: any, user: any) => {
+      if (err) {
+        return res.redirect("/api/login");
+      }
+      if (!user) {
+        return res.redirect("/api/login");
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.redirect("/api/login");
+        }
+        
+        // Redirect new users to profile setup page
+        if (user.isNewUser) {
+          return res.redirect("/profile?setup=true");
+        }
+        
+        // Existing users go to home page or their intended destination
+        return res.redirect(req.session?.returnTo || "/");
+      });
     })(req, res, next);
   });
 
