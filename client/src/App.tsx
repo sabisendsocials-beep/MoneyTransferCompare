@@ -30,6 +30,7 @@ import { NewsletterPopupContainer } from "@/components/NewsletterPopupContainer"
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ImprovedOnboarding, useImprovedOnboarding } from "@/components/ImprovedOnboarding";
 import { PersonalizedWizard, usePersonalizedWizard } from "@/components/PersonalizedWizard";
+import { AccountPrompt, useAccountPrompt } from "@/components/AccountPrompt";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useRef } from "react";
 import { initGA, trackPageView } from "./lib/analytics";
@@ -53,6 +54,7 @@ function Router() {
   
   const { showOnboarding, completeOnboarding, skipOnboarding } = useImprovedOnboarding();
   const { showWizard, closeWizard, startWizard } = usePersonalizedWizard();
+  const { showPrompt, closePrompt } = useAccountPrompt();
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -126,6 +128,11 @@ function Router() {
       <PersonalizedWizard 
         isVisible={showWizard}
         onClose={closeWizard}
+      />
+
+      <AccountPrompt 
+        isVisible={showPrompt}
+        onClose={closePrompt}
       />
       
 

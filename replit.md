@@ -105,6 +105,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Removed visible help buttons from interface to prevent spam
 - Added CSS highlighting effects for guided feature discovery
 
+### June 13, 2025 - Account Creation Encouragement
+- Added AccountPrompt component for non-logged-in users
+- Subtle encouragement to create accounts for personalized features
+- Respectful timing (45-second delay, 24-hour cooldown between shows)
+- Shows after user engagement (3+ visits or has compared rates)
+- Highlights key benefits: rate alerts, trend analysis, saved preferences
+
 ## Changelog
 - June 12, 2025. Initial setup with personalized wizard system
 
