@@ -249,12 +249,41 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
 
 
+  // Check if user has no preferences set
+  const hasNoPreferences = !user.preferences?.preferredCurrencyPair && (!user.preferences?.preferredProviders || user.preferences.preferredProviders.length === 0);
+
   return (
     <div className={`space-y-6 personalized-dashboard ${className || ''}`}>
+      {/* New User Welcome Message */}
+      {hasNoPreferences && (
+        <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <Star className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <strong>Welcome to SabiSend, {user.firstName}!</strong> Set up your currency and provider preferences to get personalized rates and recommendations.
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation('/profile')}
+                className="text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-100 ml-4"
+              >
+                Set Preferences <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
-        <h1 className="text-2xl font-bold text-white">Welcome back, {user.firstName}!</h1>
-        <p className="text-blue-100 mt-1">Your personalized exchange rate dashboard for {selectedPair}</p>
+        <h1 className="text-2xl font-bold text-white">
+          {hasNoPreferences ? `Welcome to SabiSend, ${user.firstName}!` : `Welcome back, ${user.firstName}!`}
+        </h1>
+        <p className="text-blue-100 mt-1">
+          {hasNoPreferences ? 'Compare exchange rates and find the best deals for your money transfers' : `Your personalized exchange rate dashboard for ${selectedPair}`}
+        </p>
       </div>
 
 
@@ -394,6 +423,28 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
                     </Button>
                   </div>
                 </div>
+              ) : hasNoPreferences ? (
+                <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+                  <Star className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    <div className="space-y-3">
+                      <div>
+                        <strong>Get personalized provider recommendations!</strong>
+                      </div>
+                      <p className="text-sm">
+                        Set up your preferred currency pair and providers to see customized rates and get the best deals for your transfers.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLocation('/profile')}
+                        className="text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-100"
+                      >
+                        Set Up Preferences <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <Alert>
                   <AlertDescription>

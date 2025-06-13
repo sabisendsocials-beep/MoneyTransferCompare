@@ -115,11 +115,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 ### June 13, 2025 - Enhanced Registration Flow
 - Modified OAuth callback in replitAuth.ts to detect new user creation
 - Added upsertUserWithCreationStatus method to track user creation status
-- New users automatically redirected to /profile?setup=true after Google OAuth
+- New users automatically redirected to /profile?setup=true after Google OAuth (fallback approach implemented)
 - Added welcome message and optional preference configuration in UserProfileNew.tsx
+- Added welcome messages on dashboard for users without preferences set
+- PersonalizedDashboard detects missing preferences and shows helpful setup prompts
 - Users can skip setup and continue to dashboard if preferred
 - Success feedback guides users to explore personalized dashboard
-- Existing users continue to home page as normal
+- Fallback approach ensures all new users see preference setup encouragement
 
 ## Changelog
 - June 12, 2025. Initial setup with personalized wizard system
