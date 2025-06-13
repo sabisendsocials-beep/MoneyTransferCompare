@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Plus, User, Settings, Bell } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Trash2, Plus, User, Settings, Bell, Star, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -52,6 +54,22 @@ export default function UserProfileNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [location] = useLocation();
+  const [isSetupMode, setIsSetupMode] = useState(false);
+  const [setupCompleted, setSetupCompleted] = useState(false);
+
+  // Check if user arrived from registration
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSetup = urlParams.get('setup') === 'true';
+    setIsSetupMode(isSetup);
+    
+    if (isSetup) {
+      // Clear the setup parameter from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location]);
 
   // Use fresh endpoint to bypass cache
   const { data: user, isLoading: userLoading } = useQuery<User>({
@@ -77,10 +95,19 @@ export default function UserProfileNew() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user-fresh'] });
       queryClient.refetchQueries({ queryKey: ['/api/auth/user-fresh'] });
-      toast({
-        title: "Success",
-        description: "Preferences updated successfully",
-      });
+      
+      if (isSetupMode) {
+        setSetupCompleted(true);
+        toast({
+          title: "Great! Your preferences are set",
+          description: "You're all set up for a personalized experience. Explore the app to see rates for your preferred currencies.",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Preferences updated successfully",
+        });
+      }
     },
     onError: () => {
       toast({
@@ -178,6 +205,50 @@ export default function UserProfileNew() {
         <User className="h-6 w-6" />
         <h1 className="text-2xl font-bold">Profile & Preferences</h1>
       </div>
+
+      {/* Welcome message for new users */}
+      {isSetupMode && !setupCompleted && (
+        <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <Star className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <strong>Welcome to SabiSend!</strong> Set up your preferences below to get personalized rates and recommendations for your money transfers.
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/'}
+                className="text-blue-600 hover:text-blue-700 ml-4"
+              >
+                Skip for now <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Success message when setup is completed */}
+      {setupCompleted && (
+        <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+          <Star className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <strong>Perfect!</strong> Your preferences are saved. You'll now see personalized rates on your dashboard.
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/'}
+                className="text-green-600 hover:text-green-700 ml-4"
+              >
+                Explore Dashboard <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* User Info Card */}
       <Card>

@@ -62,9 +62,10 @@ export default function Register() {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
       toast({
         title: 'Account created successfully!',
-        description: 'Welcome to SabiSend. You have been automatically logged in.',
+        description: 'Welcome to SabiSend! Set up your preferences for a personalized experience.',
       });
-      setLocation('/');
+      // Redirect to profile with a setup flag
+      setLocation('/profile?setup=true');
     },
     onError: (error: any) => {
       toast({

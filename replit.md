@@ -112,6 +112,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Shows after user engagement (3+ visits or has compared rates)
 - Highlights key benefits: rate alerts, trend analysis, saved preferences
 
+### June 13, 2025 - Enhanced Registration Flow
+- Modified registration to redirect users to profile setup page
+- Added optional but encouraged preference configuration after account creation
+- Implemented setup mode detection with welcome messages
+- Users can skip setup and continue to dashboard if preferred
+- Success feedback guides users to explore personalized dashboard
+
 ## Changelog
 - June 12, 2025. Initial setup with personalized wizard system
 
