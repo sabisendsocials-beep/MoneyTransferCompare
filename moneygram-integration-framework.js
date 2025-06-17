@@ -135,43 +135,48 @@ export class MoneyGramAPIClient {
   }
 
   /**
-   * Get exchange rates for currency pair
+   * Get exchange rates for currency pair using actual MoneyGram API structure
    */
   async getExchangeRate(fromCurrency, toCurrency, amount = 100) {
     await this.ensureValidToken();
 
-    // Test multiple endpoint patterns found during research
-    const endpoints = [
-      `/v1/fx-rates?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&amount=${amount}`,
-      `/v1/fx-rates/${fromCurrency}/${toCurrency}?amount=${amount}`,
-      `/fx-rates?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`,
-      `/rates/quote?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&amount=${amount}`
-    ];
+    // Use the actual working MoneyGram API endpoint structure
+    const countryMapping = this.getCurrencyToCountryMapping();
+    const originCountry = countryMapping[fromCurrency];
+    const destCountry = countryMapping[toCurrency];
 
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(`${this.config.baseUrl}${endpoint}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: this.config.timeout
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return this.parseRateResponse(data, fromCurrency, toCurrency, amount);
-        }
-
-      } catch (error) {
-        console.log(`Endpoint ${endpoint} failed: ${error.message}`);
-      }
+    if (!originCountry || !destCountry) {
+      throw new Error(`Unsupported currency pair: ${fromCurrency}/${toCurrency}`);
     }
 
-    // Try POST method as fallback
-    return await this.getExchangeRatePost(fromCurrency, toCurrency, amount);
+    // Generate unique client request ID
+    const clientRequestId = this.generateRequestId();
+
+    const endpoint = `/fx-rate/v1/rates?targetAudience=AGENT_FACING&userLanguage=EN-US&agentPartnerId=30150519&originatingCountryCode=${originCountry}&destinationCountryCode=${destCountry}&sendCurrencyCode=${fromCurrency}&receiveCurrencyCode=${toCurrency}`;
+
+    try {
+      const response = await fetch(`${this.config.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${this.accessToken}`,
+          'X-MG-ClientRequestId': clientRequestId
+        },
+        timeout: this.config.timeout
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return this.parseMoneyGramRateResponse(data, fromCurrency, toCurrency, amount);
+      } else {
+        const errorText = await response.text();
+        throw new Error(`MoneyGram API error: ${response.status} - ${errorText}`);
+      }
+
+    } catch (error) {
+      console.log(`MoneyGram API request failed: ${error.message}`);
+      throw error;
+    }
   }
 
   /**
@@ -219,59 +224,70 @@ export class MoneyGramAPIClient {
   }
 
   /**
-   * Parse rate response to extract exchange rate
+   * Parse MoneyGram API response to extract exchange rates
    */
-  parseRateResponse(data, fromCurrency, toCurrency, amount) {
-    // Common rate field patterns from research
-    const rateFields = [
-      'exchangeRate', 'rate', 'fx_rate', 'fxRate', 'price', 'value',
-      'customerRate', 'wholesaleRate', 'sendRate', 'receiveRate'
-    ];
-
-    let foundRate = null;
-    let feeAmount = 0;
-
-    // Recursive function to find rate in nested object
-    function findInObject(obj, path = '') {
-      for (const [key, value] of Object.entries(obj)) {
-        const currentPath = path ? `${path}.${key}` : key;
-        
-        if (typeof value === 'number') {
-          // Check if this looks like an exchange rate
-          if (rateFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
-            foundRate = { value, path: currentPath };
-          }
-          
-          // Check if this looks like a fee
-          if (key.toLowerCase().includes('fee') || key.toLowerCase().includes('cost')) {
-            feeAmount = value;
-          }
-        }
-        
-        if (typeof value === 'object' && value !== null) {
-          findInObject(value, currentPath);
-        }
-      }
+  parseMoneyGramRateResponse(data, fromCurrency, toCurrency, amount) {
+    if (!data.fxRates || !Array.isArray(data.fxRates) || data.fxRates.length === 0) {
+      throw new Error('No FX rates found in MoneyGram API response');
     }
 
-    findInObject(data);
+    // Extract all service options with their rates
+    const serviceOptions = data.fxRates.map(rate => ({
+      serviceCode: rate.serviceOptionCode,
+      serviceName: rate.serviceOptionName,
+      routingCode: rate.serviceOptionRoutingCode || null,
+      exchangeRate: rate.fxRate,
+      isEstimated: rate.fxRateEstimated || false,
+      receivedAmount: amount * rate.fxRate
+    }));
 
-    if (!foundRate) {
-      console.log('Rate parsing failed. Response structure:', JSON.stringify(data, null, 2));
-      throw new Error('Could not extract exchange rate from response');
-    }
+    // Find the best rate (highest exchange rate)
+    const bestOption = serviceOptions.reduce((best, current) => 
+      current.exchangeRate > best.exchangeRate ? current : best
+    );
 
     return {
       fromCurrency,
       toCurrency,
       amount,
-      exchangeRate: foundRate.value,
-      fee: feeAmount,
-      receivedAmount: amount * foundRate.value - feeAmount,
+      exchangeRate: bestOption.exchangeRate,
+      fee: 0, // MoneyGram API doesn't include fees in this response
+      receivedAmount: bestOption.receivedAmount,
       provider: 'MoneyGram',
-      source: 'api',
+      serviceType: bestOption.serviceName,
+      serviceCode: bestOption.serviceCode,
+      isEstimated: bestOption.isEstimated,
+      source: 'moneygram_api',
       timestamp: new Date().toISOString(),
+      allOptions: serviceOptions,
       rawResponse: data
+    };
+  }
+
+  /**
+   * Generate unique client request ID for MoneyGram API
+   */
+  generateRequestId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * Map currencies to country codes for MoneyGram API
+   */
+  getCurrencyToCountryMapping() {
+    return {
+      'GBP': 'GBR',
+      'EUR': 'FRA', // or 'DEU' for Germany
+      'USD': 'USA',
+      'NGN': 'NGA',
+      'GHS': 'GHA',
+      'KES': 'KEN',
+      'INR': 'IND',
+      'PKR': 'PAK'
     };
   }
 
