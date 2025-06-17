@@ -110,7 +110,7 @@ app.use((req, res, next) => {
     try {
       log("📊 Setting up daily increment scheduler for Alpha Vantage data");
       await initializeDailyIncrementScheduler();
-      log("✓ Daily increment scheduler initialized (runs at 3 AM UTC daily)");
+      log("✓ Daily increment scheduler initialized (runs 5 times daily: 3am, 9am, 12pm, 3pm, 6pm UTC)");
       log("📋 Daily increments add new data without affecting historical Alpha Vantage data");
     } catch (incrementError) {
       log(`Error setting up daily increment scheduler: ${incrementError}`);

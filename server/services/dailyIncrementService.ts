@@ -233,20 +233,10 @@ export async function getLatestIncrementDate(
 
 /**
  * Check if daily increment collection should run
- * (Only runs once per day, and only if not already collected today)
+ * (Allows multiple runs per day, but prevents duplicate data for same date)
  */
 export async function shouldRunDailyCollection(): Promise<boolean> {
-  const today = getTodayDate();
-  
-  // Check if any pair already has today's increment
-  const todayCount = await db.execute(sql`
-    SELECT COUNT(*) as count FROM rate_trends 
-    WHERE date = ${today} 
-    AND source = 'daily_increment'
-  `);
-  
-  const hasAnyTodayData = (todayCount.rows[0].count as number) > 0;
-  
-  // If no pairs have today's data, we should run collection
-  return !hasAnyTodayData;
+  // Always allow collection attempts - the individual addDailyIncrement function
+  // will handle duplicate detection per currency pair
+  return true;
 }

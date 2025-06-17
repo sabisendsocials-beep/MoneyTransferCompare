@@ -1,13 +1,17 @@
 /**
  * Daily Increment Scheduler
- * Automated daily collection of current rates using Alpha Vantage API
- * Runs once per day to add new data points without touching historical data
+ * Automated collection of current rates using Alpha Vantage API
+ * Runs 5 times per day at 3am, 9am, 12pm, 3pm, and 6pm UTC
  */
 
 import { runDailyIncrementCollection, shouldRunDailyCollection } from '../services/dailyIncrementService';
 
-let lastRunDate: string | null = null;
+let lastRunHours: Set<number> = new Set();
 let schedulerActive = false;
+let lastRunDate: string | null = null;
+
+// Scheduled hours (UTC): 3am, 9am, 12pm, 3pm, 6pm
+const SCHEDULED_HOURS = [3, 9, 12, 15, 18];
 
 /**
  * Check if it's time to run daily collection
@@ -17,11 +21,17 @@ function shouldRunNow(): boolean {
   const currentHour = now.getHours();
   const currentDate = now.toISOString().split('T')[0];
   
-  // Run at 3:00 AM UTC daily (after market close, before most business hours)
-  const isScheduledTime = currentHour === 3;
-  const hasNotRunToday = lastRunDate !== currentDate;
+  // Reset tracking if it's a new day
+  if (lastRunDate !== currentDate) {
+    lastRunHours.clear();
+    lastRunDate = currentDate;
+  }
   
-  return isScheduledTime && hasNotRunToday;
+  // Check if current hour is a scheduled time and hasn't run yet this hour
+  const isScheduledTime = SCHEDULED_HOURS.includes(currentHour);
+  const hasNotRunThisHour = !lastRunHours.has(currentHour);
+  
+  return isScheduledTime && hasNotRunThisHour;
 }
 
 /**
@@ -34,15 +44,16 @@ export async function initializeDailyIncrementScheduler(): Promise<void> {
   }
   
   console.log('Initializing daily increment scheduler...');
-  console.log('Daily increments scheduled for 3:00 AM UTC');
+  console.log('Daily increments scheduled for 3am, 9am, 12pm, 3pm, and 6pm UTC');
   
-  // Check every 10 minutes for the scheduled time
+  // Check every 10 minutes for the scheduled times
   const intervalMinutes = 10;
   const intervalMs = intervalMinutes * 60 * 1000;
   
   const interval = setInterval(async () => {
     if (shouldRunNow()) {
-      console.log('Daily increment collection time reached...');
+      const currentHour = new Date().getHours();
+      console.log(`Daily increment collection time reached (${currentHour}:00 UTC)...`);
       
       try {
         // Double-check if collection should run (prevents duplicate runs)
@@ -52,15 +63,19 @@ export async function initializeDailyIncrementScheduler(): Promise<void> {
           console.log('Starting automated daily increment collection...');
           
           const result = await runDailyIncrementCollection();
+          
+          // Mark this hour as completed
+          lastRunHours.add(currentHour);
           lastRunDate = new Date().toISOString().split('T')[0];
           
-          console.log(`Daily increment collection completed: ${result.successful}/${result.totalProcessed} successful`);
+          console.log(`Daily increment collection completed at ${currentHour}:00 UTC: ${result.successful}/${result.totalProcessed} successful`);
           
           if (result.failed > 0) {
             console.warn(`${result.failed} pairs failed during daily collection`);
           }
         } else {
-          console.log('Daily collection already completed for today');
+          console.log(`Daily collection already completed for ${currentHour}:00 UTC`);
+          lastRunHours.add(currentHour);
           lastRunDate = new Date().toISOString().split('T')[0];
         }
         
@@ -74,13 +89,18 @@ export async function initializeDailyIncrementScheduler(): Promise<void> {
   
   console.log(`Daily increment scheduler initialized (checking every ${intervalMinutes} minutes)`);
   console.log('Scheduler will add new daily data points without affecting historical Alpha Vantage data');
+  console.log(`Next scheduled times: ${SCHEDULED_HOURS.join(':00, ')}:00 UTC`);
   
-  // Return cleanup function
-  return () => {
+  // Cleanup function (not returned since this is async void)
+  const cleanup = () => {
     clearInterval(interval);
     schedulerActive = false;
     console.log('Daily increment scheduler stopped');
   };
+  
+  // Store cleanup function for potential future use
+  process.on('SIGTERM', cleanup);
+  process.on('SIGINT', cleanup);
 }
 
 /**
@@ -126,15 +146,40 @@ export function getSchedulerStatus(): {
   active: boolean;
   lastRunDate: string | null;
   nextScheduledTime: string;
+  completedHoursToday: number[];
+  remainingHoursToday: number[];
 } {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(3, 0, 0, 0);
+  const currentHour = now.getHours();
+  const currentDate = now.toISOString().split('T')[0];
+  
+  // Reset tracking if it's a new day
+  if (lastRunDate !== currentDate) {
+    lastRunHours.clear();
+  }
+  
+  // Find next scheduled time
+  let nextScheduledTime: Date;
+  const remainingToday = SCHEDULED_HOURS.filter(hour => hour > currentHour);
+  
+  if (remainingToday.length > 0) {
+    // Next run today
+    nextScheduledTime = new Date(now);
+    nextScheduledTime.setHours(remainingToday[0], 0, 0, 0);
+  } else {
+    // Next run tomorrow (first scheduled hour)
+    nextScheduledTime = new Date(now);
+    nextScheduledTime.setDate(nextScheduledTime.getDate() + 1);
+    nextScheduledTime.setHours(SCHEDULED_HOURS[0], 0, 0, 0);
+  }
   
   return {
     active: schedulerActive,
     lastRunDate,
-    nextScheduledTime: tomorrow.toISOString()
+    nextScheduledTime: nextScheduledTime.toISOString(),
+    completedHoursToday: Array.from(lastRunHours).sort(),
+    remainingHoursToday: SCHEDULED_HOURS.filter(hour => 
+      hour >= currentHour && !lastRunHours.has(hour)
+    )
   };
 }
