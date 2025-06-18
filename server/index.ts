@@ -13,6 +13,7 @@ import dataSourceRoutes from "./routes/dataSourceRoutes";
 import { initializeRateCollectionScheduler } from "./scheduler/rateCollectionScheduler";
 import { initializeDailyIncrementScheduler } from "./scheduler/dailyIncrementScheduler";
 import { initializeRateAlertScheduler } from "./scheduler/rateAlertScheduler";
+import { initializeProviderApiScheduler } from "./scheduler/providerApiScheduler";
 // DISABLED: Historical data scheduler causes Alpha Vantage data conflicts
 // import { initializeHistoricalDataScheduler } from "./scheduler/historicalDataScheduler";
 
@@ -124,6 +125,16 @@ app.use((req, res, next) => {
       log("📧 Email notifications sent when target rates are reached");
     } catch (alertError) {
       log(`Error setting up rate alert scheduler: ${alertError}`);
+    }
+    
+    // Initialize Provider API scheduler
+    try {
+      log("🔗 Setting up Provider API scheduler for API-based rate collection");
+      await initializeProviderApiScheduler();
+      log("✓ Provider API scheduler initialized (runs 6 times daily: 6am, 9am, 12pm, 3pm, 6pm, 9pm UTC)");
+      log("🏢 Scheduler will collect rates from API-enabled providers only");
+    } catch (apiError) {
+      log(`Error setting up Provider API scheduler: ${apiError}`);
     }
     
     // Strictly defer ALL operations until after server startup
