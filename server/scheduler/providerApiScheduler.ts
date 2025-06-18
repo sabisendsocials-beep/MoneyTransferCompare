@@ -319,14 +319,18 @@ export async function initializeProviderApiScheduler(): Promise<void> {
   console.log('Initializing Provider API Scheduler...');
   console.log(`Scheduled collection times: ${SCHEDULED_HOURS.join(':00, ')}:00 UTC`);
   
-  // Check every 5 minutes for scheduled times
-  const intervalMinutes = 5;
+  // Check every 2 minutes for more reliable timing
+  const intervalMinutes = 2;
   const intervalMs = intervalMinutes * 60 * 1000;
   
   const interval = setInterval(async () => {
-    if (shouldRunNow()) {
-      const currentHour = new Date().getHours();
-      console.log(`\n📊 Provider API collection time reached (${currentHour}:00 UTC)...`);
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // More precise timing: only check within the first 10 minutes of each hour
+    if (currentMinute <= 10 && shouldRunNow()) {
+      console.log(`\n📊 Provider API collection time reached (${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC)...`);
       
       try {
         const result = await runCollectionCycle();
@@ -339,7 +343,7 @@ export async function initializeProviderApiScheduler(): Promise<void> {
         // Store results for admin dashboard
         dailyResults.push(result);
         
-        console.log(`📊 Provider API collection completed at ${currentHour}:00 UTC\n`);
+        console.log(`📊 Provider API collection completed at ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC\n`);
         
       } catch (error) {
         console.error('Error during Provider API collection cycle:', error);
@@ -355,6 +359,7 @@ export async function initializeProviderApiScheduler(): Promise<void> {
   schedulerActive = true;
   
   console.log(`Provider API Scheduler initialized (checking every ${intervalMinutes} minutes)`);
+  console.log('Enhanced timing: executes within first 10 minutes of scheduled hours');
   console.log('Scheduler will collect rates from API-enabled providers only');
   
   // Return cleanup function
