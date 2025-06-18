@@ -75,12 +75,10 @@ export class WiseApiService {
       throw new Error(`Currency mismatch: expected ${fromCurrency}/${toCurrency}, got ${data.source}/${data.target}`);
     }
 
-    // The Wise API returns total amount for the requested quantity
-    // For 100 GBP to NGN, if response is 2120.55, that means 100 GBP = 2120.55 NGN
-    // SabiSend stores rates per single unit, so we need: 1 GBP = 21.2055 NGN
-    const exchangeRate = data.value / amount;
+    // Use the API value directly without any transformation
+    const exchangeRate = data.value;
     
-    console.log(`[Wise API] Rate calculation: ${data.value} ${toCurrency} for ${amount} ${fromCurrency} = ${exchangeRate} per unit`);
+    console.log(`[Wise API] Using direct API value: ${exchangeRate}`);
 
     return {
       rate: exchangeRate,
