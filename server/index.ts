@@ -30,7 +30,9 @@ app.use(verifyApiRouter);
 
 // Register Provider API Scheduler management routes
 import providerApiSchedulerRoutes from './routes/providerApiSchedulerRoutes';
-app.use('/api/admin', providerApiSchedulerRoutes);
+import dailyIncrementSchedulerRoutes from './routes/dailyIncrementSchedulerRoutes';
+app.use('/api/admin/provider-api-scheduler', providerApiSchedulerRoutes);
+app.use('/api/admin/daily-increment-scheduler', dailyIncrementSchedulerRoutes);
 
 app.use((req, res, next) => {
   const start = Date.now();
