@@ -5,11 +5,11 @@
  */
 
 import { storage } from '../storage';
-// Import Wise API service (will be created if needed)
+// Import Wise API service
 const fetchWiseRates = async () => {
   try {
-    const { fetchWiseRates: wiseApi } = await import('../services/wiseApiService');
-    return await wiseApi();
+    const { fetchWiseRates } = await import('../services/wiseApiService.js');
+    return await fetchWiseRates();
   } catch (error) {
     console.warn('Wise API service not available:', error);
     return { success: false, rates: [], error: 'Service not available' };

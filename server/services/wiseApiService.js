@@ -142,3 +142,61 @@ export const wiseApiService = new WiseApiService();
 
 // Export default for easy importing
 export default wiseApiService;
+
+/**
+ * Fetch rates for all supported currency pairs
+ * This is the main function used by the Provider API Scheduler
+ */
+export async function fetchWiseRates() {
+  const currencyPairs = [
+    { from: 'GBP', to: 'NGN' },
+    { from: 'EUR', to: 'NGN' },
+    { from: 'USD', to: 'NGN' },
+    { from: 'GBP', to: 'GHS' },
+    { from: 'EUR', to: 'GHS' },
+    { from: 'USD', to: 'GHS' },
+    { from: 'GBP', to: 'KES' },
+    { from: 'EUR', to: 'KES' },
+    { from: 'USD', to: 'KES' },
+    { from: 'GBP', to: 'INR' },
+    { from: 'EUR', to: 'INR' },
+    { from: 'USD', to: 'INR' },
+    { from: 'GBP', to: 'PKR' },
+    { from: 'EUR', to: 'PKR' },
+    { from: 'USD', to: 'PKR' }
+  ];
+
+  try {
+    console.log('[Wise API] Fetching rates for all currency pairs...');
+    const results = await wiseApiService.getMultipleRates(currencyPairs);
+    
+    const successfulRates = results.filter(r => r.success);
+    const failedRates = results.filter(r => !r.success);
+    
+    console.log(`[Wise API] Successfully fetched ${successfulRates.length}/${results.length} rates`);
+    
+    if (failedRates.length > 0) {
+      console.log(`[Wise API] Failed rates:`, failedRates.map(r => `${r.fromCurrency}/${r.toCurrency}: ${r.error}`));
+    }
+    
+    return {
+      success: successfulRates.length > 0,
+      rates: successfulRates,
+      totalRequested: results.length,
+      totalSuccessful: successfulRates.length,
+      totalFailed: failedRates.length,
+      errors: failedRates
+    };
+    
+  } catch (error) {
+    console.error('[Wise API] Critical error during rate collection:', error);
+    return {
+      success: false,
+      rates: [],
+      error: error.message,
+      totalRequested: currencyPairs.length,
+      totalSuccessful: 0,
+      totalFailed: currencyPairs.length
+    };
+  }
+}
