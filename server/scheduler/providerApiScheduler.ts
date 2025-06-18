@@ -193,18 +193,31 @@ async function collectFromProvider(provider: any): Promise<{
  */
 async function verifyRatesSavedToDatabase(providerId: number, expectedRates: any[]): Promise<number> {
   try {
-    // Check if rates were saved in the last 5 minutes
-    const fiveMinutesAgo = new Date();
-    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+    let savedCount = 0;
     
-    // For now, assume rates were saved successfully if we got this far
-    // In a production system, you would query the database to verify
-    console.log(`Database verification: Assuming rates were saved successfully for provider ${providerId}`);
-    return expectedRates.length;
+    // Save each rate to the database
+    for (const rateData of expectedRates) {
+      try {
+        await storage.createExchangeRate({
+          provider_id: providerId,
+          from_currency: rateData.fromCurrency,
+          to_currency: rateData.toCurrency,
+          rate: rateData.rate,
+          source: 'API',
+          source_url: 'Wise API',
+          verified: true
+        });
+        savedCount++;
+      } catch (rateError) {
+        console.warn(`Failed to save rate ${rateData.fromCurrency}/${rateData.toCurrency}: ${rateError}`);
+      }
+    }
+    
+    console.log(`Database verification: Successfully saved ${savedCount}/${expectedRates.length} rates for provider ${providerId}`);
+    return savedCount;
     
   } catch (error) {
-    console.error(`Error verifying database save for provider ${providerId}:`, error);
-    // Return 0 to indicate verification failed - this will trigger a retry
+    console.error(`Error saving rates to database for provider ${providerId}:`, error);
     return 0;
   }
 }
