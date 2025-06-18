@@ -47,7 +47,7 @@ export default function ProviderApiSchedulerPanel() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const status: SchedulerStatus | undefined = statusData?.data;
+  const status: SchedulerStatus | undefined = (statusData as any)?.success ? (statusData as any).data : undefined;
 
   // Initialize custom hours input when data loads
   useEffect(() => {
@@ -59,10 +59,20 @@ export default function ProviderApiSchedulerPanel() {
   // Update schedule mutation
   const updateScheduleMutation = useMutation({
     mutationFn: async (hours: number[]) => {
-      return apiRequest('/api/admin/provider-api-scheduler/schedule', {
+      const response = await fetch('/api/admin/provider-api-scheduler/schedule', {
         method: 'POST',
-        body: { hours }
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ hours })
       });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to update schedule');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -84,11 +94,21 @@ export default function ProviderApiSchedulerPanel() {
   // Manual trigger mutation
   const triggerMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/admin/provider-api-scheduler/trigger', {
-        method: 'POST'
+      const response = await fetch('/api/admin/provider-api-scheduler/trigger', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to trigger collection');
+      }
+      
+      return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: 'Collection Triggered',
         description: data.message || 'Manual collection completed successfully'
