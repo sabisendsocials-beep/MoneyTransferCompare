@@ -96,13 +96,14 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### June 18, 2025 - Complete API Integration Framework Development
-- Successfully validated MoneyGram API with working Bearer token authentication
-- Discovered and tested Wise public live rates API (no authentication required)
-- Created production-ready PaySend Enterprise integration framework
-- Developed Western Union OAuth 2.0 integration (network restrictions encountered)
-- Built comprehensive error handling and fallback strategies for all four providers
-- Created integration frameworks ready for immediate deployment with valid credentials
+### June 18, 2025 - Enhanced Daily Rate Collection and API Integration
+- Fixed Provider API Scheduler routing regression caused by duplicated path segments
+- Successfully integrated Wise API with complete database storage for all 15 currency pairs
+- Updated daily increment system to capture latest rates instead of first-of-day rates
+- Wise API now collecting authentic rates: GBP/NGN (2113.78), EUR/NGN (1808.55), etc.
+- Enhanced database verification to actually save API rates to exchange_rates table
+- Daily increment scheduler now updates existing entries with latest Alpha Vantage rates
+- Maintained data integrity while ensuring most current rates are captured each day
 
 ### June 16, 2025 - Enhanced Daily Increment Scheduler
 - Updated daily increment scheduler to run 5 times per day instead of once

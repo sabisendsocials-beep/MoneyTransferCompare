@@ -128,12 +128,6 @@ async function fetchLatestRateFromAlphaVantage(
 async function addDailyIncrement(fromCurrency: string, toCurrency: string): Promise<boolean> {
   console.log(`Adding daily increment for ${fromCurrency}/${toCurrency}...`);
   
-  // Check if today's increment already exists
-  if (await hasTodayIncrement(fromCurrency, toCurrency)) {
-    console.log(`Today's increment already exists for ${fromCurrency}/${toCurrency}`);
-    return true;
-  }
-  
   // Fetch latest rate from Alpha Vantage
   const rateData = await fetchLatestRateFromAlphaVantage(fromCurrency, toCurrency);
   if (!rateData) {
@@ -142,16 +136,39 @@ async function addDailyIncrement(fromCurrency: string, toCurrency: string): Prom
   }
   
   try {
-    // Insert as daily increment (separate from historical data)
-    await db.insert(rateTrends).values({
-      date: rateData.date,
-      from_currency: fromCurrency,
-      to_currency: toCurrency,
-      rate: rateData.rate,
-      source: 'daily_increment'
-    });
+    // Check if today's increment already exists
+    const existingIncrement = await hasTodayIncrement(fromCurrency, toCurrency);
     
-    console.log(`✓ Added daily increment: ${fromCurrency}/${toCurrency} = ${rateData.rate} (${rateData.date})`);
+    if (existingIncrement) {
+      // Update existing entry with latest rate
+      await db.update(rateTrends)
+        .set({
+          rate: rateData.rate,
+          // Keep original date but update rate to latest
+        })
+        .where(
+          and(
+            eq(rateTrends.date, rateData.date),
+            eq(rateTrends.from_currency, fromCurrency),
+            eq(rateTrends.to_currency, toCurrency),
+            eq(rateTrends.source, 'daily_increment')
+          )
+        );
+      
+      console.log(`✓ Updated daily increment: ${fromCurrency}/${toCurrency} = ${rateData.rate} (${rateData.date})`);
+    } else {
+      // Insert new daily increment entry
+      await db.insert(rateTrends).values({
+        date: rateData.date,
+        from_currency: fromCurrency,
+        to_currency: toCurrency,
+        rate: rateData.rate,
+        source: 'daily_increment'
+      });
+      
+      console.log(`✓ Added daily increment: ${fromCurrency}/${toCurrency} = ${rateData.rate} (${rateData.date})`);
+    }
+    
     return true;
     
   } catch (error) {
