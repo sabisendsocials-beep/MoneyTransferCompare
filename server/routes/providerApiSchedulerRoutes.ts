@@ -15,7 +15,7 @@ const router = Router();
 /**
  * Get Provider API Scheduler status and statistics
  */
-router.get('/provider-api-scheduler/status', async (req, res) => {
+router.get('/status', async (req, res) => {
   try {
     const status = getProviderApiSchedulerStatus();
     
@@ -35,7 +35,7 @@ router.get('/provider-api-scheduler/status', async (req, res) => {
 /**
  * Update scheduled collection hours
  */
-router.post('/provider-api-scheduler/schedule', async (req, res) => {
+router.post('/schedule', async (req, res) => {
   try {
     const { hours } = req.body;
     
@@ -71,7 +71,7 @@ router.post('/provider-api-scheduler/schedule', async (req, res) => {
 /**
  * Manually trigger a collection cycle
  */
-router.post('/provider-api-scheduler/trigger', async (req, res) => {
+router.post('/trigger', async (req, res) => {
   try {
     console.log('Manual collection triggered via admin panel');
     
