@@ -399,9 +399,9 @@ export function getProviderApiSchedulerStatus(): {
     lastRunDate,
     lastRunTimestamp: lastRunTimestamp?.toISOString() || null,
     nextScheduledTime: nextScheduledTime.toISOString(),
-    scheduledHours: [...SCHEDULED_HOURS],
-    completedHoursToday: [...lastRunHours].sort(),
-    remainingHoursToday: SCHEDULED_HOURS.filter(hour => 
+    scheduledHours: Array.from(SCHEDULED_HOURS),
+    completedHoursToday: Array.from(lastRunHours).sort((a, b) => a - b),
+    remainingHoursToday: Array.from(SCHEDULED_HOURS).filter(hour => 
       hour >= currentHour && !lastRunHours.has(hour)
     ),
     totalSuccessfulToday: totalSuccessful,
@@ -437,7 +437,7 @@ export function updateScheduledHours(newHours: number[]): {
     }
     
     // Remove duplicates and sort
-    const uniqueHours = [...new Set(newHours)].sort((a, b) => a - b);
+    const uniqueHours = Array.from(new Set(newHours)).sort((a, b) => a - b);
     
     SCHEDULED_HOURS = uniqueHours;
     
