@@ -174,14 +174,61 @@ export class RateCollectionService {
         return null;
       }
       
-      // TODO: Implement API-specific rate collection
-      // This will depend on the specific API for each provider
-      // For now, we'll return null to fall back to scraping
-      log(`API implementation not available yet for ${provider.name}`);
+      // Handle Wise API integration
+      if (provider.name.toLowerCase().includes('wise') && provider.api_url.includes('wise.com/rates/live')) {
+        return await this.collectFromWiseApi(provider, fromCurrency, toCurrency);
+      }
       
+      // Add other provider API integrations here as needed
+      log(`API implementation not available yet for ${provider.name}`);
       return null;
+      
     } catch (error) {
       log(`Error collecting from API: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Collect exchange rate from Wise API
+   */
+  private async collectFromWiseApi(
+    provider: Provider,
+    fromCurrency: string,
+    toCurrency: string
+  ): Promise<ExchangeRate | null> {
+    try {
+      log(`[Wise API] Collecting rate for ${fromCurrency}/${toCurrency}`);
+      
+      // Import Wise API service
+      const { wiseApiService } = await import('./wiseApiService.js');
+      
+      // Get rate from Wise API
+      const result = await wiseApiService.getExchangeRate(fromCurrency, toCurrency, 100);
+      
+      if (!result || !result.rate) {
+        log(`[Wise API] No rate returned for ${fromCurrency}/${toCurrency}`);
+        return null;
+      }
+      
+      log(`[Wise API] Successfully retrieved rate: ${result.rate} for ${fromCurrency}/${toCurrency}`);
+      
+      // Create exchange rate record with API source
+      const exchangeRate: InsertExchangeRate = {
+        provider_id: provider.id,
+        from_currency: fromCurrency,
+        to_currency: toCurrency,
+        rate: result.rate,
+        source: RateSourceType.API,
+        source_url: provider.api_url,
+        verified: true // API rates are considered verified
+      };
+      
+      // Save to database
+      return await storage.createExchangeRate(exchangeRate);
+      
+    } catch (error) {
+      log(`[Wise API] Error collecting rate: ${error.message}`);
       return null;
     }
   }
