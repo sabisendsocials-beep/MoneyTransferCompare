@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { ProviderManagement } from "@/components/ProviderManagement";
 import ScraperStatusPanel from "@/components/ScraperStatusPanel";
 import ProviderApiSchedulerPanel from "@/components/ProviderApiSchedulerPanel";
+import DailyIncrementSchedulerPanel from "@/components/DailyIncrementSchedulerPanel";
 
 // LatestRatesTable component to display the latest rates for each provider
 const LatestRatesTable = () => {
@@ -387,6 +388,7 @@ export default function AdminPage() {
           <TabsTrigger value="manual-rates">Manual Providers</TabsTrigger>
           <TabsTrigger value="collection">Data Collection</TabsTrigger>
           <TabsTrigger value="api-scheduler">API Scheduler</TabsTrigger>
+          <TabsTrigger value="base-rate-scheduler">Base Rate Scheduler</TabsTrigger>
           <TabsTrigger value="sources">Data Sources</TabsTrigger>
           <TabsTrigger value="providers">Provider Management</TabsTrigger>
           <TabsTrigger value="scraper-status">Scraper Status</TabsTrigger>
@@ -791,6 +793,11 @@ export default function AdminPage() {
         {/* Provider API Scheduler Tab */}
         <TabsContent value="api-scheduler">
           <ProviderApiSchedulerPanel />
+        </TabsContent>
+        
+        {/* Base Rate Scheduler Tab */}
+        <TabsContent value="base-rate-scheduler">
+          <DailyIncrementSchedulerPanel />
         </TabsContent>
         
         {/* Data Sources Tab */}

@@ -97,7 +97,13 @@ export async function initializeDailyIncrementScheduler(): Promise<void> {
             successful: result.successful || 0,
             failed: result.failed || 0,
             totalProcessed: result.totalProcessed || 0,
-            details: result.details || []
+            details: (result.results || []).map((r: any) => ({
+              fromCurrency: r.pair.split('/')[0],
+              toCurrency: r.pair.split('/')[1],
+              success: r.success,
+              error: r.success ? undefined : r.message,
+              rateCollected: r.success ? 1 : undefined
+            }))
           };
           
           dailyResults.push(collectionResult);
@@ -249,7 +255,13 @@ export async function manualTriggerDailyIncrement(): Promise<{
       successful: result.successful || 0,
       failed: result.failed || 0,
       totalProcessed: result.totalProcessed || 0,
-      details: result.details || []
+      details: (result.results || []).map((r: any) => ({
+        fromCurrency: r.pair.split('/')[0],
+        toCurrency: r.pair.split('/')[1], 
+        success: r.success,
+        error: r.success ? undefined : r.message,
+        rateCollected: r.success ? 1 : undefined
+      }))
     };
     
     // Update tracking
