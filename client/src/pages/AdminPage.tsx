@@ -15,6 +15,7 @@ import { Spinner } from "@/components/Spinner";
 import { format } from "date-fns";
 import { ProviderManagement } from "@/components/ProviderManagement";
 import ScraperStatusPanel from "@/components/ScraperStatusPanel";
+import ProviderApiSchedulerPanel from "@/components/ProviderApiSchedulerPanel";
 
 // LatestRatesTable component to display the latest rates for each provider
 const LatestRatesTable = () => {
@@ -385,6 +386,7 @@ export default function AdminPage() {
           <TabsTrigger value="manual-entry">Manual Rate Entry</TabsTrigger>
           <TabsTrigger value="manual-rates">Manual Providers</TabsTrigger>
           <TabsTrigger value="collection">Data Collection</TabsTrigger>
+          <TabsTrigger value="api-scheduler">API Scheduler</TabsTrigger>
           <TabsTrigger value="sources">Data Sources</TabsTrigger>
           <TabsTrigger value="providers">Provider Management</TabsTrigger>
           <TabsTrigger value="scraper-status">Scraper Status</TabsTrigger>
@@ -784,6 +786,11 @@ export default function AdminPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Provider API Scheduler Tab */}
+        <TabsContent value="api-scheduler">
+          <ProviderApiSchedulerPanel />
         </TabsContent>
         
         {/* Data Sources Tab */}

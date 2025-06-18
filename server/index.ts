@@ -28,6 +28,10 @@ app.use('/api', dataSourceRoutes);
 import verifyApiRouter from './routes/verify-api.js';
 app.use(verifyApiRouter);
 
+// Register Provider API Scheduler management routes
+import providerApiSchedulerRoutes from './routes/providerApiSchedulerRoutes';
+app.use('/api/admin', providerApiSchedulerRoutes);
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
