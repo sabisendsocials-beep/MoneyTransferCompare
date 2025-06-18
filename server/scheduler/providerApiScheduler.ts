@@ -308,6 +308,61 @@ async function runCollectionCycle(): Promise<CollectionResult> {
 }
 
 /**
+ * Check if we have any missed scheduled runs and execute immediately
+ */
+function checkAndRunMissedSchedules(): void {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentDate = now.toISOString().split('T')[0];
+  
+  // Reset tracking if it's a new day
+  if (lastRunDate !== currentDate) {
+    lastRunHours.clear();
+    lastRunDate = currentDate;
+    dailyResults = [];
+    totalSuccessful = 0;
+    totalFailed = 0;
+  }
+  
+  // Find any scheduled hours that have passed but haven't run yet today
+  const missedHours = SCHEDULED_HOURS.filter(hour => {
+    const hasPassedToday = hour <= currentHour;
+    const hasNotRunThisHour = !lastRunHours.has(hour);
+    return hasPassedToday && hasNotRunThisHour;
+  });
+  
+  if (missedHours.length > 0) {
+    console.log(`\n📊 Found ${missedHours.length} missed scheduled run(s): ${missedHours.join(':00, ')}:00 UTC`);
+    console.log(`Current time: ${currentHour}:${now.getMinutes().toString().padStart(2, '0')} UTC`);
+    
+    // Run immediately for the most recent missed hour
+    const mostRecentMissedHour = Math.max(...missedHours);
+    console.log(`📊 Executing missed Provider API collection for ${mostRecentMissedHour}:00 UTC...`);
+    
+    runCollectionCycle()
+      .then(result => {
+        // Mark this hour as completed
+        lastRunHours.add(mostRecentMissedHour);
+        lastRunDate = currentDate;
+        lastRunTimestamp = new Date();
+        
+        // Store results for admin dashboard
+        dailyResults.push(result);
+        
+        console.log(`📊 Missed Provider API collection completed for ${mostRecentMissedHour}:00 UTC\n`);
+      })
+      .catch(error => {
+        console.error('Error during missed Provider API collection:', error);
+        
+        // Still mark as attempted to prevent retries
+        lastRunHours.add(mostRecentMissedHour);
+        lastRunDate = currentDate;
+        lastRunTimestamp = new Date();
+      });
+  }
+}
+
+/**
  * Initialize the Provider API Scheduler
  */
 export async function initializeProviderApiScheduler(): Promise<void> {
@@ -319,47 +374,21 @@ export async function initializeProviderApiScheduler(): Promise<void> {
   console.log('Initializing Provider API Scheduler...');
   console.log(`Scheduled collection times: ${SCHEDULED_HOURS.join(':00, ')}:00 UTC`);
   
-  // Check every 2 minutes for more reliable timing
-  const intervalMinutes = 2;
+  // Check for missed schedules immediately on startup
+  checkAndRunMissedSchedules();
+  
+  // Check every 30 minutes for any new missed schedules
+  const intervalMinutes = 30;
   const intervalMs = intervalMinutes * 60 * 1000;
   
-  const interval = setInterval(async () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    // More precise timing: only check within the first 10 minutes of each hour
-    if (currentMinute <= 10 && shouldRunNow()) {
-      console.log(`\n📊 Provider API collection time reached (${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC)...`);
-      
-      try {
-        const result = await runCollectionCycle();
-        
-        // Mark this hour as completed
-        lastRunHours.add(currentHour);
-        lastRunDate = new Date().toISOString().split('T')[0];
-        lastRunTimestamp = new Date();
-        
-        // Store results for admin dashboard
-        dailyResults.push(result);
-        
-        console.log(`📊 Provider API collection completed at ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC\n`);
-        
-      } catch (error) {
-        console.error('Error during Provider API collection cycle:', error);
-        
-        // Still mark as attempted to prevent retries
-        lastRunHours.add(currentHour);
-        lastRunDate = new Date().toISOString().split('T')[0];
-        lastRunTimestamp = new Date();
-      }
-    }
+  const interval = setInterval(() => {
+    checkAndRunMissedSchedules();
   }, intervalMs);
   
   schedulerActive = true;
   
-  console.log(`Provider API Scheduler initialized (checking every ${intervalMinutes} minutes)`);
-  console.log('Enhanced timing: executes within first 10 minutes of scheduled hours');
+  console.log(`Provider API Scheduler initialized (checking every ${intervalMinutes} minutes for missed runs)`);
+  console.log('Scheduler will execute immediately if scheduled time has passed and not run yet');
   console.log('Scheduler will collect rates from API-enabled providers only');
   
   // Return cleanup function

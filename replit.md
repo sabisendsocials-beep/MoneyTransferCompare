@@ -104,6 +104,9 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Enhanced database verification to actually save API rates to exchange_rates table
 - Daily increment scheduler now updates existing entries with latest Alpha Vantage rates
 - Maintained data integrity while ensuring most current rates are captured each day
+- Optimized Provider API Scheduler timing mechanism: now checks for missed runs immediately on startup and executes catch-up collections automatically
+- Reduced scheduler frequency from every 2 minutes to every 30 minutes (15x more efficient)
+- Implemented smart missed-run detection that executes immediately when scheduled time has passed
 
 ### June 16, 2025 - Enhanced Daily Increment Scheduler
 - Updated daily increment scheduler to run 5 times per day instead of once
