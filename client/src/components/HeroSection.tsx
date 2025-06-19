@@ -29,9 +29,9 @@ const HeroSection = () => {
   const handleGetBestRate = () => {
     const params = new URLSearchParams({
       amount: calculatorValues.amount.replace(/,/g, ''),
-      from: calculatorValues.fromCurrency,
-      to: calculatorValues.toCurrency,
-      mode: calculatorValues.calculationMode
+      fromCurrency: calculatorValues.fromCurrency,
+      toCurrency: calculatorValues.toCurrency,
+      calculationMode: calculatorValues.calculationMode
     });
     console.log('Navigating with current values:', calculatorValues);
     setLocation(`/results?${params.toString()}`);

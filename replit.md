@@ -96,6 +96,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### June 19, 2025 - Homepage Calculator Navigation Fix
+- Fixed homepage calculator defaulting to GBP/NGN regardless of user currency selection
+- Applied same pattern used in PersonalizedDashboard for consistent navigation behavior
+- Changed from static Link component to programmatic navigation using useLocation hook
+- Updated Results page to support both parameter formats (fromCurrency/toCurrency and from/to) for compatibility
+- Calculator now properly respects user currency selections and navigates to correct comparison results
+
 ### June 19, 2025 - Sabi Buzz: Data-Driven Market Insights System (USP Feature)
 - Transformed commentary system to focus on real market data analysis and actionable insights
 - Integrated with live database to analyze actual provider rates, spreads, and market movements

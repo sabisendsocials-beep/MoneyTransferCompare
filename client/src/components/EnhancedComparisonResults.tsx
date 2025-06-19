@@ -8,9 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 type EnhancedComparisonResultsProps = {
   results: TransferResult[];
   visible: boolean;
+  fromCurrency?: string;
+  toCurrency?: string;
+  amount?: number;
 };
 
-const EnhancedComparisonResults = ({ results, visible }: EnhancedComparisonResultsProps) => {
+const EnhancedComparisonResults = ({ results, visible, fromCurrency = "GBP", toCurrency = "NGN", amount = 100 }: EnhancedComparisonResultsProps) => {
   // Force visibility for debugging
   console.log('EnhancedComparisonResults render:', { visible, resultsLength: results.length });
   
@@ -23,20 +26,33 @@ const EnhancedComparisonResults = ({ results, visible }: EnhancedComparisonResul
     );
   }
 
+  // Currency symbol mapping
+  const getCurrencySymbol = (currencyCode: string): string => {
+    const symbols: { [key: string]: string } = {
+      'GBP': '£',
+      'EUR': '€',
+      'USD': '$',
+      'NGN': '₦',
+      'KES': 'KSh',
+      'GHS': '₵',
+      'INR': '₹',
+      'PKR': '₨'
+    };
+    return symbols[currencyCode] || currencyCode;
+  };
+
   const formatCurrency = (value: number, currency: string) => {
-    const formatter = new Intl.NumberFormat(currency === 'GBP' ? 'en-GB' : 'en-NG', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'NGN' ? 0 : 2,
-      maximumFractionDigits: currency === 'NGN' ? 0 : 2,
-    });
-    return formatter.format(value);
+    const symbol = getCurrencySymbol(currency);
+    const isAfricanCurrency = ['NGN', 'KES', 'GHS'].includes(currency);
+    const formatted = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: isAfricanCurrency ? 0 : 2,
+      maximumFractionDigits: isAfricanCurrency ? 0 : 2,
+    }).format(value);
+    return `${symbol}${formatted}`;
   };
 
   // Best provider is the first in the sorted results
   const bestProvider = results[0];
-  const fromCurrency = "GBP";
-  const toCurrency = "NGN";
 
   const renderStars = (rating: number | null | undefined) => {
     if (!rating) return null;

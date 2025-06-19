@@ -32,8 +32,9 @@ const Results = () => {
     console.log('Amount param from URL:', amountParam);
     
     const amount = amountParam ? parseFloat(amountParam) : defaultAmount;
-    const fromCurrency = urlParams.get('from') || defaultFromCurrency;
-    const toCurrency = urlParams.get('to') || defaultToCurrency;
+    // Support both parameter formats for compatibility
+    const fromCurrency = urlParams.get('fromCurrency') || urlParams.get('from') || defaultFromCurrency;
+    const toCurrency = urlParams.get('toCurrency') || urlParams.get('to') || defaultToCurrency;
     
     // Store parameters for display IMMEDIATELY
     setTransferParams({ amount, fromCurrency, toCurrency });
@@ -136,7 +137,13 @@ const Results = () => {
       ) : (
         <>
           {/* Show comparison results */}
-          <EnhancedComparisonResults results={results} visible={true} />
+          <EnhancedComparisonResults 
+            results={results} 
+            visible={true} 
+            fromCurrency={transferParams.fromCurrency}
+            toCurrency={transferParams.toCurrency}
+            amount={transferParams.amount}
+          />
           
           {/* Back button */}
           <div className="mt-8 text-center">
