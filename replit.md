@@ -96,15 +96,16 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### June 19, 2025 - Sabi Buzz: Creative AI Commentary System (USP Feature)
-- Rebranded to "Sabi Buzz" and enhanced with more creative, entertaining commentary
-- Updated AI prompts for gaming references, pop culture, social media language, and unexpected comparisons
-- Enhanced fallback system with 25+ creative categories: gaming, Marvel references, Gen Z language, food analogies
-- Sample commentary: "GBP activated beast mode today!", "Netflix should make a documentary about today's drama"
-- Added dismissible toast notifications at top of both homepage and personalized dashboard
-- Integrated Sabi Buzz as first item in AI Insights tab of personalized dashboard
-- Commentary system analyzes real market data while making finance entertaining and shareable
-- Positioned as key platform differentiator from boring competitor platforms
+### June 19, 2025 - Sabi Buzz: Data-Driven Market Insights System (USP Feature)
+- Transformed commentary system to focus on real market data analysis and actionable insights
+- Integrated with live database to analyze actual provider rates, spreads, and market movements
+- AI prompts enhanced to provide data-driven commentary based on provider performance and rate changes
+- Commentary examples: "Wise leads with 2.1% better rates than market average", "Provider spread at 3.2% suggests competitive conditions"
+- Real-time analysis of rate advantages, position changes, and market competitiveness
+- Added dismissible toast notifications on homepage and personalized dashboard
+- Integrated as prominent feature in AI Insights tab of personalized dashboard
+- System generates meaningful insights for customers making transfer decisions
+- Positioned as intelligent market analysis tool distinguishing platform from basic rate comparison sites
 
 ### June 18, 2025 - Enhanced Daily Rate Collection and API Integration
 - Fixed Provider API Scheduler routing regression caused by duplicated path segments
