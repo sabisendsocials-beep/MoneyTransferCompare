@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   ArrowRightLeft, BarChart3, ShieldCheck, Compass, 
   RefreshCw, ArrowRight, CheckCircle2, Globe, Sparkles
@@ -8,6 +8,7 @@ import CurrencyCalculator from "../components/CurrencyCalculator";
 import { useState } from "react";
 
 const HeroSection = () => {
+  const [, setLocation] = useLocation();
   const [calculatorValues, setCalculatorValues] = useState({
     amount: "100",
     fromCurrency: "GBP",
@@ -16,10 +17,24 @@ const HeroSection = () => {
   });
 
   const handleCalculatorChange = (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => {
+    console.log('Calculator values changed:', values);
     setCalculatorValues({
-      ...values,
+      amount: values.amount,
+      fromCurrency: values.fromCurrency,
+      toCurrency: values.toCurrency,
       calculationMode: values.calculationMode || "send"
     });
+  };
+
+  const handleGetBestRate = () => {
+    const params = new URLSearchParams({
+      amount: calculatorValues.amount.replace(/,/g, ''),
+      from: calculatorValues.fromCurrency,
+      to: calculatorValues.toCurrency,
+      mode: calculatorValues.calculationMode
+    });
+    console.log('Navigating with current values:', calculatorValues);
+    setLocation(`/results?${params.toString()}`);
   };
 
   return (
@@ -79,17 +94,16 @@ const HeroSection = () => {
                 
                 {/* CTA Button */}
                 <div className="mt-4 text-center compare-button">
-                  <Link href={`/results?amount=${calculatorValues.amount.replace(/,/g, '')}&from=${calculatorValues.fromCurrency}&to=${calculatorValues.toCurrency}&mode=${calculatorValues.calculationMode}`}>
-                    <Button 
-                      className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg group"
-                    >
-                      <span className="inline-flex items-center">
-                        <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
-                        Get Best Rate Now
-                        <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </Button>
-                  </Link>
+                  <Button 
+                    className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-3 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg group"
+                    onClick={handleGetBestRate}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="mr-1.5 text-yellow-200 group-hover:animate-pulse">✨</span> 
+                      Get Best Rate Now
+                      <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </Button>
                   
                   {/* This section will be updated by the CurrencyCalculator component */}
                 </div>
