@@ -96,6 +96,17 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### June 19, 2025 - Entertaining AI Commentary System (USP Feature)
+- Created comprehensive AI-powered market commentary system using OpenAI GPT-4o
+- Developed entertaining tone with humor, pop culture references, and engaging language
+- Commentary examples: "GBP just had a glow-up!", "Provider drama alert!", "Sterling pulled a superhero move"
+- Built intelligent fallback system with 20+ entertaining phrases for offline scenarios
+- Created MarketCommentary React component with dynamic styling and trend-based icons
+- Added API endpoints: /api/commentary/:from/:to and /api/commentary/popular
+- Designed as platform USP to differentiate from boring competitor commentary
+- Commentary analyzes rate movements, provider competition, and market volatility
+- System generates shareable, memorable content while remaining informative
+
 ### June 18, 2025 - Enhanced Daily Rate Collection and API Integration
 - Fixed Provider API Scheduler routing regression caused by duplicated path segments
 - Successfully integrated Wise API with complete database storage for all 15 currency pairs
