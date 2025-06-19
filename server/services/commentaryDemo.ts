@@ -75,7 +75,11 @@ function getMarketData(fromCurrency: string, toCurrency: string): MarketData {
  */
 async function generateMarketCommentary(data: MarketData): Promise<string> {
   try {
-    const prompt = `Generate hilarious, creative commentary about the ${data.currencyPair} exchange rate market. Be witty, use pop culture references, metaphors, and humor while being informative.
+    // Special handling for GBP/NGN with pidgin English
+    const isGbpNgn = data.currencyPair === 'GBP/NGN';
+    
+    const prompt = isGbpNgn ? 
+      `Generate engaging commentary about the GBP/NGN exchange rate market. Use natural conversation with some pidgin English touches to make it relatable and meaningful.
 
 Market Data:
 - Current rate: ${data.currentRate.toFixed(2)}
@@ -83,23 +87,40 @@ Market Data:
 - Best provider: ${data.bestProvider} at ${data.bestRate.toFixed(2)}
 - Rate spread: ${data.rateSpread.toFixed(1)}%
 
-Style: Creative, funny, entertaining. Use humor, pop culture, gaming references, social media language, or unexpected comparisons. Make people laugh while learning about rates. Maximum 40 words.
+Style: Conversational and insightful. Use some pidgin English naturally (like "wey", "dey", "no be small", "abi"). Make it meaningful and engaging without boring jargon. Focus on what this means for people sending money home. Maximum 40 words.
 
-Be creative and original! Examples of entertaining styles (don't copy directly):
-- Gaming: "Sterling activated beast mode today!"
-- Pop culture: "The pound said 'I am inevitable' and snapped rates higher"
-- Social media: "Rate alert: This provider is giving main character energy"
-- Unexpected: "Providers are more competitive than reality TV stars today"
-- Mystery: "Plot twist nobody saw coming in today's rates"
+Examples of natural tone:
+- "Pound wey dey strong today, ${data.bestProvider} no come play"
+- "This rate movement no be small thing for people wey dey send money"
+- "See as providers dey compete - na good news for us"
 
-Generate ONE wildly creative and entertaining commentary:`;
+Generate ONE natural, meaningful commentary with pidgin touches:` :
+      
+      `Generate engaging, conversational commentary about the ${data.currencyPair} exchange rate market. Use natural everyday language that's meaningful and insightful.
+
+Market Data:
+- Current rate: ${data.currentRate.toFixed(2)}
+- Movement: ${data.movement} by ${Math.abs(data.changePercent).toFixed(2)}%
+- Best provider: ${data.bestProvider} at ${data.bestRate.toFixed(2)}
+- Rate spread: ${data.rateSpread.toFixed(1)}%
+
+Style: Natural conversation, engaging and meaningful. Focus on what this means for real people. Avoid jargon and forced slang. Make it insightful and relatable. Maximum 40 words.
+
+Examples of conversational tone:
+- "Today's rates are looking good for anyone sending money"
+- "Providers are really competing hard - that's great news"
+- "This movement could mean better value for transfers"
+
+Generate ONE natural, meaningful commentary:`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
           role: "system",
-          content: "You are a witty financial commentator who makes exchange rates fun and entertaining. Use humor, metaphors, and engaging language while providing useful insights. Think of yourself as the comedy writer for financial news."
+          content: isGbpNgn ? 
+            "You are a knowledgeable financial commentator who connects with Nigerian audiences. Use natural conversation with some pidgin English touches when appropriate. Focus on meaningful insights about exchange rates that help people make better money transfer decisions." :
+            "You are a conversational financial commentator who makes exchange rates accessible and engaging. Use natural everyday language to provide meaningful insights without jargon or forced slang."
         },
         {
           role: "user",
@@ -120,58 +141,33 @@ Generate ONE wildly creative and entertaining commentary:`;
 }
 
 /**
- * Generate creative and entertaining fallback commentary when AI is unavailable
+ * Generate natural, conversational fallback commentary when AI is unavailable
  */
 function generateEntertainingFallback(data: MarketData): string {
-  const entertainingFallbacks = [
-    // Gaming & Tech references
-    [
-      `${data.currencyPair.split('/')[0]} activated beast mode today! ${data.bestProvider} caught the power-up.`,
-      `${data.bestProvider} just unlocked the legendary rate achievement for ${data.currencyPair}!`,
-      `Rate update downloading... ${data.bestProvider} leads with premium bandwidth today.`,
-      `${data.currencyPair.split('/')[0]} said "respawn with better stats" and jumped ${Math.abs(data.changePercent).toFixed(1)}%!`,
-      `${data.bestProvider} is speedrunning the ${data.currencyPair} leaderboard today.`
-    ],
-    
-    // Pop culture & Entertainment
-    [
-      `${data.currencyPair.split('/')[0]} pulled a Marvel plot twist - ${data.bestProvider} got the infinity stone rates!`,
-      `Breaking: ${data.bestProvider} just dropped the hottest mixtape... of exchange rates.`,
-      `${data.currencyPair.split('/')[0]} said "I am inevitable" and snapped rates ${data.movement === 'up' ? 'higher' : 'lower'}.`,
-      `Netflix should make a documentary about today's ${data.currencyPair} drama starring ${data.bestProvider}.`,
-      `${data.bestProvider} is serving main character energy in the ${data.currencyPair} universe today.`
-    ],
-    
-    // Social Media & Gen Z references
-    [
-      `${data.currencyPair.split('/')[0]} said "periodt" and left no crumbs with that ${Math.abs(data.changePercent).toFixed(1)}% move.`,
-      `${data.bestProvider} understood the assignment and delivered peak ${data.currencyPair} rates.`,
-      `No cap, ${data.bestProvider} is absolutely slaying the ${data.currencyPair} game today!`,
-      `${data.currencyPair.split('/')[0]} woke up and chose violence against boring rates.`,
-      `Tell me ${data.bestProvider} is competitive without telling me... wait, they just did.`
-    ],
-    
-    // Food & Lifestyle analogies
-    [
-      `${data.bestProvider} is cooking with gas today - ${data.currencyPair} rates looking chef's kiss!`,
-      `${data.currencyPair.split('/')[0]} rates are more addictive than your favorite coffee shop today.`,
-      `${data.bestProvider} just served a five-star ${data.currencyPair} experience with extra sauce.`,
-      `Today's ${data.currencyPair} market is giving expensive taste energy, courtesy of ${data.bestProvider}.`,
-      `${data.bestProvider} said "let them eat cake" and served premium ${data.currencyPair} rates.`
-    ],
-    
-    // Competition & Sports metaphors
-    [
-      `${data.bestProvider} just scored a hat-trick in the ${data.currencyPair} championships!`,
-      `It's more competitive than Black Friday out here - ${data.rateSpread.toFixed(1)}% separating the players.`,
-      `${data.bestProvider} came through with the buzzer-beater rates for ${data.currencyPair} today.`,
-      `Someone check if ${data.bestProvider} is using cheat codes - these ${data.currencyPair} rates are too good!`,
-      `${data.currencyPair.split('/')[0]} just broke the internet with that performance.`
-    ]
-  ].flat();
+  const isGbpNgn = data.currencyPair === 'GBP/NGN';
   
-  return entertainingFallbacks[Math.floor(Math.random() * entertainingFallbacks.length)] ||
-         `${data.bestProvider} is absolutely crushing the ${data.currencyPair} game today!`;
+  if (isGbpNgn) {
+    // Pidgin English for GBP/NGN
+    const pidginOptions = [
+      `Pound wey dey strong today, ${data.bestProvider} no come play with rates!`,
+      `See as ${data.bestProvider} dey compete - na good news for people wey dey send money.`,
+      `This ${Math.abs(data.changePercent).toFixed(1)}% movement no be small thing for transfers.`,
+      `${data.bestProvider} show say them serious about giving better rates today.`,
+      `People wey dey send money home go happy with this ${data.bestProvider} rate.`
+    ];
+    return pidginOptions[Math.floor(Math.random() * pidginOptions.length)];
+  }
+  
+  // Natural conversation for other pairs
+  const conversationalOptions = [
+    `${data.bestProvider} is really stepping up their game today with competitive rates.`,
+    `Good news for transfers - ${data.bestProvider} is offering solid value on ${data.currencyPair}.`,
+    `This ${Math.abs(data.changePercent).toFixed(1)}% movement could mean better deals for money transfers.`,
+    `Rate competition is heating up, and ${data.bestProvider} is leading the charge.`,
+    `Today's ${data.currencyPair} rates are looking promising for anyone planning transfers.`,
+    `The competition between providers is really benefiting customers right now.`
+  ];
+  return conversationalOptions[Math.floor(Math.random() * conversationalOptions.length)];
 }
 
 /**
