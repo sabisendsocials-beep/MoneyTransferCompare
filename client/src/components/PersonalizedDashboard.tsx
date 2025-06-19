@@ -14,6 +14,8 @@ import { useLocation } from "wouter";
 import NewsSection from "@/components/NewsSection";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AIInsights } from "./AIInsights";
+import SabiBuzzToast from "@/components/SabiBuzzToast";
+import { MarketCommentary } from "@/components/MarketCommentary";
 
 interface PersonalizedDashboardProps {
   user: any;
@@ -254,6 +256,9 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
   return (
     <div className={`space-y-6 personalized-dashboard ${className || ''}`}>
+      {/* Sabi Buzz Toast - Dismissible notification */}
+      <SabiBuzzToast fromCurrency={fromCurrency} toCurrency={toCurrency} />
+      
       {/* New User Welcome Message */}
       {hasNoPreferences && (
         <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
@@ -724,6 +729,22 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
         </TabsContent>
 
         <TabsContent value="ai-insights" className="space-y-4">
+          {/* Sabi Buzz as first item in AI tab */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-purple-600" />
+                Sabi Buzz
+              </CardTitle>
+              <CardDescription>
+                Today's market insights with personality
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MarketCommentary fromCurrency={fromCurrency} toCurrency={toCurrency} />
+            </CardContent>
+          </Card>
+          
           <AIInsights 
             fromCurrency={fromCurrency}
             toCurrency={toCurrency}

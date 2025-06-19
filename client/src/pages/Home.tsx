@@ -10,6 +10,7 @@ import FeatureCards from "@/components/FeatureCards";
 import CountryNavigationSection from "@/components/CountryNavigationSection";
 import { PersonalizedDashboard } from "@/components/PersonalizedDashboard";
 import { MarketCommentary } from "@/components/MarketCommentary";
+import SabiBuzzToast from "@/components/SabiBuzzToast";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
 
@@ -72,13 +73,17 @@ const Home = () => {
         canonicalUrl="https://sabisend.com"
         structuredData={structuredData}
       />
+      
+      {/* Sabi Buzz Toast - Dismissible notification */}
+      <SabiBuzzToast fromCurrency="GBP" toCurrency="NGN" />
+      
       {/* New improved Hero Section with integrated calculator */}
       <HeroSection />
       
-      {/* Market Commentary - Platform USP Feature */}
+      {/* Sabi Buzz - Platform USP Feature */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Today's Market Buzz</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Sabi Buzz</h2>
           <p className="text-gray-600">Real insights with personality - because finance doesn't have to be boring</p>
         </div>
         <MarketCommentary fromCurrency="GBP" toCurrency="NGN" />

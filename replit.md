@@ -96,16 +96,15 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### June 19, 2025 - Entertaining AI Commentary System (USP Feature)
-- Created comprehensive AI-powered market commentary system using OpenAI GPT-4o
-- Developed entertaining tone with humor, pop culture references, and engaging language
-- Commentary examples: "GBP just had a glow-up!", "Provider drama alert!", "Sterling pulled a superhero move"
-- Built intelligent fallback system with 20+ entertaining phrases for offline scenarios
-- Created MarketCommentary React component with dynamic styling and trend-based icons
-- Added API endpoints: /api/commentary/:from/:to and /api/commentary/popular
-- Designed as platform USP to differentiate from boring competitor commentary
-- Commentary analyzes rate movements, provider competition, and market volatility
-- System generates shareable, memorable content while remaining informative
+### June 19, 2025 - Sabi Buzz: Creative AI Commentary System (USP Feature)
+- Rebranded to "Sabi Buzz" and enhanced with more creative, entertaining commentary
+- Updated AI prompts for gaming references, pop culture, social media language, and unexpected comparisons
+- Enhanced fallback system with 25+ creative categories: gaming, Marvel references, Gen Z language, food analogies
+- Sample commentary: "GBP activated beast mode today!", "Netflix should make a documentary about today's drama"
+- Added dismissible toast notifications at top of both homepage and personalized dashboard
+- Integrated Sabi Buzz as first item in AI Insights tab of personalized dashboard
+- Commentary system analyzes real market data while making finance entertaining and shareable
+- Positioned as key platform differentiator from boring competitor platforms
 
 ### June 18, 2025 - Enhanced Daily Rate Collection and API Integration
 - Fixed Provider API Scheduler routing regression caused by duplicated path segments
