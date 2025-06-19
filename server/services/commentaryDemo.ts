@@ -75,7 +75,7 @@ function getMarketData(fromCurrency: string, toCurrency: string): MarketData {
  */
 async function generateMarketCommentary(data: MarketData): Promise<string> {
   try {
-    const prompt = `Generate a witty, entertaining commentary about the ${data.currencyPair} exchange rate market that will make people smile while being informative.
+    const prompt = `Generate witty, culturally-aware commentary about the ${data.currencyPair} exchange rate market with regional flavor and playful observations about provider behavior.
 
 Market Data:
 - Current rate: ${data.currentRate.toFixed(2)}
@@ -83,16 +83,18 @@ Market Data:
 - Best provider: ${data.bestProvider} at ${data.bestRate.toFixed(2)}
 - Rate spread: ${data.rateSpread.toFixed(1)}%
 
-Style: Fun, witty, entertaining but still informative. Use humor, metaphors, pop culture references, or playful language. Maximum 35 words. Make it memorable and shareable.
+Style: Playful, observational, with cultural references and provider personality observations. Use casual language like someone watching the market drama unfold. Maximum 40 words.
 
-Examples of entertaining financial commentary:
-"The pound is flexing harder than a gym bro today - ${data.bestProvider} caught the wave!"
-"Plot twist: ${data.currencyPair} rates are tighter than airport security - providers battling for the crown!"
-"Sterling just pulled a superhero move, gaining ${Math.abs(data.changePercent).toFixed(1)}% overnight. Your wallet will thank you!"
-"Rates are more stable than a yoga instructor today, but ${data.bestProvider} still brings the zen."
-"Provider drama alert! The rate spread is ${data.rateSpread.toFixed(1)}% - someone's feeling generous!"
+Examples of the tone we want:
+"LemFi's acting like it owns the GBP-NGN corridor today. Someone's feeling rich."
+"WorldRemit's just chilling today. Low fees, average rates. Not trying to impress anyone."
+"Like a shy genius — TransferGo isn't saying much but quietly offering the best rate today."
+"We spy a hidden gem today. Not a usual contender. Wanna guess who?"
+"Think you know who topped the charts today? You might be surprised…"
+"Very unlikely provider in the top today"
+"Wow LemFi is feeling bullish on the rate today with a massive spread"
 
-Generate ONE entertaining commentary that people will actually want to read:`;
+Generate ONE commentary with similar observational, cultural tone:`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -120,46 +122,55 @@ Generate ONE entertaining commentary that people will actually want to read:`;
 }
 
 /**
- * Generate entertaining fallback commentary when AI is unavailable
+ * Generate culturally-aware fallback commentary when AI is unavailable
  */
 function generateEntertainingFallback(data: MarketData): string {
-  const entertainingFallbacks = [
-    // Rate movement scenarios
-    ...(data.movement === 'up' && Math.abs(data.changePercent) > 0.5 ? [
-      `${data.currencyPair.split('/')[0]} just had a glow-up! Up ${Math.abs(data.changePercent).toFixed(1)}% and looking fabulous 💅`,
-      `Breaking: ${data.currencyPair.split('/')[0]} woke up and chose violence - gained ${Math.abs(data.changePercent).toFixed(1)}% overnight!`,
-      `${data.currencyPair.split('/')[0]} is having its main character moment today! ${data.bestProvider} caught the vibe 🚀`,
-      `Plot twist: ${data.currencyPair.split('/')[0]} said "not today, gravity" and jumped ${Math.abs(data.changePercent).toFixed(1)}%!`
-    ] : []),
-    
-    // Rate decline scenarios  
-    ...(data.movement === 'down' && Math.abs(data.changePercent) > 0.5 ? [
-      `${data.currencyPair.split('/')[0]} took a little nap today (down ${Math.abs(data.changePercent).toFixed(1)}%) - perfect for incoming transfers!`,
-      `${data.currencyPair.split('/')[0]} is having a humble day, down ${Math.abs(data.changePercent).toFixed(1)}%. Someone's getting lucky! 🍀`,
-      `Currency plot twist: ${data.currencyPair.split('/')[0]} decided to be generous today. Receivers are celebrating!`,
-      `${data.currencyPair.split('/')[0]} pulled a "surprise discount" move - down ${Math.abs(data.changePercent).toFixed(1)}% for the people!`
-    ] : []),
-    
-    // Tight competition scenarios
-    ...(data.rateSpread < 3 ? [
-      `Providers are fighting harder than siblings over the last slice of pizza - just ${data.rateSpread.toFixed(1)}% separating them!`,
-      `It's a rate battle royale! Providers within ${data.rateSpread.toFixed(1)}% of each other. Someone call a referee! 🥊`,
-      `The competition is tighter than skinny jeans today - ${data.rateSpread.toFixed(1)}% spread has providers sweating!`,
-      `Provider drama level: Maximum! Everyone's rates are practically identical at ${data.rateSpread.toFixed(1)}% apart 🎭`
-    ] : []),
-    
-    // Provider leadership scenarios
+  const culturalFallbacks = [
+    // Provider personality observations
     [
-      `${data.bestProvider} is serving main character energy today with the best ${data.currencyPair} rates! 👑`,
-      `${data.bestProvider} said "hold my coffee" and dropped the best rates today. Respect! ☕`,
-      `${data.bestProvider} just pulled a boss move with top ${data.currencyPair} rates. Someone's showing off! 💪`,
-      `Plot armor activated: ${data.bestProvider} leads the ${data.currencyPair} leaderboard today! 🏆`,
-      `${data.bestProvider} woke up and chose excellence - best ${data.currencyPair} rates in the game! 🔥`
+      `${data.bestProvider}'s acting like it owns the ${data.currencyPair} corridor today. Someone's feeling confident.`,
+      `${data.bestProvider}'s just chilling today. Decent rates, no drama. Not trying to impress anyone.`,
+      `Like a shy genius — ${data.bestProvider} isn't saying much but quietly offering the best rate today.`,
+      `${data.bestProvider}'s feeling bullish on ${data.currencyPair} today with that spread.`,
+      `${data.bestProvider} decided to move up the ranks today. Plot twist incoming.`
+    ],
+    
+    // Rate movement with cultural flavor
+    ...(data.movement === 'up' && Math.abs(data.changePercent) > 0.5 ? [
+      `${data.currencyPair.split('/')[0]} woke up and chose greatness today. Up ${Math.abs(data.changePercent).toFixed(1)}% like a champion.`,
+      `Someone told ${data.currencyPair.split('/')[0]} it was payday - jumped ${Math.abs(data.changePercent).toFixed(1)}% overnight.`,
+      `${data.currencyPair.split('/')[0]} said "not today" to gravity. ${data.bestProvider} caught the wave.`,
+      `Breaking: ${data.currencyPair.split('/')[0]} is having its moment. ${Math.abs(data.changePercent).toFixed(1)}% gain and counting.`
+    ] : []),
+    
+    // Rate decline with regional humor
+    ...(data.movement === 'down' && Math.abs(data.changePercent) > 0.5 ? [
+      `${data.currencyPair.split('/')[0]} took a humble pill today. Down ${Math.abs(data.changePercent).toFixed(1)}% - receivers are smiling.`,
+      `${data.currencyPair.split('/')[0]} decided to be generous. Down ${Math.abs(data.changePercent).toFixed(1)}% for the people.`,
+      `Plot twist: ${data.currencyPair.split('/')[0]} pulled a surprise discount move today.`,
+      `${data.currencyPair.split('/')[0]}'s having a quiet day. Perfect timing for incoming transfers.`
+    ] : []),
+    
+    // Competition observations
+    ...(data.rateSpread < 3 ? [
+      `It's getting crowded at the top today. Many providers offering their best ${data.currencyPair} rates.`,
+      `The spread looks almost too good today. Worth a double check on that ${data.rateSpread.toFixed(1)}%.`,
+      `Everyone's bringing their A-game today. ${data.rateSpread.toFixed(1)}% spread between best and worst.`,
+      `Provider competition is real today. Just ${data.rateSpread.toFixed(1)}% separating the pack.`
+    ] : []),
+    
+    // Mystery and intrigue
+    [
+      `We spy a hidden gem today. Not the usual contender for ${data.currencyPair}.`,
+      `Think you know who topped the charts today? You might be surprised.`,
+      `Very unlikely provider in the top spot today. Guess who?`,
+      `Someone unexpected is making moves in the ${data.currencyPair} space today.`,
+      `Plot twist alert: The usual suspects aren't leading today.`
     ]
   ].flat();
   
-  return entertainingFallbacks[Math.floor(Math.random() * entertainingFallbacks.length)] ||
-         `${data.bestProvider} is keeping things interesting with solid ${data.currencyPair} rates today! 🎉`;
+  return culturalFallbacks[Math.floor(Math.random() * culturalFallbacks.length)] ||
+         `${data.bestProvider} is keeping things interesting with solid ${data.currencyPair} rates today.`;
 }
 
 /**
