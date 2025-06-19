@@ -425,16 +425,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Currency pair required" });
       }
       
-      const { generateDailyCommentary } = await import('./services/aiCommentaryService');
-      const commentary = await generateDailyCommentary(from.toUpperCase(), to.toUpperCase());
+      const { generateCommentary } = await import('./services/commentaryDemo');
+      const result = await generateCommentary(from.toUpperCase(), to.toUpperCase());
       
       res.json({ 
         success: true, 
-        data: {
-          currencyPair: `${from}/${to}`,
-          commentary,
-          timestamp: new Date().toISOString()
-        }
+        data: result
       });
     } catch (error) {
       console.error('Error generating commentary:', error);
@@ -448,8 +444,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Popular pairs commentary endpoint
   app.get('/api/commentary/popular', async (req, res) => {
     try {
-      const { generatePopularPairCommentaries } = await import('./services/aiCommentaryService');
-      const commentaries = await generatePopularPairCommentaries();
+      const { generatePopularCommentaries } = await import('./services/commentaryDemo');
+      const commentaries = await generatePopularCommentaries();
       
       res.json({ 
         success: true, 
