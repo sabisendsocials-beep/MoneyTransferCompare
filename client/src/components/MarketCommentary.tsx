@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { MessageCircle, TrendingUp, TrendingDown, Zap, Sparkles, Flame } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,7 +41,7 @@ export function MarketCommentary({ fromCurrency = "GBP", toCurrency = "NGN" }: C
     );
   }
 
-  if (error || !commentary?.success) {
+  if (error || !commentary) {
     return (
       <Card className="bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
         <CardContent className="p-4">
@@ -58,25 +58,29 @@ export function MarketCommentary({ fromCurrency = "GBP", toCurrency = "NGN" }: C
     );
   }
 
-  // Determine trend icon based on commentary content
+  // Determine trend icon based on commentary content with more entertainment focus
   const getTrendIcon = (text: string) => {
     const lowerText = text.toLowerCase();
-    if (lowerText.includes('up') || lowerText.includes('gain') || lowerText.includes('strengthen') || lowerText.includes('high')) {
-      return <TrendingUp className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />;
-    } else if (lowerText.includes('down') || lowerText.includes('dip') || lowerText.includes('weak') || lowerText.includes('low')) {
-      return <TrendingDown className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />;
+    if (lowerText.includes('glow-up') || lowerText.includes('flexing') || lowerText.includes('superhero') || lowerText.includes('main character') || lowerText.includes('violence') || lowerText.includes('up') || lowerText.includes('gain')) {
+      return <Flame className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />;
+    } else if (lowerText.includes('nap') || lowerText.includes('humble') || lowerText.includes('generous') || lowerText.includes('discount') || lowerText.includes('down') || lowerText.includes('dip')) {
+      return <Sparkles className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />;
+    } else if (lowerText.includes('drama') || lowerText.includes('battle') || lowerText.includes('fighting') || lowerText.includes('boss move') || lowerText.includes('excellence')) {
+      return <Zap className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />;
     }
     return <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />;
   };
 
   const getCardStyle = (text: string) => {
     const lowerText = text.toLowerCase();
-    if (lowerText.includes('up') || lowerText.includes('gain') || lowerText.includes('strengthen')) {
-      return "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200";
-    } else if (lowerText.includes('down') || lowerText.includes('dip') || lowerText.includes('weak')) {
-      return "bg-gradient-to-r from-red-50 to-rose-50 border-red-200";
+    if (lowerText.includes('glow-up') || lowerText.includes('flexing') || lowerText.includes('superhero') || lowerText.includes('main character') || lowerText.includes('violence')) {
+      return "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 shadow-md";
+    } else if (lowerText.includes('nap') || lowerText.includes('humble') || lowerText.includes('generous') || lowerText.includes('discount')) {
+      return "bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 shadow-md";
+    } else if (lowerText.includes('drama') || lowerText.includes('battle') || lowerText.includes('fighting') || lowerText.includes('boss move')) {
+      return "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 shadow-md";
     }
-    return "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200";
+    return "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-sm";
   };
 
   return (
@@ -86,12 +90,12 @@ export function MarketCommentary({ fromCurrency = "GBP", toCurrency = "NGN" }: C
           {getTrendIcon(commentary.data.commentary)}
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-1">
-              <h3 className="text-sm font-medium text-gray-900">Today's Market Insight</h3>
-              <span className="text-xs text-gray-500 bg-white/60 px-2 py-0.5 rounded-full">
+              <h3 className="text-sm font-semibold text-gray-900">Market Buzz</h3>
+              <span className="text-xs text-gray-500 bg-white/60 px-2 py-0.5 rounded-full font-medium">
                 {commentary.data.currencyPair}
               </span>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <p className="text-sm text-gray-800 leading-relaxed font-medium">
               {commentary.data.commentary}
             </p>
             <p className="text-xs text-gray-500 mt-2">
@@ -134,7 +138,7 @@ export function PopularPairsCommentary() {
     );
   }
 
-  if (error || !commentaries?.success) {
+  if (error || !commentaries) {
     return (
       <Alert>
         <MessageCircle className="h-4 w-4" />

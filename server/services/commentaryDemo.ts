@@ -71,11 +71,11 @@ function getMarketData(fromCurrency: string, toCurrency: string): MarketData {
 }
 
 /**
- * Generate AI commentary for market data
+ * Generate AI commentary for market data with entertaining tone
  */
 async function generateMarketCommentary(data: MarketData): Promise<string> {
   try {
-    const prompt = `Generate an engaging 1-2 sentence daily commentary about the ${data.currencyPair} exchange rate market.
+    const prompt = `Generate a witty, entertaining commentary about the ${data.currencyPair} exchange rate market that will make people smile while being informative.
 
 Market Data:
 - Current rate: ${data.currentRate.toFixed(2)}
@@ -83,48 +83,83 @@ Market Data:
 - Best provider: ${data.bestProvider} at ${data.bestRate.toFixed(2)}
 - Rate spread: ${data.rateSpread.toFixed(1)}%
 
-Style: Conversational, helpful, maximum 30 words. Focus on what matters to money senders.
+Style: Fun, witty, entertaining but still informative. Use humor, metaphors, pop culture references, or playful language. Maximum 35 words. Make it memorable and shareable.
 
-Examples:
-"The pound holds steady against the naira while Lemfi leads with competitive rates."
-"Sterling gained 0.8% overnight - excellent timing for UK-Nigeria transfers."
-"Provider competition is fierce today with just 2% separating best and worst rates."
+Examples of entertaining financial commentary:
+"The pound is flexing harder than a gym bro today - ${data.bestProvider} caught the wave!"
+"Plot twist: ${data.currencyPair} rates are tighter than airport security - providers battling for the crown!"
+"Sterling just pulled a superhero move, gaining ${Math.abs(data.changePercent).toFixed(1)}% overnight. Your wallet will thank you!"
+"Rates are more stable than a yoga instructor today, but ${data.bestProvider} still brings the zen."
+"Provider drama alert! The rate spread is ${data.rateSpread.toFixed(1)}% - someone's feeling generous!"
 
-Generate ONE brief commentary:`;
+Generate ONE entertaining commentary that people will actually want to read:`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
           role: "system",
-          content: "You are a financial expert creating brief, engaging commentary about exchange rates. Be conversational and focus on practical insights for money transfers."
+          content: "You are a witty financial commentator who makes exchange rates fun and entertaining. Use humor, metaphors, and engaging language while providing useful insights. Think of yourself as the comedy writer for financial news."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: 80,
-      temperature: 0.7
+      max_tokens: 100,
+      temperature: 0.8
     });
 
     return response.choices[0].message.content?.trim() || 
-           `${data.bestProvider} offers competitive ${data.currencyPair} rates today with steady market conditions.`;
+           generateEntertainingFallback(data);
     
   } catch (error) {
     console.error('Error generating AI commentary:', error);
-    
-    // Intelligent fallback based on market data
-    if (data.movement === 'up' && Math.abs(data.changePercent) > 0.5) {
-      return `${data.currencyPair.split('/')[0]} strengthened ${Math.abs(data.changePercent).toFixed(1)}% today - good news for outbound transfers.`;
-    } else if (data.movement === 'down' && Math.abs(data.changePercent) > 0.5) {
-      return `${data.currencyPair.split('/')[0]} dipped ${Math.abs(data.changePercent).toFixed(1)}% today, making incoming transfers more valuable.`;
-    } else if (data.rateSpread < 3) {
-      return `Tight competition today with providers offering similar ${data.currencyPair} rates within ${data.rateSpread.toFixed(1)}%.`;
-    } else {
-      return `${data.bestProvider} leads today's ${data.currencyPair} rates with competitive pricing across the market.`;
-    }
+    return generateEntertainingFallback(data);
   }
+}
+
+/**
+ * Generate entertaining fallback commentary when AI is unavailable
+ */
+function generateEntertainingFallback(data: MarketData): string {
+  const entertainingFallbacks = [
+    // Rate movement scenarios
+    ...(data.movement === 'up' && Math.abs(data.changePercent) > 0.5 ? [
+      `${data.currencyPair.split('/')[0]} just had a glow-up! Up ${Math.abs(data.changePercent).toFixed(1)}% and looking fabulous 💅`,
+      `Breaking: ${data.currencyPair.split('/')[0]} woke up and chose violence - gained ${Math.abs(data.changePercent).toFixed(1)}% overnight!`,
+      `${data.currencyPair.split('/')[0]} is having its main character moment today! ${data.bestProvider} caught the vibe 🚀`,
+      `Plot twist: ${data.currencyPair.split('/')[0]} said "not today, gravity" and jumped ${Math.abs(data.changePercent).toFixed(1)}%!`
+    ] : []),
+    
+    // Rate decline scenarios  
+    ...(data.movement === 'down' && Math.abs(data.changePercent) > 0.5 ? [
+      `${data.currencyPair.split('/')[0]} took a little nap today (down ${Math.abs(data.changePercent).toFixed(1)}%) - perfect for incoming transfers!`,
+      `${data.currencyPair.split('/')[0]} is having a humble day, down ${Math.abs(data.changePercent).toFixed(1)}%. Someone's getting lucky! 🍀`,
+      `Currency plot twist: ${data.currencyPair.split('/')[0]} decided to be generous today. Receivers are celebrating!`,
+      `${data.currencyPair.split('/')[0]} pulled a "surprise discount" move - down ${Math.abs(data.changePercent).toFixed(1)}% for the people!`
+    ] : []),
+    
+    // Tight competition scenarios
+    ...(data.rateSpread < 3 ? [
+      `Providers are fighting harder than siblings over the last slice of pizza - just ${data.rateSpread.toFixed(1)}% separating them!`,
+      `It's a rate battle royale! Providers within ${data.rateSpread.toFixed(1)}% of each other. Someone call a referee! 🥊`,
+      `The competition is tighter than skinny jeans today - ${data.rateSpread.toFixed(1)}% spread has providers sweating!`,
+      `Provider drama level: Maximum! Everyone's rates are practically identical at ${data.rateSpread.toFixed(1)}% apart 🎭`
+    ] : []),
+    
+    // Provider leadership scenarios
+    [
+      `${data.bestProvider} is serving main character energy today with the best ${data.currencyPair} rates! 👑`,
+      `${data.bestProvider} said "hold my coffee" and dropped the best rates today. Respect! ☕`,
+      `${data.bestProvider} just pulled a boss move with top ${data.currencyPair} rates. Someone's showing off! 💪`,
+      `Plot armor activated: ${data.bestProvider} leads the ${data.currencyPair} leaderboard today! 🏆`,
+      `${data.bestProvider} woke up and chose excellence - best ${data.currencyPair} rates in the game! 🔥`
+    ]
+  ].flat();
+  
+  return entertainingFallbacks[Math.floor(Math.random() * entertainingFallbacks.length)] ||
+         `${data.bestProvider} is keeping things interesting with solid ${data.currencyPair} rates today! 🎉`;
 }
 
 /**
