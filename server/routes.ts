@@ -416,6 +416,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Commentary endpoints
+  app.get('/api/commentary/:from/:to', async (req, res) => {
+    try {
+      const { from, to } = req.params;
+      
+      if (!from || !to) {
+        return res.status(400).json({ message: "Currency pair required" });
+      }
+      
+      const { generateDailyCommentary } = await import('./services/aiCommentaryService');
+      const commentary = await generateDailyCommentary(from.toUpperCase(), to.toUpperCase());
+      
+      res.json({ 
+        success: true, 
+        data: {
+          currencyPair: `${from}/${to}`,
+          commentary,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error('Error generating commentary:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to generate commentary" 
+      });
+    }
+  });
+
+  // Popular pairs commentary endpoint
+  app.get('/api/commentary/popular', async (req, res) => {
+    try {
+      const { generatePopularPairCommentaries } = await import('./services/aiCommentaryService');
+      const commentaries = await generatePopularPairCommentaries();
+      
+      res.json({ 
+        success: true, 
+        data: commentaries,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error generating popular commentaries:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to generate commentaries" 
+      });
+    }
+  });
+
   // System settings management routes
   app.get("/api/system-settings", async (req: Request, res: Response) => {
     try {
