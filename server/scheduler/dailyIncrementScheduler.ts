@@ -154,8 +154,9 @@ export async function initializeDailyIncrementScheduler(): Promise<void> {
   console.log('Initializing daily increment scheduler...');
   console.log('Daily increments scheduled for 3am, 9am, 12pm, 3pm, and 6pm UTC');
   
-  // Check for missed schedules immediately on startup
-  await checkAndRunMissedDailyIncrements();
+  // Skip missed schedules on startup to prevent blocking server initialization
+  // Missed collections will be handled during regular interval checks
+  console.log('Skipping missed increment check on startup for faster server initialization');
   
   // Check every 30 minutes for any new missed schedules
   const intervalMinutes = 30;
