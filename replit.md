@@ -102,6 +102,7 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Responsive design with benefits icons and prominent "Sign Up Free" CTA button
 - Strategic positioning to maximize visibility and encourage account creation
 - Minimal space usage while maintaining strong visual appeal
+- Fixed authentication redirect issue in banner button to use correct Google OAuth endpoint
 
 ### June 19, 2025 - Results Page Currency Symbol Enhancement
 - Enhanced results pages to display proper currency symbols instead of currency codes

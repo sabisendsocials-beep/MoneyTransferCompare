@@ -43,7 +43,7 @@ const AccountCreationBanner = () => {
             <Button 
               size="sm" 
               className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 h-7"
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => window.location.href = '/api/auth/google'}
             >
               Sign Up Free
             </Button>
