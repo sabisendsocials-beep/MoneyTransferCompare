@@ -16,15 +16,30 @@ export const SimpleComparisonCard = ({
   fromCurrency,
   toCurrency,
 }: SimpleComparisonCardProps) => {
-  // Format currency with proper formatting
+  // Currency symbol mapping
+  const getCurrencySymbol = (currencyCode: string): string => {
+    const symbols: { [key: string]: string } = {
+      'GBP': '£',
+      'EUR': '€',
+      'USD': '$',
+      'NGN': '₦',
+      'KES': 'KSh',
+      'GHS': '₵',
+      'INR': '₹',
+      'PKR': '₨'
+    };
+    return symbols[currencyCode] || currencyCode;
+  };
+
+  // Format currency with proper symbols
   const formatCurrency = (value: number, currency: string) => {
-    const formatter = new Intl.NumberFormat(currency === 'GBP' ? 'en-GB' : 'en-NG', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'NGN' ? 0 : 2,
-      maximumFractionDigits: currency === 'NGN' ? 0 : 2,
-    });
-    return formatter.format(value);
+    const symbol = getCurrencySymbol(currency);
+    const isAfricanCurrency = ['NGN', 'KES', 'GHS'].includes(currency);
+    const formatted = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: isAfricanCurrency ? 0 : 2,
+      maximumFractionDigits: isAfricanCurrency ? 0 : 2,
+    }).format(value);
+    return `${symbol}${formatted}`;
   };
   
   // Format rate with 4 decimal places
