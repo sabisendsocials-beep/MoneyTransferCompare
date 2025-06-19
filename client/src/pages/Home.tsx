@@ -11,6 +11,7 @@ import CountryNavigationSection from "@/components/CountryNavigationSection";
 import { PersonalizedDashboard } from "@/components/PersonalizedDashboard";
 import { MarketCommentary } from "@/components/MarketCommentary";
 import SabiBuzzToast from "@/components/SabiBuzzToast";
+import AccountCreationBanner from "@/components/AccountCreationBanner";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
 
@@ -73,6 +74,9 @@ const Home = () => {
         canonicalUrl="https://sabisend.com"
         structuredData={structuredData}
       />
+      
+      {/* Account Creation Encouragement Banner */}
+      <AccountCreationBanner />
       
       {/* Sabi Buzz Toast - Dismissible notification */}
       <SabiBuzzToast fromCurrency="GBP" toCurrency="NGN" />

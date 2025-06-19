@@ -96,6 +96,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### June 19, 2025 - Account Creation Encouragement Banner
+- Added compact AccountCreationBanner component above Hero section for non-logged-in users
+- Features clear value proposition highlighting personalized features (alerts, trends, saved preferences)
+- Responsive design with benefits icons and prominent "Sign Up Free" CTA button
+- Strategic positioning to maximize visibility and encourage account creation
+- Minimal space usage while maintaining strong visual appeal
+
 ### June 19, 2025 - Results Page Currency Symbol Enhancement
 - Enhanced results pages to display proper currency symbols instead of currency codes
 - Updated EnhancedComparisonResults component to accept dynamic fromCurrency/toCurrency props
