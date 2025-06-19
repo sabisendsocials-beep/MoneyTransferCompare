@@ -21,6 +21,21 @@ const Results = () => {
     fromCurrency: defaultFromCurrency,
     toCurrency: defaultToCurrency
   });
+
+  // Currency symbol mapping
+  const getCurrencySymbol = (currencyCode: string): string => {
+    const symbols: { [key: string]: string } = {
+      'GBP': '£',
+      'EUR': '€',
+      'USD': '$',
+      'NGN': '₦',
+      'KES': 'KSh',
+      'GHS': '₵',
+      'INR': '₹',
+      'PKR': '₨'
+    };
+    return symbols[currencyCode] || currencyCode;
+  };
   
   useEffect(() => {
     // Get URL parameters from calculator FIRST
@@ -116,7 +131,7 @@ const Results = () => {
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Best Money Transfer Options</h1>
       <p className="mb-8 text-gray-600">
-        Comparing the best rates for sending <strong>{transferParams.fromCurrency === 'GBP' ? '£' : transferParams.fromCurrency === 'EUR' ? '€' : '$'}{transferParams.amount.toFixed(2)} {transferParams.fromCurrency}</strong> to <strong>{transferParams.toCurrency}</strong>
+        Comparing the best rates for sending <strong>{getCurrencySymbol(transferParams.fromCurrency)}{transferParams.amount.toFixed(2)}</strong> to <strong>{transferParams.toCurrency}</strong>
       </p>
       
       {loading ? (

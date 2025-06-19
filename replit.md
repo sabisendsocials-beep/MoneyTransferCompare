@@ -96,6 +96,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### June 19, 2025 - Results Page Currency Symbol Enhancement
+- Enhanced results pages to display proper currency symbols instead of currency codes
+- Updated EnhancedComparisonResults component to accept dynamic fromCurrency/toCurrency props
+- Implemented comprehensive currency symbol mapping for all supported currencies (£, €, $, ₦, KSh, ₵, ₹, ₨)
+- Results now format amounts with appropriate symbols and decimal precision for each currency type
+- Improved visual presentation and user experience across all currency corridors
+
 ### June 19, 2025 - Homepage Calculator Navigation Fix
 - Fixed homepage calculator defaulting to GBP/NGN regardless of user currency selection
 - Applied same pattern used in PersonalizedDashboard for consistent navigation behavior
