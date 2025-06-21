@@ -75,7 +75,7 @@ async function getTodayCachedCommentary(currencyPair: string): Promise<string | 
 async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string): Promise<MarketSnapshot> {
   const currencyPair = `${fromCurrency}/${toCurrency}`;
   
-  // Get current rates with provider names
+  // Get current rates with provider names - include all rates, not just verified
   const currentRatesWithProviders = await db.select({
     rate: exchangeRates.rate,
     providerName: providers.name,
@@ -86,7 +86,7 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     .where(and(
       eq(exchangeRates.from_currency, fromCurrency),
       eq(exchangeRates.to_currency, toCurrency),
-      eq(exchangeRates.verified, true)
+      sql`${exchangeRates.rate} > 0`
     ));
 
   // Get recent rate trends for movement analysis
@@ -109,14 +109,27 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     movement = changePercent > 0 ? 'up' : 'down';
   }
 
-  // Find best provider rate
-  const verifiedRates = currentRatesWithProviders.filter(r => r.verified && r.rate > 0);
-  const bestRate = Math.max(...verifiedRates.map(r => r.rate));
-  const bestProvider = verifiedRates.find(r => r.rate === bestRate)?.providerName || 'Unknown';
+  // Find best provider rate from all available rates
+  const validRates = currentRatesWithProviders.filter(r => r.rate > 0 && r.providerName);
+  console.log(`Found ${validRates.length} provider rates for ${currencyPair}:`, validRates);
   
-  // Calculate rate spread
-  const minRate = Math.min(...verifiedRates.map(r => r.rate));
-  const rateSpread = ((bestRate - minRate) / minRate) * 100;
+  let bestRate = 0;
+  let bestProvider = 'Unknown';
+  let minRate = 0;
+  let rateSpread = 0;
+  
+  if (validRates.length > 0) {
+    bestRate = Math.max(...validRates.map(r => r.rate));
+    bestProvider = validRates.find(r => r.rate === bestRate)?.providerName || 'Unknown';
+    
+    // Calculate rate spread
+    minRate = Math.min(...validRates.map(r => r.rate));
+    rateSpread = ((bestRate - minRate) / minRate) * 100;
+  } else {
+    console.log(`No valid provider rates found for ${currencyPair}, using trend rate`);
+    bestRate = currentRate;
+    bestProvider = 'market rate';
+  }
 
   return {
     currencyPair,
@@ -321,15 +334,16 @@ export async function generateDailyCommentaryBatch(): Promise<void> {
   for (const pair of majorPairs) {
     try {
       const count = await getTodayCommentaryCount(pair);
+      console.log(`${pair} already has ${count} commentaries for today`);
       if (count === 0) {
+        console.log(`Generating commentary for ${pair}...`);
         await generateDailyCommentary(pair);
         // Add delay between currency pairs to respect rate limits
         await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        console.log(`${pair} already has ${count} commentaries for today`);
       }
     } catch (error) {
       console.error(`Failed to generate commentary for ${pair}:`, error);
+      console.error('Error details:', error);
       // Continue with other pairs even if one fails
     }
   }
