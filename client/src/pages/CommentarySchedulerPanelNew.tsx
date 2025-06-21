@@ -50,13 +50,11 @@ export default function CommentarySchedulerPanel() {
   // Query for scheduler status and cache data
   const { data: statusData, isLoading: statusLoading, error: statusError } = useQuery({
     queryKey: ['/api/commentary-scheduler/status'],
-    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Query for quota statistics
   const { data: quotaData, isLoading: quotaLoading, error: quotaError } = useQuery({
     queryKey: ['/api/commentary-scheduler/quota-stats'],
-    refetchInterval: 30000,
   });
 
   // Mutation for manual generation

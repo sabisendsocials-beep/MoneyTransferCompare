@@ -153,6 +153,7 @@ Variant ${variantNumber}/5: Provide a unique perspective focusing on ${
 Return only the commentary text, no headers or explanations.`;
 
   try {
+    console.log(`Making OpenAI request for variant ${variantNumber}...`);
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
@@ -160,9 +161,12 @@ Return only the commentary text, no headers or explanations.`;
       temperature: 0.7,
     });
 
-    return response.choices[0].message.content?.trim() || '';
+    const commentary = response.choices[0].message.content?.trim() || '';
+    console.log(`OpenAI response for variant ${variantNumber}: "${commentary}"`);
+    return commentary;
   } catch (error) {
     console.error('OpenAI API error:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     throw error;
   }
 }
@@ -175,13 +179,16 @@ async function generateDailyCommentary(currencyPair: string): Promise<void> {
   const today = getTodayDate();
   
   try {
+    console.log(`Getting market snapshot for ${currencyPair}...`);
     // Get current market snapshot
     const marketData = await getCurrentMarketSnapshot(fromCurrency, toCurrency);
+    console.log(`Market data for ${currencyPair}:`, JSON.stringify(marketData, null, 2));
     
     // Generate 4 variants (to stay within quota limits)
     const variants = [];
     for (let i = 1; i <= 4; i++) {
       try {
+        console.log(`Generating variant ${i} for ${currencyPair}...`);
         const commentary = await generateAICommentary(marketData, i);
         if (commentary) {
           variants.push({
@@ -191,6 +198,9 @@ async function generateDailyCommentary(currencyPair: string): Promise<void> {
             variant_number: i,
             market_data: JSON.stringify(marketData)
           });
+          console.log(`Successfully generated variant ${i}: "${commentary}"`);
+        } else {
+          console.log(`No commentary returned for variant ${i}`);
         }
         
         // Add delay between requests to respect rate limits
@@ -204,7 +214,9 @@ async function generateDailyCommentary(currencyPair: string): Promise<void> {
     // Store successful variants in cache
     if (variants.length > 0) {
       await db.insert(commentaryCache).values(variants);
-      console.log(`Generated ${variants.length} commentary variants for ${currencyPair}`);
+      console.log(`✅ Generated and cached ${variants.length} commentary variants for ${currencyPair}`);
+    } else {
+      console.log(`❌ No variants generated for ${currencyPair}`);
     }
     
   } catch (error) {

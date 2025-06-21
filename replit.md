@@ -104,10 +104,11 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Smart fallback system provides data-driven insights when quota limits reached
 - Automatic cleanup removes commentary older than 7 days to maintain database efficiency
 - System serves random cached variants throughout the day for content variety
-- Added comprehensive Commentary Scheduler admin panel with real-time monitoring
+- Added comprehensive Commentary Scheduler admin panel with manual refresh controls
 - Admin panel includes cache statistics, quota usage tracking, manual generation triggers
 - Integrated commentary scheduler tab into main admin interface alongside other schedulers
-- Fixed JSON parsing errors and improved API error handling for robust admin controls
+- Resolved JSON parsing errors by implementing React Query-based data fetching
+- Removed excessive auto-refresh intervals in favor of manual refresh for admin efficiency
 
 ### June 19, 2025 - Account Creation Encouragement Banner
 - Added compact AccountCreationBanner component above Hero section for non-logged-in users
