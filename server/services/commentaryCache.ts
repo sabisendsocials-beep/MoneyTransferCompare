@@ -242,12 +242,22 @@ async function generateDailyCommentary(currencyPair: string): Promise<void> {
       }
     }
     
-    // Store successful variants in cache
+    // Store successful variants in cache or generate fallback
     if (variants.length > 0) {
       await db.insert(commentaryCache).values(variants);
       console.log(`✅ Generated and cached ${variants.length} commentary variants for ${currencyPair}`);
     } else {
-      console.log(`❌ No variants generated for ${currencyPair}`);
+      console.log(`No AI variants generated for ${currencyPair}, using data-driven commentary`);
+      // Generate data-driven commentary with current provider data
+      const fallbackCommentary = generateFallbackCommentary(marketData);
+      await db.insert(commentaryCache).values({
+        currency_pair: currencyPair,
+        commentary_text: fallbackCommentary,
+        generation_date: today,
+        variant_number: 1,
+        market_data: JSON.stringify(marketData)
+      });
+      console.log(`✅ Generated fresh data-driven commentary: "${fallbackCommentary}"`);
     }
     
   } catch (error) {
@@ -357,17 +367,32 @@ export async function generateDailyCommentaryBatch(): Promise<void> {
   for (const pair of majorPairs) {
     try {
       const count = await getTodayCommentaryCount(pair);
-      console.log(`${pair} already has ${count} commentaries for today`);
-      if (count === 0) {
-        console.log(`Generating commentary for ${pair}...`);
-        await generateDailyCommentary(pair);
-        // Add delay between currency pairs to respect rate limits
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      console.log(`${pair} has ${count} commentaries for today`);
+      // Force generation for all pairs to get fresh data
+      console.log(`Generating fresh commentary for ${pair}...`);
+      const [fromCurrency, toCurrency] = pair.split('/');
+      const marketData = await getCurrentMarketSnapshot(fromCurrency, toCurrency);
+      const commentary = generateFallbackCommentary(marketData);
+      
+      // Clear existing commentaries for this pair today and insert fresh one
+      await db.delete(commentaryCache)
+        .where(and(
+          eq(commentaryCache.currency_pair, pair),
+          eq(commentaryCache.generation_date, getTodayDate())
+        ));
+      
+      await db.insert(commentaryCache).values({
+        currency_pair: pair,
+        commentary_text: commentary,
+        generation_date: getTodayDate(),
+        variant_number: 1,
+        market_data: JSON.stringify(marketData)
+      });
+      
+      console.log(`Generated fresh commentary for ${pair}: "${commentary}"`);
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.error(`Failed to generate commentary for ${pair}:`, error);
-      console.error('Error details:', error);
-      // Continue with other pairs even if one fails
     }
   }
   
