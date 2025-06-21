@@ -132,6 +132,17 @@ app.use((req, res, next) => {
     } catch (alertError) {
       log(`Error setting up rate alert scheduler: ${alertError}`);
     }
+
+    // Initialize commentary caching scheduler
+    try {
+      log("💬 Setting up commentary caching scheduler");
+      const { startCommentaryScheduler } = await import('./scheduler/commentaryScheduler');
+      startCommentaryScheduler();
+      log("✓ Commentary scheduler initialized (generates 3-5 daily commentaries at 6AM UTC)");
+      log("🔋 OpenAI quota optimized with smart caching system");
+    } catch (commentaryError) {
+      log(`Error setting up commentary scheduler: ${commentaryError}`);
+    }
     
     // Initialize Provider API scheduler
     try {

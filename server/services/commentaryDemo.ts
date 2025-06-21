@@ -191,6 +191,23 @@ function generateEntertainingFallback(data: MarketData): string {
 }
 
 /**
+ * Generate simple data-driven commentary without AI
+ */
+function generateFallbackCommentary(marketData: MarketData): string {
+  const { currencyPair, movement, changePercent, bestProvider, rateSpread } = marketData;
+  
+  if (movement === 'up' && Math.abs(changePercent) > 1) {
+    return `${currencyPair} strengthened ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} offers competitive rates.`;
+  } else if (movement === 'down' && Math.abs(changePercent) > 1) {
+    return `${currencyPair} declined ${Math.abs(changePercent).toFixed(1)}% - good opportunity with ${bestProvider}.`;
+  } else if (rateSpread > 3) {
+    return `${currencyPair} shows ${rateSpread.toFixed(1)}% spread - ${bestProvider} leads market rates.`;
+  } else {
+    return `${currencyPair} stable conditions - ${bestProvider} maintains competitive advantage.`;
+  }
+}
+
+/**
  * Generate commentary for a specific currency pair using smart caching
  */
 export async function generateCommentary(fromCurrency: string, toCurrency: string): Promise<{
