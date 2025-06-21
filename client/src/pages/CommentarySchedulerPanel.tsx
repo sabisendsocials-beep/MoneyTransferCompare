@@ -58,28 +58,50 @@ export default function CommentarySchedulerPanel() {
       
       // Fetch scheduler status and cache stats
       const statusResponse = await fetch('/api/commentary-scheduler/status');
-      const statusData = await statusResponse.json();
+      if (!statusResponse.ok) {
+        throw new Error(`HTTP ${statusResponse.status}: ${statusResponse.statusText}`);
+      }
       
-      if (statusData.success) {
-        setStatus(statusData.data.scheduler);
-        setCacheStats(statusData.data.cache.currencyPairStats || []);
-        setRecentCommentary(statusData.data.cache.recentCommentary || []);
-        setTotalEntries(statusData.data.cache.totalEntries || 0);
+      const statusText = await statusResponse.text();
+      let statusData;
+      
+      try {
+        statusData = statusText ? JSON.parse(statusText) : { success: false };
+      } catch (parseError) {
+        console.error('Failed to parse status response:', statusText);
+        throw new Error('Invalid JSON response from status endpoint');
+      }
+      
+      if (statusData.success && statusData.data) {
+        setStatus(statusData.data.scheduler || null);
+        setCacheStats(statusData.data.cache?.currencyPairStats || []);
+        setRecentCommentary(statusData.data.cache?.recentCommentary || []);
+        setTotalEntries(statusData.data.cache?.totalEntries || 0);
       }
       
       // Fetch quota statistics
       const quotaResponse = await fetch('/api/commentary-scheduler/quota-stats');
-      const quotaData = await quotaResponse.json();
-      
-      if (quotaData.success) {
-        setQuotaStats(quotaData.data);
+      if (quotaResponse.ok) {
+        const quotaText = await quotaResponse.text();
+        let quotaData;
+        
+        try {
+          quotaData = quotaText ? JSON.parse(quotaText) : { success: false };
+        } catch (parseError) {
+          console.error('Failed to parse quota response:', quotaText);
+          quotaData = { success: false };
+        }
+        
+        if (quotaData.success && quotaData.data) {
+          setQuotaStats(quotaData.data);
+        }
       }
       
     } catch (error) {
       console.error('Error fetching commentary scheduler data:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch scheduler data",
+        description: error instanceof Error ? error.message : "Failed to fetch scheduler data",
         variant: "destructive",
       });
     } finally {

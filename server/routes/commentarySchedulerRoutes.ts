@@ -50,8 +50,8 @@ router.get('/status', async (req, res) => {
         scheduler: status,
         cache: {
           totalEntries: totalEntries[0]?.count || 0,
-          currencyPairStats: cacheStats,
-          recentCommentary
+          currencyPairStats: cacheStats || [],
+          recentCommentary: recentCommentary || []
         }
       }
     });
@@ -59,7 +59,15 @@ router.get('/status', async (req, res) => {
     console.error('Error fetching commentary scheduler status:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch scheduler status'
+      error: 'Failed to fetch scheduler status',
+      data: {
+        scheduler: null,
+        cache: {
+          totalEntries: 0,
+          currencyPairStats: [],
+          recentCommentary: []
+        }
+      }
     });
   }
 });
@@ -179,7 +187,18 @@ router.get('/quota-stats', async (req, res) => {
     console.error('Error fetching quota stats:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch quota statistics'
+      error: 'Failed to fetch quota statistics',
+      data: {
+        todayGeneration: 0,
+        currencyPairsGenerated: 0,
+        estimatedTokensUsed: 0,
+        estimatedCostUSD: "0.0000",
+        quotaOptimization: {
+          beforeOptimization: "Hundreds of API calls daily (per page load)",
+          afterOptimization: "~60 API calls daily (batch generation)",
+          savingsPercent: "95%+"
+        }
+      }
     });
   }
 });
