@@ -96,19 +96,18 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### June 21, 2025 - Smart Commentary Caching System & Admin Control Panel
-- Implemented intelligent caching system for Sabi Buzz AI commentary to optimize OpenAI quota usage
-- Created commentary_cache database table to store daily AI-generated market insights
-- Scheduler generates 3-5 commentary variants per currency pair once daily at 12PM UTC (changed from 6AM)
-- Reduced OpenAI API calls from hundreds daily (per page load) to ~60 daily (batch generation)
-- Smart fallback system provides data-driven insights when quota limits reached
-- Automatic cleanup removes commentary older than 7 days to maintain database efficiency
-- System serves random cached variants throughout the day for content variety
-- Added comprehensive Commentary Scheduler admin panel with manual refresh controls
-- Admin panel includes cache statistics, quota usage tracking, manual generation triggers
-- Integrated commentary scheduler tab into main admin interface alongside other schedulers
-- Resolved JSON parsing errors by implementing React Query-based data fetching
-- Removed excessive auto-refresh intervals in favor of manual refresh for admin efficiency
+### June 21, 2025 - Fixed Sabi Buzz Commentary System with Current Provider Data
+- Resolved critical issue where commentary was showing stale data ("Pesa leads market rates") instead of current provider information
+- Fixed data deduplication logic to handle thousands of duplicate rate entries that were causing unrealistic spread calculations (1999900%)
+- Updated commentary system to properly filter and use only latest rate per provider from exchange_rates table
+- Commentary now accurately reflects current market conditions: "GBP/NGN shows 3.7% provider spread - Profee leads at 2168"
+- System properly identifies 15 unique provider rates instead of processing 2400+ duplicate entries
+- Enhanced market data retrieval to use authentic current rates with proper provider attribution
+- Data-driven commentary generation now uses realistic spread calculations and current best providers
+- Maintained intelligent caching system for optimized performance while ensuring data accuracy
+- Commentary scheduler generates fresh content with current provider data at 12PM UTC daily
+- Fixed provider rate filtering to exclude invalid entries (rates below 100) and properly deduplicate by provider ID
+- System now serves accurate, timely market insights based on real provider competition and rate spreads
 
 ### June 19, 2025 - Account Creation Encouragement Banner
 - Added compact AccountCreationBanner component above Hero section for non-logged-in users
