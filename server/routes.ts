@@ -21,6 +21,7 @@ import testRouter from './api/aceRateTest';
 import blogRouter from "./routes/blogRouter";
 import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 import rateAlertRouter from "./routes/rateAlertRoutes";
+import commentarySchedulerRouter from "./routes/commentarySchedulerRoutes";
 import { setupAuth, isAuthenticated, optionalAuth } from "./simpleAuth";
 
 

@@ -49,7 +49,7 @@ export function startCommentaryScheduler(): void {
     }
   }, 60000); // Wait 1 minute after startup
 
-  console.log('Commentary scheduler initialized - will generate daily at 6:00 AM UTC');
+  console.log('Commentary scheduler initialized - will generate daily at 12:00 PM UTC');
 }
 
 /**
@@ -69,8 +69,8 @@ function shouldRunDailyCommentaryGeneration(): boolean {
   const currentMinute = now.getUTCMinutes();
   const currentDate = getTodayDate();
 
-  // Scheduled for 6:00 AM UTC (within 30 minute window)
-  const isScheduledTime = currentHour === 6 && currentMinute <= 30;
+  // Scheduled for 12:00 PM UTC (within 30 minute window)
+  const isScheduledTime = currentHour === 12 && currentMinute <= 30;
   
   // Only run once per day
   const hasNotRunToday = lastRunDate !== currentDate;
@@ -141,8 +141,8 @@ export function getCommentarySchedulerStatus(): {
   const now = new Date();
   const nextScheduledTime = new Date();
   
-  // Set to next 6:00 AM UTC
-  nextScheduledTime.setUTCHours(6, 0, 0, 0);
+  // Set to next 12:00 PM UTC
+  nextScheduledTime.setUTCHours(12, 0, 0, 0);
   if (nextScheduledTime <= now) {
     nextScheduledTime.setUTCDate(nextScheduledTime.getUTCDate() + 1);
   }
@@ -152,6 +152,6 @@ export function getCommentarySchedulerStatus(): {
     lastRunDate,
     lastRunTimestamp: lastRunTimestamp?.toISOString() || null,
     nextScheduledTime: nextScheduledTime.toISOString(),
-    scheduledTime: '06:00 UTC'
+    scheduledTime: '12:00 UTC'
   };
 }
