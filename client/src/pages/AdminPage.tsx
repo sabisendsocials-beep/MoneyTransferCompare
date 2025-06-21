@@ -802,6 +802,11 @@ export default function AdminPage() {
           <DailyIncrementSchedulerPanel />
         </TabsContent>
         
+        {/* Commentary Scheduler Tab */}
+        <TabsContent value="commentary-scheduler">
+          <CommentarySchedulerPanel />
+        </TabsContent>
+        
         {/* Data Sources Tab */}
         <TabsContent value="sources">
           <Card>
