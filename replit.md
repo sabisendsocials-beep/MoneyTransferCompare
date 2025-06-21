@@ -96,14 +96,18 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### June 21, 2025 - Smart Commentary Caching System (OpenAI Quota Optimization)
+### June 21, 2025 - Smart Commentary Caching System & Admin Control Panel
 - Implemented intelligent caching system for Sabi Buzz AI commentary to optimize OpenAI quota usage
 - Created commentary_cache database table to store daily AI-generated market insights
-- Scheduler generates 3-5 commentary variants per currency pair once daily at 6AM UTC instead of per-request
+- Scheduler generates 3-5 commentary variants per currency pair once daily at 12PM UTC (changed from 6AM)
 - Reduced OpenAI API calls from hundreds daily (per page load) to ~60 daily (batch generation)
 - Smart fallback system provides data-driven insights when quota limits reached
 - Automatic cleanup removes commentary older than 7 days to maintain database efficiency
 - System serves random cached variants throughout the day for content variety
+- Added comprehensive Commentary Scheduler admin panel with real-time monitoring
+- Admin panel includes cache statistics, quota usage tracking, manual generation triggers
+- Integrated commentary scheduler tab into main admin interface alongside other schedulers
+- Fixed JSON parsing errors and improved API error handling for robust admin controls
 
 ### June 19, 2025 - Account Creation Encouragement Banner
 - Added compact AccountCreationBanner component above Hero section for non-logged-in users
