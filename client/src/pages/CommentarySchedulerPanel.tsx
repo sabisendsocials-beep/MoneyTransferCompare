@@ -55,45 +55,78 @@ export default function CommentarySchedulerPanel() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching commentary scheduler data...');
       
       // Fetch scheduler status and cache stats
       const statusResponse = await fetch('/api/commentary-scheduler/status');
+      console.log('Status response:', statusResponse.status, statusResponse.statusText);
+      
       if (!statusResponse.ok) {
         throw new Error(`HTTP ${statusResponse.status}: ${statusResponse.statusText}`);
       }
       
       const statusText = await statusResponse.text();
+      console.log('Status response text:', statusText?.substring(0, 200) + '...');
+      
       let statusData;
       
-      try {
-        statusData = statusText ? JSON.parse(statusText) : { success: false };
-      } catch (parseError) {
-        console.error('Failed to parse status response:', statusText);
-        throw new Error('Invalid JSON response from status endpoint');
+      if (!statusText || statusText.trim() === '') {
+        console.warn('Empty status response, using defaults');
+        statusData = { success: false, data: null };
+      } else {
+        try {
+          statusData = JSON.parse(statusText);
+          console.log('Parsed status data:', statusData);
+        } catch (parseError) {
+          console.error('Failed to parse status response:', statusText);
+          console.error('Parse error:', parseError);
+          statusData = { success: false, data: null, error: 'JSON parse failed' };
+        }
       }
       
-      if (statusData.success && statusData.data) {
+      if (statusData?.success && statusData?.data) {
         setStatus(statusData.data.scheduler || null);
         setCacheStats(statusData.data.cache?.currencyPairStats || []);
         setRecentCommentary(statusData.data.cache?.recentCommentary || []);
-        setTotalEntries(statusData.data.cache?.totalEntries || 0);
+        setTotalEntries(parseInt(statusData.data.cache?.totalEntries) || 0);
+      } else {
+        console.warn('Status data unsuccessful or missing:', statusData);
+        // Set default values
+        setStatus(null);
+        setCacheStats([]);
+        setRecentCommentary([]);
+        setTotalEntries(0);
       }
       
       // Fetch quota statistics
       const quotaResponse = await fetch('/api/commentary-scheduler/quota-stats');
+      console.log('Quota response:', quotaResponse.status, quotaResponse.statusText);
+      
       if (quotaResponse.ok) {
         const quotaText = await quotaResponse.text();
+        console.log('Quota response text:', quotaText?.substring(0, 200) + '...');
+        
         let quotaData;
         
-        try {
-          quotaData = quotaText ? JSON.parse(quotaText) : { success: false };
-        } catch (parseError) {
-          console.error('Failed to parse quota response:', quotaText);
-          quotaData = { success: false };
+        if (!quotaText || quotaText.trim() === '') {
+          console.warn('Empty quota response, using defaults');
+          quotaData = { success: false, data: null };
+        } else {
+          try {
+            quotaData = JSON.parse(quotaText);
+            console.log('Parsed quota data:', quotaData);
+          } catch (parseError) {
+            console.error('Failed to parse quota response:', quotaText);
+            console.error('Parse error:', parseError);
+            quotaData = { success: false, data: null, error: 'JSON parse failed' };
+          }
         }
         
-        if (quotaData.success && quotaData.data) {
+        if (quotaData?.success && quotaData?.data) {
           setQuotaStats(quotaData.data);
+        } else {
+          console.warn('Quota data unsuccessful or missing:', quotaData);
+          setQuotaStats(null);
         }
       }
       
@@ -104,6 +137,13 @@ export default function CommentarySchedulerPanel() {
         description: error instanceof Error ? error.message : "Failed to fetch scheduler data",
         variant: "destructive",
       });
+      
+      // Set safe defaults on error
+      setStatus(null);
+      setCacheStats([]);
+      setRecentCommentary([]);
+      setTotalEntries(0);
+      setQuotaStats(null);
     } finally {
       setLoading(false);
     }
