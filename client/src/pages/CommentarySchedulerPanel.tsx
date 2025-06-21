@@ -58,15 +58,25 @@ export default function CommentarySchedulerPanel() {
       console.log('Fetching commentary scheduler data...');
       
       // Fetch scheduler status and cache stats
-      const statusResponse = await fetch('/api/commentary-scheduler/status');
+      const statusResponse = await fetch('/api/commentary-scheduler/status', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       console.log('Status response:', statusResponse.status, statusResponse.statusText);
+      console.log('Status response headers:', Object.fromEntries(statusResponse.headers.entries()));
       
       if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        console.error('Error response body:', errorText);
         throw new Error(`HTTP ${statusResponse.status}: ${statusResponse.statusText}`);
       }
       
       const statusText = await statusResponse.text();
-      console.log('Status response text:', statusText?.substring(0, 200) + '...');
+      console.log('Status response text length:', statusText?.length);
+      console.log('Status response text preview:', statusText?.substring(0, 500));
       
       let statusData;
       
@@ -99,12 +109,20 @@ export default function CommentarySchedulerPanel() {
       }
       
       // Fetch quota statistics
-      const quotaResponse = await fetch('/api/commentary-scheduler/quota-stats');
+      const quotaResponse = await fetch('/api/commentary-scheduler/quota-stats', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       console.log('Quota response:', quotaResponse.status, quotaResponse.statusText);
+      console.log('Quota response headers:', Object.fromEntries(quotaResponse.headers.entries()));
       
       if (quotaResponse.ok) {
         const quotaText = await quotaResponse.text();
-        console.log('Quota response text:', quotaText?.substring(0, 200) + '...');
+        console.log('Quota response text length:', quotaText?.length);
+        console.log('Quota response text preview:', quotaText?.substring(0, 500));
         
         let quotaData;
         
