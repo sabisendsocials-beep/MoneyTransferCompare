@@ -61,9 +61,14 @@ export default function CommentarySchedulerPanel() {
 
   // Mutation for manual generation
   const generateMutation = useMutation({
-    mutationFn: () => apiRequest('/api/commentary-scheduler/generate', {
-      method: 'POST',
-    }),
+    mutationFn: async () => {
+      const response = await fetch('/api/commentary-scheduler/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Success",
@@ -84,9 +89,14 @@ export default function CommentarySchedulerPanel() {
 
   // Mutation for cache cleanup
   const cleanupMutation = useMutation({
-    mutationFn: () => apiRequest('/api/commentary-scheduler/cleanup', {
-      method: 'DELETE',
-    }),
+    mutationFn: async () => {
+      const response = await fetch('/api/commentary-scheduler/cleanup', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Success",
@@ -103,11 +113,11 @@ export default function CommentarySchedulerPanel() {
     },
   });
 
-  const status: SchedulerStatus | null = statusData?.data?.scheduler || null;
-  const cacheStats: CacheStats[] = statusData?.data?.cache?.currencyPairStats || [];
-  const recentCommentary: CommentaryEntry[] = statusData?.data?.cache?.recentCommentary || [];
-  const totalEntries: number = parseInt(statusData?.data?.cache?.totalEntries) || 0;
-  const quotaStats: QuotaStats | null = quotaData?.data || null;
+  const status: SchedulerStatus | null = (statusData as any)?.data?.scheduler || null;
+  const cacheStats: CacheStats[] = (statusData as any)?.data?.cache?.currencyPairStats || [];
+  const recentCommentary: CommentaryEntry[] = (statusData as any)?.data?.cache?.recentCommentary || [];
+  const totalEntries: number = parseInt((statusData as any)?.data?.cache?.totalEntries) || 0;
+  const quotaStats: QuotaStats | null = (quotaData as any)?.data || null;
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';

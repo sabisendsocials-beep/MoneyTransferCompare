@@ -17,7 +17,7 @@ import { ProviderManagement } from "@/components/ProviderManagement";
 import ScraperStatusPanel from "@/components/ScraperStatusPanel";
 import ProviderApiSchedulerPanel from "@/components/ProviderApiSchedulerPanel";
 import DailyIncrementSchedulerPanel from "@/components/DailyIncrementSchedulerPanel";
-import CommentarySchedulerPanel from "@/pages/CommentarySchedulerPanel";
+import CommentarySchedulerPanel from "@/pages/CommentarySchedulerPanelNew";
 
 // LatestRatesTable component to display the latest rates for each provider
 const LatestRatesTable = () => {
