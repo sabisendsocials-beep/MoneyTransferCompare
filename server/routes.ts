@@ -63,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', rateAlertRouter);
   
   // Register commentary scheduler admin routes
-  app.use('/api', commentarySchedulerRouter);
+  app.use('/api/commentary-scheduler', commentarySchedulerRouter);
   
   // Authentication endpoints for email/password auth
   app.get('/api/auth/status', optionalAuth, (req: any, res) => {
