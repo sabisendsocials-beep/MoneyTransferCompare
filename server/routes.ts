@@ -62,6 +62,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register rate alert routes
   app.use('/api', rateAlertRouter);
   
+  // Register commentary scheduler admin routes
+  app.use('/api', commentarySchedulerRouter);
+  
   // Authentication endpoints for email/password auth
   app.get('/api/auth/status', optionalAuth, (req: any, res) => {
     const isAuthenticated = req.isAuthenticated();

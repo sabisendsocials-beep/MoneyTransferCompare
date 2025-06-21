@@ -23,6 +23,7 @@ import BlogAdmin from "@/pages/BlogAdmin";
 import Profile from "@/pages/Profile";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import CommentarySchedulerPanel from "@/pages/CommentarySchedulerPanel";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -70,6 +71,7 @@ function Router() {
           <Route path="/how-it-works" component={HowItWorks} />
           <Route path="/contact" component={ContactUs} />
           <Route path="/admin" component={AdminPage} />
+          <Route path="/admin/commentary-scheduler" component={CommentarySchedulerPanel} />
           <Route path="/bulk-rates" component={BulkRateManager} />
           
           {/* Blog Routes */}

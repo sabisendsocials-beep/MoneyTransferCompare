@@ -60,6 +60,7 @@ export function MarketCommentary({ fromCurrency = "GBP", toCurrency = "NGN" }: C
 
   // Determine trend icon based on commentary content with more entertainment focus
   const getTrendIcon = (text: string) => {
+    if (!text || typeof text !== 'string') return <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />;
     const lowerText = text.toLowerCase();
     if (lowerText.includes('glow-up') || lowerText.includes('flexing') || lowerText.includes('superhero') || lowerText.includes('main character') || lowerText.includes('violence') || lowerText.includes('up') || lowerText.includes('gain')) {
       return <Flame className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />;
