@@ -75,19 +75,22 @@ async function getTodayCachedCommentary(currencyPair: string): Promise<string | 
 async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string): Promise<MarketSnapshot> {
   const currencyPair = `${fromCurrency}/${toCurrency}`;
   
-  // Get current rates with provider names - include all rates, not just verified
+  // Get current rates with provider names - get only latest rate per provider
   const currentRatesWithProviders = await db.select({
     rate: exchangeRates.rate,
     providerName: providers.name,
     verified: exchangeRates.verified,
+    providerId: exchangeRates.provider_id,
+    updatedAt: exchangeRates.timestamp,
   })
     .from(exchangeRates)
     .leftJoin(providers, eq(exchangeRates.provider_id, providers.id))
     .where(and(
       eq(exchangeRates.from_currency, fromCurrency),
       eq(exchangeRates.to_currency, toCurrency),
-      sql`${exchangeRates.rate} > 0`
-    ));
+      sql`${exchangeRates.rate} > 100` // Filter out invalid rates
+    ))
+    .orderBy(sql`${exchangeRates.timestamp} DESC`);
 
   // Get recent rate trends for movement analysis
   const recentTrends = await db.select()
@@ -109,9 +112,22 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     movement = changePercent > 0 ? 'up' : 'down';
   }
 
-  // Find best provider rate from all available rates
-  const validRates = currentRatesWithProviders.filter(r => r.rate > 0 && r.providerName);
-  console.log(`Found ${validRates.length} provider rates for ${currencyPair}:`, validRates);
+  // Deduplicate by taking latest rate per provider
+  const latestRatesByProvider = new Map();
+  currentRatesWithProviders.forEach(rate => {
+    if (rate.rate > 0 && rate.providerName && rate.providerId) {
+      const existing = latestRatesByProvider.get(rate.providerId);
+      if (!existing || new Date(rate.updatedAt || 0) > new Date(existing.updatedAt || 0)) {
+        latestRatesByProvider.set(rate.providerId, rate);
+      }
+    }
+  });
+  
+  const validRates = Array.from(latestRatesByProvider.values());
+  console.log(`Found ${validRates.length} unique provider rates for ${currencyPair}:`);
+  validRates.forEach(rate => {
+    console.log(`  ${rate.providerName}: ${rate.rate} (verified: ${rate.verified})`);
+  });
   
   let bestRate = 0;
   let bestProvider = 'Unknown';
@@ -125,6 +141,8 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     // Calculate rate spread
     minRate = Math.min(...validRates.map(r => r.rate));
     rateSpread = ((bestRate - minRate) / minRate) * 100;
+    
+    console.log(`Best provider: ${bestProvider} with rate ${bestRate}, spread: ${rateSpread.toFixed(1)}%`);
   } else {
     console.log(`No valid provider rates found for ${currencyPair}, using trend rate`);
     bestRate = currentRate;
@@ -286,16 +304,21 @@ export async function getSmartCommentary(fromCurrency: string, toCurrency: strin
  * Generate simple data-driven commentary without AI
  */
 function generateFallbackCommentary(marketData: MarketSnapshot): string {
-  const { currencyPair, movement, changePercent, bestProvider, rateSpread } = marketData;
+  const { currencyPair, movement, changePercent, bestProvider, rateSpread, bestRate } = marketData;
+  
+  // Ensure realistic spread calculation
+  const validSpread = rateSpread > 0 && rateSpread < 100 ? rateSpread : 0;
   
   if (movement === 'up' && Math.abs(changePercent) > 1) {
-    return `${currencyPair} strengthened ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} offers competitive rates.`;
+    return `${currencyPair} strengthened ${Math.abs(changePercent).toFixed(1)}% today - ${bestProvider} offers competitive rates at ${bestRate.toFixed(0)}.`;
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
-    return `${currencyPair} declined ${Math.abs(changePercent).toFixed(1)}% - good opportunity with ${bestProvider}.`;
-  } else if (rateSpread > 3) {
-    return `${currencyPair} shows ${rateSpread.toFixed(1)}% spread - ${bestProvider} leads market rates.`;
+    return `${currencyPair} declined ${Math.abs(changePercent).toFixed(1)}% - good opportunity with ${bestProvider} at ${bestRate.toFixed(0)}.`;
+  } else if (validSpread > 2) {
+    return `${currencyPair} shows ${validSpread.toFixed(1)}% provider spread - ${bestProvider} leads at ${bestRate.toFixed(0)}.`;
+  } else if (validSpread > 0) {
+    return `${currencyPair} competitive market - ${bestProvider} offers best rate at ${bestRate.toFixed(0)}.`;
   } else {
-    return `${currencyPair} stable conditions - ${bestProvider} maintains competitive advantage.`;
+    return `${currencyPair} stable conditions - ${bestProvider} maintains strong position.`;
   }
 }
 
