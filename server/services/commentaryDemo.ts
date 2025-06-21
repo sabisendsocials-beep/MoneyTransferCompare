@@ -191,25 +191,42 @@ function generateEntertainingFallback(data: MarketData): string {
 }
 
 /**
- * Generate commentary for a specific currency pair using real market data
+ * Generate commentary for a specific currency pair using smart caching
  */
 export async function generateCommentary(fromCurrency: string, toCurrency: string): Promise<{
   currencyPair: string;
   commentary: string;
   timestamp: string;
 }> {
-  console.log(`Generating commentary for ${fromCurrency}/${toCurrency}...`);
+  console.log(`Getting cached commentary for ${fromCurrency}/${toCurrency}...`);
   
-  const marketData = await getRealMarketData(fromCurrency, toCurrency);
-  const commentary = await generateMarketCommentary(marketData);
-  
-  console.log(`Generated: "${commentary}"`);
-  
-  return {
-    currencyPair: marketData.currencyPair,
-    commentary,
-    timestamp: new Date().toISOString()
-  };
+  try {
+    // Use smart caching system instead of generating on every request
+    const { getSmartCommentary } = await import('./commentaryCache');
+    const commentary = await getSmartCommentary(fromCurrency, toCurrency);
+    
+    console.log(`Served from cache: "${commentary}"`);
+    
+    return {
+      currencyPair: `${fromCurrency}/${toCurrency}`,
+      commentary,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.log(`Cache failed, using fallback for ${fromCurrency}/${toCurrency}`);
+    
+    // Fallback to real market data analysis
+    const marketData = await getRealMarketData(fromCurrency, toCurrency);
+    const commentary = generateFallbackCommentary(marketData);
+    
+    console.log(`Generated fallback: "${commentary}"`);
+    
+    return {
+      currencyPair: marketData.currencyPair,
+      commentary,
+      timestamp: new Date().toISOString()
+    };
+  }
 }
 
 /**

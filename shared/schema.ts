@@ -298,6 +298,25 @@ export const insertContactSubmissionSchema = createInsertSchema(contactSubmissio
 export type InsertContactSubmission = z.infer<typeof insertContactSubmissionSchema>;
 export type ContactSubmission = typeof contactSubmissions.$inferSelect;
 
+// Commentary Cache schema - for storing daily AI-generated market insights
+export const commentaryCache = pgTable("commentary_cache", {
+  id: serial("id").primaryKey(),
+  currency_pair: text("currency_pair").notNull(), // e.g., "GBP/NGN"
+  commentary_text: text("commentary_text").notNull(),
+  generation_date: date("generation_date").notNull(), // Date the commentary was generated
+  variant_number: integer("variant_number").notNull(), // 1-5 for daily variants
+  market_data: text("market_data"), // JSON snapshot of market conditions when generated
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCommentaryCacheSchema = createInsertSchema(commentaryCache).omit({
+  id: true,
+  created_at: true,
+});
+
+export type InsertCommentaryCache = z.infer<typeof insertCommentaryCacheSchema>;
+export type CommentaryCache = typeof commentaryCache.$inferSelect;
+
 // Contact form validation schema for frontend
 export const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
