@@ -215,9 +215,9 @@ async function generateDailyCommentary(currencyPair: string): Promise<void> {
     const marketData = await getCurrentMarketSnapshot(fromCurrency, toCurrency);
     console.log(`Market data for ${currencyPair}:`, JSON.stringify(marketData, null, 2));
     
-    // Generate 4 variants (to stay within quota limits)
+    // Generate 5 variants for variety
     const variants = [];
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       try {
         console.log(`Generating variant ${i} for ${currencyPair}...`);
         const commentary = await generateAICommentary(marketData, i);
@@ -374,23 +374,41 @@ export async function generateDailyCommentaryBatch(): Promise<void> {
       const marketData = await getCurrentMarketSnapshot(fromCurrency, toCurrency);
       const commentary = generateFallbackCommentary(marketData);
       
-      // Clear existing commentaries for this pair today and insert fresh one
+      // Clear existing commentaries for this pair today
       await db.delete(commentaryCache)
         .where(and(
           eq(commentaryCache.currency_pair, pair),
           eq(commentaryCache.generation_date, getTodayDate())
         ));
       
-      await db.insert(commentaryCache).values({
-        currency_pair: pair,
-        commentary_text: commentary,
-        generation_date: getTodayDate(),
-        variant_number: 1,
-        market_data: JSON.stringify(marketData)
-      });
+      // Generate 5 variants with different perspectives
+      const variants = [];
+      for (let i = 1; i <= 5; i++) {
+        let variantCommentary = commentary;
+        
+        // Create variations based on different data aspects
+        if (i === 2 && marketData.rateSpread > 1) {
+          variantCommentary = `${pair} market spread at ${marketData.rateSpread.toFixed(1)}% - ${marketData.bestProvider} leading competitive rates.`;
+        } else if (i === 3 && marketData.bestRate > 0) {
+          variantCommentary = `${marketData.bestProvider} sets pace for ${pair} transfers at ${marketData.bestRate.toFixed(0)} rate.`;
+        } else if (i === 4) {
+          variantCommentary = `${pair} competition heating up - ${marketData.bestProvider} maintains advantage.`;
+        } else if (i === 5) {
+          variantCommentary = `Current ${pair} trends favor ${marketData.bestProvider} for optimal transfer value.`;
+        }
+        
+        variants.push({
+          currency_pair: pair,
+          commentary_text: variantCommentary,
+          generation_date: getTodayDate(),
+          variant_number: i,
+          market_data: JSON.stringify(marketData)
+        });
+      }
       
-      console.log(`Generated fresh commentary for ${pair}: "${commentary}"`);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await db.insert(commentaryCache).values(variants);
+      console.log(`Generated 5 commentary variants for ${pair}`);
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error(`Failed to generate commentary for ${pair}:`, error);
     }
