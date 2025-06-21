@@ -407,7 +407,7 @@ export async function generateDailyCommentaryBatch(): Promise<void> {
       }
       
       await db.insert(commentaryCache).values(variants);
-      console.log(`Generated 5 commentary variants for ${pair}`);
+      console.log(`Generated 5 commentary variants for ${pair}: "${variants[0].commentary_text}"`);
       await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error(`Failed to generate commentary for ${pair}:`, error);

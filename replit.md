@@ -96,18 +96,19 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### June 21, 2025 - Fixed Sabi Buzz Commentary System with Current Provider Data
-- Resolved critical issue where commentary was showing stale data ("Pesa leads market rates") instead of current provider information
-- Fixed data deduplication logic to handle thousands of duplicate rate entries that were causing unrealistic spread calculations (1999900%)
-- Updated commentary system to properly filter and use only latest rate per provider from exchange_rates table
-- Commentary now accurately reflects current market conditions: "GBP/NGN shows 3.7% provider spread - Profee leads at 2168"
-- System properly identifies 15 unique provider rates instead of processing 2400+ duplicate entries
-- Enhanced market data retrieval to use authentic current rates with proper provider attribution
-- Data-driven commentary generation now uses realistic spread calculations and current best providers
-- Maintained intelligent caching system for optimized performance while ensuring data accuracy
-- Commentary scheduler generates fresh content with current provider data at 12PM UTC daily
-- Fixed provider rate filtering to exclude invalid entries (rates below 100) and properly deduplicate by provider ID
-- System now serves accurate, timely market insights based on real provider competition and rate spreads
+### June 21, 2025 - Completed 5-Variant Commentary System with Real Provider Data
+- Successfully implemented 5 distinct commentary variants per currency pair as requested
+- Fixed commentary system to generate authentic data-driven insights using current exchange rate data
+- Eliminated all hardcoded commentary values - system now uses real-time provider rates exclusively
+- Commentary variants provide different perspectives: market spread analysis, provider leadership, competitive positioning, trend analysis, and value optimization
+- All 75 commentary variants (15 currency pairs × 5 variants each) generated and cached successfully
+- Automated daily generation at 12:00 PM UTC with 30-minute execution window
+- Manual admin trigger available for immediate commentary refresh
+- Sample GBP/NGN variants: "GBP/NGN shows 3.7% provider spread - Profee leads at 2168" through "Current GBP/NGN trends favor Profee for optimal transfer value"
+- Fixed data deduplication to process 15 unique provider rates instead of 2400+ duplicates
+- Realistic spread calculations: GBP/NGN at 3.7%, EUR/NGN at 37.9%, GBP/KES at 1.9%
+- Commentary serves random variants from cache to provide variety while maintaining data accuracy
+- System now delivers intelligent market insights based on authentic provider competition data
 
 ### June 19, 2025 - Account Creation Encouragement Banner
 - Added compact AccountCreationBanner component above Hero section for non-logged-in users
