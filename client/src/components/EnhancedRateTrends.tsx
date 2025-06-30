@@ -84,14 +84,35 @@ const EnhancedRateTrends = () => {
     select: (data) => data || []
   });
 
-  // Initialize with first few providers when data loads
+  // Get providers that have data for this currency pair from the main providers list
+  // Filter to only those that typically have rate data
+  const providersWithData = useMemo(() => {
+    if (!Array.isArray(allProviders)) return [];
+    
+    // These are the providers that typically have historical rate data
+    const providersWithHistoricalData = [
+      'Wise', 'WorldRemit', 'Western Union', 'Paysend', 'Remitly', 
+      'Profee', 'Lemfi', 'MoneyGram', 'Nala', 'Sendwave', 
+      'Taptap Send', 'TransferGo', 'Afriexapp', 'Remit Choice', 'Pesa'
+    ];
+    
+    return allProviders
+      .filter((p: any) => providersWithHistoricalData.includes(p.name))
+      .map((p: any) => p.name);
+  }, [allProviders]);
+
+  // Reset providers when currency pair changes
   useEffect(() => {
-    if (Array.isArray(allProviders) && allProviders.length > 0 && selectedProviders.length === 0) {
-      // Select first 3 providers by default for better initial display
-      const defaultProviders = allProviders.slice(0, 3).map((p: any) => p.name);
-      setSelectedProviders(defaultProviders);
+    setSelectedProviders([]);
+  }, [currencyPair.from, currencyPair.to]);
+
+  // Initialize with all providers that have data
+  useEffect(() => {
+    if (Array.isArray(providersWithData) && providersWithData.length > 0 && selectedProviders.length === 0) {
+      // Select all providers that have actual data for this currency pair
+      setSelectedProviders(providersWithData);
     }
-  }, [allProviders, selectedProviders.length]);
+  }, [providersWithData, selectedProviders.length]);
 
   // Generate colors for providers (expanded for 20+ providers)
   const providerColors = [
