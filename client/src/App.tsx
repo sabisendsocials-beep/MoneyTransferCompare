@@ -24,6 +24,7 @@ import Profile from "@/pages/Profile";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import CommentarySchedulerPanel from "@/pages/CommentarySchedulerPanel";
+import EnhancedTrendsTest from "@/pages/EnhancedTrendsTest";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -72,6 +73,9 @@ function Router() {
           <Route path="/contact" component={ContactUs} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/admin/commentary-scheduler" component={CommentarySchedulerPanel} />
+          
+          {/* Test Pages */}
+          <Route path="/enhanced-trends-test" component={EnhancedTrendsTest} />
           <Route path="/bulk-rates" component={BulkRateManager} />
           
           {/* Blog Routes */}

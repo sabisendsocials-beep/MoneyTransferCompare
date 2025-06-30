@@ -84,7 +84,7 @@ export async function getProviderRateTrends(req: Request, res: Response): Promis
           rate: trend.rate,
           provider_name: trend.provider_name,
           provider_id: trend.provider_id,
-          verification_status: trend.verification_status
+          verification_status: Boolean(trend.verification_status)
         });
       }
     });
