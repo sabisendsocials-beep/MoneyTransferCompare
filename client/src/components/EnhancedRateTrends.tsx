@@ -18,6 +18,10 @@ import {
   Calendar,
   TrendingUp,
   Building2,
+  ChevronDown,
+  Check,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   Select,
@@ -29,6 +33,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type PeriodOption = {
   label: string;
