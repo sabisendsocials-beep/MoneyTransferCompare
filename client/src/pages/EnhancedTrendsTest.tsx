@@ -84,7 +84,7 @@ export default function EnhancedTrendsTest() {
         </div>
 
         {/* Enhanced Rate Trends Component */}
-        <EnhancedRateTrends />
+        <ImprovedEnhancedRateTrends />
 
         {/* Feature Details */}
         <div className="mt-12">

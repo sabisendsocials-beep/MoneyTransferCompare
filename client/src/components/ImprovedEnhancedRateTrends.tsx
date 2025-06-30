@@ -137,10 +137,10 @@ export default function ImprovedEnhancedRateTrends() {
 
   // Combine and process chart data
   useEffect(() => {
-    const combinedData = new Map<string, ChartDataPoint>();
+    const combinedData = new Map<string, any>();
 
     // Add base rates
-    if (showBaseRates && baseRateTrends.length > 0) {
+    if (showBaseRates && Array.isArray(baseRateTrends) && baseRateTrends.length > 0) {
       baseRateTrends.forEach((point: any) => {
         const existing = combinedData.get(point.date) || { date: point.date };
         existing.baseRate = point.rate;
@@ -149,7 +149,7 @@ export default function ImprovedEnhancedRateTrends() {
     }
 
     // Add provider rates
-    if (providerRateTrends.length > 0) {
+    if (Array.isArray(providerRateTrends) && providerRateTrends.length > 0) {
       providerRateTrends.forEach((point: any) => {
         const existing = combinedData.get(point.date) || { date: point.date };
         existing[`provider_${point.provider_name}`] = point.rate;
