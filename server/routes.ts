@@ -692,6 +692,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get provider rate trends for enhanced chart analysis
+  app.get("/api/provider-rate-trends", async (req: Request, res: Response) => {
+    const { getProviderRateTrends } = await import('./routes/providerRateTrendsEndpoint');
+    return getProviderRateTrends(req, res);
+  });
+
   // Get rate trends - uses real historical exchange rate data from ExchangeRate-API
   app.get("/api/rate-trends", async (req: Request, res: Response) => {
     try {
