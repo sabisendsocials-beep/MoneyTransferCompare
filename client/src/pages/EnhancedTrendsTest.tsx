@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, Building2, BarChart3 } from "lucide-react";
 import { Link } from "wouter";
-import ImprovedEnhancedRateTrends from "@/components/ImprovedEnhancedRateTrends";
+import EnhancedRateTrends from "@/components/EnhancedRateTrends";
 
 export default function EnhancedTrendsTest() {
   return (
@@ -84,7 +84,7 @@ export default function EnhancedTrendsTest() {
         </div>
 
         {/* Enhanced Rate Trends Component */}
-        <ImprovedEnhancedRateTrends />
+        <EnhancedRateTrends />
 
         {/* Feature Details */}
         <div className="mt-12">

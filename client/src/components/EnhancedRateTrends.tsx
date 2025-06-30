@@ -75,56 +75,45 @@ const EnhancedRateTrends = () => {
     fromSymbol: "£",
     toSymbol: "₦"
   });
+  const [selectedProviders, setSelectedProviders] = useState<string[]>(['Wise', 'WorldRemit']);
+  const [showBaseRates, setShowBaseRates] = useState(true);
 
-  const [dataSources, setDataSources] = useState<RateDataSource[]>([
-    {
+  // Fetch all available providers
+  const { data: allProviders = [] } = useQuery({
+    queryKey: ['/api/providers'],
+    select: (data) => data || []
+  });
+
+  // Generate colors for providers  
+  const providerColors = [
+    '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0891b2', 
+    '#7c3aed', '#059669', '#d97706', '#0369a1', '#be123c',
+    '#7c2d12', '#365314', '#1e3a8a', '#581c87', '#78350f'
+  ];
+
+  const getProviderColor = (providerName: string) => {
+    const index = Array.isArray(allProviders) ? allProviders.findIndex((p: any) => p.name === providerName) : -1;
+    return index >= 0 ? providerColors[index % providerColors.length] : '#6b7280';
+  };
+
+  // Create data sources dynamically based on selections
+  const dataSources: RateDataSource[] = [
+    ...(showBaseRates ? [{
       id: 'base_rate',
       label: 'Official Base Rate',
-      type: 'base',
+      type: 'base' as const,
       color: '#2563eb',
       enabled: true
-    },
-    {
-      id: 'wise',
-      label: 'Wise',
-      type: 'provider',
-      color: '#16a34a',
+    }] : []),
+    ...selectedProviders.map((providerName) => ({
+      id: `provider_${providerName}`,
+      label: providerName,
+      type: 'provider' as const,
+      color: getProviderColor(providerName),
       enabled: true,
-      providerName: 'Wise'
-    },
-    {
-      id: 'remitly',
-      label: 'Remitly',
-      type: 'provider',
-      color: '#dc2626',
-      enabled: false,
-      providerName: 'Remitly'
-    },
-    {
-      id: 'worldremit',
-      label: 'WorldRemit',
-      type: 'provider',
-      color: '#9333ea',
-      enabled: false,
-      providerName: 'WorldRemit'
-    },
-    {
-      id: 'profee',
-      label: 'Profee',
-      type: 'provider',
-      color: '#ea580c',
-      enabled: false,
-      providerName: 'Profee'
-    },
-    {
-      id: 'lemfi',
-      label: 'Lemfi',
-      type: 'provider',
-      color: '#0891b2',
-      enabled: false,
-      providerName: 'Lemfi'
-    }
-  ]);
+      providerName: providerName
+    }))
+  ];
 
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
@@ -156,15 +145,13 @@ const EnhancedRateTrends = () => {
   // Fetch base rate trends
   const { data: baseRateData, isLoading: baseRateLoading } = useQuery({
     queryKey: [`/api/rate-trends?fromCurrency=${currencyPair.from}&toCurrency=${currencyPair.to}&days=${periodOptions.find(p => p.value === periodOption)?.days || 30}`],
-    enabled: dataSources.find(ds => ds.id === 'base_rate')?.enabled || false,
+    enabled: showBaseRates,
   });
 
-  // Fetch provider rate trends for enabled providers
-  const enabledProviders = dataSources.filter(ds => ds.type === 'provider' && ds.enabled);
-  
+  // Fetch provider rate trends for selected providers
   const providerQueries = useQuery({
-    queryKey: [`/api/provider-rate-trends?fromCurrency=${currencyPair.from}&toCurrency=${currencyPair.to}&days=${periodOptions.find(p => p.value === periodOption)?.days || 30}&providers=${enabledProviders.map(p => p.providerName).join(',')}`],
-    enabled: enabledProviders.length > 0,
+    queryKey: [`/api/provider-rate-trends?fromCurrency=${currencyPair.from}&toCurrency=${currencyPair.to}&days=${periodOptions.find(p => p.value === periodOption)?.days || 30}&providers=${selectedProviders.join(',')}`],
+    enabled: selectedProviders.length > 0,
   });
 
   // Process and combine data for chart
