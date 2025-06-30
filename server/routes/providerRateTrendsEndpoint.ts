@@ -38,8 +38,8 @@ export async function getProviderRateTrends(req: Request, res: Response): Promis
     console.log(`[Provider Trends API] Fetching ${fromCurrency}/${toCurrency} trends for ${daysNum} days`);
     console.log(`[Provider Trends API] Requested providers: ${providerNames.join(', ')}`);
 
-    // Get provider rate trends with provider information
-    const providerTrends = await db
+    // Get all provider rate trends first, then filter in JavaScript if needed
+    let allProviderTrends = await db
       .select({
         date: sql<string>`DATE(${exchangeRates.timestamp})`,
         rate: exchangeRates.rate,
@@ -53,14 +53,15 @@ export async function getProviderRateTrends(req: Request, res: Response): Promis
         and(
           eq(exchangeRates.from_currency, fromCurrency as string),
           eq(exchangeRates.to_currency, toCurrency as string),
-          gte(exchangeRates.timestamp, cutoffDate),
-          // Filter by requested providers if specified
-          providerNames.length > 0 ? 
-            sql`${providers.name} IN (${sql.join(providerNames.map(name => sql`${name}`), sql`, `)})` : 
-            sql`1=1`
+          gte(exchangeRates.timestamp, cutoffDate)
         )
       )
       .orderBy(desc(exchangeRates.timestamp));
+
+    // Filter by provider names if specified
+    const providerTrends = providerNames.length > 0 
+      ? allProviderTrends.filter(trend => providerNames.includes(trend.provider_name))
+      : allProviderTrends;
 
     console.log(`[Provider Trends API] Found ${providerTrends.length} provider rate points`);
 

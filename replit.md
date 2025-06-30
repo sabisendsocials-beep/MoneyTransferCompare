@@ -96,6 +96,17 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### June 30, 2025 - Enhanced Rate Trends with Provider Visualization
+- Created comprehensive EnhancedRateTrends component combining base rates and provider rates
+- Built new `/api/provider-rate-trends` endpoint serving historical provider rate data from exchange_rates table
+- Implemented multi-source chart visualization with dropdown controls for data source selection
+- Added test page at `/enhanced-trends-test` showcasing advanced charting functionality
+- Fixed SQL syntax issues in provider filtering using JavaScript-based filtering approach
+- Enhanced rate trends display both Alpha Vantage base rates and competitive provider rates
+- Component features individual provider selection, base rate toggle, and responsive chart design
+- System maintains separation between base rates (rate_trends table) and provider rates (exchange_rates table)
+- No regression to existing functionality - all original endpoints continue working perfectly
+
 ### June 21, 2025 - Completed 5-Variant Commentary System with Real Provider Data
 - Successfully implemented 5 distinct commentary variants per currency pair as requested
 - Fixed commentary system to generate authentic data-driven insights using current exchange rate data
