@@ -6,7 +6,7 @@
 import type { Request, Response } from 'express';
 import { db } from '../db';
 import { exchangeRates, providers } from '@shared/schema';
-import { eq, and, gte, desc, sql } from 'drizzle-orm';
+import { eq, and, gte, desc, sql, inArray } from 'drizzle-orm';
 
 interface ProviderRatePoint {
   date: string;
@@ -56,7 +56,7 @@ export async function getProviderRateTrends(req: Request, res: Response): Promis
           gte(exchangeRates.timestamp, cutoffDate),
           // Filter by requested providers if specified
           providerNames.length > 0 ? 
-            sql`${providers.name} = ANY(${providerNames})` : 
+            sql`${providers.name} IN (${sql.join(providerNames.map(name => sql`${name}`), sql`, `)})` : 
             sql`1=1`
         )
       )
