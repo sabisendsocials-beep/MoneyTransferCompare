@@ -160,7 +160,7 @@ const EnhancedRateTrends = () => {
     const dateMap = new Map<string, ChartDataPoint>();
 
     // Process base rate data
-    if (baseRateData && Array.isArray(baseRateData) && dataSources.find(ds => ds.id === 'base_rate')?.enabled) {
+    if (baseRateData && Array.isArray(baseRateData) && showBaseRates) {
       baseRateData.forEach((point: any) => {
         const date = point.date;
         if (!dateMap.has(date)) {
@@ -203,10 +203,17 @@ const EnhancedRateTrends = () => {
     }
   };
 
-  const handleDataSourceToggle = (sourceId: string) => {
-    setDataSources(prev => prev.map(ds => 
-      ds.id === sourceId ? { ...ds, enabled: !ds.enabled } : ds
-    ));
+  // Provider management functions
+  const handleProviderToggle = (providerName: string) => {
+    setSelectedProviders(prev => 
+      prev.includes(providerName) 
+        ? prev.filter(p => p !== providerName)
+        : [...prev, providerName]
+    );
+  };
+
+  const handleBaseRateToggle = () => {
+    setShowBaseRates(!showBaseRates);
   };
 
   const enabledSources = dataSources.filter(ds => ds.enabled);
@@ -313,7 +320,13 @@ const EnhancedRateTrends = () => {
                     <Checkbox
                       id={source.id}
                       checked={source.enabled}
-                      onCheckedChange={() => handleDataSourceToggle(source.id)}
+                      onCheckedChange={() => {
+                        if (source.type === 'base') {
+                          handleBaseRateToggle();
+                        } else if (source.providerName) {
+                          handleProviderToggle(source.providerName);
+                        }
+                      }}
                       className="data-[state=checked]:bg-primary"
                     />
                     <label
