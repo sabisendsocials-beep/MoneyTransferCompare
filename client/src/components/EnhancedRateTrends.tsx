@@ -75,7 +75,7 @@ const EnhancedRateTrends = () => {
     fromSymbol: "£",
     toSymbol: "₦"
   });
-  const [selectedProviders, setSelectedProviders] = useState<string[]>(['Wise', 'WorldRemit']);
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [showBaseRates, setShowBaseRates] = useState(true);
 
   // Fetch all available providers
@@ -84,11 +84,22 @@ const EnhancedRateTrends = () => {
     select: (data) => data || []
   });
 
-  // Generate colors for providers  
+  // Initialize with first few providers when data loads
+  useEffect(() => {
+    if (Array.isArray(allProviders) && allProviders.length > 0 && selectedProviders.length === 0) {
+      // Select first 3 providers by default for better initial display
+      const defaultProviders = allProviders.slice(0, 3).map((p: any) => p.name);
+      setSelectedProviders(defaultProviders);
+    }
+  }, [allProviders, selectedProviders.length]);
+
+  // Generate colors for providers (expanded for 20+ providers)
   const providerColors = [
     '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0891b2', 
     '#7c3aed', '#059669', '#d97706', '#0369a1', '#be123c',
-    '#7c2d12', '#365314', '#1e3a8a', '#581c87', '#78350f'
+    '#7c2d12', '#365314', '#1e3a8a', '#581c87', '#78350f',
+    '#ec4899', '#06b6d4', '#84cc16', '#f59e0b', '#ef4444',
+    '#8b5cf6', '#10b981', '#f97316', '#3b82f6', '#f43f5e'
   ];
 
   const getProviderColor = (providerName: string) => {
