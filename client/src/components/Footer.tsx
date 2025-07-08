@@ -30,7 +30,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gradient-to-r from-gray-800 to-gray-700 text-white pt-16 pb-8">
+    <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white pt-16 pb-8">
       <div className="container mx-auto px-4">
         {/* Value Propositions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 border-b border-gray-600 pb-12">
@@ -39,7 +39,7 @@ const Footer = () => {
               <Clock className="h-8 w-8 text-primary" />
             </div>
             <h3 className="font-semibold text-xl mb-3 text-white">Real-Time Comparisons</h3>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-gray-200 leading-relaxed">
               Get up-to-the-minute rates and fees from all major transfer providers in one place
             </p>
           </div>
@@ -49,7 +49,7 @@ const Footer = () => {
               <Shield className="h-8 w-8 text-primary" />
             </div>
             <h3 className="font-semibold text-xl mb-3 text-white">Independent & Trusted</h3>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-gray-200 leading-relaxed">
               Unbiased comparisons with transparent information to help you make the best decision
             </p>
           </div>
@@ -59,7 +59,7 @@ const Footer = () => {
               <Globe2 className="h-8 w-8 text-primary" />
             </div>
             <h3 className="font-semibold text-xl mb-3 text-white">Global Coverage</h3>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-gray-200 leading-relaxed">
               Compare transfers between multiple countries and currencies worldwide
             </p>
           </div>
@@ -88,7 +88,7 @@ const Footer = () => {
               </div>
               <h3 className="text-lg font-semibold">SabiSend</h3>
             </div>
-            <p className="text-gray-400 text-sm mb-4">
+            <p className="text-gray-200 text-sm mb-4">
               SabiSend helps you find the best international money transfer options with real-time comparisons of rates, fees, and delivery times.
             </p>
             <div className="flex space-x-4 mt-4">
@@ -109,7 +109,7 @@ const Footer = () => {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
-            <ul className="space-y-3 text-sm text-gray-300">
+            <ul className="space-y-3 text-sm text-gray-200">
               <li>
                 <Link href="/" className="hover:text-primary transition duration-200 flex items-center">
                   <span className="bg-gray-800 p-1 rounded-full mr-2">
@@ -165,7 +165,7 @@ const Footer = () => {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Money Transfer Guides</h3>
-            <ul className="space-y-3 text-sm text-gray-300">
+            <ul className="space-y-3 text-sm text-gray-200">
               <li>
                 <Link href="/send-money-to-nigeria" className="hover:text-primary transition duration-200 flex items-center">
                   <span className="bg-gray-800 p-1 rounded-full mr-2">
@@ -251,7 +251,7 @@ const Footer = () => {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Stay Updated</h3>
-            <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+            <p className="text-gray-200 text-sm mb-4 leading-relaxed">
               Subscribe to our newsletter for the latest exchange rates, news and money-saving tips.
             </p>
             <form onSubmit={handleSubscribe} className="flex">
@@ -268,12 +268,12 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-gray-400 text-sm mb-4 md:mb-0">
+        <div className="border-t border-gray-700 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center">
+          <div className="text-gray-200 text-sm mb-4 md:mb-0">
             &copy; {currentYear} SabiSend. All rights reserved.
             <span className="block text-xs mt-1 opacity-50">Impact-Site-Verification: 05a24e7b-12ee-477c-876c-027d1184abf7</span>
           </div>
-          <div className="flex space-x-6 text-sm text-gray-400">
+          <div className="flex space-x-6 text-sm text-gray-200">
             <a href="#" className="hover:text-primary transition duration-200">Privacy Policy</a>
             <a href="#" className="hover:text-primary transition duration-200">Terms of Service</a>
             <a href="#" className="hover:text-primary transition duration-200">Contact Us</a>

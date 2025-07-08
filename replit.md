@@ -96,6 +96,14 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### July 8, 2025 - Phase 2.1: Footer Contrast Enhancement Complete
+- Fixed critical contrast issues in footer for better accessibility and readability
+- Updated background gradient from gray-800/gray-700 to gray-900/gray-800 for darker base
+- Enhanced text contrast: all gray-300/gray-400 text upgraded to gray-200 for better visibility
+- Improved border contrast: footer border changed from gray-800 to gray-700
+- All footer text now meets WCAG accessibility standards for contrast ratios
+- Maintains visual hierarchy while ensuring excellent readability against dark background
+
 ### July 8, 2025 - Phase 3: Complete FAQ Branding Consistency Achieved
 - Fixed all remaining "TransferCompare" references to "SabiSend" throughout application
 - Updated FAQ section in HowItWorks.tsx: 3 question titles and 2 answer descriptions
