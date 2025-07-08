@@ -173,17 +173,17 @@ Here's what's happening:
 - Best deal: ${marketData.bestProvider} at ${marketData.bestRate.toFixed(2)}
 - Rate difference between providers: ${marketData.rateSpread.toFixed(1)}%
 
-Write like you're having a conversation - friendly, helpful, and focused on what matters to them. Keep it short (max 25 words) and sound natural.
+Write like you're encouraging a friend about their money transfer. Use phrases like "Perfect time to send money home", "Great rates today", "Your money goes further", etc. Keep it short (max 25 words) and action-oriented.
 
 Focus on: ${
-  variantNumber === 1 ? 'which provider is giving the best deal and why' :
-  variantNumber === 2 ? 'what the rate movement means for their transfer' :
-  variantNumber === 3 ? 'whether now is a good time to send money' :
-  variantNumber === 4 ? 'how much difference provider choice makes' :
-  'the overall market picture in simple terms'
+  variantNumber === 1 ? 'timing opportunity - is now a good time to send money home' :
+  variantNumber === 2 ? 'which provider gives the best value and by how much' :
+  variantNumber === 3 ? 'how the rate movement benefits their transfer' :
+  variantNumber === 4 ? 'encouraging them about the market conditions' :
+  'practical advice about maximising their transfer value'
 }.
 
-Just give the friendly comment, nothing else:`;
+Give an encouraging, action-focused comment:`;
 
   try {
     console.log(`Making OpenAI request for variant ${variantNumber}...`);
@@ -330,40 +330,45 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
   // Ensure realistic spread calculation
   const validSpread = rateSpread > 0 && rateSpread < 100 ? rateSpread : 0;
   
-  // Create conversational, friendly commentary options
+  // Create conversational, action-oriented commentary options
   if (movement === 'up' && Math.abs(changePercent) > 1) {
     const upOptions = [
-      `Great news! ${currencyPair} is up ${Math.abs(changePercent).toFixed(1)}% and ${bestProvider} has the best rates.`,
-      `${currencyPair} looking strong today - ${bestProvider} leading with competitive rates.`,
-      `Nice movement! ${currencyPair} gained ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} on top.`
+      `Perfect time to send money home! ${currencyPair} up ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} leading the way.`,
+      `Great rates today - ${currencyPair} gained ${Math.abs(changePercent).toFixed(1)}% and ${bestProvider} offers the best value.`,
+      `Your money goes further today! ${bestProvider} leading ${currencyPair} rates after ${Math.abs(changePercent).toFixed(1)}% rise.`,
+      `Excellent timing for transfers - ${currencyPair} up ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} ahead.`
     ];
     return upOptions[Math.floor(Math.random() * upOptions.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
     const downOptions = [
-      `${currencyPair} dipped ${Math.abs(changePercent).toFixed(1)}% today - could be a good time with ${bestProvider}.`,
-      `Market correction for ${currencyPair}, but ${bestProvider} still offers solid value.`,
-      `${currencyPair} down ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} maintaining competitive rates.`
+      `Good opportunity emerging! ${currencyPair} dipped ${Math.abs(changePercent).toFixed(1)}% but ${bestProvider} keeps rates competitive.`,
+      `Market dip could work in your favour - ${bestProvider} still offering strong ${currencyPair} rates.`,
+      `Smart time to compare providers - ${bestProvider} maintaining value despite ${Math.abs(changePercent).toFixed(1)}% ${currencyPair} drop.`,
+      `Consider sending soon - ${bestProvider} holding steady rates while ${currencyPair} adjusts ${Math.abs(changePercent).toFixed(1)}%.`
     ];
     return downOptions[Math.floor(Math.random() * downOptions.length)];
   } else if (validSpread > 3) {
     const spreadOptions = [
-      `Shop around! ${currencyPair} rates vary by ${validSpread.toFixed(1)}% - ${bestProvider} leading the pack.`,
-      `Provider choice matters today - ${validSpread.toFixed(1)}% spread with ${bestProvider} ahead.`,
-      `Big difference between providers! ${bestProvider} beats others by ${validSpread.toFixed(1)}%.`
+      `Choose wisely! ${bestProvider} beats other providers by ${validSpread.toFixed(1)}% on ${currencyPair} today.`,
+      `Huge savings available - ${bestProvider} leading ${currencyPair} rates by ${validSpread.toFixed(1)}%!`,
+      `Perfect time to compare! ${bestProvider} offers ${validSpread.toFixed(1)}% better ${currencyPair} rates than competitors.`,
+      `Your transfer could save significantly - ${bestProvider} ahead by ${validSpread.toFixed(1)}% today.`
     ];
     return spreadOptions[Math.floor(Math.random() * spreadOptions.length)];
   } else if (validSpread > 1) {
     const competitiveOptions = [
-      `Tight competition today - ${bestProvider} edges out the field for ${currencyPair}.`,
-      `${bestProvider} taking the lead in today's ${currencyPair} rates.`,
-      `Good rates across the board, with ${bestProvider} just ahead on ${currencyPair}.`
+      `Solid rates all around - ${bestProvider} just edges ahead for ${currencyPair} transfers today.`,
+      `Great time to send money home! ${bestProvider} leading competitive ${currencyPair} market.`,
+      `All providers competing hard - ${bestProvider} offering the best ${currencyPair} value right now.`,
+      `Strong market for transfers - ${bestProvider} giving you the edge on ${currencyPair} today.`
     ];
     return competitiveOptions[Math.floor(Math.random() * competitiveOptions.length)];
   } else {
     const stableOptions = [
-      `${currencyPair} holding steady today with ${bestProvider} offering good value.`,
-      `Stable conditions for ${currencyPair} - ${bestProvider} maintaining their edge.`,
-      `${bestProvider} consistent with competitive ${currencyPair} rates today.`
+      `Reliable time to transfer! ${bestProvider} keeping ${currencyPair} rates steady and competitive.`,
+      `Perfect consistency from ${bestProvider} - great time for your ${currencyPair} transfer.`,
+      `Stable market means predictable rates - ${bestProvider} your best bet for ${currencyPair} today.`,
+      `Good news for transfers! ${bestProvider} maintaining excellent ${currencyPair} value.`
     ];
     return stableOptions[Math.floor(Math.random() * stableOptions.length)];
   }
