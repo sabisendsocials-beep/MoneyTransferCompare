@@ -163,7 +163,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light" storageKey="transfercompare-theme">
+      <ThemeProvider defaultTheme="light" storageKey="sabisend-theme">
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Toaster />

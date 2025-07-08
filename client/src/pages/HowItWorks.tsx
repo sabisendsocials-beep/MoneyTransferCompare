@@ -52,15 +52,15 @@ const HowItWorks = () => {
 
   const faqs = [
     {
-      question: "Is TransferCompare a money transfer service?",
-      answer: "No, TransferCompare is not a money transfer service. We are a comparison platform that helps you find the best money transfer provider for your needs. We don't handle any transfers ourselves, but instead direct you to licensed and regulated providers."
+      question: "Is SabiSend a money transfer service?",
+      answer: "No, SabiSend is not a money transfer service. We are a comparison platform that helps you find the best money transfer provider for your needs. We don't handle any transfers ourselves, but instead direct you to licensed and regulated providers."
     },
     {
-      question: "How does TransferCompare make money?",
-      answer: "TransferCompare is a free service for users. We may receive a commission from some of the providers listed on our site when users click through to their website and complete a transfer. This does not affect our rankings or recommendations, which are based solely on what offers the best value to users."
+      question: "How does SabiSend make money?",
+      answer: "SabiSend is a free service for users. We may receive a commission from some of the providers listed on our site when users click through to their website and complete a transfer. This does not affect our rankings or recommendations, which are based solely on what offers the best value to users."
     },
     {
-      question: "Are the exchange rates shown on TransferCompare up-to-date?",
+      question: "Are the exchange rates shown on SabiSend up-to-date?",
       answer: "Yes, we aim to show the most current exchange rates available. Our rates are updated regularly throughout the day to reflect the latest information from providers. However, exchange rates can fluctuate rapidly, so the final rate you receive may differ slightly from what was shown on our site."
     },
     {
@@ -131,7 +131,7 @@ const HowItWorks = () => {
       <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-            Why Use TransferCompare?
+            Why Use SabiSend?
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
