@@ -35,31 +35,31 @@ const Footer = () => {
         {/* Value Propositions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 border-b border-gray-600 pb-12">
           <div className="flex flex-col items-center text-center">
-            <div className="bg-primary/10 p-3 rounded-full mb-4">
-              <Clock className="h-7 w-7 text-primary" />
+            <div className="bg-primary/10 p-4 rounded-full mb-4">
+              <Clock className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">Real-Time Comparisons</h3>
-            <p className="text-gray-400">
+            <h3 className="font-semibold text-xl mb-3 text-white">Real-Time Comparisons</h3>
+            <p className="text-gray-300 leading-relaxed">
               Get up-to-the-minute rates and fees from all major transfer providers in one place
             </p>
           </div>
           
           <div className="flex flex-col items-center text-center">
-            <div className="bg-primary/10 p-3 rounded-full mb-4">
-              <Shield className="h-7 w-7 text-primary" />
+            <div className="bg-primary/10 p-4 rounded-full mb-4">
+              <Shield className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">Independent & Trusted</h3>
-            <p className="text-gray-400">
+            <h3 className="font-semibold text-xl mb-3 text-white">Independent & Trusted</h3>
+            <p className="text-gray-300 leading-relaxed">
               Unbiased comparisons with transparent information to help you make the best decision
             </p>
           </div>
           
           <div className="flex flex-col items-center text-center">
-            <div className="bg-primary/10 p-3 rounded-full mb-4">
-              <Globe2 className="h-7 w-7 text-primary" />
+            <div className="bg-primary/10 p-4 rounded-full mb-4">
+              <Globe2 className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">Global Coverage</h3>
-            <p className="text-gray-400">
+            <h3 className="font-semibold text-xl mb-3 text-white">Global Coverage</h3>
+            <p className="text-gray-300 leading-relaxed">
               Compare transfers between multiple countries and currencies worldwide
             </p>
           </div>
@@ -108,176 +108,150 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-3 text-sm text-gray-400">
+            <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
+            <ul className="space-y-3 text-sm text-gray-300">
               <li>
-                <Link href="/">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Home
-                  </a>
+                <Link href="/" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Home
                 </Link>
               </li>
               <li>
-                <Link href="/compare">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Compare Providers
-                  </a>
+                <Link href="/compare" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Compare Providers
                 </Link>
               </li>
               <li>
-                <Link href="/trends">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Exchange Rate Trends
-                  </a>
+                <Link href="/trends" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Exchange Rate Trends
                 </Link>
               </li>
               <li>
-                <Link href="/news">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Financial News
-                  </a>
+                <Link href="/news" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Financial News
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    How It Works
-                  </a>
+                <Link href="/how-it-works" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  How It Works
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Money Transfer Guides</h3>
-            <ul className="space-y-3 text-sm text-gray-400">
+            <h3 className="text-lg font-semibold mb-4 text-white">Money Transfer Guides</h3>
+            <ul className="space-y-3 text-sm text-gray-300">
               <li>
-                <Link href="/send-money-to-nigeria">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Send Money to Nigeria
-                  </a>
+                <Link href="/send-money-to-nigeria" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Send Money to Nigeria
                 </Link>
               </li>
               <li>
-                <Link href="/send-money-to-ghana">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Send Money to Ghana
-                  </a>
+                <Link href="/send-money-to-ghana" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Send Money to Ghana
                 </Link>
               </li>
               <li>
-                <Link href="/send-money-to-kenya">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Send Money to Kenya
-                  </a>
+                <Link href="/send-money-to-kenya" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Send Money to Kenya
                 </Link>
               </li>
               <li>
-                <Link href="/send-money-to-india">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Send Money to India
-                  </a>
+                <Link href="/send-money-to-india" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Send Money to India
                 </Link>
               </li>
               <li>
-                <Link href="/send-money-to-pakistan">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    Send Money to Pakistan
-                  </a>
+                <Link href="/send-money-to-pakistan" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Send Money to Pakistan
                 </Link>
               </li>
               <li>
-                <Link href="/gbp-to-ngn">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    GBP to NGN Exchange Rate
-                  </a>
+                <Link href="/gbp-to-ngn" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  GBP to NGN Exchange Rate
                 </Link>
               </li>
               <li>
-                <Link href="/eur-to-ngn">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    EUR to NGN Exchange Rate
-                  </a>
+                <Link href="/eur-to-ngn" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  EUR to NGN Exchange Rate
                 </Link>
               </li>
               <li>
-                <Link href="/gbp-to-ghs">
-                  <a className="hover:text-primary transition duration-200 flex items-center">
-                    <span className="bg-gray-800 p-1 rounded-full mr-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    GBP to GHS Exchange Rate
-                  </a>
+                <Link href="/gbp-to-ghs" className="hover:text-primary transition duration-200 flex items-center">
+                  <span className="bg-gray-800 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  GBP to GHS Exchange Rate
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Stay Updated</h3>
-            <p className="text-gray-400 text-sm mb-4">
+            <h3 className="text-lg font-semibold mb-4 text-white">Stay Updated</h3>
+            <p className="text-gray-300 text-sm mb-4 leading-relaxed">
               Subscribe to our newsletter for the latest exchange rates, news and money-saving tips.
             </p>
             <form onSubmit={handleSubscribe} className="flex">
@@ -296,7 +270,7 @@ const Footer = () => {
 
         <div className="border-t border-gray-800 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
-            &copy; {currentYear} TransferCompare. All rights reserved.
+            &copy; {currentYear} SabiSend. All rights reserved.
             <span className="block text-xs mt-1 opacity-50">Impact-Site-Verification: 05a24e7b-12ee-477c-876c-027d1184abf7</span>
           </div>
           <div className="flex space-x-6 text-sm text-gray-400">

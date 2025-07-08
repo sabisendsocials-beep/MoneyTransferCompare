@@ -96,6 +96,17 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### July 8, 2025 - Phase 2: Bottom Section Readability Improvements Complete
+- Fixed critical nested anchor tag accessibility issues in Footer component
+- Eliminated all `<Link><a>` nested structures causing browser console warnings
+- Updated footer branding from "TransferCompare" to "SabiSend" for consistency
+- Enhanced visual typography: stronger headings (text-white), improved text contrast (gray-300)
+- Increased icon sizes and padding for better visual hierarchy in value propositions
+- Improved line spacing with "leading-relaxed" for better content readability
+- Simplified link structure by moving styling directly to Link components
+- Addressed all accessibility violations in bottom section navigation
+- Part of systematic user experience improvements from user testing workshop feedback
+
 ### July 8, 2025 - Comprehensive British English Localisation Phase 1 Complete
 - Systematically converted American to British English spelling throughout user-facing content
 - Updated 15+ components with proper UK spellings: "personalised", "optimisation", "maximise", "prioritise", "favourite"
