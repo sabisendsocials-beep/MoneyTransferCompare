@@ -42,7 +42,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 const faqItems = [
   {
     question: "How can I request a new provider to be added?",
-    answer: "You can easily request a new provider by submitting a feature request through this page. Select 'Request New Provider' from the dropdown menu and include details about which money transfer provider you'd like us to add. We prioritize adding providers based on user demand."
+    answer: "You can easily request a new provider by submitting a feature request through this page. Select 'Request New Provider' from the dropdown menu and include details about which money transfer provider you'd like us to add. We prioritise adding providers based on user demand."
   },
   {
     question: "What type of feedback is most helpful?",
@@ -50,7 +50,7 @@ const faqItems = [
   },
   {
     question: "How do you decide which features to implement?",
-    answer: "We prioritize new features based on several factors, with user feedback being the most important one. We look at how many users have requested a feature, how it would improve the overall experience, and the technical feasibility of implementation. Your suggestions directly influence our development roadmap!"
+    answer: "We prioritise new features based on several factors, with user feedback being the most important one. We look at how many users have requested a feature, how it would improve the overall experience, and the technical feasibility of implementation. Your suggestions directly influence our development roadmap!"
   },
   {
     question: "Can I suggest new destination countries to include?",
@@ -151,7 +151,7 @@ const ContactUs = () => {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Thank You For Your Feedback!</h3>
                 <p className="text-gray-600 mb-6">
-                  Your suggestions help us improve our platform. We review all feedback and prioritize new features based on user demand.
+                  Your suggestions help us improve our platform. We review all feedback and prioritise new features based on user demand.
                 </p>
                 <Button 
                   onClick={() => setSubmitted(false)}

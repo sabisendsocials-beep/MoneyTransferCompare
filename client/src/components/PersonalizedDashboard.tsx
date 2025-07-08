@@ -437,7 +437,7 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
                         <strong>Get personalized provider recommendations!</strong>
                       </div>
                       <p className="text-sm">
-                        Set up your preferred currency pair and providers to see customized rates and get the best deals for your transfers.
+                        Set up your preferred currency pair and providers to see customised rates and get the best deals for your transfers.
                       </p>
                       <Button
                         variant="outline"

@@ -830,10 +830,10 @@ export default function AdminPage() {
               </Alert>
               
               <div className="mt-6">
-                <h3 className="text-lg font-medium mb-2">Source Prioritization</h3>
+                <h3 className="text-lg font-medium mb-2">Source Prioritisation</h3>
                 <p className="text-muted-foreground mb-4">
                   When multiple sources have data for the same currency pair and provider,
-                  the system prioritizes as follows:
+                  the system prioritises as follows:
                 </p>
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>API data is used first (direct from provider, most accurate)</li>

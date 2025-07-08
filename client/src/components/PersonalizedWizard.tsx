@@ -24,7 +24,7 @@ interface WizardStep {
   icon: React.ElementType;
   condition: (user: any, usage: UserUsage) => boolean;
   priority: 'high' | 'medium' | 'low';
-  category: 'setup' | 'features' | 'optimization';
+  category: 'setup' | 'features' | 'optimisation';
   action: {
     type: 'navigate' | 'modal' | 'highlight' | 'interaction';
     target?: string;
@@ -79,7 +79,7 @@ const wizardSteps: WizardStep[] = [
     icon: TrendingUp,
     condition: (user, usage) => !usage.hasUsedTrends && usage.hasComparedRates,
     priority: 'medium',
-    category: 'optimization',
+    category: 'optimisation',
     action: { type: 'highlight', target: '.rate-trends-chart' }
   },
   {
@@ -89,7 +89,7 @@ const wizardSteps: WizardStep[] = [
     icon: Star,
     condition: (user, usage) => user && usage.hasComparedRates && (!user.preferences?.preferredProviders?.length),
     priority: 'low',
-    category: 'optimization',
+    category: 'optimisation',
     action: { type: 'navigate', target: '/profile' }
   }
 ];

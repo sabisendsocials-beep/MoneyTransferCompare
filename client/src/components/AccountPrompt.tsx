@@ -44,7 +44,7 @@ export const AccountPrompt: React.FC<AccountPromptProps> = ({
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          Create a free account to unlock personalized features and save even more on transfers.
+          Create a free account to unlock personalised features and save even more on transfers.
         </p>
 
         <div className="space-y-2 mb-4">
@@ -54,11 +54,11 @@ export const AccountPrompt: React.FC<AccountPromptProps> = ({
           </div>
           <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
             <TrendingUp className="h-3 w-3 text-blue-600" />
-            <span>Personalized trend analysis</span>
+            <span>Personalised trend analysis</span>
           </div>
           <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
             <Star className="h-3 w-3 text-purple-600" />
-            <span>Save favorite providers</span>
+            <span>Save favourite providers</span>
           </div>
         </div>
 

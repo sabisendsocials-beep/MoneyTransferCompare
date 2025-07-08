@@ -73,7 +73,7 @@ const HowItWorks = () => {
     },
     {
       question: "How do I know which provider is best for me?",
-      answer: "The best provider depends on your specific needs. If you want to maximize the amount received, look for the provider with the highest 'recipient gets' amount. If speed is important, check the estimated delivery times. Consider factors like payment methods, pickup options, and customer service as well."
+      answer: "The best provider depends on your specific needs. If you want to maximise the amount received, look for the provider with the highest 'recipient gets' amount. If speed is important, check the estimated delivery times. Consider factors like payment methods, pickup options, and customer service as well."
     }
   ];
 

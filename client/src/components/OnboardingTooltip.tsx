@@ -53,7 +53,7 @@ const getOnboardingSteps = (isAuthenticated: boolean): TooltipStep[] => {
       id: 'dashboard-overview',
       target: '.personalized-dashboard',
       title: 'Your Personal Dashboard',
-      content: 'Your customized hub shows preferred providers, active alerts, and rate performance for your chosen currency pairs.',
+      content: 'Your customised hub shows preferred providers, active alerts, and rate performance for your chosen currency pairs.',
       position: 'bottom' as const,
       action: 'Explore your dashboard sections'
     },

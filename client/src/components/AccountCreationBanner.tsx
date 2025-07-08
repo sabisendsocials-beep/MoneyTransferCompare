@@ -13,10 +13,10 @@ const AccountCreationBanner = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">
-                Create a free account to unlock personalized features
+                Create a free account to unlock personalised features
               </p>
               <p className="text-xs text-gray-600 hidden sm:block">
-                Get rate alerts, save preferences, and track your favorite providers
+                Get rate alerts, save preferences, and track your favourite providers
               </p>
             </div>
           </div>

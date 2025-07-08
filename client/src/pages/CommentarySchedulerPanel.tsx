@@ -34,9 +34,9 @@ interface QuotaStats {
   currencyPairsGenerated: number;
   estimatedTokensUsed: number;
   estimatedCostUSD: string;
-  quotaOptimization: {
-    beforeOptimization: string;
-    afterOptimization: string;
+  quotaOptimisation: {
+    beforeOptimisation: string;
+    afterOptimisation: string;
     savingsPercent: string;
   };
 }
@@ -258,7 +258,7 @@ export default function CommentarySchedulerPanel() {
         <div>
           <h1 className="text-2xl font-bold">Commentary Scheduler Admin</h1>
           <p className="text-muted-foreground">
-            Manage AI commentary caching system and OpenAI quota optimization
+            Manage AI commentary caching system and OpenAI quota optimisation
           </p>
         </div>
         <Button onClick={fetchData} variant="outline" size="sm">

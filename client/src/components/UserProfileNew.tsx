@@ -100,7 +100,7 @@ export default function UserProfileNew() {
         setSetupCompleted(true);
         toast({
           title: "Great! Your preferences are set",
-          description: "You're all set up for a personalized experience. Explore the app to see rates for your preferred currencies.",
+          description: "You're all set up for a personalised experience. Explore the app to see rates for your preferred currencies.",
         });
       } else {
         toast({
@@ -213,7 +213,7 @@ export default function UserProfileNew() {
           <AlertDescription className="text-blue-800 dark:text-blue-200">
             <div className="flex items-center justify-between">
               <div>
-                <strong>Welcome to SabiSend!</strong> Set up your preferences below to get personalized rates and recommendations for your money transfers.
+                <strong>Welcome to SabiSend!</strong> Set up your preferences below to get personalised rates and recommendations for your money transfers.
               </div>
               <Button
                 variant="ghost"
@@ -235,7 +235,7 @@ export default function UserProfileNew() {
           <AlertDescription className="text-green-800 dark:text-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <strong>Perfect!</strong> Your preferences are saved. You'll now see personalized rates on your dashboard.
+                <strong>Perfect!</strong> Your preferences are saved. You'll now see personalised rates on your dashboard.
               </div>
               <Button
                 variant="ghost"
@@ -285,7 +285,7 @@ export default function UserProfileNew() {
             Currency & Provider Preferences
           </CardTitle>
           <CardDescription>
-            Set your preferred currency pair and providers for personalized rate comparisons
+            Set your preferred currency pair and providers for personalised rate comparisons
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

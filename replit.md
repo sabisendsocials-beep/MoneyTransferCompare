@@ -96,6 +96,16 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### July 8, 2025 - Comprehensive British English Localisation Phase 1 Complete
+- Systematically converted American to British English spelling throughout user-facing content
+- Updated 15+ components with proper UK spellings: "personalised", "optimisation", "maximise", "prioritise", "favourite"
+- Fixed spelling in PersonalizedWizard, PersonalizedDashboard, HowItWorks, ContactUs, CommentaryScheduler, AdminPage components
+- Updated AccountPrompt, AccountCreationBanner, and UserProfileNew components for UK audience
+- Maintained technical terms and CSS class names unchanged (gray, center, color in code contexts)
+- Preserved JSON-LD schema "Organization" spelling as required by technical standards
+- Part of systematic UK market localisation addressing user testing workshop feedback
+- No functionality regression - purely language conversion for better UK market fit
+
 ### June 30, 2025 - Complete Multi-Provider Rate Trends Implementation
 - Fixed EnhancedRateTrends component to display all 20 providers with proper multi-select functionality
 - Resolved initial issue where only 2 providers (Wise, WorldRemit) were shown by default
