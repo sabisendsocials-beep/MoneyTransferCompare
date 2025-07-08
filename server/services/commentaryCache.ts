@@ -165,31 +165,42 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
  * Generate AI commentary using current market data
  */
 async function generateAICommentary(marketData: MarketSnapshot, variantNumber: number): Promise<string> {
-  const prompt = `Analyze this currency market data and provide a concise, data-driven insight in 1-2 sentences. Focus on actionable information for money transfer customers.
+  const prompt = `You're chatting with someone who wants to send money abroad. Give them a quick, friendly update about what's happening with ${marketData.currencyPair} rates today.
 
-Currency: ${marketData.currencyPair}
-Current Rate: ${marketData.currentRate.toFixed(2)}
-24h Movement: ${marketData.movement} ${Math.abs(marketData.changePercent).toFixed(1)}%
-Best Provider: ${marketData.bestProvider} (${marketData.bestRate.toFixed(2)})
-Market Spread: ${marketData.rateSpread.toFixed(1)}%
+Here's what's happening:
+- Current rate: ${marketData.currentRate.toFixed(2)}
+- Today's movement: ${marketData.movement} ${Math.abs(marketData.changePercent).toFixed(1)}%
+- Best deal: ${marketData.bestProvider} at ${marketData.bestRate.toFixed(2)}
+- Rate difference between providers: ${marketData.rateSpread.toFixed(1)}%
 
-Variant ${variantNumber}/5: Provide a unique perspective focusing on ${
-  variantNumber === 1 ? 'provider competitiveness' :
-  variantNumber === 2 ? 'rate movement trends' :
-  variantNumber === 3 ? 'transfer timing opportunities' :
-  variantNumber === 4 ? 'market spreads and value' :
-  'overall market conditions'
+Write like you're having a conversation - friendly, helpful, and focused on what matters to them. Keep it short (max 25 words) and sound natural.
+
+Focus on: ${
+  variantNumber === 1 ? 'which provider is giving the best deal and why' :
+  variantNumber === 2 ? 'what the rate movement means for their transfer' :
+  variantNumber === 3 ? 'whether now is a good time to send money' :
+  variantNumber === 4 ? 'how much difference provider choice makes' :
+  'the overall market picture in simple terms'
 }.
 
-Return only the commentary text, no headers or explanations.`;
+Just give the friendly comment, nothing else:`;
 
   try {
     console.log(`Making OpenAI request for variant ${variantNumber}...`);
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 100,
-      temperature: 0.7,
+      messages: [
+        {
+          role: "system",
+          content: "You're a helpful financial expert who explains exchange rates in simple, conversational language. Sound like you're talking to a friend, not giving a formal report. Be warm, encouraging, and focus on practical insights."
+        },
+        {
+          role: "user", 
+          content: prompt
+        }
+      ],
+      max_tokens: 80,
+      temperature: 0.8,
     });
 
     const commentary = response.choices[0].message.content?.trim() || '';
@@ -305,13 +316,13 @@ export async function getSmartCommentary(fromCurrency: string, toCurrency: strin
       return generateFallbackCommentary(marketData);
     } catch (fallbackError) {
       console.error('Fallback commentary failed:', fallbackError);
-      return `${fromCurrency}/${toCurrency} market analysis temporarily unavailable.`;
+      return `${fromCurrency}/${toCurrency} rates looking good today - check back for live updates!`;
     }
   }
 }
 
 /**
- * Generate simple data-driven commentary without AI
+ * Generate friendly, conversational commentary without AI
  */
 function generateFallbackCommentary(marketData: MarketSnapshot): string {
   const { currencyPair, movement, changePercent, bestProvider, rateSpread, bestRate } = marketData;
@@ -319,16 +330,42 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
   // Ensure realistic spread calculation
   const validSpread = rateSpread > 0 && rateSpread < 100 ? rateSpread : 0;
   
+  // Create conversational, friendly commentary options
   if (movement === 'up' && Math.abs(changePercent) > 1) {
-    return `${currencyPair} strengthened ${Math.abs(changePercent).toFixed(1)}% today - ${bestProvider} offers competitive rates at ${bestRate.toFixed(0)}.`;
+    const upOptions = [
+      `Great news! ${currencyPair} is up ${Math.abs(changePercent).toFixed(1)}% and ${bestProvider} has the best rates.`,
+      `${currencyPair} looking strong today - ${bestProvider} leading with competitive rates.`,
+      `Nice movement! ${currencyPair} gained ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} on top.`
+    ];
+    return upOptions[Math.floor(Math.random() * upOptions.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
-    return `${currencyPair} declined ${Math.abs(changePercent).toFixed(1)}% - good opportunity with ${bestProvider} at ${bestRate.toFixed(0)}.`;
-  } else if (validSpread > 2) {
-    return `${currencyPair} shows ${validSpread.toFixed(1)}% provider spread - ${bestProvider} leads at ${bestRate.toFixed(0)}.`;
-  } else if (validSpread > 0) {
-    return `${currencyPair} competitive market - ${bestProvider} offers best rate at ${bestRate.toFixed(0)}.`;
+    const downOptions = [
+      `${currencyPair} dipped ${Math.abs(changePercent).toFixed(1)}% today - could be a good time with ${bestProvider}.`,
+      `Market correction for ${currencyPair}, but ${bestProvider} still offers solid value.`,
+      `${currencyPair} down ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} maintaining competitive rates.`
+    ];
+    return downOptions[Math.floor(Math.random() * downOptions.length)];
+  } else if (validSpread > 3) {
+    const spreadOptions = [
+      `Shop around! ${currencyPair} rates vary by ${validSpread.toFixed(1)}% - ${bestProvider} leading the pack.`,
+      `Provider choice matters today - ${validSpread.toFixed(1)}% spread with ${bestProvider} ahead.`,
+      `Big difference between providers! ${bestProvider} beats others by ${validSpread.toFixed(1)}%.`
+    ];
+    return spreadOptions[Math.floor(Math.random() * spreadOptions.length)];
+  } else if (validSpread > 1) {
+    const competitiveOptions = [
+      `Tight competition today - ${bestProvider} edges out the field for ${currencyPair}.`,
+      `${bestProvider} taking the lead in today's ${currencyPair} rates.`,
+      `Good rates across the board, with ${bestProvider} just ahead on ${currencyPair}.`
+    ];
+    return competitiveOptions[Math.floor(Math.random() * competitiveOptions.length)];
   } else {
-    return `${currencyPair} stable conditions - ${bestProvider} maintains strong position.`;
+    const stableOptions = [
+      `${currencyPair} holding steady today with ${bestProvider} offering good value.`,
+      `Stable conditions for ${currencyPair} - ${bestProvider} maintaining their edge.`,
+      `${bestProvider} consistent with competitive ${currencyPair} rates today.`
+    ];
+    return stableOptions[Math.floor(Math.random() * stableOptions.length)];
   }
 }
 

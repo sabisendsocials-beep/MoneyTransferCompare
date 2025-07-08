@@ -147,7 +147,7 @@ Generate ONE data-driven insight based on real market analysis:`;
       messages: [
         {
           role: "system",
-          content: "You are a data-driven financial analyst who provides insightful market commentary. Focus on real market movements, provider performance analysis, and actionable insights based on the actual data provided. Explain what the numbers mean for customers in practical terms."
+          content: "You're a friendly financial expert who explains exchange rates in simple, conversational language. Sound like you're chatting with a friend about money transfers - helpful, encouraging, and practical. Keep it natural and focus on what matters to someone sending money abroad."
         },
         {
           role: "user",
@@ -191,19 +191,39 @@ function generateEntertainingFallback(data: MarketData): string {
 }
 
 /**
- * Generate simple data-driven commentary without AI
+ * Generate friendly, conversational commentary without AI
  */
 function generateFallbackCommentary(marketData: MarketData): string {
   const { currencyPair, movement, changePercent, bestProvider, rateSpread } = marketData;
   
   if (movement === 'up' && Math.abs(changePercent) > 1) {
-    return `${currencyPair} strengthened ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} offers competitive rates.`;
+    const upMessages = [
+      `Looking good! ${currencyPair} is up ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} leading.`,
+      `${currencyPair} gained ${Math.abs(changePercent).toFixed(1)}% today - ${bestProvider} has the best rates.`,
+      `Nice movement for ${currencyPair}! ${bestProvider} offering competitive rates.`
+    ];
+    return upMessages[Math.floor(Math.random() * upMessages.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
-    return `${currencyPair} declined ${Math.abs(changePercent).toFixed(1)}% - good opportunity with ${bestProvider}.`;
+    const downMessages = [
+      `${currencyPair} dipped ${Math.abs(changePercent).toFixed(1)}% - might be a good opportunity with ${bestProvider}.`,
+      `${currencyPair} down ${Math.abs(changePercent).toFixed(1)}% but ${bestProvider} still competitive.`,
+      `Market adjustment for ${currencyPair}, though ${bestProvider} maintaining good rates.`
+    ];
+    return downMessages[Math.floor(Math.random() * downMessages.length)];
   } else if (rateSpread > 3) {
-    return `${currencyPair} shows ${rateSpread.toFixed(1)}% spread - ${bestProvider} leads market rates.`;
+    const spreadMessages = [
+      `Big difference between providers today! ${bestProvider} beats the rest by ${rateSpread.toFixed(1)}%.`,
+      `${currencyPair} rates vary by ${rateSpread.toFixed(1)}% - ${bestProvider} clearly ahead.`,
+      `Worth shopping around - ${bestProvider} leading by ${rateSpread.toFixed(1)}% on ${currencyPair}.`
+    ];
+    return spreadMessages[Math.floor(Math.random() * spreadMessages.length)];
   } else {
-    return `${currencyPair} stable conditions - ${bestProvider} maintains competitive advantage.`;
+    const stableMessages = [
+      `${currencyPair} holding steady with ${bestProvider} offering solid value.`,
+      `Consistent rates for ${currencyPair} - ${bestProvider} maintaining their edge.`,
+      `${bestProvider} keeping competitive on ${currencyPair} today.`
+    ];
+    return stableMessages[Math.floor(Math.random() * stableMessages.length)];
   }
 }
 

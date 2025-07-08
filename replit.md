@@ -96,6 +96,17 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### July 8, 2025 - Phase 4: AI Commentary Tone Enhancement Complete
+- Completely overhauled AI-generated "Sabi Buzz" commentary system for natural conversation
+- Updated AI prompts to sound like friendly financial expert chatting with friends
+- Enhanced system prompt: "You're chatting with someone who wants to send money abroad" 
+- Changed from formal analysis to conversational tone: "Looking good!" "Nice movement!" "Worth shopping around!"
+- Improved fallback commentary with multiple randomised friendly variations per scenario
+- Reduced technical jargon in favour of practical, encouraging language
+- Maximum 25 words per comment for better readability and engagement
+- Temperature increased to 0.8 for more natural, varied responses
+- Addresses final priority from user testing workshop feedback: AI content tone improvement
+
 ### July 8, 2025 - Phase 2.1: Footer Contrast Enhancement Complete
 - Fixed critical contrast issues in footer for better accessibility and readability
 - Updated background gradient from gray-800/gray-700 to gray-900/gray-800 for darker base
