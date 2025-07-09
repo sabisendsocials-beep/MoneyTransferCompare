@@ -20,6 +20,11 @@ interface MarketSnapshot {
   bestRate: number;
   rateSpread: number;
   timestamp: string;
+  // Historical trend insights
+  monthlyTrend?: 'up' | 'down' | 'stable';
+  monthlyChangePercent?: number;
+  historicalPositioning?: 'high' | 'low' | 'normal';
+  trendContext?: string;
 }
 
 /**
@@ -70,7 +75,7 @@ async function getTodayCachedCommentary(currencyPair: string): Promise<string | 
 }
 
 /**
- * Get current market data for AI analysis
+ * Get current market data for AI analysis with historical trend context
  */
 async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string): Promise<MarketSnapshot> {
   const currencyPair = `${fromCurrency}/${toCurrency}`;
@@ -101,6 +106,16 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     ))
     .orderBy(desc(rateTrends.date))
     .limit(7);
+
+  // Get 30-day historical data for trend context
+  const thirtyDayTrends = await db.select()
+    .from(rateTrends)
+    .where(and(
+      eq(rateTrends.from_currency, fromCurrency),
+      eq(rateTrends.to_currency, toCurrency)
+    ))
+    .orderBy(desc(rateTrends.date))
+    .limit(30);
 
   // Calculate movement and best provider
   const currentRate = recentTrends[0]?.rate || 0;
@@ -149,6 +164,47 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     bestProvider = 'market rate';
   }
 
+  // Calculate historical trend insights
+  let monthlyTrend: 'up' | 'down' | 'stable' = 'stable';
+  let monthlyChangePercent = 0;
+  let historicalPositioning: 'high' | 'low' | 'normal' = 'normal';
+  let trendContext = '';
+
+  if (thirtyDayTrends.length >= 2) {
+    const oldestRate = thirtyDayTrends[thirtyDayTrends.length - 1]?.rate || currentRate;
+    monthlyChangePercent = ((currentRate - oldestRate) / oldestRate) * 100;
+    
+    if (Math.abs(monthlyChangePercent) > 2) {
+      monthlyTrend = monthlyChangePercent > 0 ? 'up' : 'down';
+    }
+
+    // Determine if current rate is historically high/low
+    if (thirtyDayTrends.length >= 20) {
+      const rates = thirtyDayTrends.map(t => t.rate).filter(r => r > 0);
+      const maxRate = Math.max(...rates);
+      const minRate = Math.min(...rates);
+      const rateRange = maxRate - minRate;
+      
+      if (currentRate >= maxRate - (rateRange * 0.15)) {
+        historicalPositioning = 'high';
+        trendContext = Math.abs(monthlyChangePercent) > 3 
+          ? `${currencyPair} near 30-day highs` 
+          : `${currencyPair} trading near recent peaks`;
+      } else if (currentRate <= minRate + (rateRange * 0.15)) {
+        historicalPositioning = 'low';
+        trendContext = Math.abs(monthlyChangePercent) > 3 
+          ? `${currencyPair} near 30-day lows - could be opportunity` 
+          : `${currencyPair} trading at recent discount levels`;
+      } else {
+        trendContext = monthlyTrend === 'up' 
+          ? `${currencyPair} trending upward over 30 days` 
+          : monthlyTrend === 'down' 
+          ? `${currencyPair} trending downward over 30 days`
+          : `${currencyPair} stable over recent weeks`;
+      }
+    }
+  }
+
   return {
     currencyPair,
     currentRate,
@@ -157,7 +213,11 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
     bestProvider,
     bestRate,
     rateSpread,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    monthlyTrend,
+    monthlyChangePercent,
+    historicalPositioning,
+    trendContext
   };
 }
 
@@ -165,6 +225,20 @@ async function getCurrentMarketSnapshot(fromCurrency: string, toCurrency: string
  * Generate AI commentary using current market data
  */
 async function generateAICommentary(marketData: MarketSnapshot, variantNumber: number): Promise<string> {
+  // Include historical context in the prompt occasionally
+  const includeHistoricalContext = Math.random() < 0.4; // 40% chance to include historical insights
+  
+  let historicalInsight = '';
+  if (includeHistoricalContext && marketData.trendContext) {
+    if (marketData.historicalPositioning === 'high') {
+      historicalInsight = `Historical context: ${marketData.trendContext} - rates are strong right now!`;
+    } else if (marketData.historicalPositioning === 'low') {
+      historicalInsight = `Historical context: ${marketData.trendContext} - this could be good timing!`;
+    } else if (Math.abs(marketData.monthlyChangePercent || 0) > 3) {
+      historicalInsight = `30-day trend: ${marketData.currencyPair} ${marketData.monthlyTrend === 'up' ? 'gained' : 'dropped'} ${Math.abs(marketData.monthlyChangePercent || 0).toFixed(1)}% this month.`;
+    }
+  }
+
   const prompt = `You're a relatable financial friend giving quick money transfer advice. Sound excited, knowledgeable, and like you genuinely care about helping them save money and time perfectly.
 
 Market snapshot for ${marketData.currencyPair}:
@@ -172,6 +246,7 @@ Market snapshot for ${marketData.currencyPair}:
 - Movement: ${marketData.movement} ${Math.abs(marketData.changePercent).toFixed(1)}%
 - Best deal: ${marketData.bestProvider} at ${marketData.bestRate.toFixed(2)}
 - Provider spread: ${marketData.rateSpread.toFixed(1)}%
+${historicalInsight ? `- ${historicalInsight}` : ''}
 
 Write like you're texting a close friend about an amazing deal you found! Use relatable expressions like "OMG", "Trust me", "You won't believe this", "Seriously", "Quick heads up", "This is huge". Be conversational and genuine. Max 25 words.
 
@@ -182,6 +257,8 @@ ${
   variantNumber === 4 ? 'Be genuinely encouraging - like cheering on a friend making smart financial moves' :
   'Sound like you discovered insider info that could really help them'
 }.
+
+${historicalInsight ? 'Consider mentioning the historical trend if it makes the advice more compelling.' : ''}
 
 Write the comment:`;
 
@@ -330,7 +407,9 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
   // Ensure realistic spread calculation
   const validSpread = rateSpread > 0 && rateSpread < 100 ? rateSpread : 0;
   
-  // Create relatable, personality-driven commentary options
+  // Create relatable, personality-driven commentary options with occasional historical context
+  const includeHistoricalContext = Math.random() < 0.3; // 30% chance for historical insights
+  
   if (movement === 'up' && Math.abs(changePercent) > 1) {
     const upOptions = [
       `OMG! ${currencyPair} just jumped ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} has the best rates right now! 🔥`,
@@ -338,6 +417,14 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
       `Quick heads up! ${currencyPair} rates are flying high (+${Math.abs(changePercent).toFixed(1)}%) and ${bestProvider} is leading!`,
       `This is HUGE! ${bestProvider} just became the best deal with ${currencyPair} up ${Math.abs(changePercent).toFixed(1)}%!`
     ];
+    
+    // Add historical context variants occasionally
+    if (includeHistoricalContext && marketData.historicalPositioning === 'high') {
+      upOptions.push(`Perfect timing! ${currencyPair} hitting recent highs and ${bestProvider} leading the charge!`);
+    } else if (includeHistoricalContext && Math.abs(marketData.monthlyChangePercent || 0) > 5) {
+      upOptions.push(`This month's been wild! ${currencyPair} up ${Math.abs(marketData.monthlyChangePercent || 0).toFixed(1)}% and ${bestProvider} on top!`);
+    }
+    
     return upOptions[Math.floor(Math.random() * upOptions.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
     const downOptions = [
@@ -346,6 +433,14 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
       `Real talk - ${bestProvider} is holding strong while ${currencyPair} wobbles ${Math.abs(changePercent).toFixed(1)}%. Smart choice!`,
       `Trust me on this - ${bestProvider} staying solid despite ${currencyPair} being down ${Math.abs(changePercent).toFixed(1)}%!`
     ];
+    
+    // Add historical context variants occasionally  
+    if (includeHistoricalContext && marketData.historicalPositioning === 'low') {
+      downOptions.push(`Actually good news! ${currencyPair} near recent lows - perfect time for ${bestProvider}!`);
+    } else if (includeHistoricalContext && marketData.monthlyTrend === 'down') {
+      downOptions.push(`Heads up! ${currencyPair} been dropping lately - but ${bestProvider} holding strong!`);
+    }
+    
     return downOptions[Math.floor(Math.random() * downOptions.length)];
   } else if (validSpread > 3) {
     const spreadOptions = [
@@ -354,6 +449,12 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
       `You're gonna love this - ${bestProvider} just destroyed the competition by ${validSpread.toFixed(1)}%! 💰`,
       `No joke - ${bestProvider} is ${validSpread.toFixed(1)}% ahead on ${currencyPair}! Your wallet will thank you!`
     ];
+    
+    // Add historical context variants occasionally
+    if (includeHistoricalContext && marketData.historicalPositioning === 'high') {
+      spreadOptions.push(`Market's hot and ${bestProvider} dominating! ${validSpread.toFixed(1)}% ahead on ${currencyPair}!`);
+    }
+    
     return spreadOptions[Math.floor(Math.random() * spreadOptions.length)];
   } else if (validSpread > 1) {
     const competitiveOptions = [
@@ -370,6 +471,14 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
       `Love this consistency! ${bestProvider} delivering reliable ${currencyPair} rates today.`,
       `${bestProvider} is your safe bet for ${currencyPair} - no surprises, just good value!`
     ];
+    
+    // Add historical context variants occasionally
+    if (includeHistoricalContext && Math.abs(marketData.monthlyChangePercent || 0) < 2) {
+      stableOptions.push(`${currencyPair} been super stable lately - ${bestProvider} your reliable choice!`);
+    } else if (includeHistoricalContext && marketData.monthlyTrend === 'up') {
+      stableOptions.push(`Steady growth! ${currencyPair} trending up this month with ${bestProvider} leading!`);
+    }
+    
     return stableOptions[Math.floor(Math.random() * stableOptions.length)];
   }
 }

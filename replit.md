@@ -105,6 +105,10 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - Phrases like "Trust me on this", "Plot twist!", "Your wallet will thank you!", "Zero drama, just good rates!"
 - Maximum 25 words per comment with emoji usage for extra personality
 - Temperature optimized for natural, varied, authentic responses
+- **NEW: Integrated historical trend insights** - Commentary now occasionally references 30-day trends and historical positioning
+- Examples: "Perfect timing! GBP/NGN hitting recent highs", "Actually good news! EUR/USD near recent lows - perfect timing!"
+- System calculates if rates are historically high/low and includes relevant context 40% of the time
+- Historical insights add valuable timing guidance: "This month's been wild! GBP/NGN up 6.2% and Pesa on top!"
 - System now delivers relatable, informative, engaging, and actionable insights as core platform differentiator
 - Addresses critical USP requirement: commentary must have personality and be relatable to drive user engagement
 
