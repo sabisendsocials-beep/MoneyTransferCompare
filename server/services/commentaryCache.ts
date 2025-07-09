@@ -239,7 +239,7 @@ async function generateAICommentary(marketData: MarketSnapshot, variantNumber: n
     }
   }
 
-  const prompt = `You're texting your best friend about money transfer deals. Sound super casual, excited, and helpful - like you just discovered something cool and want to share!
+  const prompt = `You're giving casual money transfer advice to a friend. Use natural, varied language that sounds genuinely human.
 
 ${marketData.currencyPair} situation:
 - Current rate: ${marketData.currentRate.toFixed(2)}
@@ -247,20 +247,26 @@ ${marketData.currencyPair} situation:
 - It's ${marketData.rateSpread.toFixed(1)}% better than other options
 ${historicalInsight ? `- ${historicalInsight}` : ''}
 
-Write exactly like you're texting a friend! Use casual language like:
-- "Yo!", "Hey!", "Dude!", "Girl!", "Bro!"
-- "This is wild", "No way", "For real?", "I'm telling you"
-- "You gotta", "Don't sleep on this", "Quick!", "Right now"
-- "That's crazy good", "Insane deal", "Free money basically"
+Write in one of these natural styles:
 
-Keep it super casual and under 20 words. No formal language at all!
+SAVINGS-FOCUSED: "You can save [amount] sending money today", "Perfect time to send money", "Rates are getting good"
+
+MARKET OBSERVATIONS: "Rates are trending upward", "It's not the usual providers at the top", "Things are heating up"
+
+TIMING ADVICE: "Perfect time to send money today", "Rates are starting to fall", "Get in before rates change"
+
+SURPRISE ELEMENTS: "Wow, didn't expect that one", "Plot twist", "This is unexpected"
+
+RELIABLE PROVIDERS: "${marketData.bestProvider} reliable as always", "You know what you're getting", "Steady as usual"
+
+Keep it under 20 words. Sound natural and conversational, not overly excited.
 
 Tone: ${
-  variantNumber === 1 ? 'Excited discovery - like finding money on the street' :
-  variantNumber === 2 ? 'Urgent but friendly warning - like "hurry before it ends!"' :
-  variantNumber === 3 ? 'Casual insider tip - like "psst, I know something good"' :
-  variantNumber === 4 ? 'Hyped recommendation - like your favorite restaurant just opened' :
-  'Chill but confident advice - like "trust me on this one"'
+  variantNumber === 1 ? 'Focus on savings opportunity and amounts' :
+  variantNumber === 2 ? 'Market observation and trend awareness' :
+  variantNumber === 3 ? 'Timing advice and urgency' :
+  variantNumber === 4 ? 'Surprise and unexpected elements' :
+  'Provider reliability and trust'
 }`;
 
   try {
@@ -413,69 +419,74 @@ function generateFallbackCommentary(marketData: MarketSnapshot): string {
   
   if (movement === 'up' && Math.abs(changePercent) > 1) {
     const upOptions = [
-      `Yo! ${bestProvider} is killing it right now - rates just shot up!`,
-      `Dude, ${bestProvider} rates are fire today! Quick before they drop!`,
-      `No way! ${bestProvider} just got even better - you gotta see this!`,
-      `Bro! Perfect timing - ${bestProvider} rates are through the roof!`
+      `Rates are trending upward this week - ${bestProvider} leading the charge!`,
+      `Perfect time to send money today - ${bestProvider} rates climbing!`,
+      `You can save extra today with ${bestProvider} rates going up!`,
+      `Rates are getting hot and ${bestProvider} is on top!`,
+      `Wow, didn't expect ${bestProvider} to jump this much today!`
     ];
     
     // Add historical context variants occasionally
     if (includeHistoricalContext && marketData.historicalPositioning === 'high') {
-      upOptions.push(`Girl! ${bestProvider} hitting peaks right now - this is rare!`);
+      upOptions.push(`${bestProvider} hitting recent peaks - rates looking strong!`);
     } else if (includeHistoricalContext && Math.abs(marketData.monthlyChangePercent || 0) > 5) {
-      upOptions.push(`This month's insane! ${bestProvider} rates keep climbing - get in!`);
+      upOptions.push(`Rates been climbing all month and ${bestProvider} still leading!`);
     }
     
     return upOptions[Math.floor(Math.random() * upOptions.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
     const downOptions = [
-      `Hey! Even with rates dipping, ${bestProvider} is still your best bet!`,
-      `For real? ${bestProvider} staying strong while others struggle - smart move!`,
-      `I'm telling you - ${bestProvider} holding steady when others can't!`,
-      `Yo! Market's wobbly but ${bestProvider} got you covered - solid choice!`
+      `Perfect time to send money today - rates are starting to fall!`,
+      `${bestProvider} reliable as always, holding steady while others drop!`,
+      `Good timing - ${bestProvider} still offering best rates despite the dip!`,
+      `Rates cooling off but ${bestProvider} keeps you covered!`,
+      `Plot twist - ${bestProvider} stays strong while market wobbles!`
     ];
     
     // Add historical context variants occasionally  
     if (includeHistoricalContext && marketData.historicalPositioning === 'low') {
-      downOptions.push(`Dude! Rates are low right now - perfect timing for ${bestProvider}!`);
+      downOptions.push(`Perfect timing - rates at recent lows with ${bestProvider}!`);
     } else if (includeHistoricalContext && marketData.monthlyTrend === 'down') {
-      downOptions.push(`Been dropping all month but ${bestProvider} still rocks!`);
+      downOptions.push(`Rates been dropping but ${bestProvider} holding strong!`);
     }
     
     return downOptions[Math.floor(Math.random() * downOptions.length)];
   } else if (validSpread > 3) {
     const spreadOptions = [
-      `Yo! ${bestProvider} is crushing everyone else - that's free money right there!`,
-      `Bro! ${bestProvider} just smoked the competition - don't sleep on this!`,
-      `Girl! ${bestProvider} is way ahead of everyone - this is wild!`,
-      `Dude! ${bestProvider} dominating right now - you gotta get on this!`
+      `You can save big today - ${bestProvider} way ahead of everyone!`,
+      `Rates are getting hot and it's not the usual providers at the top!`,
+      `Wow, didn't expect ${bestProvider} to dominate like this today!`,
+      `${bestProvider} crushing it - perfect timing to save extra money!`,
+      `This is unexpected - ${bestProvider} beating everyone by miles!`
     ];
     
     // Add historical context variants occasionally
     if (includeHistoricalContext && marketData.historicalPositioning === 'high') {
-      spreadOptions.push(`${bestProvider} on fire lately - rates are insane right now!`);
+      spreadOptions.push(`${bestProvider} at recent highs - rates looking strong!`);
     }
     
     return spreadOptions[Math.floor(Math.random() * spreadOptions.length)];
   } else if (validSpread > 1) {
     const competitiveOptions = [
-      `Hey! ${bestProvider} just pulled ahead - not huge but still better!`,
-      `Yo! ${bestProvider} quietly winning today - good choice bro!`,
-      `FYI - ${bestProvider} got a slight edge right now, worth it!`,
-      `${bestProvider} just moved up - every bit counts, you know?`
+      `${bestProvider} reliable as always - slight edge but worth it!`,
+      `Perfect time for ${bestProvider} - rates looking steady today!`,
+      `${bestProvider} quietly leading today - good choice as usual!`,
+      `Rates getting competitive but ${bestProvider} still on top!`,
+      `${bestProvider} edging ahead - every little bit helps!`
     ];
     return competitiveOptions[Math.floor(Math.random() * competitiveOptions.length)];
   } else {
     const stableOptions = [
-      `${bestProvider} keeping it chill today - no drama, just solid rates!`,
-      `Yo! ${bestProvider} steady as always - sometimes boring is good!`,
-      `${bestProvider} reliable as usual - you know what you're getting!`,
-      `${bestProvider} your safe bet - no surprises, just works!`
+      `${bestProvider} reliable as always and offering best transfer rate today!`,
+      `Perfect time for ${bestProvider} - steady rates, no surprises!`,
+      `${bestProvider} keeping things stable - you know what you're getting!`,
+      `Rates looking good with ${bestProvider} leading as usual!`,
+      `${bestProvider} consistent choice - sometimes steady is best!`
     ];
     
     // Add historical context variants occasionally
     if (includeHistoricalContext && Math.abs(marketData.monthlyChangePercent || 0) < 2) {
-      stableOptions.push(`${bestProvider} been super steady lately - reliable choice!`);
+      stableOptions.push(`${bestProvider} been rock steady lately - reliable as always!`);
     } else if (includeHistoricalContext && marketData.monthlyTrend === 'up') {
       stableOptions.push(`${bestProvider} slowly climbing all month - nice and steady!`);
     }

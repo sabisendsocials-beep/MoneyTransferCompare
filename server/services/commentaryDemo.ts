@@ -198,34 +198,38 @@ function generateFallbackCommentary(marketData: MarketData): string {
   
   if (movement === 'up' && Math.abs(changePercent) > 1) {
     const upMessages = [
-      `Yo! ${bestProvider} rates just shot up - get on this now!`,
-      `Dude! ${bestProvider} is on fire today - rates climbing fast!`,
-      `Girl! ${bestProvider} just got way better - you gotta see this!`,
-      `Bro! Perfect timing - ${bestProvider} rates are through the roof!`
+      `Rates are trending upward this week - ${bestProvider} leading!`,
+      `Perfect time to send money today with ${bestProvider} rates climbing!`,
+      `You can save extra today - ${bestProvider} rates going up!`,
+      `Rates are getting hot and ${bestProvider} is on top!`,
+      `Wow, didn't expect ${bestProvider} to jump this much!`
     ];
     return upMessages[Math.floor(Math.random() * upMessages.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
     const downMessages = [
-      `Hey! Even with rates dipping, ${bestProvider} still your best bet!`,
-      `For real? ${bestProvider} staying strong while others tank!`,
-      `Yo! Market's wobbly but ${bestProvider} got you covered!`,
-      `${bestProvider} holding steady when others can't - solid choice!`
+      `Perfect time to send money today - rates are starting to fall!`,
+      `${bestProvider} reliable as always, holding steady while others drop!`,
+      `Good timing with ${bestProvider} - still best rates despite the dip!`,
+      `Plot twist - ${bestProvider} stays strong while market wobbles!`,
+      `Rates cooling off but ${bestProvider} keeps you covered!`
     ];
     return downMessages[Math.floor(Math.random() * downMessages.length)];
   } else if (rateSpread > 3) {
     const spreadMessages = [
-      `Yo! ${bestProvider} crushing everyone else - free money right there!`,
-      `Dude! ${bestProvider} just smoked the competition - don't sleep on this!`,
-      `Bro! ${bestProvider} way ahead of everyone - this is wild!`,
-      `Girl! ${bestProvider} dominating right now - you gotta get on this!`
+      `You can save big today - ${bestProvider} way ahead of everyone!`,
+      `Rates are getting hot and it's not the usual providers at the top!`,
+      `Wow, didn't expect ${bestProvider} to dominate like this!`,
+      `${bestProvider} crushing it - perfect timing to save extra!`,
+      `This is unexpected - ${bestProvider} beating everyone by miles!`
     ];
     return spreadMessages[Math.floor(Math.random() * spreadMessages.length)];
   } else {
     const stableMessages = [
-      `${bestProvider} keeping it chill - no drama, just solid rates!`,
-      `Yo! ${bestProvider} steady as always - sometimes boring is good!`,
-      `${bestProvider} reliable as usual - you know what you're getting!`,
-      `${bestProvider} your safe bet - no surprises, just works!`
+      `${bestProvider} reliable as always and offering best transfer rate today!`,
+      `Perfect time for ${bestProvider} - steady rates, no surprises!`,
+      `${bestProvider} keeping things stable - you know what you're getting!`,
+      `Rates looking good with ${bestProvider} leading as usual!`,
+      `${bestProvider} consistent choice - sometimes steady is best!`
     ];
     return stableMessages[Math.floor(Math.random() * stableMessages.length)];
   }
