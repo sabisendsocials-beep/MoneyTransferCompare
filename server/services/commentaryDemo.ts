@@ -146,8 +146,8 @@ Generate ONE data-driven insight based on real market analysis:`;
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
-          role: "system",
-          content: "You're an encouraging friend helping someone with money transfers. Use action-oriented language like 'Perfect time to send money home', 'Your money goes further today', 'Great rates right now'. Sound excited about good opportunities and be practical about timing."
+          role: "system",  
+          content: "You're a relatable financial friend giving money transfer advice. Sound excited and use expressions like 'OMG', 'Trust me', 'You won't believe this', 'Seriously', 'This is huge'. Write like you're texting a close friend about an amazing deal you found!"
         },
         {
           role: "user",
@@ -198,34 +198,34 @@ function generateFallbackCommentary(marketData: MarketData): string {
   
   if (movement === 'up' && Math.abs(changePercent) > 1) {
     const upMessages = [
-      `Perfect time to send money home! ${currencyPair} up ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} leading.`,
-      `Great news - your money goes further today! ${bestProvider} offering top ${currencyPair} rates.`,
-      `Excellent timing for transfers - ${currencyPair} gained ${Math.abs(changePercent).toFixed(1)}% with ${bestProvider} ahead.`,
-      `Strong rates today! ${bestProvider} beating the market on ${currencyPair} transfers.`
+      `OMG! ${currencyPair} just jumped ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} has the best rates right now! 🔥`,
+      `You won't believe this - ${currencyPair} is UP ${Math.abs(changePercent).toFixed(1)}%! ${bestProvider} is crushing it today.`,
+      `This is HUGE! ${bestProvider} just became the best deal with ${currencyPair} up ${Math.abs(changePercent).toFixed(1)}%!`,
+      `Seriously good timing! ${bestProvider} leading while ${currencyPair} climbs ${Math.abs(changePercent).toFixed(1)}%!`
     ];
     return upMessages[Math.floor(Math.random() * upMessages.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
     const downMessages = [
-      `Good time to compare rates! ${bestProvider} holding steady despite ${Math.abs(changePercent).toFixed(1)}% ${currencyPair} dip.`,
-      `Smart opportunity emerging - ${bestProvider} maintaining competitive ${currencyPair} rates.`,
-      `Consider sending soon! ${bestProvider} offering value while ${currencyPair} adjusts ${Math.abs(changePercent).toFixed(1)}%.`,
-      `Market dip could work in your favour - ${bestProvider} keeping rates strong.`
+      `Plot twist! ${currencyPair} dipped ${Math.abs(changePercent).toFixed(1)}% but ${bestProvider} is still killing it with rates!`,
+      `Honestly? This ${Math.abs(changePercent).toFixed(1)}% ${currencyPair} drop makes ${bestProvider} look even better! Silver lining!`,
+      `Real talk - ${bestProvider} is holding strong while ${currencyPair} wobbles ${Math.abs(changePercent).toFixed(1)}%. Smart choice!`,
+      `Trust me on this - ${bestProvider} staying solid despite ${currencyPair} being down ${Math.abs(changePercent).toFixed(1)}%!`
     ];
     return downMessages[Math.floor(Math.random() * downMessages.length)];
   } else if (rateSpread > 3) {
     const spreadMessages = [
-      `Choose wisely! ${bestProvider} beats competitors by ${rateSpread.toFixed(1)}% on ${currencyPair} today.`,
-      `Huge savings available - ${bestProvider} leading ${currencyPair} rates by ${rateSpread.toFixed(1)}%!`,
-      `Your transfer could save significantly! ${bestProvider} ahead by ${rateSpread.toFixed(1)}% right now.`,
-      `Perfect time to compare providers - ${bestProvider} offering exceptional ${currencyPair} value.`
+      `WAIT! ${bestProvider} is beating others by ${rateSpread.toFixed(1)}% on ${currencyPair}! That's free money!`,
+      `Seriously?! ${bestProvider} is ${rateSpread.toFixed(1)}% better than everyone else on ${currencyPair}! Don't miss this!`,
+      `You're gonna love this - ${bestProvider} just destroyed the competition by ${rateSpread.toFixed(1)}%! 💰`,
+      `No joke - ${bestProvider} is ${rateSpread.toFixed(1)}% ahead on ${currencyPair}! Your wallet will thank you!`
     ];
     return spreadMessages[Math.floor(Math.random() * spreadMessages.length)];
   } else {
     const stableMessages = [
-      `Reliable time to transfer! ${bestProvider} offering consistent ${currencyPair} value today.`,
-      `Great time to send money home - ${bestProvider} maintaining excellent ${currencyPair} rates.`,
-      `Perfect consistency from ${bestProvider} - ideal conditions for your transfer.`,
-      `Stable market means predictable rates - ${bestProvider} your best choice today.`
+      `Honestly? ${bestProvider} is rock solid on ${currencyPair} right now. Zero drama, just good rates!`,
+      `${bestProvider} keeping it steady with ${currencyPair}. Sometimes boring is beautiful!`,
+      `Love this consistency! ${bestProvider} delivering reliable ${currencyPair} rates today.`,
+      `${bestProvider} is your safe bet for ${currencyPair} - no surprises, just good value!`
     ];
     return stableMessages[Math.floor(Math.random() * stableMessages.length)];
   }

@@ -96,17 +96,17 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
-### July 8, 2025 - Phase 4: Enhanced AI Commentary Tone Complete
-- Completely overhauled AI-generated "Sabi Buzz" commentary system for engaging, action-oriented conversation
-- Updated AI prompts with encouraging phrases: "Perfect time to send money home", "Your money goes further today"
-- Enhanced system prompt: "You're encouraging a friend helping someone with money transfers"
-- Changed from formal analysis to action-focused tone with specific timing guidance
-- Improved fallback commentary with 4 variations per scenario including urgency and savings opportunities
-- Added phrases like "Great rates today", "Huge savings available", "Consider sending soon"
-- Maximum 25 words per comment for better readability and engagement
-- Temperature increased to 0.8 for more natural, varied responses
-- Commentary now includes specific rate advantages and timing recommendations
-- Addresses final priority from user testing workshop feedback: AI content tone improvement
+### July 9, 2025 - Phase 4: Revolutionary "Sabi Buzz" Personality System Complete
+- Completely transformed AI commentary from boring analysis to relatable friend advice as platform USP
+- AI now sounds like texting a close friend: "OMG!", "You won't believe this", "Seriously?!", "This is HUGE!"
+- Enhanced system prompts to be genuinely excited and use relatable expressions
+- Commentary examples: "WAIT! Pesa is beating others by 3.3%! That's free money!"
+- Added personality-driven fallback with 4+ variations: urgency, excitement, genuine care, insider tips
+- Phrases like "Trust me on this", "Plot twist!", "Your wallet will thank you!", "Zero drama, just good rates!"
+- Maximum 25 words per comment with emoji usage for extra personality
+- Temperature optimized for natural, varied, authentic responses
+- System now delivers relatable, informative, engaging, and actionable insights as core platform differentiator
+- Addresses critical USP requirement: commentary must have personality and be relatable to drive user engagement
 
 ### July 8, 2025 - Phase 2.1: Footer Contrast Enhancement Complete
 - Fixed critical contrast issues in footer for better accessibility and readability
