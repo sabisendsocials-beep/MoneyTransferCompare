@@ -147,7 +147,7 @@ Generate ONE data-driven insight based on real market analysis:`;
       messages: [
         {
           role: "system",  
-          content: "You're a relatable financial friend giving money transfer advice. Sound excited and use expressions like 'OMG', 'Trust me', 'You won't believe this', 'Seriously', 'This is huge'. Write like you're texting a close friend about an amazing deal you found!"
+          content: "You're texting your best friend about money transfer deals. Be super casual and excited! Use language like 'Yo!', 'Dude!', 'Bro!', 'Girl!', 'No way!', 'For real?', 'That's crazy!', 'Don't sleep on this!'. Keep it under 20 words and sound like you're actually texting a friend!"
         },
         {
           role: "user",
@@ -198,34 +198,34 @@ function generateFallbackCommentary(marketData: MarketData): string {
   
   if (movement === 'up' && Math.abs(changePercent) > 1) {
     const upMessages = [
-      `OMG! ${currencyPair} just jumped ${Math.abs(changePercent).toFixed(1)}% - ${bestProvider} has the best rates right now! 🔥`,
-      `You won't believe this - ${currencyPair} is UP ${Math.abs(changePercent).toFixed(1)}%! ${bestProvider} is crushing it today.`,
-      `This is HUGE! ${bestProvider} just became the best deal with ${currencyPair} up ${Math.abs(changePercent).toFixed(1)}%!`,
-      `Seriously good timing! ${bestProvider} leading while ${currencyPair} climbs ${Math.abs(changePercent).toFixed(1)}%!`
+      `Yo! ${bestProvider} rates just shot up - get on this now!`,
+      `Dude! ${bestProvider} is on fire today - rates climbing fast!`,
+      `Girl! ${bestProvider} just got way better - you gotta see this!`,
+      `Bro! Perfect timing - ${bestProvider} rates are through the roof!`
     ];
     return upMessages[Math.floor(Math.random() * upMessages.length)];
   } else if (movement === 'down' && Math.abs(changePercent) > 1) {
     const downMessages = [
-      `Plot twist! ${currencyPair} dipped ${Math.abs(changePercent).toFixed(1)}% but ${bestProvider} is still killing it with rates!`,
-      `Honestly? This ${Math.abs(changePercent).toFixed(1)}% ${currencyPair} drop makes ${bestProvider} look even better! Silver lining!`,
-      `Real talk - ${bestProvider} is holding strong while ${currencyPair} wobbles ${Math.abs(changePercent).toFixed(1)}%. Smart choice!`,
-      `Trust me on this - ${bestProvider} staying solid despite ${currencyPair} being down ${Math.abs(changePercent).toFixed(1)}%!`
+      `Hey! Even with rates dipping, ${bestProvider} still your best bet!`,
+      `For real? ${bestProvider} staying strong while others tank!`,
+      `Yo! Market's wobbly but ${bestProvider} got you covered!`,
+      `${bestProvider} holding steady when others can't - solid choice!`
     ];
     return downMessages[Math.floor(Math.random() * downMessages.length)];
   } else if (rateSpread > 3) {
     const spreadMessages = [
-      `WAIT! ${bestProvider} is beating others by ${rateSpread.toFixed(1)}% on ${currencyPair}! That's free money!`,
-      `Seriously?! ${bestProvider} is ${rateSpread.toFixed(1)}% better than everyone else on ${currencyPair}! Don't miss this!`,
-      `You're gonna love this - ${bestProvider} just destroyed the competition by ${rateSpread.toFixed(1)}%! 💰`,
-      `No joke - ${bestProvider} is ${rateSpread.toFixed(1)}% ahead on ${currencyPair}! Your wallet will thank you!`
+      `Yo! ${bestProvider} crushing everyone else - free money right there!`,
+      `Dude! ${bestProvider} just smoked the competition - don't sleep on this!`,
+      `Bro! ${bestProvider} way ahead of everyone - this is wild!`,
+      `Girl! ${bestProvider} dominating right now - you gotta get on this!`
     ];
     return spreadMessages[Math.floor(Math.random() * spreadMessages.length)];
   } else {
     const stableMessages = [
-      `Honestly? ${bestProvider} is rock solid on ${currencyPair} right now. Zero drama, just good rates!`,
-      `${bestProvider} keeping it steady with ${currencyPair}. Sometimes boring is beautiful!`,
-      `Love this consistency! ${bestProvider} delivering reliable ${currencyPair} rates today.`,
-      `${bestProvider} is your safe bet for ${currencyPair} - no surprises, just good value!`
+      `${bestProvider} keeping it chill - no drama, just solid rates!`,
+      `Yo! ${bestProvider} steady as always - sometimes boring is good!`,
+      `${bestProvider} reliable as usual - you know what you're getting!`,
+      `${bestProvider} your safe bet - no surprises, just works!`
     ];
     return stableMessages[Math.floor(Math.random() * stableMessages.length)];
   }
