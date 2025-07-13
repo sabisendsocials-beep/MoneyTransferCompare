@@ -57,8 +57,10 @@ export const createFinancialServiceSchema = () => ({
   "url": "https://sabisend.com",
   "logo": "https://sabisend.com/logo.png",
   "sameAs": [
-    "https://twitter.com/sabisend",
-    "https://facebook.com/sabisend"
+    "https://x.com/sabisend_",
+    "https://www.facebook.com/sabisend",
+    "https://www.instagram.com/sabisend",
+    "https://www.tiktok.com/@sabisend_fx"
   ],
   "serviceType": "Money Transfer Comparison",
   "provider": {

@@ -96,6 +96,13 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### July 13, 2025 - Social Media URLs Updated
+- Updated all social media links throughout the website with official SabiSend accounts
+- Footer social icons now link to: X (Twitter), Facebook, Instagram, TikTok
+- Added TikTok icon and replaced LinkedIn with TikTok to match brand presence
+- Updated SEO structured data with all four social media profiles for better search visibility
+- All links open in new tabs with proper security attributes (target="_blank" rel="noopener noreferrer")
+
 ### July 9, 2025 - Phase 4: Revolutionary "Sabi Buzz" Natural Variety System Complete
 - Completely transformed commentary to match user's specific tone examples with significant variety
 - **NOW MATCHES USER EXAMPLES**: "You can save big today - Profee way ahead of everyone!", "Perfect time for Wise - steady rates, no surprises!"

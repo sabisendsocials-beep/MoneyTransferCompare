@@ -92,17 +92,19 @@ const Footer = () => {
               SabiSend helps you find the best international money transfer options with real-time comparisons of rates, fees, and delivery times.
             </p>
             <div className="flex space-x-4 mt-4">
-              <a href="#" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
+              <a href="https://www.facebook.com/sabisend" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
                 <Facebook size={18} />
               </a>
-              <a href="#" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
+              <a href="https://x.com/sabisend_" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
                 <Twitter size={18} />
               </a>
-              <a href="#" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
+              <a href="https://www.instagram.com/sabisend" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
                 <Instagram size={18} />
               </a>
-              <a href="#" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
-                <Linkedin size={18} />
+              <a href="https://www.tiktok.com/@sabisend_fx" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition duration-200">
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.321 5.562a5.122 5.122 0 0 1-.443-.258 6.228 6.228 0 0 1-1.137-.966c-.849-.849-1.294-1.98-1.294-3.281V1h-3.061v14.519c0 1.294-.527 2.466-1.376 3.315-.849.849-1.98 1.376-3.274 1.376-2.54 0-4.61-2.07-4.61-4.61s2.07-4.61 4.61-4.61c.849 0 1.617.241 2.302.644V7.573a8.685 8.685 0 0 0-2.302-.322c-4.774 0-8.671 3.897-8.671 8.671S4.462 24.593 9.236 24.593s8.671-3.897 8.671-8.671V9.236a9.28 9.28 0 0 0 5.414 1.733V7.573c-1.617 0-3.073-.723-4.061-1.825-.402-.446-.724-.966-.966-1.536-.12-.241-.202-.523-.282-.805h-3.315c.08.322.161.604.241.886.161.563.402 1.086.724 1.572.966 1.375 2.505 2.263 4.301 2.263v3.396a5.446 5.446 0 0 1-1.774-.322v6.597c0 2.705-2.224 4.929-4.929 4.929s-4.929-2.224-4.929-4.929 2.224-4.929 4.929-4.929c.885 0 1.693.241 2.425.644V7.814a8.36 8.36 0 0 0-2.425-.362c-4.532 0-8.268 3.736-8.268 8.268s3.736 8.268 8.268 8.268 8.268-3.736 8.268-8.268V9.719a9.043 9.043 0 0 0 5.173 1.613V7.573c-1.533 0-2.908-.684-3.857-1.774-.402-.443-.684-.925-.925-1.457-.08-.201-.161-.443-.201-.684z"/>
+                </svg>
               </a>
             </div>
           </div>
