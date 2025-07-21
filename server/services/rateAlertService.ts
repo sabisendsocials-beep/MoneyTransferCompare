@@ -4,7 +4,7 @@
  */
 
 import { db } from '../db';
-import { rateAlerts, exchangeRates, providers } from '../../shared/schema';
+import { rateAlerts, exchangeRates, providers, rateTrends } from '../../shared/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import type { InsertRateAlert, RateAlert } from '../../shared/schema';
 
@@ -21,17 +21,32 @@ export interface AlertValidationResult {
 }
 
 /**
- * Get current official rate from Alpha Vantage historical data
+ * Get current official rate from latest rate trends data (including daily increments)
  */
 async function getOfficialRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
   try {
-    const { getChartData } = await import('./chartDataService');
-    const chartData = await getChartData(fromCurrency, toCurrency, 1);
+    // Import the rate_trends table
+    const { rateTrends } = await import('../../shared/schema');
     
-    if (chartData.length > 0) {
-      // Get the most recent rate
-      return chartData[chartData.length - 1].rate;
+    // Get the most recent rate from rate_trends (includes daily increments and alpha vantage data)
+    const [latestRate] = await db
+      .select()
+      .from(rateTrends)
+      .where(
+        and(
+          eq(rateTrends.from_currency, fromCurrency),
+          eq(rateTrends.to_currency, toCurrency)
+        )
+      )
+      .orderBy(desc(rateTrends.created_at))
+      .limit(1);
+    
+    if (latestRate) {
+      console.log(`Official rate for ${fromCurrency}/${toCurrency}:`, latestRate.rate, `(source: ${latestRate.source})`);
+      return latestRate.rate;
     }
+    
+    console.log(`No official rate found for ${fromCurrency}/${toCurrency}`);
     return null;
   } catch (error) {
     console.error(`Error getting official rate for ${fromCurrency}/${toCurrency}:`, error);

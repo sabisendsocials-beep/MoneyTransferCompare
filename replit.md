@@ -96,6 +96,14 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 
 ## Recent Changes
 
+### July 21, 2025 - Base Rate Update System Fixed
+- Fixed critical issue where base rates were not updating properly in rate alerts system
+- Updated getOfficialRate function to query rate_trends table directly instead of chart data
+- System now retrieves latest rates from both Alpha Vantage historical data and daily increments
+- Base rates now showing correctly: GBP/NGN (2051.12), EUR/NGN (1778.89), USD/NGN (1530.23)
+- Added proper logging to track rate source (alpha_vantage vs daily_increment)
+- Affects rate alerts, comparison calculations, and all features depending on official rates
+
 ### July 13, 2025 - Social Media URLs Updated
 - Updated all social media links throughout the website with official SabiSend accounts
 - Footer social icons now link to: X (Twitter), Facebook, Instagram, TikTok
