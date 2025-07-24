@@ -465,6 +465,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual daily increment trigger for admin (reliable version)
+  app.post("/api/admin/trigger-daily-increment", async (req: Request, res: Response) => {
+    try {
+      const { addTodaysDailyIncrements } = await import('./services/manualDailyUpdate');
+      console.log('Manual daily increment update triggered via API');
+      
+      const result = await addTodaysDailyIncrements();
+      
+      res.json({
+        success: result.success,
+        message: result.message,
+        data: {
+          totalProcessed: result.totalProcessed,
+          successful: result.successful,
+          failed: result.failed
+        }
+      });
+    } catch (error) {
+      console.error('Error during manual daily increment trigger:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Manual trigger failed'
+      });
+    }
+  });
+
   // System settings management routes
   app.get("/api/system-settings", async (req: Request, res: Response) => {
     try {

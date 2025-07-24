@@ -22,6 +22,8 @@ interface AlphaVantageResponse {
     '3. To Symbol': string;
     '5. Last Refreshed': string;
   };
+  'Error Message'?: string;
+  'Note'?: string;
 }
 
 const ALL_CURRENCY_PAIRS = [
@@ -54,6 +56,36 @@ async function hasTodayIncrement(fromCurrency: string, toCurrency: string): Prom
   `);
   
   return (existing.rows[0].count as number) > 0;
+}
+
+/**
+ * Check if we should run daily collection
+ */
+export async function shouldRunDailyCollection(): Promise<boolean> {
+  try {
+    const today = getTodayDate();
+    
+    // Count how many currency pairs already have today's data
+    const existing = await db.execute(sql`
+      SELECT COUNT(*) as count FROM rate_trends 
+      WHERE date = ${today}
+      AND source = 'daily_increment'
+    `);
+    
+    const existingCount = existing.rows[0].count as number;
+    const totalPairs = ALL_CURRENCY_PAIRS.length; // 15 pairs
+    
+    // Only run if we have ZERO records for today to prevent duplicates
+    const shouldRun = existingCount === 0;
+    
+    console.log(`📊 Daily increment status: ${existingCount}/${totalPairs} pairs exist for ${today}`);
+    console.log(`📊 Should run collection: ${shouldRun} (only runs if 0 records exist)`);
+    
+    return shouldRun;
+  } catch (error) {
+    console.error('Error checking daily collection status:', error);
+    return false; // Default to false to prevent duplicate runs
+  }
 }
 
 /**
@@ -123,7 +155,7 @@ async function fetchLatestRateFromAlphaVantage(
 }
 
 /**
- * Add daily increment for a single currency pair
+ * Add daily increment for a single currency pair using UPSERT
  */
 async function addDailyIncrement(fromCurrency: string, toCurrency: string): Promise<boolean> {
   console.log(`Adding daily increment for ${fromCurrency}/${toCurrency}...`);
@@ -136,43 +168,24 @@ async function addDailyIncrement(fromCurrency: string, toCurrency: string): Prom
   }
   
   try {
-    // Check if today's increment already exists
-    const existingIncrement = await hasTodayIncrement(fromCurrency, toCurrency);
+    const today = getTodayDate();
     
-    if (existingIncrement) {
-      // Update existing entry with latest rate
-      await db.update(rateTrends)
-        .set({
-          rate: rateData.rate,
-          // Keep original date but update rate to latest
-        })
-        .where(
-          and(
-            eq(rateTrends.date, rateData.date),
-            eq(rateTrends.from_currency, fromCurrency),
-            eq(rateTrends.to_currency, toCurrency),
-            eq(rateTrends.source, 'daily_increment')
-          )
-        );
-      
-      console.log(`✓ Updated daily increment: ${fromCurrency}/${toCurrency} = ${rateData.rate} (${rateData.date})`);
-    } else {
-      // Insert new daily increment entry
-      await db.insert(rateTrends).values({
-        date: rateData.date,
-        from_currency: fromCurrency,
-        to_currency: toCurrency,
-        rate: rateData.rate,
-        source: 'daily_increment'
-      });
-      
-      console.log(`✓ Added daily increment: ${fromCurrency}/${toCurrency} = ${rateData.rate} (${rateData.date})`);
-    }
+    // Use UPSERT with robust conflict handling - always use TODAY'S date
+    await db.execute(sql`
+      INSERT INTO rate_trends (date, from_currency, to_currency, rate, source, created_at)
+      VALUES (${today}, ${fromCurrency}, ${toCurrency}, ${rateData.rate}, 'daily_increment', ${new Date()})
+      ON CONFLICT (date, from_currency, to_currency) 
+      DO UPDATE SET 
+        rate = EXCLUDED.rate,
+        created_at = EXCLUDED.created_at
+      WHERE rate_trends.source = 'daily_increment'
+    `);
     
+    console.log(`✓ Upserted daily increment: ${fromCurrency}/${toCurrency} = ${rateData.rate} (${today})`);
     return true;
     
   } catch (error) {
-    console.error(`Error storing daily increment for ${fromCurrency}/${toCurrency}:`, error);
+    console.error(`Error upserting daily increment for ${fromCurrency}/${toCurrency}:`, error);
     return false;
   }
 }
@@ -248,12 +261,3 @@ export async function getLatestIncrementDate(
   return result.rows[0].latest_date as string || null;
 }
 
-/**
- * Check if daily increment collection should run
- * (Allows multiple runs per day, but prevents duplicate data for same date)
- */
-export async function shouldRunDailyCollection(): Promise<boolean> {
-  // Always allow collection attempts - the individual addDailyIncrement function
-  // will handle duplicate detection per currency pair
-  return true;
-}

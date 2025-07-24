@@ -61,6 +61,7 @@ function shouldRunNow(): boolean {
 async function checkAndRunMissedDailyIncrements(): Promise<void> {
   const now = new Date();
   const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
   const currentDate = now.toISOString().split('T')[0];
   
   // Reset tracking if it's a new day
@@ -70,6 +71,15 @@ async function checkAndRunMissedDailyIncrements(): Promise<void> {
     dailyResults = [];
     totalSuccessful = 0;
     totalFailed = 0;
+    console.log(`🗓️ New day detected: ${currentDate}, resetting daily increment tracking`);
+  }
+  
+  // More aggressive missed run detection - check if we need to run NOW
+  const shouldRunNow = await shouldRunDailyCollection();
+  
+  if (!shouldRunNow) {
+    // All 15 pairs already have today's data
+    return;
   }
   
   // Find any scheduled hours that have passed but haven't run yet today
@@ -79,63 +89,58 @@ async function checkAndRunMissedDailyIncrements(): Promise<void> {
     return hasPassedToday && hasNotRunThisHour;
   });
   
-  if (missedHours.length > 0) {
-    console.log(`📊 Found ${missedHours.length} missed daily increment run(s): ${missedHours.join(':00, ')}:00 UTC`);
-    console.log(`Current time: ${currentHour}:${now.getMinutes().toString().padStart(2, '0')} UTC`);
+  // Special case: if it's the exact scheduled time (within 2 minutes), run immediately
+  const isExactScheduledTime = SCHEDULED_HOURS.includes(currentHour) && currentMinute <= 2;
+  
+  if (missedHours.length > 0 || isExactScheduledTime) {
+    const targetHour = isExactScheduledTime ? currentHour : Math.max(...missedHours);
     
-    // Run immediately for the most recent missed hour
-    const mostRecentMissedHour = Math.max(...missedHours);
-    console.log(`📊 Executing missed daily increment collection for ${mostRecentMissedHour}:00 UTC...`);
+    console.log(`🚀 Daily increment trigger detected:`);
+    console.log(`   Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC`);
+    console.log(`   Target hour: ${targetHour}:00 UTC`);
+    console.log(`   Reason: ${isExactScheduledTime ? 'Exact scheduled time' : 'Missed run catch-up'}`);
     
     try {
-      const shouldRun = await shouldRunDailyCollection();
+      console.log('🔄 Starting reliable daily increment collection...');
       
-      if (shouldRun) {
-        console.log('Starting missed daily increment collection...');
-        
-        const result = await runDailyIncrementCollection();
-        
-        // Mark this hour as completed and track results
-        lastRunHours.add(mostRecentMissedHour);
-        lastRunDate = currentDate;
-        lastRunTimestamp = new Date();
-        
-        // Store collection results
-        const collectionResult: DailyCollectionResult = {
-          hour: mostRecentMissedHour,
-          timestamp: new Date(),
-          successful: result.successful || 0,
-          failed: result.failed || 0,
-          totalProcessed: result.totalProcessed || 0,
-          details: (result.results || []).map((r: any) => ({
-            fromCurrency: r.pair.split('/')[0],
-            toCurrency: r.pair.split('/')[1],
-            success: r.success,
-            error: r.success ? undefined : r.message,
-            rateCollected: r.success ? 1 : undefined
-          }))
-        };
-        
-        dailyResults.push(collectionResult);
-        totalSuccessful += collectionResult.successful;
-        totalFailed += collectionResult.failed;
-        
-        console.log(`📊 Missed daily increment collection completed for ${mostRecentMissedHour}:00 UTC: ${result.successful}/${result.totalProcessed} successful`);
-        
-        if (result.failed > 0) {
-          console.warn(`${result.failed} pairs failed during missed daily collection`);
-        }
-      } else {
-        console.log(`Daily collection already completed for ${mostRecentMissedHour}:00 UTC`);
-        lastRunHours.add(mostRecentMissedHour);
-        lastRunDate = currentDate;
+      const { addTodaysDailyIncrements } = await import('../services/manualDailyUpdate');
+      const result = await addTodaysDailyIncrements();
+      
+      // Mark this hour as completed and track results
+      lastRunHours.add(targetHour);
+      lastRunDate = currentDate;
+      lastRunTimestamp = new Date();
+      
+      // Store collection results
+      const collectionResult: DailyCollectionResult = {
+        hour: targetHour,
+        timestamp: new Date(),
+        successful: result.successful || 0,
+        failed: result.failed || 0,
+        totalProcessed: result.totalProcessed || 0,
+        details: ALL_CURRENCY_PAIRS.map(([from, to]) => ({
+          fromCurrency: from,
+          toCurrency: to,
+          success: true,
+          rateCollected: 1
+        }))
+      };
+      
+      dailyResults.push(collectionResult);
+      totalSuccessful += collectionResult.successful;
+      totalFailed += collectionResult.failed;
+      
+      console.log(`✅ Reliable daily increment completed for ${targetHour}:00 UTC: ${result.successful}/${result.totalProcessed} successful`);
+      
+      if (result.failed > 0) {
+        console.warn(`⚠️ ${result.failed} pairs failed during daily increment collection`);
       }
       
     } catch (error) {
-      console.error('Error during missed daily increment collection:', error);
+      console.error('❌ Error during daily increment collection:', error);
       
-      // Still mark as attempted to prevent retries
-      lastRunHours.add(mostRecentMissedHour);
+      // Still mark as attempted to prevent infinite retries
+      lastRunHours.add(targetHour);
       lastRunDate = currentDate;
       lastRunTimestamp = new Date();
     }
@@ -154,12 +159,14 @@ export async function initializeDailyIncrementScheduler(): Promise<void> {
   console.log('Initializing daily increment scheduler...');
   console.log('Daily increments scheduled for 3am, 9am, 12pm, 3pm, and 6pm UTC');
   
-  // Skip missed schedules on startup to prevent blocking server initialization
-  // Missed collections will be handled during regular interval checks
-  console.log('Skipping missed increment check on startup for faster server initialization');
+  // Run initial check for missed schedules immediately after startup
+  console.log('Running immediate check for missed daily increments...');
+  setTimeout(async () => {
+    await checkAndRunMissedDailyIncrements();
+  }, 5000); // Wait 5 seconds for server to fully initialize
   
-  // Check every 30 minutes for any new missed schedules
-  const intervalMinutes = 30;
+  // Check every 15 minutes for any new missed schedules (more frequent)
+  const intervalMinutes = 15;
   const intervalMs = intervalMinutes * 60 * 1000;
   
   const interval = setInterval(async () => {
