@@ -754,34 +754,40 @@ const EnhancedRateTrends = () => {
                                         key={`${provider.name}-${dayData.date}`}
                                         className="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 shadow-sm hover:shadow-md transition-shadow"
                                       >
-                                        {/* Movement Indicator */}
-                                        {movement && dayIndex > 0 && (
-                                          <div className={`absolute -top-1 -right-1 text-xs font-medium ${movementColor} rounded-full w-6 h-6 flex items-center justify-center shadow-sm`}>
-                                            {movement}
+                                        <div className="flex items-center justify-between h-full">
+                                          {/* Left: Rank Badge */}
+                                          <div className="flex-shrink-0">
+                                            <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white shadow-sm ${
+                                              rank === 1 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
+                                              rank === 2 ? 'bg-gradient-to-r from-slate-400 to-slate-500' :
+                                              rank === 3 ? 'bg-gradient-to-r from-orange-400 to-amber-500' :
+                                              rank === 4 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                                              'bg-gradient-to-r from-purple-500 to-pink-500'
+                                            }`}>
+                                              {rank}
+                                            </div>
                                           </div>
-                                        )}
-                                        
-                                        {/* Rank Badge */}
-                                        <div className="flex items-center justify-center mb-2">
-                                          <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold text-white shadow-sm ${
-                                            rank === 1 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
-                                            rank === 2 ? 'bg-gradient-to-r from-slate-400 to-slate-500' :
-                                            rank === 3 ? 'bg-gradient-to-r from-orange-400 to-amber-500' :
-                                            rank === 4 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                                            'bg-gradient-to-r from-purple-500 to-pink-500'
-                                          }`}>
-                                            {rank}
+                                          
+                                          {/* Center: Provider Name and Rate */}
+                                          <div className="flex-1 px-2">
+                                            <div className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                              {provider.name}
+                                            </div>
+                                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                              {currencyPair.toSymbol}{formatRate(provider.rate)}
+                                            </div>
                                           </div>
-                                        </div>
-                                        
-                                        {/* Provider Name */}
-                                        <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1 text-center truncate">
-                                          {provider.name}
-                                        </div>
-                                        
-                                        {/* Exchange Rate */}
-                                        <div className="text-sm font-bold text-gray-800 dark:text-gray-200 text-center">
-                                          {currencyPair.toSymbol}{formatRate(provider.rate)}
+                                          
+                                          {/* Right: Movement Indicator */}
+                                          <div className="flex-shrink-0">
+                                            {movement && dayIndex > 0 ? (
+                                              <div className={`text-sm font-medium ${movementColor} rounded-full w-7 h-7 flex items-center justify-center shadow-sm`}>
+                                                {movement}
+                                              </div>
+                                            ) : (
+                                              <div className="w-7 h-7"></div>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                     );
