@@ -679,139 +679,183 @@ const EnhancedRateTrends = () => {
                           Daily Provider Rankings
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Visual ranking cards showing top 5 providers by day with rates and performance indicators
+                          Timeline view showing top 5 providers across last 5 days with movement indicators
                         </p>
                       </div>
                       
-                      <div className="grid gap-4">
-                        {leagueTableData.slice(0, 10).map((dayData, dayIndex) => {
-                          const isToday = dayIndex === 0; // First item is most recent (today)
-                          return (
-                            <div 
-                              key={dayData.date} 
-                              className={`border rounded-lg p-4 ${
-                                isToday 
-                                  ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 shadow-lg' 
-                                  : 'bg-white dark:bg-gray-800'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center">
-                                  <h3 className={`font-semibold text-lg ${
-                                    isToday ? 'text-blue-800 dark:text-blue-200' : 'text-gray-800 dark:text-white'
-                                  }`}>
-                                    {formatDateString(dayData.date)}
-                                  </h3>
-                                  {isToday && (
-                                    <span className="ml-3 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 rounded-full">
-                                      Latest
-                                    </span>
-                                  )}
-                                </div>
-                                {dayData.baseRate && (
-                                  <div className={`text-sm ${
-                                    isToday ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300'
-                                  }`}>
-                                    Base Rate: {currencyPair.toSymbol}{formatRate(dayData.baseRate)}
-                                  </div>
-                                )}
-                              </div>
-                            
-                              {dayData.topProviders.length > 0 ? (
-                                <div className="space-y-2">
-                                  {dayData.topProviders.slice(0, 5).map((provider, index) => {
-                                    const percentage = dayData.baseRate ? ((provider.rate - dayData.baseRate) / dayData.baseRate * 100) : 0;
-                                    return (
-                                      <div
-                                        key={`${dayData.date}-${provider.name}`}
-                                        className="relative flex items-center p-3 rounded-lg"
-                                        style={{
-                                          backgroundColor: `${rankingProviderColors[provider.name]}20`,
-                                          borderLeft: `4px solid ${rankingProviderColors[provider.name]}`
-                                        }}
-                                      >
-                                        <div className="flex items-center flex-1">
-                                          <div className="flex items-center mr-4">
-                                            {getRankIcon(index + 1)}
-                                          </div>
-                                          <div className="flex-1">
-                                            <div className="font-medium text-gray-900 dark:text-white">
-                                              {provider.name}
-                                            </div>
-                                            <div className="text-sm text-gray-600 dark:text-gray-300">
-                                              Rate: {currencyPair.toSymbol}{formatRate(provider.rate)}
-                                            </div>
-                                          </div>
-                                          <div className="text-right">
-                                            <div className={`font-semibold ${
-                                              percentage >= 0 
-                                                ? 'text-green-600 dark:text-green-400' 
-                                                : 'text-red-600 dark:text-red-400'
-                                            }`}>
-                                              {formatPercentage(percentage)}
-                                            </div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                              vs base
-                                            </div>
-                                          </div>
-                                        </div>
-                                        
-                                        {/* Visual bar showing relative performance */}
-                                        <div className="absolute bottom-0 left-0 h-1 rounded-b-lg transition-all duration-300"
-                                             style={{
-                                               backgroundColor: rankingProviderColors[provider.name],
-                                               width: `${Math.max(20, Math.min(100, 50 + percentage * 2))}%`
-                                             }}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                  
-                                  {/* Show remaining providers count if more than 5 */}
-                                  {dayData.topProviders.length > 5 && (
-                                    <div className="text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                                      +{dayData.topProviders.length - 5} more providers
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                  No provider data available for this date
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                        
-                        {leagueTableData.length > 10 && (
-                          <div className="text-center py-4">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Showing latest 10 days. Total: {leagueTableData.length} days
+                      {/* Horizontal Timeline View - Perfect for Social Media */}
+                      <div className="overflow-x-auto">
+                        <div className="min-w-full bg-white dark:bg-gray-900 rounded-lg border shadow-lg p-6">
+                          {/* Header */}
+                          <div className="text-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                              {currencyPair.fromSymbol} to {currencyPair.toSymbol} Provider Rankings
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              Last 5 Days - Track provider movement over time
                             </p>
                           </div>
-                        )}
+                          
+                          {/* Timeline Grid */}
+                          <div className="grid grid-cols-6 gap-4 min-w-[800px]">
+                            {/* Provider Names Column */}
+                            <div className="space-y-3">
+                              <div className="h-12 flex items-center justify-center font-semibold text-gray-800 dark:text-white border-b-2 border-gray-200 dark:border-gray-600">
+                                Provider
+                              </div>
+                              {/* Get unique providers from recent days for consistent ordering */}
+                              {(() => {
+                                const recentDays = leagueTableData.slice(0, 5);
+                                const allProviders = new Set<string>();
+                                recentDays.forEach(day => {
+                                  day.topProviders.slice(0, 5).forEach(provider => {
+                                    allProviders.add(provider.name);
+                                  });
+                                });
+                                return Array.from(allProviders).slice(0, 5).map((providerName, index) => (
+                                  <div 
+                                    key={providerName}
+                                    className="h-16 flex items-center p-3 rounded-lg font-medium text-gray-900 dark:text-white"
+                                    style={{
+                                      backgroundColor: `${rankingProviderColors[providerName]}20`,
+                                      borderLeft: `4px solid ${rankingProviderColors[providerName]}`
+                                    }}
+                                  >
+                                    {providerName}
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                            
+                            {/* Day Columns */}
+                            {leagueTableData.slice(0, 5).map((dayData, dayIndex) => {
+                              const isToday = dayIndex === 0;
+                              return (
+                                <div key={dayData.date} className="space-y-3">
+                                  {/* Day Header */}
+                                  <div className={`h-12 flex flex-col items-center justify-center rounded-lg border-b-2 ${
+                                    isToday 
+                                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-800 dark:text-blue-200' 
+                                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white'
+                                  }`}>
+                                    <div className="text-xs font-medium">
+                                      {formatDateString(dayData.date).split(' ')[0]}
+                                    </div>
+                                    <div className="text-xs">
+                                      {formatDateString(dayData.date).split(' ')[1]}
+                                    </div>
+                                    {isToday && (
+                                      <div className="text-xs bg-blue-500 text-white px-1 rounded">Latest</div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Provider Rankings for this day */}
+                                  {(() => {
+                                    const recentDays = leagueTableData.slice(0, 5);
+                                    const allProviders = new Set<string>();
+                                    recentDays.forEach(day => {
+                                      day.topProviders.slice(0, 5).forEach(provider => {
+                                        allProviders.add(provider.name);
+                                      });
+                                    });
+                                    return Array.from(allProviders).slice(0, 5).map((providerName) => {
+                                      const providerRank = dayData.topProviders.findIndex(p => p.name === providerName) + 1;
+                                      const provider = dayData.topProviders.find(p => p.name === providerName);
+                                      const prevDay = leagueTableData[dayIndex + 1];
+                                      const prevRank = prevDay ? prevDay.topProviders.findIndex(p => p.name === providerName) + 1 : 0;
+                                      
+                                      // Movement indicator
+                                      let movement = '';
+                                      let movementColor = '';
+                                      if (prevRank > 0 && providerRank > 0) {
+                                        if (prevRank > providerRank) {
+                                          movement = '↑';
+                                          movementColor = 'text-green-500';
+                                        } else if (prevRank < providerRank) {
+                                          movement = '↓';
+                                          movementColor = 'text-red-500';
+                                        } else {
+                                          movement = '→';
+                                          movementColor = 'text-gray-400';
+                                        }
+                                      }
+                                      
+                                      return (
+                                        <div 
+                                          key={providerName}
+                                          className="h-16 flex flex-col items-center justify-center rounded-lg border text-center relative"
+                                          style={{
+                                            backgroundColor: providerRank > 0 ? `${rankingProviderColors[providerName]}30` : '#f9fafb',
+                                            borderColor: providerRank > 0 ? rankingProviderColors[providerName] : '#d1d5db'
+                                          }}
+                                        >
+                                          {providerRank > 0 ? (
+                                            <>
+                                              <div className="flex items-center space-x-1">
+                                                {getRankIcon(providerRank)}
+                                                <span className="text-sm font-bold">#{providerRank}</span>
+                                              </div>
+                                              {provider && (
+                                                <div className="text-xs text-gray-600 dark:text-gray-300">
+                                                  {currencyPair.toSymbol}{formatRate(provider.rate)}
+                                                </div>
+                                              )}
+                                              {movement && (
+                                                <div className={`absolute -top-1 -right-1 text-lg font-bold ${movementColor} bg-white dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center shadow-md`}>
+                                                  {movement}
+                                                </div>
+                                              )}
+                                            </>
+                                          ) : (
+                                            <div className="text-xs text-gray-400">Not in Top 5</div>
+                                          )}
+                                        </div>
+                                      );
+                                    });
+                                  })()}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Legend */}
+                          <div className="mt-6 flex items-center justify-center space-x-6 text-xs text-gray-600 dark:text-gray-300">
+                            <div className="flex items-center space-x-1">
+                              <span className="text-green-500 font-bold">↑</span>
+                              <span>Moved Up</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span className="text-red-500 font-bold">↓</span>
+                              <span>Moved Down</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span className="text-gray-400 font-bold">→</span>
+                              <span>Same Position</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       
                       {/* Rankings Legend */}
                       <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-2">
-                          Reading the Ranking Cards:
+                          Reading the Timeline:
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
                           <div className="flex items-center">
                             <Trophy className="w-3 h-3 text-yellow-500 mr-1" />
-                            Each card shows top 5 providers for the day
+                            Compare rankings across last 5 days side by side
                           </div>
                           <div className="flex items-center">
                             <Medal className="w-3 h-3 text-gray-400 mr-1" />
-                            Colors and progress bars show performance vs base rate
+                            Movement arrows show if providers moved up/down
                           </div>
                           <div className="flex items-center">
                             <Award className="w-3 h-3 text-amber-600 mr-1" />
-                            Trophy/medal icons indicate ranking positions
+                            Perfect for social media sharing and trend analysis
                           </div>
                           <div className="text-gray-500">
-                            Green percentages = above base rate, Red = below base rate
+                            Latest day highlighted in blue with "Latest" badge
                           </div>
                         </div>
                       </div>
