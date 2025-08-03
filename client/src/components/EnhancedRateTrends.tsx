@@ -754,9 +754,9 @@ const EnhancedRateTrends = () => {
                                     return (
                                       <div 
                                         key={`${provider.name}-${dayData.date}`}
-                                        className="relative h-24 flex flex-col items-center justify-center rounded-xl border-2 text-center shadow-sm hover:shadow-md transition-shadow"
+                                        className="relative h-28 flex flex-col items-center justify-center rounded-xl border-2 text-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                                         style={{
-                                          backgroundColor: `${rankingProviderColors[provider.name]}20`,
+                                          background: `linear-gradient(135deg, ${rankingProviderColors[provider.name]}25, ${rankingProviderColors[provider.name]}40)`,
                                           borderColor: rankingProviderColors[provider.name],
                                           borderWidth: '2px'
                                         }}
@@ -768,16 +768,38 @@ const EnhancedRateTrends = () => {
                                           </div>
                                         )}
                                         
-                                        {/* Provider Name */}
-                                        <div className="text-xs font-bold text-gray-700 dark:text-gray-200 mb-1 truncate max-w-full px-1" 
-                                             style={{ color: rankingProviderColors[provider.name] }}>
-                                          {provider.name}
+                                        {/* Provider Logo and Name */}
+                                        <div className="flex items-center justify-center mb-2">
+                                          {allProviders.find((p: any) => p.name === provider.name)?.logo ? (
+                                            <img 
+                                              src={allProviders.find((p: any) => p.name === provider.name)?.logo} 
+                                              alt={provider.name}
+                                              className="w-8 h-8 rounded-full object-cover mr-2"
+                                            />
+                                          ) : (
+                                            <div 
+                                              className="w-8 h-8 rounded-full mr-2 flex items-center justify-center text-white text-xs font-bold"
+                                              style={{ backgroundColor: rankingProviderColors[provider.name] }}
+                                            >
+                                              {provider.name.charAt(0)}
+                                            </div>
+                                          )}
+                                          <div className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate">
+                                            {provider.name}
+                                          </div>
                                         </div>
                                         
-                                        {/* Rank with Icon */}
-                                        <div className="flex items-center space-x-1 mb-1">
-                                          {getRankIcon(rank)}
-                                          <span className="text-lg font-bold text-gray-800 dark:text-white">#{rank}</span>
+                                        {/* Rank Only */}
+                                        <div className="mb-1">
+                                          <span className={`text-lg font-bold text-white px-3 py-1 rounded-full shadow-lg ${
+                                            rank === 1 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                                            rank === 2 ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
+                                            rank === 3 ? 'bg-gradient-to-r from-orange-400 to-yellow-600' :
+                                            rank === 4 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                                            'bg-gradient-to-r from-purple-500 to-pink-500'
+                                          }`}>
+                                            #{rank}
+                                          </span>
                                         </div>
                                         
                                         {/* Exchange Rate */}
