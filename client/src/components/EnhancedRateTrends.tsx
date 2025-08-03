@@ -724,11 +724,11 @@ const EnhancedRateTrends = () => {
                               })}
                             </div>
                             
-                            {/* Clean Provider Rankings */}
-                            <div className="grid grid-cols-5 gap-6">
+                            {/* Simplified Provider Rankings - Top 5 */}
+                            <div className="grid grid-cols-5 gap-4">
                               {leagueTableData.slice(0, 5).map((dayData, dayIndex) => (
-                                <div key={dayData.date} className="space-y-4">
-                                  {dayData.topProviders.slice(0, 3).map((provider, rankIndex) => {
+                                <div key={dayData.date} className="space-y-2">
+                                  {dayData.topProviders.slice(0, 5).map((provider, rankIndex) => {
                                     const rank = rankIndex + 1;
                                     const prevDay = leagueTableData[dayIndex + 1];
                                     const prevRank = prevDay ? prevDay.topProviders.findIndex(p => p.name === provider.name) + 1 : 0;
@@ -739,87 +739,53 @@ const EnhancedRateTrends = () => {
                                     if (dayIndex > 0 && prevRank > 0) {
                                       if (prevRank > rank) {
                                         movement = '↗';
-                                        movementColor = 'text-emerald-600 bg-emerald-50 border-emerald-200';
+                                        movementColor = 'text-emerald-600 bg-emerald-50';
                                       } else if (prevRank < rank) {
                                         movement = '↘';
-                                        movementColor = 'text-red-500 bg-red-50 border-red-200';
+                                        movementColor = 'text-red-500 bg-red-50';
                                       } else {
                                         movement = '→';
-                                        movementColor = 'text-gray-500 bg-gray-50 border-gray-200';
+                                        movementColor = 'text-gray-500 bg-gray-50';
                                       }
                                     }
                                     
                                     return (
                                       <div 
                                         key={`${provider.name}-${dayData.date}`}
-                                        className="relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-md transition-all duration-300 group"
+                                        className="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 shadow-sm hover:shadow-md transition-shadow"
                                       >
                                         {/* Movement Indicator */}
                                         {movement && dayIndex > 0 && (
-                                          <div className={`absolute -top-2 -right-2 text-sm font-medium ${movementColor} rounded-full w-8 h-8 flex items-center justify-center shadow-sm border`}>
+                                          <div className={`absolute -top-1 -right-1 text-xs font-medium ${movementColor} rounded-full w-6 h-6 flex items-center justify-center shadow-sm`}>
                                             {movement}
                                           </div>
                                         )}
                                         
                                         {/* Rank Badge */}
-                                        <div className="flex items-center justify-between mb-3">
-                                          <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white shadow-sm ${
+                                        <div className="flex items-center justify-center mb-2">
+                                          <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold text-white shadow-sm ${
                                             rank === 1 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
                                             rank === 2 ? 'bg-gradient-to-r from-slate-400 to-slate-500' :
-                                            'bg-gradient-to-r from-orange-400 to-amber-500'
+                                            rank === 3 ? 'bg-gradient-to-r from-orange-400 to-amber-500' :
+                                            rank === 4 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                                            'bg-gradient-to-r from-purple-500 to-pink-500'
                                           }`}>
                                             {rank}
-                                          </div>
-                                          
-                                          {/* Provider Logo */}
-                                          <div className="flex-shrink-0">
-                                            {allProviders.find((p: any) => p.name === provider.name)?.logo ? (
-                                              <img 
-                                                src={allProviders.find((p: any) => p.name === provider.name)?.logo} 
-                                                alt={provider.name}
-                                                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                                              />
-                                            ) : (
-                                              <div 
-                                                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm border-2 border-white"
-                                                style={{ backgroundColor: rankingProviderColors[provider.name] }}
-                                              >
-                                                {provider.name.charAt(0)}
-                                              </div>
-                                            )}
                                           </div>
                                         </div>
                                         
                                         {/* Provider Name */}
-                                        <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                        <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1 text-center truncate">
                                           {provider.name}
                                         </div>
                                         
                                         {/* Exchange Rate */}
-                                        <div className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                                        <div className="text-sm font-bold text-gray-800 dark:text-gray-200 text-center">
                                           {currencyPair.toSymbol}{formatRate(provider.rate)}
                                         </div>
-                                        
-                                        {/* Subtle Border Accent */}
-                                        <div 
-                                          className="absolute inset-x-0 bottom-0 h-1 rounded-b-2xl opacity-60"
-                                          style={{ backgroundColor: rankingProviderColors[provider.name] }}
-                                        />
                                       </div>
                                     );
                                   })}
-                                  
-                                  {/* Show "View More" for additional providers */}
-                                  {dayData.topProviders.length > 3 && (
-                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4 text-center">
-                                      <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                                        +{dayData.topProviders.length - 3} more
-                                      </div>
-                                      <div className="text-xs text-gray-400 dark:text-gray-500">
-                                        providers ranked
-                                      </div>
-                                    </div>
-                                  )}
                                 </div>
                               ))}
                             </div>
