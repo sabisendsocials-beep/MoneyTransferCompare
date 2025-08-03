@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect, useMemo } from "react";
 import {
   LineChart,
@@ -22,6 +22,9 @@ import {
   Check,
   Eye,
   EyeOff,
+  Trophy,
+  Medal,
+  Award,
 } from "lucide-react";
 import {
   Select,
@@ -35,6 +38,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type PeriodOption = {
   label: string;
@@ -77,6 +82,21 @@ const EnhancedRateTrends = () => {
   });
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [showBaseRates, setShowBaseRates] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Type definitions for league table
+  type ProviderRanking = {
+    name: string;
+    rate: number;
+    percentageAboveBase: number;
+    amountAboveBase: number;
+  };
+
+  type DayLeagueData = {
+    date: string;
+    baseRate: number;
+    topProviders: ProviderRanking[];
+  };
 
   // Fetch all available providers
   const { data: allProviders = [] } = useQuery({
@@ -290,6 +310,58 @@ const EnhancedRateTrends = () => {
     return null;
   };
 
+  // Calculate league table data for each day
+  const leagueTableData = useMemo((): DayLeagueData[] => {
+    if (!chartData.length) return [];
+    
+    return chartData.map(dayData => {
+      const baseRate = dayData.base_rate;
+      const providers: ProviderRanking[] = [];
+      
+      // Extract all provider rates for this day
+      Object.keys(dayData).forEach(key => {
+        if (key !== 'date' && key !== 'base_rate' && dayData[key] != null) {
+          const providerName = selectedProviders.find(p => 
+            p.toLowerCase().replace(/\s+/g, '_') === key
+          ) || key.replace(/_/g, ' ');
+          
+          const rate = dayData[key] as number;
+          const percentageAboveBase = baseRate ? ((rate - baseRate) / baseRate * 100) : 0;
+          
+          providers.push({
+            name: providerName,
+            rate: rate,
+            percentageAboveBase: percentageAboveBase,
+            amountAboveBase: baseRate ? (rate - baseRate) : 0
+          });
+        }
+      });
+      
+      // Sort by rate (highest first) and take top 7
+      providers.sort((a, b) => b.rate - a.rate);
+      
+      return {
+        date: dayData.date,
+        baseRate: baseRate || 0,
+        topProviders: providers.slice(0, 7)
+      };
+    }).reverse(); // Most recent first
+  }, [chartData, selectedProviders]);
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1: return <Trophy className="w-4 h-4 text-yellow-500" />;
+      case 2: return <Medal className="w-4 h-4 text-gray-400" />;
+      case 3: return <Award className="w-4 h-4 text-amber-600" />;
+      default: return <span className="w-4 h-4 flex items-center justify-center text-xs font-bold text-gray-500">#{rank}</span>;
+    }
+  };
+
+  const formatPercentage = (percentage: number) => {
+    const sign = percentage >= 0 ? '+' : '';
+    return `${sign}${percentage.toFixed(2)}%`;
+  };
+
   return (
     <section className="py-12 bg-white dark:bg-gray-800">
       <div className="container mx-auto px-4">
@@ -399,9 +471,16 @@ const EnhancedRateTrends = () => {
             </div>
           )}
 
-          {/* Chart Section */}
-          <Card className="mb-6">
-            <CardContent className="p-6">
+          {/* Chart and League Table Section */}
+          <Tabs defaultValue="chart" className="mb-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="chart">Rate Trends Chart</TabsTrigger>
+              <TabsTrigger value="league">Daily League Table</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chart">
+              <Card>
+                <CardContent className="p-6">
               {isLoading ? (
                 <div className="flex items-center justify-center h-96">
                   <div className="text-center">
@@ -470,8 +549,108 @@ const EnhancedRateTrends = () => {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="league">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+                    Daily Provider League Table
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Top 7 providers by day, ranked by exchange rate with percentage above base rate
+                  </p>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {leagueTableData.length > 0 ? (
+                    <ScrollArea className="h-[500px]">
+                      <div className="space-y-6">
+                        {leagueTableData.map((dayData, dayIndex) => (
+                          <div key={dayData.date} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-semibold text-lg">
+                                {formatDateString(dayData.date)}
+                              </h3>
+                              {dayData.baseRate && (
+                                <div className="text-sm text-gray-600 dark:text-gray-300">
+                                  Base Rate: {currencyPair.toSymbol}{formatRate(dayData.baseRate)}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {dayData.topProviders.length > 0 ? (
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-16">Rank</TableHead>
+                                    <TableHead>Provider</TableHead>
+                                    <TableHead className="text-right">Rate</TableHead>
+                                    <TableHead className="text-right">vs Base</TableHead>
+                                    <TableHead className="text-right">Amount Above</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {dayData.topProviders.map((provider, index) => (
+                                    <TableRow key={`${dayData.date}-${provider.name}`}>
+                                      <TableCell className="flex items-center">
+                                        {getRankIcon(index + 1)}
+                                      </TableCell>
+                                      <TableCell className="font-medium">
+                                        {provider.name}
+                                      </TableCell>
+                                      <TableCell className="text-right font-mono">
+                                        {currencyPair.toSymbol}{formatRate(provider.rate)}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={`font-medium ${
+                                          provider.percentageAboveBase >= 0 
+                                            ? 'text-green-600 dark:text-green-400' 
+                                            : 'text-red-600 dark:text-red-400'
+                                        }`}>
+                                          {formatPercentage(provider.percentageAboveBase)}
+                                        </span>
+                                      </TableCell>
+                                      <TableCell className="text-right font-mono">
+                                        <span className={`${
+                                          provider.amountAboveBase >= 0 
+                                            ? 'text-green-600 dark:text-green-400' 
+                                            : 'text-red-600 dark:text-red-400'
+                                        }`}>
+                                          {provider.amountAboveBase >= 0 ? '+' : ''}
+                                          {currencyPair.toSymbol}{formatRate(Math.abs(provider.amountAboveBase))}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            ) : (
+                              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                No provider data available for this date
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="flex items-center justify-center h-96">
+                      <div className="text-center">
+                        <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 dark:text-gray-300 mb-2">No league data available</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Select providers and ensure base rates are enabled to see the league table
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
           {/* Quick Actions */}
           <div className="flex justify-between items-center">
