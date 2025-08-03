@@ -696,126 +696,135 @@ const EnhancedRateTrends = () => {
                             </p>
                           </div>
                           
-                          {/* Timeline Grid */}
-                          <div className="grid grid-cols-6 gap-4 min-w-[800px]">
-                            {/* Provider Names Column */}
-                            <div className="space-y-3">
+                          {/* Timeline Grid - Compact Layout for Social Media */}
+                          <div className="grid gap-3 min-w-[900px]">
+                            {/* Header Row */}
+                            <div className="grid grid-cols-6 gap-3">
                               <div className="h-12 flex items-center justify-center font-semibold text-gray-800 dark:text-white border-b-2 border-gray-200 dark:border-gray-600">
                                 Provider
                               </div>
-                              {/* Get unique providers from recent days for consistent ordering */}
-                              {(() => {
-                                const recentDays = leagueTableData.slice(0, 5);
-                                const allProviders = new Set<string>();
-                                recentDays.forEach(day => {
-                                  day.topProviders.slice(0, 5).forEach(provider => {
-                                    allProviders.add(provider.name);
-                                  });
-                                });
-                                return Array.from(allProviders).slice(0, 5).map((providerName, index) => (
-                                  <div 
-                                    key={providerName}
-                                    className="h-16 flex items-center p-3 rounded-lg font-medium text-gray-900 dark:text-white"
-                                    style={{
-                                      backgroundColor: `${rankingProviderColors[providerName]}20`,
-                                      borderLeft: `4px solid ${rankingProviderColors[providerName]}`
-                                    }}
-                                  >
-                                    {providerName}
-                                  </div>
-                                ));
-                              })()}
-                            </div>
-                            
-                            {/* Day Columns */}
-                            {leagueTableData.slice(0, 5).map((dayData, dayIndex) => {
-                              const isToday = dayIndex === 0;
-                              return (
-                                <div key={dayData.date} className="space-y-3">
-                                  {/* Day Header */}
-                                  <div className={`h-12 flex flex-col items-center justify-center rounded-lg border-b-2 ${
+                              {leagueTableData.slice(0, 5).map((dayData, dayIndex) => {
+                                const isToday = dayIndex === 0;
+                                return (
+                                  <div key={dayData.date} className={`h-12 flex flex-col items-center justify-center rounded-lg border-b-2 ${
                                     isToday 
                                       ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-800 dark:text-blue-200' 
                                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white'
                                   }`}>
                                     <div className="text-xs font-medium">
-                                      {formatDateString(dayData.date).split(' ')[0]}
+                                      {formatDateString(dayData.date).split(' ')[1]}
                                     </div>
                                     <div className="text-xs">
-                                      {formatDateString(dayData.date).split(' ')[1]}
+                                      {formatDateString(dayData.date).split(' ')[0]}
                                     </div>
                                     {isToday && (
                                       <div className="text-xs bg-blue-500 text-white px-1 rounded">Latest</div>
                                     )}
                                   </div>
+                                );
+                              })}
+                            </div>
+                            
+                            {/* Provider Rows */}
+                            {(() => {
+                              const recentDays = leagueTableData.slice(0, 5);
+                              const allProviders = new Set<string>();
+                              recentDays.forEach(day => {
+                                day.topProviders.slice(0, 5).forEach(provider => {
+                                  allProviders.add(provider.name);
+                                });
+                              });
+                              
+                              return Array.from(allProviders).slice(0, 5).map((providerName) => (
+                                <div key={providerName} className="grid grid-cols-6 gap-3">
+                                  {/* Provider Name Column */}
+                                  <div 
+                                    className="h-20 flex items-center p-3 rounded-lg font-medium text-gray-900 dark:text-white"
+                                    style={{
+                                      backgroundColor: `${rankingProviderColors[providerName]}20`,
+                                      borderLeft: `4px solid ${rankingProviderColors[providerName]}`
+                                    }}
+                                  >
+                                    <span className="text-sm font-semibold">{providerName}</span>
+                                  </div>
                                   
-                                  {/* Provider Rankings for this day */}
-                                  {(() => {
-                                    const recentDays = leagueTableData.slice(0, 5);
-                                    const allProviders = new Set<string>();
-                                    recentDays.forEach(day => {
-                                      day.topProviders.slice(0, 5).forEach(provider => {
-                                        allProviders.add(provider.name);
-                                      });
-                                    });
-                                    return Array.from(allProviders).slice(0, 5).map((providerName) => {
-                                      const providerRank = dayData.topProviders.findIndex(p => p.name === providerName) + 1;
-                                      const provider = dayData.topProviders.find(p => p.name === providerName);
-                                      const prevDay = leagueTableData[dayIndex + 1];
-                                      const prevRank = prevDay ? prevDay.topProviders.findIndex(p => p.name === providerName) + 1 : 0;
-                                      
-                                      // Movement indicator
-                                      let movement = '';
-                                      let movementColor = '';
-                                      if (prevRank > 0 && providerRank > 0) {
-                                        if (prevRank > providerRank) {
-                                          movement = '↑';
-                                          movementColor = 'text-green-500';
-                                        } else if (prevRank < providerRank) {
-                                          movement = '↓';
-                                          movementColor = 'text-red-500';
-                                        } else {
-                                          movement = '→';
-                                          movementColor = 'text-gray-400';
-                                        }
+                                  {/* Daily Rankings */}
+                                  {recentDays.map((dayData, dayIndex) => {
+                                    const providerRank = dayData.topProviders.findIndex(p => p.name === providerName) + 1;
+                                    const provider = dayData.topProviders.find(p => p.name === providerName);
+                                    const prevDay = recentDays[dayIndex + 1];
+                                    const prevRank = prevDay ? prevDay.topProviders.findIndex(p => p.name === providerName) + 1 : 0;
+                                    
+                                    // Movement calculation
+                                    let movement = '';
+                                    let movementColor = '';
+                                    let movementText = '';
+                                    if (prevRank > 0 && providerRank > 0) {
+                                      if (prevRank > providerRank) {
+                                        movement = '↑';
+                                        movementColor = 'text-green-500';
+                                        movementText = 'Up';
+                                      } else if (prevRank < providerRank) {
+                                        movement = '↓';
+                                        movementColor = 'text-red-500';
+                                        movementText = 'Down';
+                                      } else {
+                                        movement = '→';
+                                        movementColor = 'text-gray-400';
+                                        movementText = 'Same';
                                       }
-                                      
-                                      return (
-                                        <div 
-                                          key={providerName}
-                                          className="h-16 flex flex-col items-center justify-center rounded-lg border text-center relative"
-                                          style={{
-                                            backgroundColor: providerRank > 0 ? `${rankingProviderColors[providerName]}30` : '#f9fafb',
-                                            borderColor: providerRank > 0 ? rankingProviderColors[providerName] : '#d1d5db'
-                                          }}
-                                        >
-                                          {providerRank > 0 ? (
-                                            <>
-                                              <div className="flex items-center space-x-1">
-                                                {getRankIcon(providerRank)}
-                                                <span className="text-sm font-bold">#{providerRank}</span>
+                                    }
+                                    
+                                    return (
+                                      <div 
+                                        key={`${providerName}-${dayData.date}`}
+                                        className="h-20 flex flex-col items-center justify-center rounded-lg border-2 text-center relative overflow-hidden"
+                                        style={{
+                                          backgroundColor: providerRank > 0 ? `${rankingProviderColors[providerName]}15` : '#f8fafc',
+                                          borderColor: providerRank > 0 ? rankingProviderColors[providerName] : '#e2e8f0'
+                                        }}
+                                      >
+                                        {providerRank > 0 ? (
+                                          <>
+                                            {/* Provider Name in Box */}
+                                            <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 truncate max-w-full px-1">
+                                              {providerName}
+                                            </div>
+                                            
+                                            {/* Rank and Rate */}
+                                            <div className="flex items-center space-x-1 mb-1">
+                                              {getRankIcon(providerRank)}
+                                              <span className="text-sm font-bold">#{providerRank}</span>
+                                            </div>
+                                            
+                                            {/* Exchange Rate */}
+                                            {provider && (
+                                              <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                                                {currencyPair.toSymbol}{formatRate(provider.rate)}
                                               </div>
-                                              {provider && (
-                                                <div className="text-xs text-gray-600 dark:text-gray-300">
-                                                  {currencyPair.toSymbol}{formatRate(provider.rate)}
-                                                </div>
-                                              )}
-                                              {movement && (
-                                                <div className={`absolute -top-1 -right-1 text-lg font-bold ${movementColor} bg-white dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center shadow-md`}>
-                                                  {movement}
-                                                </div>
-                                              )}
-                                            </>
-                                          ) : (
+                                            )}
+                                            
+                                            {/* Movement Indicator */}
+                                            {movement && dayIndex > 0 && (
+                                              <div className={`absolute top-1 right-1 text-sm font-bold ${movementColor} bg-white dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border`}>
+                                                {movement}
+                                              </div>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <>
+                                            <div className="text-xs font-semibold text-gray-400 mb-1">
+                                              {providerName}
+                                            </div>
                                             <div className="text-xs text-gray-400">Not in Top 5</div>
-                                          )}
-                                        </div>
-                                      );
-                                    });
-                                  })()}
+                                          </>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              );
-                            })}
+                              ));
+                            })()}
                           </div>
                           
                           {/* Legend */}
