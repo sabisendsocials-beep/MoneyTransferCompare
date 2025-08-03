@@ -10,6 +10,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
 import { 
   ArrowUp, 
@@ -25,6 +27,7 @@ import {
   Trophy,
   Medal,
   Award,
+  LineChart as LineChartIcon,
 } from "lucide-react";
 import {
   Select,
@@ -96,6 +99,11 @@ const EnhancedRateTrends = () => {
     date: string;
     baseRate: number;
     topProviders: ProviderRanking[];
+  };
+
+  type RankingTrendPoint = {
+    date: string;
+    [providerName: string]: string | number; // Provider names as keys with ranking positions as values
   };
 
   // Fetch all available providers
@@ -362,6 +370,90 @@ const EnhancedRateTrends = () => {
     return `${sign}${percentage.toFixed(2)}%`;
   };
 
+  // Calculate ranking trends data for stacked chart
+  const rankingTrendsData = useMemo((): RankingTrendPoint[] => {
+    if (!leagueTableData.length) return [];
+    
+    // Get all unique providers across all days
+    const allProviders = new Set<string>();
+    leagueTableData.forEach(day => {
+      day.topProviders.forEach(provider => {
+        allProviders.add(provider.name);
+      });
+    });
+    
+    // Build trend data with rankings for each day
+    return leagueTableData.slice().reverse().map(dayData => { // Reverse to show chronological order
+      const trendPoint: RankingTrendPoint = { date: dayData.date };
+      
+      // Initialize all providers to position 8 (not in top 7)
+      allProviders.forEach(providerName => {
+        trendPoint[providerName] = 8;
+      });
+      
+      // Set actual rankings for providers in top 7
+      dayData.topProviders.forEach((provider, index) => {
+        trendPoint[provider.name] = index + 1; // Rankings 1-7
+      });
+      
+      return trendPoint;
+    });
+  }, [leagueTableData]);
+
+  // Provider colors for ranking trends
+  const rankingProviderColors = useMemo(() => {
+    const colors = [
+      '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', 
+      '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
+      '#6366f1', '#84cc16', '#f43f5e', '#14b8a6', '#a855f7'
+    ];
+    const providerColorMap: { [key: string]: string } = {};
+    
+    let colorIndex = 0;
+    rankingTrendsData.forEach(day => {
+      Object.keys(day).forEach(key => {
+        if (key !== 'date' && !providerColorMap[key]) {
+          providerColorMap[key] = colors[colorIndex % colors.length];
+          colorIndex++;
+        }
+      });
+    });
+    
+    return providerColorMap;
+  }, [rankingTrendsData]);
+
+  const CustomRankingTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const sortedProviders = payload
+        .filter((entry: any) => entry.value <= 7) // Only show providers in top 7
+        .sort((a: any, b: any) => a.value - b.value); // Sort by ranking
+
+      if (sortedProviders.length === 0) return null;
+
+      return (
+        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+            {formatDateString(label)}
+          </p>
+          <div className="space-y-1">
+            {sortedProviders.map((entry: any, index: number) => (
+              <div key={index} className="flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                  {getRankIcon(entry.value)}
+                  <span className="ml-2" style={{ color: entry.color }}>
+                    {entry.dataKey.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">#{entry.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <section className="py-12 bg-white dark:bg-gray-800">
       <div className="container mx-auto px-4">
@@ -473,8 +565,9 @@ const EnhancedRateTrends = () => {
 
           {/* Chart and League Table Section */}
           <Tabs defaultValue="chart" className="mb-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="chart">Rate Trends Chart</TabsTrigger>
+              <TabsTrigger value="rankings">Ranking Trends</TabsTrigger>
               <TabsTrigger value="league">Daily League Table</TabsTrigger>
             </TabsList>
             
@@ -549,6 +642,103 @@ const EnhancedRateTrends = () => {
                   </div>
                 </div>
               )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="rankings">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <LineChartIcon className="w-5 h-5 mr-2 text-blue-500" />
+                    Provider Ranking Trends
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    See how provider rankings change over time (lower is better, 1st place = best rate)
+                  </p>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {rankingTrendsData.length > 0 ? (
+                    <div>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                          Provider Position Changes Over Time
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          Track how each provider's ranking position changes daily (1 = best rate, 7 = 7th best)
+                        </p>
+                      </div>
+                      
+                      <ResponsiveContainer width="100%" height={400}>
+                        <LineChart data={rankingTrendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={formatDateString}
+                            stroke="#6b7280"
+                            fontSize={12}
+                          />
+                          <YAxis 
+                            domain={[1, 8]}
+                            ticks={[1, 2, 3, 4, 5, 6, 7, 8]}
+                            tickFormatter={(value) => value === 8 ? 'Not in Top 7' : `#${value}`}
+                            stroke="#6b7280"
+                            fontSize={12}
+                            reversed={true} // Reverse so #1 is at top
+                          />
+                          <Tooltip content={<CustomRankingTooltip />} />
+                          <Legend />
+                          
+                          {Object.keys(rankingProviderColors).map((providerName) => (
+                            <Line
+                              key={providerName}
+                              type="monotone"
+                              dataKey={providerName}
+                              stroke={rankingProviderColors[providerName]}
+                              strokeWidth={2}
+                              dot={{ fill: rankingProviderColors[providerName], strokeWidth: 2, r: 4 }}
+                              name={providerName.replace(/_/g, ' ')}
+                              connectNulls={false}
+                            />
+                          ))}
+                        </LineChart>
+                      </ResponsiveContainer>
+                      
+                      {/* Rankings Legend */}
+                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-2">
+                          Reading the Chart:
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600 dark:text-gray-300">
+                          <div className="flex items-center">
+                            <Trophy className="w-3 h-3 text-yellow-500 mr-1" />
+                            Position 1 = Best rate
+                          </div>
+                          <div className="flex items-center">
+                            <Medal className="w-3 h-3 text-gray-400 mr-1" />
+                            Position 2 = 2nd best
+                          </div>
+                          <div className="flex items-center">
+                            <Award className="w-3 h-3 text-amber-600 mr-1" />
+                            Position 3 = 3rd best
+                          </div>
+                          <div className="text-gray-500">
+                            Position 8 = Not in top 7
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-96">
+                      <div className="text-center">
+                        <LineChartIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 dark:text-gray-300 mb-2">No ranking trends available</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Select providers and ensure base rates are enabled to see ranking trends
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
