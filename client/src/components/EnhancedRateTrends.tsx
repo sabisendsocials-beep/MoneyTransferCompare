@@ -696,37 +696,39 @@ const EnhancedRateTrends = () => {
                             </p>
                           </div>
                           
-                          {/* Timeline Grid - Compact Layout for Social Media */}
-                          <div className="grid gap-4 min-w-[800px]">
-                            {/* Header Row */}
-                            <div className="grid grid-cols-5 gap-4">
+                          {/* Enhanced Timeline Layout - Clean & Spacious */}
+                          <div className="space-y-8 min-w-[1000px]">
+                            {/* Elegant Header Row */}
+                            <div className="grid grid-cols-5 gap-6">
                               {leagueTableData.slice(0, 5).map((dayData, dayIndex) => {
                                 const isToday = dayIndex === 0;
                                 return (
-                                  <div key={dayData.date} className={`h-16 flex flex-col items-center justify-center rounded-lg border-2 ${
+                                  <div key={dayData.date} className={`relative h-20 flex flex-col items-center justify-center rounded-2xl border ${
                                     isToday 
-                                      ? 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-500 text-blue-800 dark:text-blue-200 shadow-lg' 
-                                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white'
+                                      ? 'bg-gradient-to-br from-blue-50/80 to-indigo-50/80 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-300 text-blue-900 dark:text-blue-100 shadow-md backdrop-blur-sm' 
+                                      : 'bg-white/60 dark:bg-gray-800/60 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 backdrop-blur-sm'
                                   }`}>
-                                    <div className="text-sm font-bold">
+                                    <div className="text-lg font-bold">
                                       {formatDateString(dayData.date).split(' ')[1]}
                                     </div>
-                                    <div className="text-xs">
+                                    <div className="text-sm opacity-75">
                                       {formatDateString(dayData.date).split(' ')[0]}
                                     </div>
                                     {isToday && (
-                                      <div className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-medium">Latest</div>
+                                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-lg">
+                                        Today
+                                      </div>
                                     )}
                                   </div>
                                 );
                               })}
                             </div>
                             
-                            {/* Provider Rankings Grid */}
-                            <div className="grid grid-cols-5 gap-4">
+                            {/* Clean Provider Rankings */}
+                            <div className="grid grid-cols-5 gap-6">
                               {leagueTableData.slice(0, 5).map((dayData, dayIndex) => (
-                                <div key={dayData.date} className="space-y-3">
-                                  {dayData.topProviders.slice(0, 5).map((provider, rankIndex) => {
+                                <div key={dayData.date} className="space-y-4">
+                                  {dayData.topProviders.slice(0, 3).map((provider, rankIndex) => {
                                     const rank = rankIndex + 1;
                                     const prevDay = leagueTableData[dayIndex + 1];
                                     const prevRank = prevDay ? prevDay.topProviders.findIndex(p => p.name === provider.name) + 1 : 0;
@@ -734,115 +736,114 @@ const EnhancedRateTrends = () => {
                                     // Movement calculation
                                     let movement = '';
                                     let movementColor = '';
-                                    let movementBg = '';
                                     if (dayIndex > 0 && prevRank > 0) {
                                       if (prevRank > rank) {
-                                        movement = '↑';
-                                        movementColor = 'text-green-600';
-                                        movementBg = 'bg-green-100 border-green-300';
+                                        movement = '↗';
+                                        movementColor = 'text-emerald-600 bg-emerald-50 border-emerald-200';
                                       } else if (prevRank < rank) {
-                                        movement = '↓';
-                                        movementColor = 'text-red-600';
-                                        movementBg = 'bg-red-100 border-red-300';
+                                        movement = '↘';
+                                        movementColor = 'text-red-500 bg-red-50 border-red-200';
                                       } else {
                                         movement = '→';
-                                        movementColor = 'text-gray-500';
-                                        movementBg = 'bg-gray-100 border-gray-300';
+                                        movementColor = 'text-gray-500 bg-gray-50 border-gray-200';
                                       }
                                     }
                                     
                                     return (
                                       <div 
                                         key={`${provider.name}-${dayData.date}`}
-                                        className="relative h-28 flex flex-col items-center justify-center rounded-xl border-2 text-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                                        style={{
-                                          background: `linear-gradient(135deg, ${rankingProviderColors[provider.name]}25, ${rankingProviderColors[provider.name]}40)`,
-                                          borderColor: rankingProviderColors[provider.name],
-                                          borderWidth: '2px'
-                                        }}
+                                        className="relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-md transition-all duration-300 group"
                                       >
                                         {/* Movement Indicator */}
                                         {movement && dayIndex > 0 && (
-                                          <div className={`absolute -top-2 -right-2 text-sm font-bold ${movementColor} ${movementBg} rounded-full w-8 h-8 flex items-center justify-center shadow-md border-2`}>
+                                          <div className={`absolute -top-2 -right-2 text-sm font-medium ${movementColor} rounded-full w-8 h-8 flex items-center justify-center shadow-sm border`}>
                                             {movement}
                                           </div>
                                         )}
                                         
-                                        {/* Provider Logo and Name */}
-                                        <div className="flex items-center justify-center mb-2">
-                                          {allProviders.find((p: any) => p.name === provider.name)?.logo ? (
-                                            <img 
-                                              src={allProviders.find((p: any) => p.name === provider.name)?.logo} 
-                                              alt={provider.name}
-                                              className="w-8 h-8 rounded-full object-cover mr-2"
-                                            />
-                                          ) : (
-                                            <div 
-                                              className="w-8 h-8 rounded-full mr-2 flex items-center justify-center text-white text-xs font-bold"
-                                              style={{ backgroundColor: rankingProviderColors[provider.name] }}
-                                            >
-                                              {provider.name.charAt(0)}
-                                            </div>
-                                          )}
-                                          <div className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate">
-                                            {provider.name}
+                                        {/* Rank Badge */}
+                                        <div className="flex items-center justify-between mb-3">
+                                          <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white shadow-sm ${
+                                            rank === 1 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
+                                            rank === 2 ? 'bg-gradient-to-r from-slate-400 to-slate-500' :
+                                            'bg-gradient-to-r from-orange-400 to-amber-500'
+                                          }`}>
+                                            {rank}
+                                          </div>
+                                          
+                                          {/* Provider Logo */}
+                                          <div className="flex-shrink-0">
+                                            {allProviders.find((p: any) => p.name === provider.name)?.logo ? (
+                                              <img 
+                                                src={allProviders.find((p: any) => p.name === provider.name)?.logo} 
+                                                alt={provider.name}
+                                                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                                              />
+                                            ) : (
+                                              <div 
+                                                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm border-2 border-white"
+                                                style={{ backgroundColor: rankingProviderColors[provider.name] }}
+                                              >
+                                                {provider.name.charAt(0)}
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                         
-                                        {/* Rank Only */}
-                                        <div className="mb-1">
-                                          <span className={`text-lg font-bold text-white px-3 py-1 rounded-full shadow-lg ${
-                                            rank === 1 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                                            rank === 2 ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
-                                            rank === 3 ? 'bg-gradient-to-r from-orange-400 to-yellow-600' :
-                                            rank === 4 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                                            'bg-gradient-to-r from-purple-500 to-pink-500'
-                                          }`}>
-                                            #{rank}
-                                          </span>
+                                        {/* Provider Name */}
+                                        <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                          {provider.name}
                                         </div>
                                         
                                         {/* Exchange Rate */}
-                                        <div className="text-xs text-gray-600 dark:text-gray-400 font-semibold">
+                                        <div className="text-lg font-bold text-gray-800 dark:text-gray-200">
                                           {currencyPair.toSymbol}{formatRate(provider.rate)}
                                         </div>
                                         
-                                        {/* Provider Color Stripe */}
+                                        {/* Subtle Border Accent */}
                                         <div 
-                                          className="absolute bottom-0 left-0 w-full h-1 rounded-b-xl"
+                                          className="absolute inset-x-0 bottom-0 h-1 rounded-b-2xl opacity-60"
                                           style={{ backgroundColor: rankingProviderColors[provider.name] }}
                                         />
                                       </div>
                                     );
                                   })}
                                   
-                                  {/* Fill empty spots if less than 5 providers */}
-                                  {Array.from({ length: Math.max(0, 5 - dayData.topProviders.length) }).map((_, emptyIndex) => (
-                                    <div 
-                                      key={`empty-${dayData.date}-${emptyIndex}`}
-                                      className="h-24 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-200 text-gray-400"
-                                    >
-                                      <span className="text-xs">No Data</span>
+                                  {/* Show "View More" for additional providers */}
+                                  {dayData.topProviders.length > 3 && (
+                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4 text-center">
+                                      <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                                        +{dayData.topProviders.length - 3} more
+                                      </div>
+                                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                                        providers ranked
+                                      </div>
                                     </div>
-                                  ))}
+                                  )}
                                 </div>
                               ))}
                             </div>
                           </div>
                           
-                          {/* Legend */}
-                          <div className="mt-6 flex items-center justify-center space-x-6 text-xs text-gray-600 dark:text-gray-300">
-                            <div className="flex items-center space-x-1">
-                              <span className="text-green-500 font-bold">↑</span>
-                              <span>Moved Up</span>
+                          {/* Elegant Legend */}
+                          <div className="mt-8 flex items-center justify-center space-x-8 p-4 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl backdrop-blur-sm">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-emerald-600 text-sm font-medium">↗</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Improved</span>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <span className="text-red-500 font-bold">↓</span>
-                              <span>Moved Down</span>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-red-50 border border-red-200 rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-red-500 text-sm font-medium">↘</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Declined</span>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <span className="text-gray-400 font-bold">→</span>
-                              <span>Same Position</span>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-gray-500 text-sm font-medium">→</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Unchanged</span>
                             </div>
                           </div>
                         </div>
