@@ -374,30 +374,44 @@ const EnhancedRateTrends = () => {
   const rankingTrendsData = useMemo((): RankingTrendPoint[] => {
     if (!leagueTableData.length) return [];
     
-    // Get all unique providers across all days
-    const allProviders = new Set<string>();
-    leagueTableData.forEach(day => {
-      day.topProviders.forEach(provider => {
-        allProviders.add(provider.name);
-      });
-    });
-    
-    // Build trend data with rankings for each day
+    // Build trend data with provider names and their ranking positions
     return leagueTableData.slice().reverse().map(dayData => { // Reverse to show chronological order
       const trendPoint: RankingTrendPoint = { date: dayData.date };
       
-      // Initialize all providers to position 8 (not in top 7)
-      allProviders.forEach(providerName => {
-        trendPoint[providerName] = 8;
-      });
-      
-      // Set actual rankings for providers in top 7
-      dayData.topProviders.forEach((provider, index) => {
-        trendPoint[provider.name] = index + 1; // Rankings 1-7
+      // Add top 7 providers for this day in order
+      dayData.topProviders.slice(0, 7).forEach((provider, index) => {
+        trendPoint[`rank_${index + 1}`] = provider.name;
       });
       
       return trendPoint;
     });
+  }, [leagueTableData]);
+
+  // Calculate stacked data for area chart (providers stacked by ranking)
+  const stackedRankingData = useMemo(() => {
+    if (!leagueTableData.length) return [];
+    
+    return leagueTableData.slice().reverse().map(dayData => {
+      const stackPoint: any = { date: dayData.date };
+      
+      // Create stacked values - each provider gets a "slice" of 1 unit
+      dayData.topProviders.slice(0, 7).forEach((provider, index) => {
+        stackPoint[provider.name] = 1; // Each provider gets equal height in stack
+      });
+      
+      return stackPoint;
+    });
+  }, [leagueTableData]);
+
+  // Get all unique providers for stacked chart
+  const allUniqueProviders = useMemo(() => {
+    const providers = new Set<string>();
+    leagueTableData.forEach(day => {
+      day.topProviders.slice(0, 7).forEach(provider => {
+        providers.add(provider.name);
+      });
+    });
+    return Array.from(providers);
   }, [leagueTableData]);
 
   // Provider colors for ranking trends
@@ -422,13 +436,11 @@ const EnhancedRateTrends = () => {
     return providerColorMap;
   }, [rankingTrendsData]);
 
-  const CustomRankingTooltip = ({ active, payload, label }: any) => {
+  const CustomStackedTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const sortedProviders = payload
-        .filter((entry: any) => entry.value <= 7) // Only show providers in top 7
-        .sort((a: any, b: any) => a.value - b.value); // Sort by ranking
-
-      if (sortedProviders.length === 0) return null;
+      const dayData = leagueTableData.find(day => day.date === label);
+      
+      if (!dayData) return null;
 
       return (
         <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
@@ -436,15 +448,17 @@ const EnhancedRateTrends = () => {
             {formatDateString(label)}
           </p>
           <div className="space-y-1">
-            {sortedProviders.map((entry: any, index: number) => (
+            {dayData.topProviders.slice(0, 7).map((provider, index) => (
               <div key={index} className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
-                  {getRankIcon(entry.value)}
-                  <span className="ml-2" style={{ color: entry.color }}>
-                    {entry.dataKey.replace(/_/g, ' ')}
+                  {getRankIcon(index + 1)}
+                  <span className="ml-2" style={{ color: rankingProviderColors[provider.name] }}>
+                    {provider.name}
                   </span>
                 </div>
-                <span className="text-xs text-gray-500">#{entry.value}</span>
+                <span className="text-xs text-gray-500">
+                  {currencyPair.toSymbol}{formatRate(provider.rate)}
+                </span>
               </div>
             ))}
           </div>
@@ -670,7 +684,7 @@ const EnhancedRateTrends = () => {
                       </div>
                       
                       <ResponsiveContainer width="100%" height={400}>
-                        <LineChart data={rankingTrendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <AreaChart data={stackedRankingData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis 
                             dataKey="date" 
@@ -679,51 +693,50 @@ const EnhancedRateTrends = () => {
                             fontSize={12}
                           />
                           <YAxis 
-                            domain={[1, 8]}
-                            ticks={[1, 2, 3, 4, 5, 6, 7, 8]}
-                            tickFormatter={(value) => value === 8 ? 'Not in Top 7' : `#${value}`}
+                            domain={[0, 7]}
+                            ticks={[0, 1, 2, 3, 4, 5, 6, 7]}
+                            tickFormatter={(value) => `${value} Provider${value !== 1 ? 's' : ''}`}
                             stroke="#6b7280"
                             fontSize={12}
-                            reversed={true} // Reverse so #1 is at top
                           />
-                          <Tooltip content={<CustomRankingTooltip />} />
+                          <Tooltip content={<CustomStackedTooltip />} />
                           <Legend />
                           
-                          {Object.keys(rankingProviderColors).map((providerName) => (
-                            <Line
+                          {allUniqueProviders.map((providerName, index) => (
+                            <Area
                               key={providerName}
                               type="monotone"
                               dataKey={providerName}
+                              stackId="1"
                               stroke={rankingProviderColors[providerName]}
-                              strokeWidth={2}
-                              dot={{ fill: rankingProviderColors[providerName], strokeWidth: 2, r: 4 }}
-                              name={providerName.replace(/_/g, ' ')}
-                              connectNulls={false}
+                              fill={rankingProviderColors[providerName]}
+                              fillOpacity={0.8}
+                              name={providerName}
                             />
                           ))}
-                        </LineChart>
+                        </AreaChart>
                       </ResponsiveContainer>
                       
                       {/* Rankings Legend */}
                       <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-2">
-                          Reading the Chart:
+                          Reading the Stacked Chart:
                         </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
                           <div className="flex items-center">
                             <Trophy className="w-3 h-3 text-yellow-500 mr-1" />
-                            Position 1 = Best rate
+                            Each colored segment represents a provider in the top 7
                           </div>
                           <div className="flex items-center">
                             <Medal className="w-3 h-3 text-gray-400 mr-1" />
-                            Position 2 = 2nd best
+                            Stack order shows ranking (bottom = #1, top = #7)
                           </div>
                           <div className="flex items-center">
                             <Award className="w-3 h-3 text-amber-600 mr-1" />
-                            Position 3 = 3rd best
+                            See which providers consistently appear in rankings
                           </div>
                           <div className="text-gray-500">
-                            Position 8 = Not in top 7
+                            Hover over any day to see detailed rankings and rates
                           </div>
                         </div>
                       </div>
