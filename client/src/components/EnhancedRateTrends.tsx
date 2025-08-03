@@ -676,67 +676,121 @@ const EnhancedRateTrends = () => {
                     <div>
                       <div className="mb-4">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                          Provider Position Changes Over Time
+                          Daily Provider Rankings
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Track how each provider's ranking position changes daily (1 = best rate, 7 = 7th best)
+                          Visual ranking cards showing top 5 providers by day with rates and performance indicators
                         </p>
                       </div>
                       
-                      <ResponsiveContainer width="100%" height={400}>
-                        <AreaChart data={stackedRankingData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis 
-                            dataKey="date" 
-                            tickFormatter={formatDateString}
-                            stroke="#6b7280"
-                            fontSize={12}
-                          />
-                          <YAxis 
-                            domain={[0, 7]}
-                            ticks={[0, 1, 2, 3, 4, 5, 6, 7]}
-                            tickFormatter={(value) => `${value} Provider${value !== 1 ? 's' : ''}`}
-                            stroke="#6b7280"
-                            fontSize={12}
-                          />
-                          <Tooltip content={<CustomStackedTooltip />} />
-                          <Legend />
-                          
-                          {allUniqueProviders.map((providerName, index) => (
-                            <Area
-                              key={providerName}
-                              type="monotone"
-                              dataKey={providerName}
-                              stackId="1"
-                              stroke={rankingProviderColors[providerName]}
-                              fill={rankingProviderColors[providerName]}
-                              fillOpacity={0.8}
-                              name={providerName}
-                            />
-                          ))}
-                        </AreaChart>
-                      </ResponsiveContainer>
+                      <div className="grid gap-4">
+                        {leagueTableData.slice(0, 10).map((dayData, dayIndex) => (
+                          <div key={dayData.date} className="border rounded-lg p-4 bg-white dark:bg-gray-800">
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="font-semibold text-lg text-gray-800 dark:text-white">
+                                {formatDateString(dayData.date)}
+                              </h3>
+                              {dayData.baseRate && (
+                                <div className="text-sm text-gray-600 dark:text-gray-300">
+                                  Base Rate: {currencyPair.toSymbol}{formatRate(dayData.baseRate)}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {dayData.topProviders.length > 0 ? (
+                              <div className="space-y-2">
+                                {dayData.topProviders.slice(0, 5).map((provider, index) => {
+                                  const percentage = dayData.baseRate ? ((provider.rate - dayData.baseRate) / dayData.baseRate * 100) : 0;
+                                  return (
+                                    <div
+                                      key={`${dayData.date}-${provider.name}`}
+                                      className="relative flex items-center p-3 rounded-lg"
+                                      style={{
+                                        backgroundColor: `${rankingProviderColors[provider.name]}20`,
+                                        borderLeft: `4px solid ${rankingProviderColors[provider.name]}`
+                                      }}
+                                    >
+                                      <div className="flex items-center flex-1">
+                                        <div className="flex items-center mr-4">
+                                          {getRankIcon(index + 1)}
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="font-medium text-gray-900 dark:text-white">
+                                            {provider.name}
+                                          </div>
+                                          <div className="text-sm text-gray-600 dark:text-gray-300">
+                                            Rate: {currencyPair.toSymbol}{formatRate(provider.rate)}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <div className={`font-semibold ${
+                                            percentage >= 0 
+                                              ? 'text-green-600 dark:text-green-400' 
+                                              : 'text-red-600 dark:text-red-400'
+                                          }`}>
+                                            {formatPercentage(percentage)}
+                                          </div>
+                                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                                            vs base
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Visual bar showing relative performance */}
+                                      <div className="absolute bottom-0 left-0 h-1 rounded-b-lg transition-all duration-300"
+                                           style={{
+                                             backgroundColor: rankingProviderColors[provider.name],
+                                             width: `${Math.max(20, Math.min(100, 50 + percentage * 2))}%`
+                                           }}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                                
+                                {/* Show remaining providers count if more than 5 */}
+                                {dayData.topProviders.length > 5 && (
+                                  <div className="text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                                    +{dayData.topProviders.length - 5} more providers
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                No provider data available for this date
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        
+                        {leagueTableData.length > 10 && (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Showing latest 10 days. Total: {leagueTableData.length} days
+                            </p>
+                          </div>
+                        )}
+                      </div>
                       
                       {/* Rankings Legend */}
                       <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-2">
-                          Reading the Stacked Chart:
+                          Reading the Ranking Cards:
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
                           <div className="flex items-center">
                             <Trophy className="w-3 h-3 text-yellow-500 mr-1" />
-                            Each colored segment represents a provider in the top 7
+                            Each card shows top 5 providers for the day
                           </div>
                           <div className="flex items-center">
                             <Medal className="w-3 h-3 text-gray-400 mr-1" />
-                            Stack order shows ranking (bottom = #1, top = #7)
+                            Colors and progress bars show performance vs base rate
                           </div>
                           <div className="flex items-center">
                             <Award className="w-3 h-3 text-amber-600 mr-1" />
-                            See which providers consistently appear in rankings
+                            Trophy/medal icons indicate ranking positions
                           </div>
                           <div className="text-gray-500">
-                            Hover over any day to see detailed rankings and rates
+                            Green percentages = above base rate, Red = below base rate
                           </div>
                         </div>
                       </div>
