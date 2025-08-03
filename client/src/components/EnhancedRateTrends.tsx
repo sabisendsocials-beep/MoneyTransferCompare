@@ -684,83 +684,104 @@ const EnhancedRateTrends = () => {
                       </div>
                       
                       <div className="grid gap-4">
-                        {leagueTableData.slice(0, 10).map((dayData, dayIndex) => (
-                          <div key={dayData.date} className="border rounded-lg p-4 bg-white dark:bg-gray-800">
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="font-semibold text-lg text-gray-800 dark:text-white">
-                                {formatDateString(dayData.date)}
-                              </h3>
-                              {dayData.baseRate && (
-                                <div className="text-sm text-gray-600 dark:text-gray-300">
-                                  Base Rate: {currencyPair.toSymbol}{formatRate(dayData.baseRate)}
+                        {leagueTableData.slice(0, 10).map((dayData, dayIndex) => {
+                          const isToday = dayIndex === 0; // First item is most recent (today)
+                          return (
+                            <div 
+                              key={dayData.date} 
+                              className={`border rounded-lg p-4 ${
+                                isToday 
+                                  ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 shadow-lg' 
+                                  : 'bg-white dark:bg-gray-800'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center">
+                                  <h3 className={`font-semibold text-lg ${
+                                    isToday ? 'text-blue-800 dark:text-blue-200' : 'text-gray-800 dark:text-white'
+                                  }`}>
+                                    {formatDateString(dayData.date)}
+                                  </h3>
+                                  {isToday && (
+                                    <span className="ml-3 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 rounded-full">
+                                      Latest
+                                    </span>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                            
-                            {dayData.topProviders.length > 0 ? (
-                              <div className="space-y-2">
-                                {dayData.topProviders.slice(0, 5).map((provider, index) => {
-                                  const percentage = dayData.baseRate ? ((provider.rate - dayData.baseRate) / dayData.baseRate * 100) : 0;
-                                  return (
-                                    <div
-                                      key={`${dayData.date}-${provider.name}`}
-                                      className="relative flex items-center p-3 rounded-lg"
-                                      style={{
-                                        backgroundColor: `${rankingProviderColors[provider.name]}20`,
-                                        borderLeft: `4px solid ${rankingProviderColors[provider.name]}`
-                                      }}
-                                    >
-                                      <div className="flex items-center flex-1">
-                                        <div className="flex items-center mr-4">
-                                          {getRankIcon(index + 1)}
-                                        </div>
-                                        <div className="flex-1">
-                                          <div className="font-medium text-gray-900 dark:text-white">
-                                            {provider.name}
-                                          </div>
-                                          <div className="text-sm text-gray-600 dark:text-gray-300">
-                                            Rate: {currencyPair.toSymbol}{formatRate(provider.rate)}
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <div className={`font-semibold ${
-                                            percentage >= 0 
-                                              ? 'text-green-600 dark:text-green-400' 
-                                              : 'text-red-600 dark:text-red-400'
-                                          }`}>
-                                            {formatPercentage(percentage)}
-                                          </div>
-                                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                                            vs base
-                                          </div>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Visual bar showing relative performance */}
-                                      <div className="absolute bottom-0 left-0 h-1 rounded-b-lg transition-all duration-300"
-                                           style={{
-                                             backgroundColor: rankingProviderColors[provider.name],
-                                             width: `${Math.max(20, Math.min(100, 50 + percentage * 2))}%`
-                                           }}
-                                      />
-                                    </div>
-                                  );
-                                })}
-                                
-                                {/* Show remaining providers count if more than 5 */}
-                                {dayData.topProviders.length > 5 && (
-                                  <div className="text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                                    +{dayData.topProviders.length - 5} more providers
+                                {dayData.baseRate && (
+                                  <div className={`text-sm ${
+                                    isToday ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    Base Rate: {currencyPair.toSymbol}{formatRate(dayData.baseRate)}
                                   </div>
                                 )}
                               </div>
-                            ) : (
-                              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                No provider data available for this date
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                            
+                              {dayData.topProviders.length > 0 ? (
+                                <div className="space-y-2">
+                                  {dayData.topProviders.slice(0, 5).map((provider, index) => {
+                                    const percentage = dayData.baseRate ? ((provider.rate - dayData.baseRate) / dayData.baseRate * 100) : 0;
+                                    return (
+                                      <div
+                                        key={`${dayData.date}-${provider.name}`}
+                                        className="relative flex items-center p-3 rounded-lg"
+                                        style={{
+                                          backgroundColor: `${rankingProviderColors[provider.name]}20`,
+                                          borderLeft: `4px solid ${rankingProviderColors[provider.name]}`
+                                        }}
+                                      >
+                                        <div className="flex items-center flex-1">
+                                          <div className="flex items-center mr-4">
+                                            {getRankIcon(index + 1)}
+                                          </div>
+                                          <div className="flex-1">
+                                            <div className="font-medium text-gray-900 dark:text-white">
+                                              {provider.name}
+                                            </div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-300">
+                                              Rate: {currencyPair.toSymbol}{formatRate(provider.rate)}
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <div className={`font-semibold ${
+                                              percentage >= 0 
+                                                ? 'text-green-600 dark:text-green-400' 
+                                                : 'text-red-600 dark:text-red-400'
+                                            }`}>
+                                              {formatPercentage(percentage)}
+                                            </div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                              vs base
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Visual bar showing relative performance */}
+                                        <div className="absolute bottom-0 left-0 h-1 rounded-b-lg transition-all duration-300"
+                                             style={{
+                                               backgroundColor: rankingProviderColors[provider.name],
+                                               width: `${Math.max(20, Math.min(100, 50 + percentage * 2))}%`
+                                             }}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                  
+                                  {/* Show remaining providers count if more than 5 */}
+                                  {dayData.topProviders.length > 5 && (
+                                    <div className="text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                                      +{dayData.topProviders.length - 5} more providers
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                  No provider data available for this date
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                         
                         {leagueTableData.length > 10 && (
                           <div className="text-center py-4">
