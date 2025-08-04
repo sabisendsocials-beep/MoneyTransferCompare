@@ -686,12 +686,14 @@ const EnhancedRateTrends = () => {
                       {/* Horizontal Timeline View - Perfect for Social Media */}
                       <div className="overflow-x-auto">
                         <div className="min-w-full bg-white dark:bg-gray-900 rounded-lg border shadow-lg p-6">
-                          {/* Header with SabiSend Branding */}
-                          <div className="text-center mb-6">
-                            <div className="flex items-center justify-center mb-4">
-                              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                SabiSend
-                              </div>
+                          {/* Header with SabiSend Logo */}
+                          <div className="relative text-center mb-6">
+                            <div className="absolute top-0 left-0">
+                              <img 
+                                src="/attached_assets/SabiSend Logo with tagline short.png" 
+                                alt="SabiSend Logo" 
+                                className="h-12 w-auto"
+                              />
                             </div>
                             <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                               {currencyPair.fromSymbol} to {currencyPair.toSymbol} Provider Rankings
