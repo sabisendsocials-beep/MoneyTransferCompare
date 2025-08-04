@@ -43,6 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import sabiSendLogo from "@assets/SabiSend Logo with tagline short.png";
 
 type PeriodOption = {
   label: string;
@@ -690,7 +691,7 @@ const EnhancedRateTrends = () => {
                           <div className="relative text-center mb-6">
                             <div className="absolute top-0 left-0">
                               <img 
-                                src="/attached_assets/SabiSend Logo with tagline short.png" 
+                                src={sabiSendLogo} 
                                 alt="SabiSend Logo" 
                                 className="h-12 w-auto"
                               />
