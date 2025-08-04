@@ -686,14 +686,27 @@ const EnhancedRateTrends = () => {
                       {/* Horizontal Timeline View - Perfect for Social Media */}
                       <div className="overflow-x-auto">
                         <div className="min-w-full bg-white dark:bg-gray-900 rounded-lg border shadow-lg p-6">
-                          {/* Header */}
+                          {/* Header with SabiSend Branding */}
                           <div className="text-center mb-6">
+                            <div className="flex items-center justify-center mb-4">
+                              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                SabiSend
+                              </div>
+                            </div>
                             <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                               {currencyPair.fromSymbol} to {currencyPair.toSymbol} Provider Rankings
                             </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                               Last 5 Days - Track provider movement over time
                             </p>
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                              <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                                Don't send on habit. Send on facts.
+                              </p>
+                              <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                Compare best rates at SabiSend.com before you send money home.
+                              </p>
+                            </div>
                           </div>
                           
                           {/* Enhanced Timeline Layout - Clean & Spacious */}
@@ -733,10 +746,10 @@ const EnhancedRateTrends = () => {
                                     const prevDay = leagueTableData[dayIndex + 1];
                                     const prevRank = prevDay ? prevDay.topProviders.findIndex(p => p.name === provider.name) + 1 : 0;
                                     
-                                    // Movement calculation
+                                    // Movement calculation - show for all days including today
                                     let movement = '';
                                     let movementColor = '';
-                                    if (dayIndex > 0 && prevRank > 0) {
+                                    if (prevRank > 0) {
                                       if (prevRank > rank) {
                                         movement = '↗';
                                         movementColor = 'text-emerald-600 bg-emerald-50';
@@ -780,7 +793,7 @@ const EnhancedRateTrends = () => {
                                           
                                           {/* Right: Movement Indicator */}
                                           <div className="flex-shrink-0">
-                                            {movement && dayIndex > 0 ? (
+                                            {movement ? (
                                               <div className={`text-sm font-medium ${movementColor} rounded-full w-7 h-7 flex items-center justify-center shadow-sm`}>
                                                 {movement}
                                               </div>
