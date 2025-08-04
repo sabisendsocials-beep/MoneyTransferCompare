@@ -25,6 +25,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import CommentarySchedulerPanel from "@/pages/CommentarySchedulerPanel";
 import EnhancedTrendsTest from "@/pages/EnhancedTrendsTest";
+import ProviderTrends from "@/pages/ProviderTrends";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -67,6 +68,7 @@ function Router() {
           <Route path="/compare" component={Compare} />
           <Route path="/results" component={HorizontalResults} />
           <Route path="/trends" component={Trends} />
+          <Route path="/providertrend" component={ProviderTrends} />
           <Route path="/news" component={News} />
 
           <Route path="/how-it-works" component={HowItWorks} />

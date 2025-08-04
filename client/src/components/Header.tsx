@@ -56,7 +56,7 @@ const Header = ({ onStartWizard }: HeaderProps = {}) => {
   const navItems = [
     { href: "/", label: "Home", icon: <Home size={18} /> },
     { href: "/compare", label: "Compare", icon: <Banknote size={18} /> },
-    { href: "/trends", label: "Trends", icon: <TrendingUp size={18} /> },
+    { href: "/providertrend", label: "Provider Trends", icon: <TrendingUp size={18} /> },
     { href: "/news", label: "News", icon: <Newspaper size={18} /> },
 
     { href: "/blog", label: "Blog", icon: <BookOpen size={18} /> },
