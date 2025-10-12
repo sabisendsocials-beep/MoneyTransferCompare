@@ -101,28 +101,28 @@ async function checkAndRunMissedDailyIncrements(): Promise<void> {
     console.log(`   Reason: ${isExactScheduledTime ? 'Exact scheduled time' : 'Missed run catch-up'}`);
     
     try {
-      console.log('🔄 Starting reliable daily increment collection...');
+      console.log('🔄 Starting Alpha Vantage daily increment collection...');
       
-      const { addTodaysDailyIncrements } = await import('../services/manualDailyUpdate');
-      const result = await addTodaysDailyIncrements();
+      const result = await runDailyIncrementCollection();
       
       // Mark this hour as completed and track results
       lastRunHours.add(targetHour);
       lastRunDate = currentDate;
       lastRunTimestamp = new Date();
       
-      // Store collection results
+      // Store collection results with actual details from Alpha Vantage
       const collectionResult: DailyCollectionResult = {
         hour: targetHour,
         timestamp: new Date(),
         successful: result.successful || 0,
         failed: result.failed || 0,
         totalProcessed: result.totalProcessed || 0,
-        details: ALL_CURRENCY_PAIRS.map(([from, to]) => ({
-          fromCurrency: from,
-          toCurrency: to,
-          success: true,
-          rateCollected: 1
+        details: result.results.map(r => ({
+          fromCurrency: r.pair.split('/')[0],
+          toCurrency: r.pair.split('/')[1],
+          success: r.success,
+          error: r.success ? undefined : r.message,
+          rateCollected: r.success ? 1 : 0
         }))
       };
       
@@ -130,7 +130,7 @@ async function checkAndRunMissedDailyIncrements(): Promise<void> {
       totalSuccessful += collectionResult.successful;
       totalFailed += collectionResult.failed;
       
-      console.log(`✅ Reliable daily increment completed for ${targetHour}:00 UTC: ${result.successful}/${result.totalProcessed} successful`);
+      console.log(`✅ Alpha Vantage daily increment completed for ${targetHour}:00 UTC: ${result.successful}/${result.totalProcessed} successful`);
       
       if (result.failed > 0) {
         console.warn(`⚠️ ${result.failed} pairs failed during daily increment collection`);

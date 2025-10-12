@@ -72,7 +72,7 @@ export async function shouldRunDailyCollection(): Promise<boolean> {
       AND source = 'daily_increment'
     `);
     
-    const existingCount = existing.rows[0].count as number;
+    const existingCount = Number(existing.rows[0].count);
     const totalPairs = ALL_CURRENCY_PAIRS.length; // 15 pairs
     
     // Only run if we have ZERO records for today to prevent duplicates
