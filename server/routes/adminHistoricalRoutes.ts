@@ -11,6 +11,7 @@ import {
 } from '../services/adminHistoricalService';
 import { runDailyIncrementCollection, shouldRunDailyCollection } from '../services/dailyIncrementService';
 import { getDataCoverageSummary } from '../services/chartDataService';
+import { backfillHistoricalData } from '../services/historicalBackfillService';
 
 const router = express.Router();
 
@@ -125,6 +126,40 @@ router.get('/admin/daily/should-run', async (req, res) => {
     console.error('Error checking daily collection status:', error);
     res.status(500).json({
       error: 'Internal server error checking daily collection status'
+    });
+  }
+});
+
+// Admin endpoint to backfill historical data for a date range
+router.post('/admin/historical/backfill', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both startDate and endDate are required (format: YYYY-MM-DD)'
+      });
+    }
+    
+    console.log(`Admin request: Backfill historical data from ${startDate} to ${endDate}`);
+    
+    const result = await backfillHistoricalData(startDate, endDate);
+    
+    res.json({
+      success: result.failedPairs === 0,
+      totalPairs: result.totalPairs,
+      successfulPairs: result.successfulPairs,
+      failedPairs: result.failedPairs,
+      totalDatesInserted: result.totalDatesInserted,
+      results: result.results
+    });
+    
+  } catch (error) {
+    console.error('Error in historical backfill:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during historical backfill'
     });
   }
 });
