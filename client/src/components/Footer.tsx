@@ -273,6 +273,7 @@ const Footer = () => {
         <div className="border-t border-gray-700 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-200 text-sm mb-4 md:mb-0">
             &copy; {currentYear} SabiSend. All rights reserved.
+            <span className="block text-xs mt-1 opacity-75">SabiSend is a product brand of High City Consulting Ltd.</span>
             <span className="block text-xs mt-1 opacity-50">Impact-Site-Verification: 05a24e7b-12ee-477c-876c-027d1184abf7</span>
           </div>
           <div className="flex space-x-6 text-sm text-gray-200">
