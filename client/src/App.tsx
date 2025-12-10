@@ -26,6 +26,7 @@ import Register from "@/pages/Register";
 import CommentarySchedulerPanel from "@/pages/CommentarySchedulerPanel";
 import EnhancedTrendsTest from "@/pages/EnhancedTrendsTest";
 import ProviderTrends from "@/pages/ProviderTrends";
+import PreviewDashboard from "@/pages/PreviewDashboard";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -79,6 +80,7 @@ function Router() {
           {/* Test Pages */}
           <Route path="/enhanced-trends-test" component={EnhancedTrendsTest} />
           <Route path="/bulk-rates" component={BulkRateManager} />
+          <Route path="/preview-dashboard" component={PreviewDashboard} />
           
           {/* Blog Routes */}
           <Route path="/blog" component={Blog} />
