@@ -1,15 +1,16 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Bell, TrendingUp, Sparkles, 
   CheckCircle2, Shield, Clock, Globe 
 } from "lucide-react";
 import TopRatesCard from "@/components/TopRatesCard";
+import EnhancedRateTrends from "@/components/EnhancedRateTrends";
+import { RateAlertForm } from "@/components/RateAlertForm";
 import { MarketCommentary } from "@/components/MarketCommentary";
 import NewsSection from "@/components/NewsSection";
-import Footer from "@/components/Footer";
 
 const HomepageDraft = () => {
   return (
@@ -76,51 +77,35 @@ const HomepageDraft = () => {
         </div>
       </section>
 
-      <section className="py-8 bg-gray-50">
+      <section className="py-10 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            <Link href="/providertrend">
-              <Card className="group hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary/30">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    <TrendingUp className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors">
-                      Provider Rate Trends
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      See 7-day rate history for all providers
-                    </p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                </CardContent>
-              </Card>
-            </Link>
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-gray-900">Provider Ranking Trends</h2>
+            </div>
+            <p className="text-gray-600">Track provider movement over time - see who's offering the best rates</p>
+          </div>
+          <EnhancedRateTrends />
+        </div>
+      </section>
 
-            <Link href="/profile">
-              <Card className="group hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary/30">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="bg-amber-100 p-3 rounded-lg group-hover:bg-amber-200 transition-colors">
-                    <Bell className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors">
-                      Set Rate Alerts
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Get notified when rates hit your target
-                    </p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                </CardContent>
-              </Card>
-            </Link>
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="max-w-xl mx-auto">
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Bell className="h-6 w-6 text-amber-500" />
+                <h2 className="text-2xl font-bold text-gray-900">Rate Alerts</h2>
+              </div>
+              <p className="text-gray-600">Get notified when rates hit your target</p>
+            </div>
+            <RateAlertForm />
           </div>
         </div>
       </section>
 
-      <section className="py-8">
+      <section className="py-8 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
