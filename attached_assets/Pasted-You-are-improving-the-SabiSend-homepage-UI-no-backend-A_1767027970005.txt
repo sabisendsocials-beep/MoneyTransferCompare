@@ -1,0 +1,37 @@
+You are improving the SabiSend homepage UI (no backend/API changes). 
+IMPORTANT: Do NOT create new features or new API endpoints. Reuse existing data, hooks, services, or store that the compare/full-search page already uses to fetch rates/providers.
+
+Goal:
+Make the homepage instantly valuable by showing the “Top 3 / Top 5 exchange rates for today” for a selected currency pair, without requiring the user to run a full comparison first.
+
+Requirements:
+1) Above the fold: 
+   - Show a prominent currency pair selector/toggle.
+   - Default currency pair must be GBP → NGN.
+   - Provide quick switching across currency pairs (reuse existing supported currencies).
+   - Show a “Top rates right now” card displaying Top 3 by default, with a toggle for Top 5.
+   - Each provider row shows: provider name/logo + rate prominently.
+   - A clear CTA: “See full comparison” that navigates to the existing comparison/search page with the pair prefilled.
+
+2) Additional homepage info (reuse existing data only):
+   - “Last 7 days best provider & rate” card (derive from existing historical/daily rate snapshots if available; if not available, gracefully hide this card).
+   - “Rate trend (7 days)” chart (use existing time-series data if available; otherwise hide the chart).
+   - “Rate alert” card linking to existing rate alert flow/page if it already exists; do not build a new alert system.
+   - Optional: show “Last updated” timestamp if available in existing data responses.
+
+3) UI/UX:
+   - Clean, modern, trustworthy style (blue/white, fintech feel).
+   - Key message and top rates must be easy to see quickly.
+   - Responsive: mobile-first, stacked cards, large touch targets.
+   - Loading & error states: show skeletons/spinners and a friendly error message.
+   - Accessibility: semantic headings, button labels, contrast, keyboard navigation.
+
+Implementation guidance:
+- Do NOT change the API layer. Import and reuse the same rate fetching logic used by the comparison page.
+- If needed, refactor existing rate fetching into a shared hook/service used by both homepage and comparison page (still no new endpoints).
+- Sorting: use the existing rate values; show highest rate first.
+- The homepage should be a pure UI re-organisation: same data, better layout.
+
+Deliverables:
+A) First output an UPDATED DRAFT (a short text wireframe + component list) without editing real files.
+B) Then implement the UI changes in the homepage code, keeping existing routes and data logic intact.
