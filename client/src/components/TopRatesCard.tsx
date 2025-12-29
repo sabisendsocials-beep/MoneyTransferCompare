@@ -91,16 +91,16 @@ const TopRatesCard = ({
         toCurrency,
         type: "send"
       });
-      return response as unknown as TransferResult[];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     refetchInterval: 120000,
     staleTime: 60000,
   });
 
-  const sortedResults = results
-    ?.slice()
-    .sort((a, b) => b.exchangeRate - a.exchangeRate)
-    .slice(0, showTop5 ? 5 : 3);
+  const sortedResults = Array.isArray(results) 
+    ? results.slice().sort((a, b) => b.exchangeRate - a.exchangeRate).slice(0, showTop5 ? 5 : 3)
+    : [];
 
   const displayCount = showTop5 ? 5 : 3;
   const totalProviders = results?.length || 0;
