@@ -58,8 +58,9 @@ export function RateAlertForm() {
     defaultValues: {
       fromCurrency: 'GBP',
       toCurrency: 'NGN',
-      alertBasis: 'official',
+      alertBasis: 'best_provider',
       triggerType: 'percentage',
+      targetValue: 3,
     },
   });
 

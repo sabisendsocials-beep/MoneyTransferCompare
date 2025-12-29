@@ -3,12 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowRight, Bell, TrendingUp, Sparkles, 
+  ArrowRight, TrendingUp, Sparkles, 
   CheckCircle2, Shield, Clock, Globe 
 } from "lucide-react";
 import TopRatesCard from "@/components/TopRatesCard";
 import EnhancedRateTrends from "@/components/EnhancedRateTrends";
-import { RateAlertForm } from "@/components/RateAlertForm";
 import { MarketCommentary } from "@/components/MarketCommentary";
 import NewsSection from "@/components/NewsSection";
 
@@ -90,20 +89,6 @@ const HomepageDraft = () => {
         </div>
       </section>
 
-      <section className="py-10">
-        <div className="container mx-auto px-4">
-          <div className="max-w-xl mx-auto">
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Bell className="h-6 w-6 text-amber-500" />
-                <h2 className="text-2xl font-bold text-gray-900">Rate Alerts</h2>
-              </div>
-              <p className="text-gray-600">Get notified when rates hit your target</p>
-            </div>
-            <RateAlertForm />
-          </div>
-        </div>
-      </section>
 
       <section className="py-8 bg-gray-50">
         <div className="container mx-auto px-4">
