@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { 
+  ArrowRight, 
+  TrendingUp, 
+  Crown, 
+  Lightbulb, 
+  Bell, 
+  Target,
+  Sparkles,
+  MessageCircle
+} from "lucide-react";
 import CurrencyCalculator from "@/components/CurrencyCalculator";
 import TopRatesCard from "@/components/TopRatesCard";
 import ComparisonResults from "@/components/ComparisonResults";
@@ -18,6 +28,27 @@ import { MarketCommentary } from "@/components/MarketCommentary";
 import AccountCreationBanner from "@/components/AccountCreationBanner";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
+
+interface ProviderRotation {
+  currentBest: string;
+  historicalLeader: string;
+  recommendation: string;
+  timePattern?: string;
+}
+
+interface AlertSuggestion {
+  targetRate: number;
+  percentageAboveCurrent: number;
+  reasoning: string;
+}
+
+interface PowerInsightData {
+  alertSuggestion: AlertSuggestion;
+  currentMarket: {
+    bestProviderRate: number;
+    bestProvider: string;
+  };
+}
 
 const Home = () => {
   const [, setLocation] = useLocation();
@@ -39,6 +70,26 @@ const Home = () => {
     queryKey: ['/api/auth/user-fresh'],
     enabled: !!(authStatus as any)?.user,
     retry: false,
+  });
+
+  const { data: providerRotation } = useQuery<ProviderRotation>({
+    queryKey: ['/api/ai/provider-rotation', calculatorValues.fromCurrency, calculatorValues.toCurrency],
+    queryFn: async () => {
+      const response = await fetch(`/api/ai/provider-rotation?fromCurrency=${calculatorValues.fromCurrency}&toCurrency=${calculatorValues.toCurrency}`);
+      if (!response.ok) throw new Error('Failed to fetch provider rotation');
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: powerInsight } = useQuery<PowerInsightData>({
+    queryKey: ['/api/ai/power-insight', calculatorValues.fromCurrency, calculatorValues.toCurrency, 500],
+    queryFn: async () => {
+      const response = await fetch(`/api/ai/power-insight?fromCurrency=${calculatorValues.fromCurrency}&toCurrency=${calculatorValues.toCurrency}&amount=500`);
+      if (!response.ok) throw new Error('Failed to fetch power insight');
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleCalculatorChange = (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => {
@@ -63,6 +114,14 @@ const Home = () => {
   const handleComparisonResults = (results: TransferResult[]) => {
     setComparisonResults(results);
     setShowResults(true);
+  };
+
+  const formatRate = (rate: number) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(rate);
   };
 
   const financialServiceSchema = createFinancialServiceSchema();
@@ -91,7 +150,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <SEO
         title="SabiSend - Compare Best Money Transfer Rates to Nigeria & Ghana | Save Money on Remittances"
         description="Compare live exchange rates from 15+ money transfer providers. Send money to Nigeria and Ghana with the best rates. Save up to £50 per transfer with SabiSend."
@@ -153,40 +212,137 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-6 bg-gray-50">
+      <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="max-w-lg mx-auto">
-            <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-4 md:p-6 rounded-xl shadow-xl">
-              <h2 className="text-lg font-semibold mb-3 text-center text-white">Quick Calculator</h2>
-              
-              <div data-testid="currency-calculator">
-                <CurrencyCalculator onValuesChange={handleCalculatorChange} />
+          <div className="flex flex-col lg:flex-row lg:space-x-8">
+            <div className="lg:w-1/2 space-y-4 order-2 lg:order-1 mt-6 lg:mt-0">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-primary px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-white" />
+                    <h3 className="font-medium text-white text-sm">Sabi Buzz</h3>
+                    <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
+                      Live
+                    </Badge>
+                  </div>
+                  <p className="text-white/70 text-xs mt-0.5">Real insights with personality</p>
+                </div>
+                <div className="p-4">
+                  <MarketCommentary 
+                    fromCurrency={calculatorValues.fromCurrency} 
+                    toCurrency={calculatorValues.toCurrency} 
+                  />
+                </div>
               </div>
-              
-              <div className="mt-4 text-center">
-                <Button 
-                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group"
-                  onClick={handleGetBestRate}
-                >
-                  <span className="inline-flex items-center">
-                    <span className="mr-1.5 text-yellow-200">✨</span> 
-                    Get Best Rate Now
-                    <ArrowRight size={16} className="ml-2" />
-                  </span>
-                </Button>
+
+              {providerRotation && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="bg-primary px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Crown className="h-4 w-4 text-white" />
+                      <h3 className="font-medium text-white text-sm">Market Intelligence</h3>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-500 mb-1.5">Current Market Leader</p>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-primary hover:bg-primary text-white text-xs">
+                            {providerRotation.currentBest}
+                          </Badge>
+                          <span className="text-xs text-emerald-600 font-medium">Active</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-500 mb-1.5">Historical Performance</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-primary text-primary text-xs">
+                            {providerRotation.historicalLeader}
+                          </Badge>
+                          <span className="text-xs text-primary font-medium">Consistent</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2 text-sm text-gray-700 bg-primary/5 rounded-lg p-3">
+                      <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <p className="text-xs">{providerRotation.recommendation}</p>
+                    </div>
+                    
+                    <p className="text-xs text-gray-400 mt-3 italic">
+                      This intelligence complements your existing provider comparisons.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {powerInsight?.alertSuggestion && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="bg-primary px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-white" />
+                      <h3 className="font-medium text-white text-sm">Smart Alert Suggestion</h3>
+                      <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Target className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 text-sm">
+                          Set alert at {formatRate(powerInsight.alertSuggestion.targetRate)} {calculatorValues.toCurrency}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {powerInsight.alertSuggestion.reasoning}
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/alerts">
+                      <Button 
+                        size="sm" 
+                        className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
+                        data-testid="btn-create-smart-alert"
+                      >
+                        <Bell className="h-4 w-4 mr-2" />
+                        Create Alert
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:w-1/2 order-1 lg:order-2">
+              <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-5 md:p-6 rounded-xl shadow-xl lg:sticky lg:top-4">
+                <h2 className="text-lg font-semibold mb-4 text-center text-white">Quick Calculator</h2>
+                
+                <div data-testid="currency-calculator">
+                  <CurrencyCalculator onValuesChange={handleCalculatorChange} />
+                </div>
+                
+                <div className="mt-5 text-center">
+                  <Button 
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group py-3"
+                    onClick={handleGetBestRate}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="mr-1.5 text-yellow-200">✨</span> 
+                      Get Best Rate Now
+                      <ArrowRight size={16} className="ml-2" />
+                    </span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Sabi Buzz</h2>
-          <p className="text-sm text-gray-600">Real insights with personality</p>
-        </div>
-        <MarketCommentary fromCurrency="GBP" toCurrency="NGN" />
-      </div>
 
       <ComparisonResults results={comparisonResults} visible={showResults} />
 
@@ -198,7 +354,7 @@ const Home = () => {
         <RateTrends />
       </div>
 
-      <section className="py-8 bg-gray-50">
+      <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
