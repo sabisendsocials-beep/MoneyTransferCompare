@@ -37,7 +37,8 @@ This is a currency exchange rate comparison application built with Node.js, Expr
 - **Personalized Feature Discovery**: An intelligent `PersonalizedWizard` component offers context-aware, adaptive help based on user behavior, respecting user choices and timing.
 - **Account Encouragement**: Subtle prompts encourage non-logged-in users to create accounts, highlighting personalized features.
 - **Enhanced Registration Flow**: New users are seamlessly redirected to profile setup after OAuth, with welcome messages and preference configuration options.
-- **Sabi Buzz (Data-Driven Market Insights)**: Commentary system provides data-driven insights based on live market data, provider rates, and spreads, integrating with toast notifications and an "AI Insights" tab.
+- **Consolidated AI Power Insights** (`/api/ai/power-insight`): Unified endpoint providing 7-day and 30-day rate forecasts with confidence ratings, anomaly detection (best/worst in 30 days, high spread alerts), and actionable recommendations (send now/wait/set alert). Replaces separate prediction, timing, and alert suggestion endpoints. Frontend uses `RateForecast` component.
+- **Market Commentary**: Commentary system provides data-driven insights based on live market data, provider rates, and spreads, accessible in the "AI Insights" tab.
 - **Multi-Provider Rate Trends**: Displays historical trends for all providers with multi-select functionality and distinct color coding.
 - **Commentary System**: Generates authentic, data-driven insights with 5 distinct variants per currency pair, based on real-time provider data.
 - **Localization**: Comprehensive British English localization across user-facing content.
