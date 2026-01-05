@@ -52,7 +52,7 @@ async function getRealMarketData(fromCurrency: string, toCurrency: string): Prom
       .orderBy(desc(rateTrends.date))
       .limit(7);
     
-    // Analyze provider performance
+    // Analyze provider performance - filter out unrealistic rates
     const validRates = currentRatesWithProviders.filter(p => p.rate > 0 && p.verified !== false);
     if (validRates.length === 0) {
       return getSimulatedMarketData(fromCurrency, toCurrency);
@@ -61,13 +61,19 @@ async function getRealMarketData(fromCurrency: string, toCurrency: string): Prom
     const bestProvider = validRates.reduce((best, current) => 
       current.rate > best.rate ? current : best
     );
-    const worstProvider = validRates.reduce((worst, current) => 
+    
+    // Filter out rates that are less than 50% of best rate (unrealistic outliers)
+    const realisticRates = validRates.filter(r => r.rate >= bestProvider.rate * 0.5);
+    const worstProvider = realisticRates.reduce((worst, current) => 
       current.rate < worst.rate ? current : worst
     );
     
-    // Calculate rate spread
-    const rateSpread = validRates.length > 1 ? 
-      ((bestProvider.rate - worstProvider.rate) / worstProvider.rate * 100) : 0;
+    // Calculate rate spread with sanity check (cap at 20% maximum)
+    let rateSpread = 0;
+    if (realisticRates.length > 1 && worstProvider.rate > 0) {
+      rateSpread = ((bestProvider.rate - worstProvider.rate) / worstProvider.rate) * 100;
+      rateSpread = Math.min(rateSpread, 20); // Cap at 20% to prevent absurd values
+    }
     
     // Analyze recent movement
     let movement: 'up' | 'down' | 'stable' = 'stable';

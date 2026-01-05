@@ -135,8 +135,17 @@ class PowerInsightService {
     
     const sortedRates = [...currentRates].sort((a, b) => b.rate - a.rate);
     const bestRate = sortedRates[0];
-    const worstRate = sortedRates[sortedRates.length - 1];
-    const spread = worstRate.rate > 0 ? ((bestRate.rate - worstRate.rate) / worstRate.rate) * 100 : 0;
+    
+    // Filter out unrealistic low rates (less than 50% of best) before calculating spread
+    const realisticRates = sortedRates.filter(r => r.rate >= bestRate.rate * 0.5);
+    const worstRate = realisticRates[realisticRates.length - 1] || bestRate;
+    
+    // Calculate spread with sanity cap at 20%
+    let spread = 0;
+    if (realisticRates.length > 1 && worstRate.rate > 0) {
+      spread = ((bestRate.rate - worstRate.rate) / worstRate.rate) * 100;
+      spread = Math.min(spread, 20);
+    }
     
     return {
       baseRate: rateStats.currentRate || bestRate.rate,
@@ -212,7 +221,7 @@ class PowerInsightService {
     }
     
     const rates = historicalData.map(d => d.rate);
-    const currentRate = rates[rates.length - 1];
+    const currentBaseRate = rates[rates.length - 1];
     
     const dataPoints = historicalData.map((point, index) => ({
       x: index,
@@ -226,11 +235,22 @@ class PowerInsightService {
     const thirtyDayPredicted = slope * (dataPoints.length + 30) + intercept;
     
     const recentMA = rates.slice(-7).reduce((a, b) => a + b, 0) / 7;
-    const smoothed7Day = sevenDayPredicted * 0.7 + recentMA * 0.3;
-    const smoothed30Day = thirtyDayPredicted * 0.6 + recentMA * 0.4;
+    const smoothed7DayBase = sevenDayPredicted * 0.7 + recentMA * 0.3;
+    const smoothed30DayBase = thirtyDayPredicted * 0.6 + recentMA * 0.4;
     
-    const sevenDayChange = ((smoothed7Day - currentRate) / currentRate) * 100;
-    const thirtyDayChange = ((smoothed30Day - currentRate) / currentRate) * 100;
+    // Calculate percentage changes based on base rate trends
+    const sevenDayChange = ((smoothed7DayBase - currentBaseRate) / currentBaseRate) * 100;
+    const thirtyDayChange = ((smoothed30DayBase - currentBaseRate) / currentBaseRate) * 100;
+    
+    // Scale predictions to provider rate context for consistent display
+    // If provider rates are typically X% above base rate, apply same ratio to predictions
+    const providerPremium = currentMarket.baseRate > 0 
+      ? currentMarket.bestProviderRate / currentMarket.baseRate 
+      : 1;
+    
+    // Apply percentage change to current best provider rate for consistent display
+    const predictedProvider7Day = currentMarket.bestProviderRate * (1 + sevenDayChange / 100);
+    const predictedProvider30Day = currentMarket.bestProviderRate * (1 + thirtyDayChange / 100);
     
     const baseConfidence7 = Math.max(0.35, Math.min(0.85, rSquared * (1 - volatility / 100)));
     const baseConfidence30 = Math.max(0.25, Math.min(0.70, rSquared * 0.8 * (1 - volatility / 100)));
@@ -242,13 +262,13 @@ class PowerInsightService {
     
     return {
       sevenDay: {
-        predictedRate: smoothed7Day,
+        predictedRate: predictedProvider7Day,
         changePercent: sevenDayChange,
         confidence: baseConfidence7,
         direction: getDirection(sevenDayChange)
       },
       thirtyDay: {
-        predictedRate: smoothed30Day,
+        predictedRate: predictedProvider30Day,
         changePercent: thirtyDayChange,
         confidence: baseConfidence30,
         direction: getDirection(thirtyDayChange)
