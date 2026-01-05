@@ -124,8 +124,8 @@ const HomepageDraft = () => {
       <section className="py-6 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto">
-            <div className="bg-white p-4 md:p-6 rounded-xl border shadow-lg">
-              <h2 className="text-lg font-semibold mb-3 text-center text-gray-900">Quick Calculator</h2>
+            <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-4 md:p-6 rounded-xl shadow-xl">
+              <h2 className="text-lg font-semibold mb-3 text-center text-white">Quick Calculator</h2>
               
               <div data-testid="currency-calculator">
                 <CurrencyCalculator onValuesChange={handleCalculatorChange} />
