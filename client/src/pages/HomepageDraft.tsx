@@ -114,14 +114,14 @@ const HomepageDraft = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="bg-yellow-50 border-b border-yellow-200 py-2">
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-blue-900 border-b border-blue-800 py-2">
         <div className="container mx-auto px-4 text-center">
-          <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
+          <Badge variant="outline" className="text-blue-200 border-blue-400 bg-blue-800/50">
             DRAFT PREVIEW
           </Badge>
-          <span className="ml-2 text-sm text-gray-600">
-            Proposed homepage redesign - Calculator right, AI insights left
+          <span className="ml-2 text-sm text-blue-200">
+            Proposed homepage redesign for review
           </span>
         </div>
       </div>
@@ -179,53 +179,53 @@ const HomepageDraft = () => {
         </div>
       </section>
 
-      <section className="py-8 bg-gray-50">
+      <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto items-start">
             
-            <div className="space-y-4 order-2 lg:order-1">
-              <Card className="border-0 shadow-md overflow-hidden">
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3">
+            <div className="lg:col-span-5 space-y-4 order-2 lg:order-1">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-900 to-indigo-800 px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5 text-white" />
-                    <h3 className="font-semibold text-white">Sabi Buzz</h3>
-                    <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
+                    <MessageCircle className="h-4 w-4 text-emerald-400" />
+                    <h3 className="font-medium text-white text-sm">Sabi Buzz</h3>
+                    <Badge variant="secondary" className="ml-auto bg-emerald-500/20 text-emerald-300 border-0 text-xs">
                       Live
                     </Badge>
                   </div>
-                  <p className="text-amber-100 text-xs mt-1">Real insights with personality</p>
+                  <p className="text-blue-200 text-xs mt-0.5">Real insights with personality</p>
                 </div>
-                <CardContent className="p-4">
+                <div className="p-4">
                   <MarketCommentary 
                     fromCurrency={calculatorValues.fromCurrency} 
                     toCurrency={calculatorValues.toCurrency} 
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {providerRotation && (
-                <Card className="border-0 shadow-md overflow-hidden">
-                  <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-3">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-900 to-indigo-800 px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-white" />
-                      <h3 className="font-semibold text-white">Market Intelligence</h3>
+                      <Crown className="h-4 w-4 text-emerald-400" />
+                      <h3 className="font-medium text-white text-sm">Market Intelligence</h3>
                     </div>
                   </div>
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-2 gap-4 mb-3">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Current Market Leader</p>
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-500 mb-1.5">Current Market Leader</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant="default" className="bg-rose-600">
+                          <Badge className="bg-blue-900 hover:bg-blue-900 text-white text-xs">
                             {providerRotation.currentBest}
                           </Badge>
-                          <span className="text-xs text-green-600 font-medium">Active</span>
+                          <span className="text-xs text-emerald-600 font-medium">Active</span>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Historical Performance</p>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-500 mb-1.5">Historical Performance</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="border-blue-300 text-blue-700">
+                          <Badge variant="outline" className="border-blue-900 text-blue-900 text-xs">
                             {providerRotation.historicalLeader}
                           </Badge>
                           <span className="text-xs text-blue-600 font-medium">Consistent</span>
@@ -233,79 +233,70 @@ const HomepageDraft = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-start gap-2 text-sm text-gray-700 mb-2">
-                      <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <p>{providerRotation.recommendation}</p>
+                    <div className="flex items-start gap-2 text-sm text-gray-700 bg-blue-50 rounded-lg p-3">
+                      <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs">{providerRotation.recommendation}</p>
                     </div>
                     
-                    <p className="text-xs text-gray-500 italic">
+                    <p className="text-xs text-gray-400 mt-3 italic">
                       This intelligence complements your existing provider comparisons.
                     </p>
-                    
-                    {providerRotation.timePattern && (
-                      <div className="mt-3 pt-3 border-t">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="h-4 w-4 text-gray-500" />
-                          <p className="text-xs text-gray-600">Provider performance varies by timing and market conditions.</p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {powerInsight?.alertSuggestion && (
-                <Card className="border-0 shadow-md overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-3">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-900 to-indigo-800 px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Bell className="h-5 w-5 text-white" />
-                      <h3 className="font-semibold text-white">Smart Alert Suggestion</h3>
-                      <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
+                      <Bell className="h-4 w-4 text-emerald-400" />
+                      <h3 className="font-medium text-white text-sm">Smart Alert Suggestion</h3>
+                      <Badge variant="secondary" className="ml-auto bg-emerald-500/20 text-emerald-300 border-0 text-xs">
                         <Sparkles className="h-3 w-3 mr-1" />
                         AI
                       </Badge>
                     </div>
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-start gap-3">
-                        <Target className="h-5 w-5 text-blue-600 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            Set alert at {formatRate(powerInsight.alertSuggestion.targetRate)} {calculatorValues.toCurrency}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {powerInsight.alertSuggestion.reasoning}
-                          </p>
-                        </div>
+                  <div className="p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <Target className="h-4 w-4 text-blue-900" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 text-sm">
+                          Set alert at {formatRate(powerInsight.alertSuggestion.targetRate)} {calculatorValues.toCurrency}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {powerInsight.alertSuggestion.reasoning}
+                        </p>
                       </div>
                     </div>
                     <Link href="/alerts">
                       <Button 
                         size="sm" 
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
                         data-testid="btn-create-smart-alert"
                       >
                         <Bell className="h-4 w-4 mr-2" />
                         Create Alert
                       </Button>
                     </Link>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div className="order-1 lg:order-2">
-              <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-4 md:p-6 rounded-xl shadow-xl sticky top-4">
-                <h2 className="text-lg font-semibold mb-3 text-center text-white">Quick Calculator</h2>
+            <div className="lg:col-span-7 order-1 lg:order-2">
+              <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-5 md:p-6 rounded-xl shadow-xl lg:sticky lg:top-4">
+                <h2 className="text-lg font-semibold mb-4 text-center text-white">Quick Calculator</h2>
                 
                 <div data-testid="currency-calculator">
                   <CurrencyCalculator onValuesChange={handleCalculatorChange} />
                 </div>
                 
-                <div className="mt-4 text-center">
+                <div className="mt-5 text-center">
                   <Button 
-                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group"
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group py-3"
                     onClick={handleGetBestRate}
                   >
                     <span className="inline-flex items-center">
@@ -331,11 +322,11 @@ const HomepageDraft = () => {
         <RateTrends />
       </div>
 
-      <section className="py-8 bg-gray-50">
+      <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <TrendingUp className="h-6 w-6 text-primary" />
+              <TrendingUp className="h-6 w-6 text-blue-900" />
               <h2 className="text-2xl font-bold text-gray-900">Provider Ranking Trends</h2>
             </div>
             <p className="text-gray-600">Track provider movement over time - see who's offering the best rates</p>
