@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { 
   ArrowRight, 
   TrendingUp, 
   Crown, 
-  BarChart3, 
   Lightbulb, 
   Bell, 
   Target,
@@ -115,12 +113,12 @@ const HomepageDraft = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-blue-900 border-b border-blue-800 py-2">
+      <div className="bg-primary border-b border-primary/80 py-2">
         <div className="container mx-auto px-4 text-center">
-          <Badge variant="outline" className="text-blue-200 border-blue-400 bg-blue-800/50">
+          <Badge variant="outline" className="text-white/90 border-white/40 bg-white/10">
             DRAFT PREVIEW
           </Badge>
-          <span className="ml-2 text-sm text-blue-200">
+          <span className="ml-2 text-sm text-white/90">
             Proposed homepage redesign for review
           </span>
         </div>
@@ -181,19 +179,18 @@ const HomepageDraft = () => {
 
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto items-start">
-            
-            <div className="lg:col-span-5 space-y-4 order-2 lg:order-1">
+          <div className="flex flex-col lg:flex-row lg:space-x-8">
+            <div className="lg:w-1/2 space-y-4 order-2 lg:order-1 mt-6 lg:mt-0">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-900 to-indigo-800 px-4 py-3">
+                <div className="bg-primary px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4 text-emerald-400" />
+                    <MessageCircle className="h-4 w-4 text-white" />
                     <h3 className="font-medium text-white text-sm">Sabi Buzz</h3>
-                    <Badge variant="secondary" className="ml-auto bg-emerald-500/20 text-emerald-300 border-0 text-xs">
+                    <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
                       Live
                     </Badge>
                   </div>
-                  <p className="text-blue-200 text-xs mt-0.5">Real insights with personality</p>
+                  <p className="text-white/70 text-xs mt-0.5">Real insights with personality</p>
                 </div>
                 <div className="p-4">
                   <MarketCommentary 
@@ -205,9 +202,9 @@ const HomepageDraft = () => {
 
               {providerRotation && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-900 to-indigo-800 px-4 py-3">
+                  <div className="bg-primary px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Crown className="h-4 w-4 text-emerald-400" />
+                      <Crown className="h-4 w-4 text-white" />
                       <h3 className="font-medium text-white text-sm">Market Intelligence</h3>
                     </div>
                   </div>
@@ -216,7 +213,7 @@ const HomepageDraft = () => {
                       <div className="bg-gray-50 rounded-lg p-3">
                         <p className="text-xs text-gray-500 mb-1.5">Current Market Leader</p>
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-blue-900 hover:bg-blue-900 text-white text-xs">
+                          <Badge className="bg-primary hover:bg-primary text-white text-xs">
                             {providerRotation.currentBest}
                           </Badge>
                           <span className="text-xs text-emerald-600 font-medium">Active</span>
@@ -225,16 +222,16 @@ const HomepageDraft = () => {
                       <div className="bg-gray-50 rounded-lg p-3">
                         <p className="text-xs text-gray-500 mb-1.5">Historical Performance</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="border-blue-900 text-blue-900 text-xs">
+                          <Badge variant="outline" className="border-primary text-primary text-xs">
                             {providerRotation.historicalLeader}
                           </Badge>
-                          <span className="text-xs text-blue-600 font-medium">Consistent</span>
+                          <span className="text-xs text-primary font-medium">Consistent</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-start gap-2 text-sm text-gray-700 bg-blue-50 rounded-lg p-3">
-                      <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex items-start gap-2 text-sm text-gray-700 bg-primary/5 rounded-lg p-3">
+                      <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <p className="text-xs">{providerRotation.recommendation}</p>
                     </div>
                     
@@ -247,11 +244,11 @@ const HomepageDraft = () => {
 
               {powerInsight?.alertSuggestion && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-900 to-indigo-800 px-4 py-3">
+                  <div className="bg-primary px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-emerald-400" />
+                      <Bell className="h-4 w-4 text-white" />
                       <h3 className="font-medium text-white text-sm">Smart Alert Suggestion</h3>
-                      <Badge variant="secondary" className="ml-auto bg-emerald-500/20 text-emerald-300 border-0 text-xs">
+                      <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
                         <Sparkles className="h-3 w-3 mr-1" />
                         AI
                       </Badge>
@@ -259,8 +256,8 @@ const HomepageDraft = () => {
                   </div>
                   <div className="p-4">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Target className="h-4 w-4 text-blue-900" />
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Target className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 text-sm">
@@ -286,7 +283,7 @@ const HomepageDraft = () => {
               )}
             </div>
 
-            <div className="lg:col-span-7 order-1 lg:order-2">
+            <div className="lg:w-1/2 order-1 lg:order-2">
               <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-5 md:p-6 rounded-xl shadow-xl lg:sticky lg:top-4">
                 <h2 className="text-lg font-semibold mb-4 text-center text-white">Quick Calculator</h2>
                 
@@ -326,7 +323,7 @@ const HomepageDraft = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <TrendingUp className="h-6 w-6 text-blue-900" />
+              <TrendingUp className="h-6 w-6 text-primary" />
               <h2 className="text-2xl font-bold text-gray-900">Provider Ranking Trends</h2>
             </div>
             <p className="text-gray-600">Track provider movement over time - see who's offering the best rates</p>
