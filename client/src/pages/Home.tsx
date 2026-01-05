@@ -15,7 +15,6 @@ import FeatureCards from "@/components/FeatureCards";
 import CountryNavigationSection from "@/components/CountryNavigationSection";
 import { PersonalizedDashboard } from "@/components/PersonalizedDashboard";
 import { MarketCommentary } from "@/components/MarketCommentary";
-import SabiBuzzToast from "@/components/SabiBuzzToast";
 import AccountCreationBanner from "@/components/AccountCreationBanner";
 import { TransferResult } from "@shared/schema";
 import { SEO, createFinancialServiceSchema, createWebsiteSchema } from "@/components/SEO";
@@ -102,7 +101,6 @@ const Home = () => {
       />
       
       <AccountCreationBanner />
-      <SabiBuzzToast fromCurrency="GBP" toCurrency="NGN" />
 
       <section className="relative bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800 py-4">
         <div className="absolute inset-0">

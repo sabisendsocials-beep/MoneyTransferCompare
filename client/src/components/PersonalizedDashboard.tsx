@@ -14,7 +14,6 @@ import { useLocation } from "wouter";
 import NewsSection from "@/components/NewsSection";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AIInsights } from "./AIInsights";
-import SabiBuzzToast from "@/components/SabiBuzzToast";
 import { MarketCommentary } from "@/components/MarketCommentary";
 
 interface PersonalizedDashboardProps {
@@ -256,9 +255,6 @@ export function PersonalizedDashboard({ user, className }: PersonalizedDashboard
 
   return (
     <div className={`space-y-6 personalized-dashboard ${className || ''}`}>
-      {/* Sabi Buzz Toast - Dismissible notification */}
-      <SabiBuzzToast fromCurrency={fromCurrency} toCurrency={toCurrency} />
-      
       {/* New User Welcome Message */}
       {hasNoPreferences && (
         <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">

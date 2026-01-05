@@ -34,7 +34,6 @@ import Footer from "@/components/Footer";
 import { NewsletterPopupContainer } from "@/components/NewsletterPopupContainer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ImprovedOnboarding, useImprovedOnboarding } from "@/components/ImprovedOnboarding";
-import { PersonalizedWizard, usePersonalizedWizard } from "@/components/PersonalizedWizard";
 import { AccountPrompt, useAccountPrompt } from "@/components/AccountPrompt";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useRef } from "react";
@@ -58,12 +57,11 @@ function Router() {
   useAnalytics();
   
   const { showOnboarding, completeOnboarding, skipOnboarding } = useImprovedOnboarding();
-  const { showWizard, closeWizard, startWizard } = usePersonalizedWizard();
   const { showPrompt, closePrompt } = useAccountPrompt();
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Header onStartWizard={startWizard} />
+      <Header />
       <main className="flex-grow">
         <Switch>
           <Route path="/" component={Home} />
@@ -137,11 +135,6 @@ function Router() {
         isAuthenticated={false}
       />
       
-      <PersonalizedWizard 
-        isVisible={showWizard}
-        onClose={closeWizard}
-      />
-
       <AccountPrompt 
         isVisible={showPrompt}
         onClose={closePrompt}
