@@ -1,13 +1,14 @@
 /**
  * Unified Power Insight Service
  * Consolidates rate prediction, timing analysis, and alert suggestions into one comprehensive feature
- * Uses base rate trends + provider rate trends to provide 7-day and 30-day forecasts
+ * Uses AI-powered forecasting via OpenAI to analyze historical data and predict future rates
  */
 
 import { db } from "../db";
 import { rateTrends, exchangeRates, providers } from "@shared/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { storage } from "../storage";
+import { aiForecastService } from "./aiForecastService";
 
 export interface PowerInsightResponse {
   currencyPair: string;
@@ -70,8 +71,20 @@ class PowerInsightService {
     
     const currentMarket = this.analyzeCurrentMarket(currentRates, rateStats);
     const anomalies = await this.detectAnomalies(fromCurrency, toCurrency, currentMarket, historicalData);
-    const forecast = this.generateForecast(historicalData, currentMarket);
-    const recommendation = this.generateRecommendation(currentMarket, anomalies, forecast, amount);
+    
+    // Use AI-powered forecasting instead of statistical formulas
+    const aiForecast = await aiForecastService.getForecast(
+      fromCurrency, 
+      toCurrency, 
+      currentMarket.bestProviderRate
+    );
+    
+    const forecast = {
+      sevenDay: aiForecast.sevenDay,
+      thirtyDay: aiForecast.thirtyDay
+    };
+    
+    const recommendation = this.generateRecommendation(currentMarket, anomalies, forecast, amount, aiForecast.reasoning);
     const alertSuggestion = this.generateAlertSuggestion(currentMarket, forecast, rateStats);
     
     return {
@@ -280,7 +293,8 @@ class PowerInsightService {
     currentMarket: any,
     anomalies: any,
     forecast: any,
-    amount: number
+    amount: number,
+    aiReasoning?: string
   ) {
     const { sevenDay, thirtyDay } = forecast;
     const potentialChange7Day = (sevenDay.changePercent / 100) * amount * currentMarket.bestProviderRate;
