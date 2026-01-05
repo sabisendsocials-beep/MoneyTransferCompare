@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { 
   Trophy, ArrowRight, Clock, RefreshCw, ChevronDown, 
-  TrendingUp, Zap, ExternalLink 
+  TrendingUp, Zap, ExternalLink, Share2 
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -71,16 +72,50 @@ interface TopRatesCardProps {
   className?: string;
   defaultFrom?: string;
   defaultTo?: string;
+  showShareButton?: boolean;
 }
 
 const TopRatesCard = ({ 
   className = "",
   defaultFrom = "GBP",
-  defaultTo = "NGN"
+  defaultTo = "NGN",
+  showShareButton = false
 }: TopRatesCardProps) => {
   const [fromCurrency, setFromCurrency] = useState(defaultFrom);
   const [toCurrency, setToCurrency] = useState(defaultTo);
   const [showTop5, setShowTop5] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `Best ${fromCurrency} to ${toCurrency} Exchange Rates - SabiSend`,
+      text: sortedResults.length > 0 
+        ? `Best rate: ${sortedResults[0]?.providerName} - ${currencySymbols[fromCurrency]}1 = ${currencySymbols[toCurrency]}${formatRate(sortedResults[0]?.exchangeRate || 0)}. Compare rates at SabiSend!`
+        : `Compare the best ${fromCurrency} to ${toCurrency} exchange rates at SabiSend!`,
+      url: `${window.location.origin}/results?amount=100&fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&calculationMode=send`
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          copyToClipboard(shareData.url);
+        }
+      }
+    } else {
+      copyToClipboard(shareData.url);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Link copied!",
+      description: "Share link has been copied to your clipboard",
+    });
+  };
 
   const { data: results, isLoading, error, refetch, dataUpdatedAt } = useQuery<TransferResult[]>({
     queryKey: ['/api/compare', fromCurrency, toCurrency, 'top-rates'],
@@ -280,12 +315,26 @@ const TopRatesCard = ({
                 </button>
               </div>
               
-              <Link href={compareUrl}>
-                <Button className="w-full sm:w-auto gap-2" data-testid="see-full-comparison-btn">
-                  See Full Comparison
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                {showShareButton && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleShare}
+                    className="gap-2"
+                    data-testid="share-rates-btn"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </Button>
+                )}
+                <Link href={compareUrl}>
+                  <Button className="gap-2" data-testid="see-full-comparison-btn">
+                    See Full Comparison
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </>
         )}

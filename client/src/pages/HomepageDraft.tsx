@@ -1,17 +1,59 @@
-import { Link } from "wouter";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight, TrendingUp, Sparkles, 
-  CheckCircle2, Shield, Clock, Globe 
-} from "lucide-react";
+import { ArrowRight, TrendingUp } from "lucide-react";
+import CurrencyCalculator from "@/components/CurrencyCalculator";
 import TopRatesCard from "@/components/TopRatesCard";
+import ComparisonResults from "@/components/ComparisonResults";
+import RateAlertModule from "@/components/RateAlertModule";
+import RateTrends from "@/components/RateTrends";
 import EnhancedRateTrends from "@/components/EnhancedRateTrends";
-import { MarketCommentary } from "@/components/MarketCommentary";
 import NewsSection from "@/components/NewsSection";
+import FeatureSection from "@/components/FeatureSection";
+import FeatureCards from "@/components/FeatureCards";
+import CountryNavigationSection from "@/components/CountryNavigationSection";
+import { MarketCommentary } from "@/components/MarketCommentary";
+import SabiBuzzToast from "@/components/SabiBuzzToast";
+import AccountCreationBanner from "@/components/AccountCreationBanner";
+import { TransferResult } from "@shared/schema";
 
 const HomepageDraft = () => {
+  const [, setLocation] = useLocation();
+  const [comparisonResults, setComparisonResults] = useState<TransferResult[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [calculatorValues, setCalculatorValues] = useState({
+    amount: "100",
+    fromCurrency: "GBP",
+    toCurrency: "NGN",
+    calculationMode: "send"
+  });
+
+  const handleCalculatorChange = (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => {
+    setCalculatorValues({
+      amount: values.amount,
+      fromCurrency: values.fromCurrency,
+      toCurrency: values.toCurrency,
+      calculationMode: values.calculationMode || "send"
+    });
+  };
+
+  const handleGetBestRate = () => {
+    const params = new URLSearchParams({
+      amount: calculatorValues.amount.replace(/,/g, ''),
+      fromCurrency: calculatorValues.fromCurrency,
+      toCurrency: calculatorValues.toCurrency,
+      calculationMode: calculatorValues.calculationMode
+    });
+    setLocation(`/results?${params.toString()}`);
+  };
+
+  const handleComparisonResults = (results: TransferResult[]) => {
+    setComparisonResults(results);
+    setShowResults(true);
+  };
+
   return (
     <div className="min-h-screen">
       <div className="bg-yellow-50 border-b border-yellow-200 py-2">
@@ -20,12 +62,15 @@ const HomepageDraft = () => {
             DRAFT PREVIEW
           </Badge>
           <span className="ml-2 text-sm text-gray-600">
-            This is a proposed homepage redesign for review
+            Proposed homepage redesign for review
           </span>
         </div>
       </div>
 
-      <section className="relative bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800 py-10 md:py-16">
+      <AccountCreationBanner />
+      <SabiBuzzToast fromCurrency="GBP" toCurrency="NGN" />
+
+      <section className="relative bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800 py-4">
         <div className="absolute inset-0">
           <div className="absolute inset-0 opacity-30" 
             style={{
@@ -38,45 +83,90 @@ const HomepageDraft = () => {
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
-              Don't send on habit.{" "}
-              <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
-                Send on facts.
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-blue-100 mb-6 max-w-2xl mx-auto">
-              SabiSend compares exchange rates from 15+ providers in real time, 
-              helping you save on every international transfer.
-            </p>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-12">
+            <div className="lg:w-1/2 mb-4 lg:mb-0">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-2">
+                Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
+              </h1>
+              
+              <p className="text-lg text-blue-100 mb-4">
+                SabiSend compares exchange rates from trusted providers in real time, 
+                helping you save on every international transfer.
+              </p>
+              
+              <div className="hidden lg:flex space-x-4">
+                <Link href="/compare">
+                  <Button size="default" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium shadow-lg">
+                    Compare All Providers
+                    <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                </Link>
+                <Link href="/trends">
+                  <Button size="default" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10">
+                    View Rate Trends
+                  </Button>
+                </Link>
+              </div>
+            </div>
             
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-blue-200">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span>Free to use</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Shield className="h-4 w-4 text-emerald-400" />
-                <span>Independent & unbiased</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-emerald-400" />
-                <span>Updated every minute</span>
+            <div className="lg:w-1/2">
+              <div className="bg-white/15 backdrop-blur-xl p-3 md:p-4 rounded-2xl border border-white/20 shadow-lg">
+                <h2 className="text-base text-white font-semibold mb-2 text-center">Quick Calculator</h2>
+                
+                <div data-testid="currency-calculator">
+                  <CurrencyCalculator onValuesChange={handleCalculatorChange} />
+                </div>
+                
+                <div className="mt-3 text-center">
+                  <Button 
+                    className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full py-2 shadow-lg text-base group"
+                    onClick={handleGetBestRate}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="mr-1.5 text-yellow-200">✨</span> 
+                      Get Best Rate Now
+                      <ArrowRight size={16} className="ml-2" />
+                    </span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="max-w-3xl mx-auto">
+      <section className="py-6 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
             <TopRatesCard 
-              className="bg-white shadow-2xl border-0" 
-              defaultFrom="GBP" 
-              defaultTo="NGN" 
+              className="shadow-lg" 
+              defaultFrom={calculatorValues.fromCurrency} 
+              defaultTo={calculatorValues.toCurrency}
+              showShareButton={true}
             />
           </div>
         </div>
       </section>
 
-      <section className="py-10 bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Sabi Buzz</h2>
+          <p className="text-sm text-gray-600">Real insights with personality</p>
+        </div>
+        <MarketCommentary fromCurrency="GBP" toCurrency="NGN" />
+      </div>
+
+      <ComparisonResults results={comparisonResults} visible={showResults} />
+
+      <div className="rate-alert-section">
+        <RateAlertModule />
+      </div>
+
+      <div className="chart-container">
+        <RateTrends />
+      </div>
+
+      <section className="py-8 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -89,49 +179,10 @@ const HomepageDraft = () => {
         </div>
       </section>
 
-
-      <section className="py-8 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold text-gray-900">Sabi Buzz</h2>
-              <Badge variant="secondary" className="text-xs">AI Insights</Badge>
-            </div>
-            <MarketCommentary fromCurrency="GBP" toCurrency="NGN" />
-          </div>
-        </div>
-      </section>
-
-      <section className="py-8 bg-gradient-to-r from-primary/5 to-primary/10">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              Ready to compare all providers?
-            </h2>
-            <p className="text-gray-600 mb-6">
-              See detailed fees, transfer times, and customer ratings for every provider
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/compare">
-                <Button size="lg" className="gap-2 w-full sm:w-auto">
-                  <Globe className="h-5 w-5" />
-                  Full Rate Comparison
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/trends">
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
-                  <TrendingUp className="h-5 w-5" />
-                  View Exchange Rate Trends
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <FeatureCards />
       <NewsSection />
+      <CountryNavigationSection />
+      <FeatureSection />
     </div>
   );
 };
