@@ -1033,6 +1033,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Unified Power Insight endpoint - consolidates prediction, timing, and alert suggestions
+  app.get("/api/ai/power-insight", async (req: Request, res: Response) => {
+    try {
+      const fromCurrency = (req.query.fromCurrency as string) || "GBP";
+      const toCurrency = (req.query.toCurrency as string) || "NGN";
+      const amount = parseFloat(req.query.amount as string) || 500;
+      
+      const { powerInsightService } = await import('./services/powerInsightService');
+      const insight = await powerInsightService.getPowerInsight(fromCurrency, toCurrency, amount);
+      
+      res.json(insight);
+    } catch (error) {
+      console.error('Error generating power insight:', error);
+      res.status(500).json({ message: "Failed to generate power insight" });
+    }
+  });
+
   // Get rate statistics
   app.get("/api/rate-stats", async (req: Request, res: Response) => {
     try {
