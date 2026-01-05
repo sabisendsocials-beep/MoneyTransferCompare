@@ -486,87 +486,89 @@ const EnhancedRateTrends = ({ hideRateTrendChart = false }: EnhancedRateTrendsPr
         </div>
 
         <div className="bg-white dark:bg-gray-700 rounded-xl shadow-md overflow-hidden p-6">
-          {/* Chart Controls */}
-          <div className="flex flex-col lg:flex-row items-start justify-between mb-6 space-y-4 lg:space-y-0 lg:space-x-6">
-            {/* Currency and Period Selection */}
-            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
-              <Select 
-                value={`${currencyPair.from}-${currencyPair.to}`} 
-                onValueChange={handleCurrencyPairChange}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select currencies" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencyPairs.map((pair) => (
-                    <SelectItem key={`${pair.from}-${pair.to}`} value={`${pair.from}-${pair.to}`}>
-                      {pair.from} to {pair.to}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <div className="flex space-x-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                {periodOptions.map((option) => (
-                  <button 
-                    key={option.value} 
-                    onClick={() => handlePeriodChange(option.value)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      periodOption === option.value 
-                        ? "bg-primary text-white" 
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Data Source Selection */}
-            <div className="lg:max-w-md w-full">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                <BarChart2 className="w-4 h-4 mr-2" />
-                Data Sources
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {dataSources.map((source) => (
-                  <div key={source.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={source.id}
-                      checked={source.enabled}
-                      onCheckedChange={() => {
-                        if (source.type === 'base') {
-                          handleBaseRateToggle();
-                        } else if (source.providerName) {
-                          handleProviderToggle(source.providerName);
-                        }
-                      }}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                    <label
-                      htmlFor={source.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center cursor-pointer"
+          {/* Chart Controls - only show when chart tab is visible */}
+          {!hideRateTrendChart && (
+            <div className="flex flex-col lg:flex-row items-start justify-between mb-6 space-y-4 lg:space-y-0 lg:space-x-6">
+              {/* Currency and Period Selection */}
+              <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+                <Select 
+                  value={`${currencyPair.from}-${currencyPair.to}`} 
+                  onValueChange={handleCurrencyPairChange}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select currencies" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencyPairs.map((pair) => (
+                      <SelectItem key={`${pair.from}-${pair.to}`} value={`${pair.from}-${pair.to}`}>
+                        {pair.from} to {pair.to}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <div className="flex space-x-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                  {periodOptions.map((option) => (
+                    <button 
+                      key={option.value} 
+                      onClick={() => handlePeriodChange(option.value)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        periodOption === option.value 
+                          ? "bg-primary text-white" 
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      }`}
                     >
-                      <div
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: source.enabled ? source.color : '#d1d5db' }}
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Data Source Selection */}
+              <div className="lg:max-w-md w-full">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                  <BarChart2 className="w-4 h-4 mr-2" />
+                  Data Sources
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {dataSources.map((source) => (
+                    <div key={source.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={source.id}
+                        checked={source.enabled}
+                        onCheckedChange={() => {
+                          if (source.type === 'base') {
+                            handleBaseRateToggle();
+                          } else if (source.providerName) {
+                            handleProviderToggle(source.providerName);
+                          }
+                        }}
+                        className="data-[state=checked]:bg-primary"
                       />
-                      {source.type === 'base' ? (
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                      ) : (
-                        <Building2 className="w-3 h-3 mr-1" />
-                      )}
-                      {source.label}
-                    </label>
-                  </div>
-                ))}
+                      <label
+                        htmlFor={source.id}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center cursor-pointer"
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: source.enabled ? source.color : '#d1d5db' }}
+                        />
+                        {source.type === 'base' ? (
+                          <TrendingUp className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Building2 className="w-3 h-3 mr-1" />
+                        )}
+                        {source.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Active Sources Display */}
-          {enabledSources.length > 0 && (
+          {/* Active Sources Display - only show when chart tab is visible */}
+          {!hideRateTrendChart && enabledSources.length > 0 && (
             <div className="mb-4">
               <div className="flex flex-wrap gap-2">
                 {enabledSources.map((source) => (

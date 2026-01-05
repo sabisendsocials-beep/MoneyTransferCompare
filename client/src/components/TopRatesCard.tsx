@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { 
   Trophy, ArrowRight, Clock, RefreshCw, ChevronDown, 
-  TrendingUp, Zap, ExternalLink, Share2 
+  TrendingUp, Zap, ExternalLink, Share2, Image, Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import html2canvas from "html2canvas";
 
 interface TransferResult {
   providerId: number;
@@ -87,33 +88,141 @@ const TopRatesCard = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleShare = async () => {
-    const shareData = {
-      title: `Best ${fromCurrency} to ${toCurrency} Exchange Rates - SabiSend`,
-      text: sortedResults.length > 0 
-        ? `Best rate: ${sortedResults[0]?.providerName} - ${currencySymbols[fromCurrency]}1 = ${currencySymbols[toCurrency]}${formatRate(sortedResults[0]?.exchangeRate || 0)}. Compare rates at SabiSend!`
-        : `Compare the best ${fromCurrency} to ${toCurrency} exchange rates at SabiSend!`,
-      url: `${window.location.origin}/results?amount=100&fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&calculationMode=send`
-    };
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const shareableRef = useRef<HTMLDivElement>(null);
 
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          copyToClipboard(shareData.url);
+  const generateShareableImage = async (): Promise<Blob | null> => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    const width = 1200;
+    const height = 630;
+    canvas.width = width;
+    canvas.height = height;
+
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#1e3a5f');
+    gradient.addColorStop(0.5, '#2d4a6f');
+    gradient.addColorStop(1, '#1e3a5f');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
+    ctx.fillText('SabiSend', 60, 80);
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '20px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Best Exchange Rates', 60, 115);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`Top ${fromCurrency} to ${toCurrency} Rates`, 60, 200);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '24px system-ui, -apple-system, sans-serif';
+    const now = new Date();
+    ctx.fillText(`Updated: ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, 60, 245);
+
+    sortedResults.slice(0, 3).forEach((result, index) => {
+      const yPos = 310 + (index * 95);
+      
+      const medals = ['#ffd700', '#c0c0c0', '#cd7f32'];
+      ctx.fillStyle = medals[index] || '#666';
+      ctx.beginPath();
+      ctx.arc(90, yPos + 30, 30, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = '#1e3a5f';
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${index + 1}`, 90, yPos + 40);
+      ctx.textAlign = 'left';
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      ctx.fillText(result.providerName, 140, yPos + 25);
+      
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${currencySymbols[toCurrency]}${formatRate(result.exchangeRate)}`, 140, yPos + 65);
+      
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '22px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`per ${currencySymbols[fromCurrency]}1`, 350, yPos + 65);
+    });
+
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(60, height - 80, width - 120, 50);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Compare rates at sabisend.com', width / 2, height - 48);
+    ctx.textAlign = 'left';
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/png');
+    });
+  };
+
+  const handleShare = async () => {
+    if (sortedResults.length === 0) {
+      toast({
+        title: "No rates to share",
+        description: "Please wait for rates to load",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    
+    try {
+      const blob = await generateShareableImage();
+      if (!blob) throw new Error('Failed to generate image');
+
+      const shareUrl = `${window.location.origin}/results?amount=100&fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&calculationMode=send`;
+      
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], `sabisend-rates-${fromCurrency}-${toCurrency}.png`, { type: 'image/png' });
+        const shareData = {
+          files: [file],
+          title: `Best ${fromCurrency} to ${toCurrency} Rates - SabiSend`,
+          text: `Check out today's best exchange rates! Compare at ${shareUrl}`,
+        };
+        
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          downloadImage(blob);
         }
+      } else {
+        downloadImage(blob);
       }
-    } else {
-      copyToClipboard(shareData.url);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        toast({
+          title: "Share cancelled",
+          description: "You can download the image instead",
+        });
+      }
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const downloadImage = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sabisend-rates-${fromCurrency}-${toCurrency}.png`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
     toast({
-      title: "Link copied!",
-      description: "Share link has been copied to your clipboard",
+      title: "Image downloaded!",
+      description: "Share it on social media with a link to sabisend.com",
     });
   };
 
@@ -321,11 +430,21 @@ const TopRatesCard = ({
                     variant="outline" 
                     size="sm"
                     onClick={handleShare}
+                    disabled={isGeneratingImage || isLoading}
                     className="gap-2"
                     data-testid="share-rates-btn"
                   >
-                    <Share2 className="h-4 w-4" />
-                    Share
+                    {isGeneratingImage ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Image className="h-4 w-4" />
+                        Share Image
+                      </>
+                    )}
                   </Button>
                 )}
                 <Link href={compareUrl}>

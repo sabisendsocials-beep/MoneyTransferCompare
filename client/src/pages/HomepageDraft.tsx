@@ -70,7 +70,7 @@ const HomepageDraft = () => {
       <AccountCreationBanner />
       <SabiBuzzToast fromCurrency="GBP" toCurrency="NGN" />
 
-      <section className="relative bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800 py-3">
+      <section className="relative bg-gradient-to-b from-blue-900 via-purple-900 to-indigo-800 py-4">
         <div className="absolute inset-0">
           <div className="absolute inset-0 opacity-30" 
             style={{
@@ -78,28 +78,31 @@ const HomepageDraft = () => {
               backgroundSize: "100px 100px"
             }}>
           </div>
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full bg-emerald-500/10 filter blur-3xl"></div>
+          <div className="absolute bottom-1/3 left-1/4 w-72 h-72 rounded-full bg-indigo-500/10 filter blur-3xl"></div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-8">
-            <div className="lg:w-1/2 mb-3 lg:mb-0">
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight mb-1">
+            <div className="lg:w-1/2 mb-4 lg:mb-0">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-2">
                 Find the <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">best rates</span> for sending money globally
               </h1>
               
-              <p className="text-sm text-blue-100 mb-3">
-                Compare exchange rates from trusted providers in real time.
+              <p className="text-base md:text-lg text-blue-100 mb-4">
+                SabiSend compares exchange rates from trusted providers in real time so you don't have to, 
+                helping you save on fees and get best value in every international transfer.
               </p>
               
               <div className="hidden lg:flex space-x-3">
                 <Link href="/compare">
-                  <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium shadow-lg">
+                  <Button size="default" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium shadow-lg">
                     Compare All Providers
-                    <ArrowRight size={14} className="ml-1" />
+                    <ArrowRight size={16} className="ml-2" />
                   </Button>
                 </Link>
                 <Link href="/trends">
-                  <Button size="sm" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10">
+                  <Button size="default" variant="outline" className="border-2 border-white/30 text-white bg-white/5 hover:bg-white/10">
                     View Rate Trends
                   </Button>
                 </Link>
@@ -107,14 +110,14 @@ const HomepageDraft = () => {
             </div>
             
             <div className="lg:w-1/2">
-              <div className="bg-white/15 backdrop-blur-xl p-2 md:p-3 rounded-xl border border-white/20 shadow-lg">
-                <h2 className="text-sm text-white font-semibold mb-1 text-center">Quick Calculator</h2>
+              <div className="bg-white/15 backdrop-blur-xl p-3 md:p-4 rounded-xl border border-white/20 shadow-lg max-w-md mx-auto lg:mx-0">
+                <h2 className="text-sm text-white font-semibold mb-2 text-center">Quick Calculator</h2>
                 
-                <div data-testid="currency-calculator" className="[&_input]:py-1 [&_input]:text-sm [&_button]:py-1 [&_select]:py-1">
+                <div data-testid="currency-calculator" className="[&_input]:py-1.5 [&_input]:text-sm [&_button]:py-1.5">
                   <CurrencyCalculator onValuesChange={handleCalculatorChange} />
                 </div>
                 
-                <div className="mt-2 text-center">
+                <div className="mt-3 text-center">
                   <Button 
                     size="sm"
                     className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full shadow-lg text-sm group"
