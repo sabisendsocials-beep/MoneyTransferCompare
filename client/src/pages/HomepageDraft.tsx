@@ -110,27 +110,12 @@ const HomepageDraft = () => {
             </div>
             
             <div className="lg:w-1/2">
-              <div className="bg-white/15 backdrop-blur-xl p-3 md:p-4 rounded-xl border border-white/20 shadow-lg max-w-md mx-auto lg:mx-0">
-                <h2 className="text-sm text-white font-semibold mb-2 text-center">Quick Calculator</h2>
-                
-                <div data-testid="currency-calculator" className="[&_input]:py-1.5 [&_input]:text-sm [&_button]:py-1.5">
-                  <CurrencyCalculator onValuesChange={handleCalculatorChange} />
-                </div>
-                
-                <div className="mt-3 text-center">
-                  <Button 
-                    size="sm"
-                    className="bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 border-0 text-white font-medium w-full shadow-lg text-sm group"
-                    onClick={handleGetBestRate}
-                  >
-                    <span className="inline-flex items-center">
-                      <span className="mr-1 text-yellow-200">✨</span> 
-                      Get Best Rate Now
-                      <ArrowRight size={14} className="ml-1" />
-                    </span>
-                  </Button>
-                </div>
-              </div>
+              <TopRatesCard 
+                className="shadow-lg bg-white/15 backdrop-blur-xl border-white/20" 
+                defaultFrom={calculatorValues.fromCurrency} 
+                defaultTo={calculatorValues.toCurrency}
+                showShareButton={true}
+              />
             </div>
           </div>
         </div>
@@ -138,13 +123,27 @@ const HomepageDraft = () => {
 
       <section className="py-6 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <TopRatesCard 
-              className="shadow-lg" 
-              defaultFrom={calculatorValues.fromCurrency} 
-              defaultTo={calculatorValues.toCurrency}
-              showShareButton={true}
-            />
+          <div className="max-w-lg mx-auto">
+            <div className="bg-white p-4 md:p-6 rounded-xl border shadow-lg">
+              <h2 className="text-lg font-semibold mb-3 text-center text-gray-900">Quick Calculator</h2>
+              
+              <div data-testid="currency-calculator">
+                <CurrencyCalculator onValuesChange={handleCalculatorChange} />
+              </div>
+              
+              <div className="mt-4 text-center">
+                <Button 
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group"
+                  onClick={handleGetBestRate}
+                >
+                  <span className="inline-flex items-center">
+                    <span className="mr-1.5 text-yellow-200">✨</span> 
+                    Get Best Rate Now
+                    <ArrowRight size={16} className="ml-2" />
+                  </span>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
