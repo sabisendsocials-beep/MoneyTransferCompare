@@ -36,7 +36,7 @@ interface HistoricalDataPoint {
 }
 
 const forecastCache = new Map<string, { result: AIForecastResult; timestamp: number }>();
-const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours
+const CACHE_DURATION = 20 * 60 * 60 * 1000; // 20 hours - extended cache to reduce API costs
 
 export class AIForecastService {
   
@@ -68,12 +68,15 @@ export class AIForecastService {
     toCurrency: string,
     currentBestProviderRate: number
   ): Promise<AIForecastResult> {
-    const historicalData = await this.getHistoricalData(fromCurrency, toCurrency, 60);
+    // Use 2 years of data to capture seasonal trends and patterns
+    const historicalData = await this.getHistoricalData(fromCurrency, toCurrency, 730);
     
-    if (historicalData.length < 14) {
+    if (historicalData.length < 30) {
       console.log('[AI Forecast] Insufficient data, using fallback');
       return this.getFallbackForecast(currentBestProviderRate);
     }
+    
+    console.log(`[AI Forecast] Analyzing ${historicalData.length} days of historical data for ${fromCurrency}/${toCurrency}`);
     
     const dataForAI = this.prepareDataForAI(historicalData);
     const currentBaseRate = historicalData[historicalData.length - 1].rate;
@@ -121,60 +124,107 @@ Be conservative with confidence levels - currency markets are inherently unpredi
     currentBaseRate: number,
     currentBestProviderRate: number
   ): string {
-    const recentData = data.slice(-30);
-    const weekAgo = data.slice(-7);
-    const monthAgo = data.slice(-30, -23);
+    // Use all available data for comprehensive analysis
+    const totalDays = data.length;
+    const recentData = data.slice(-60); // Last 60 days for recent trends
+    const weekData = data.slice(-7);
+    const monthData = data.slice(-30);
+    const quarterData = data.slice(-90);
+    const yearData = data.slice(-365);
     
-    const weekAvg = weekAgo.reduce((sum, d) => sum + d.rate, 0) / weekAgo.length;
-    const monthAvg = recentData.reduce((sum, d) => sum + d.rate, 0) / recentData.length;
+    // Calculate multiple timeframe averages
+    const weekAvg = weekData.length > 0 ? weekData.reduce((sum, d) => sum + d.rate, 0) / weekData.length : currentBaseRate;
+    const monthAvg = monthData.length > 0 ? monthData.reduce((sum, d) => sum + d.rate, 0) / monthData.length : currentBaseRate;
+    const quarterAvg = quarterData.length > 0 ? quarterData.reduce((sum, d) => sum + d.rate, 0) / quarterData.length : currentBaseRate;
+    const yearAvg = yearData.length > 0 ? yearData.reduce((sum, d) => sum + d.rate, 0) / yearData.length : currentBaseRate;
     
-    const highRate = Math.max(...recentData.map(d => d.rate));
-    const lowRate = Math.min(...recentData.map(d => d.rate));
-    const volatility = ((highRate - lowRate) / monthAvg * 100).toFixed(2);
+    // Calculate highs and lows across timeframes
+    const monthHigh = monthData.length > 0 ? Math.max(...monthData.map(d => d.rate)) : currentBaseRate;
+    const monthLow = monthData.length > 0 ? Math.min(...monthData.map(d => d.rate)) : currentBaseRate;
+    const yearHigh = yearData.length > 0 ? Math.max(...yearData.map(d => d.rate)) : currentBaseRate;
+    const yearLow = yearData.length > 0 ? Math.min(...yearData.map(d => d.rate)) : currentBaseRate;
     
-    const dataTable = recentData.map(d => 
+    const monthVolatility = monthAvg > 0 ? ((monthHigh - monthLow) / monthAvg * 100).toFixed(2) : '0';
+    const yearVolatility = yearAvg > 0 ? ((yearHigh - yearLow) / yearAvg * 100).toFixed(2) : '0';
+    
+    // Current position analysis
+    const positionVsMonthAvg = ((currentBaseRate - monthAvg) / monthAvg * 100).toFixed(2);
+    const positionVsYearAvg = ((currentBaseRate - yearAvg) / yearAvg * 100).toFixed(2);
+    
+    // Seasonal analysis - group by month
+    const monthlyAverages: { [key: string]: number[] } = {};
+    data.forEach(d => {
+      const month = d.date.substring(5, 7); // Extract MM from YYYY-MM-DD
+      if (!monthlyAverages[month]) monthlyAverages[month] = [];
+      monthlyAverages[month].push(d.rate);
+    });
+    
+    const seasonalSummary = Object.entries(monthlyAverages)
+      .map(([month, rates]) => {
+        const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+        return `Month ${month}: avg ${avg.toFixed(4)} (${rates.length} samples)`;
+      })
+      .join('\n');
+    
+    // Recent trend direction
+    const trendStart = recentData[0]?.rate || currentBaseRate;
+    const trendChange = ((currentBaseRate - trendStart) / trendStart * 100).toFixed(2);
+    
+    // Sample of recent data (last 14 days)
+    const recentSample = data.slice(-14).map(d => 
       `${d.date} (${d.dayOfWeek}): ${d.rate.toFixed(4)}`
     ).join('\n');
     
-    return `Analyse this ${fromCurrency}/${toCurrency} exchange rate history and predict future rates.
+    return `Analyse this ${fromCurrency}/${toCurrency} exchange rate with ${totalDays} days of historical data to predict future movements.
 
-HISTORICAL DATA (last 30 days):
-${dataTable}
+RECENT DATA (last 14 days):
+${recentSample}
 
-KEY STATISTICS:
-- Current base rate: ${currentBaseRate.toFixed(4)}
-- Current best provider rate: ${currentBestProviderRate.toFixed(2)}
-- Provider premium: ${((currentBestProviderRate / currentBaseRate - 1) * 100).toFixed(2)}%
+MULTI-TIMEFRAME STATISTICS:
+- Current rate: ${currentBaseRate.toFixed(4)}
 - 7-day average: ${weekAvg.toFixed(4)}
-- 30-day average: ${monthAvg.toFixed(4)}
-- 30-day high: ${highRate.toFixed(4)}
-- 30-day low: ${lowRate.toFixed(4)}
-- Volatility range: ${volatility}%
+- 30-day average: ${monthAvg.toFixed(4)} (current is ${positionVsMonthAvg}% vs this)
+- 90-day average: ${quarterAvg.toFixed(4)}
+- 365-day average: ${yearAvg.toFixed(4)} (current is ${positionVsYearAvg}% vs this)
+
+RANGE ANALYSIS:
+- 30-day range: ${monthLow.toFixed(4)} to ${monthHigh.toFixed(4)} (${monthVolatility}% volatility)
+- 365-day range: ${yearLow.toFixed(4)} to ${yearHigh.toFixed(4)} (${yearVolatility}% volatility)
+- 60-day trend: ${trendChange}% change
+
+SEASONAL PATTERNS (monthly averages):
+${seasonalSummary}
+
+CURRENT MARKET CONTEXT:
+- Best provider rate: ${currentBestProviderRate.toFixed(2)} ${toCurrency}
+- Provider premium: ${((currentBestProviderRate / currentBaseRate - 1) * 100).toFixed(2)}%
 
 ANALYSIS REQUIRED:
-1. Identify any trends (upward, downward, or sideways movement)
-2. Look for weekly patterns (certain days typically better/worse)
-3. Assess momentum (is the trend accelerating, decelerating, or reversing?)
-4. Consider volatility and uncertainty
+1. Identify the primary trend direction using multi-timeframe analysis
+2. Detect any seasonal patterns from monthly data
+3. Assess current rate position relative to historical averages
+4. Consider mean reversion tendencies and momentum
+5. Factor in volatility for confidence assessment
 
-Provide predictions as percentage changes from the current base rate.
-The frontend will scale these to provider rates.
+Be realistic but also decisive - avoid defaulting to 0% change unless data truly shows stability.
+If the rate is significantly above/below yearly average, consider mean reversion.
+If there's a clear trend, project it forward with appropriate confidence.
 
 Respond with this exact JSON structure:
 {
   "sevenDay": {
-    "predictedChangePercent": <number between -5 and 5>,
-    "confidence": <number between 0.3 and 0.85>,
+    "predictedChangePercent": <number between -5 and 5, be specific not 0>,
+    "confidence": <number between 0.4 and 0.85>,
     "direction": "<up|down|stable>"
   },
   "thirtyDay": {
-    "predictedChangePercent": <number between -10 and 10>,
-    "confidence": <number between 0.2 and 0.7>,
+    "predictedChangePercent": <number between -10 and 10, be specific>,
+    "confidence": <number between 0.3 and 0.7>,
     "direction": "<up|down|stable>"
   },
-  "reasoning": "<2-3 sentences explaining the key factors driving your prediction>",
-  "keyPatterns": ["<pattern 1>", "<pattern 2>"],
-  "riskFactors": ["<risk 1>", "<risk 2>"]
+  "reasoning": "<2-3 specific sentences explaining the key factors - mention actual numbers from the data>",
+  "keyPatterns": ["<specific pattern from data>", "<another pattern>"],
+  "riskFactors": ["<specific risk>", "<another risk>"]
 }`;
   }
   

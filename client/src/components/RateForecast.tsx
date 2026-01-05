@@ -17,9 +17,18 @@ import {
   Bell,
   Sparkles,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Crown,
+  BarChart3
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+
+interface ProviderRotation {
+  currentBest: string;
+  historicalLeader: string;
+  recommendation: string;
+  timePattern?: string;
+}
 
 interface RateForecastProps {
   fromCurrency: string;
@@ -80,6 +89,16 @@ export function RateForecast({ fromCurrency, toCurrency, amount = 500, onCreateA
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: providerRotation } = useQuery<ProviderRotation>({
+    queryKey: ['/api/ai/provider-rotation', fromCurrency, toCurrency],
+    queryFn: async () => {
+      const response = await fetch(`/api/ai/provider-rotation?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}`);
+      if (!response.ok) throw new Error('Failed to fetch provider rotation');
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000,
   });
 
   const formatRate = (rate: number) => {
@@ -292,10 +311,61 @@ export function RateForecast({ fromCurrency, toCurrency, amount = 500, onCreateA
             </div>
           )}
 
+          {providerRotation && (
+            <div className="bg-gradient-to-r from-rose-50 to-pink-50 p-4 rounded-lg border border-rose-100">
+              <div className="flex items-center gap-2 mb-3">
+                <Crown className="h-5 w-5 text-rose-600" />
+                <h4 className="font-semibold text-gray-900">Market Intelligence</h4>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Current Market Leader</p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="default" className="bg-rose-600">
+                      {providerRotation.currentBest}
+                    </Badge>
+                    <span className="text-xs text-green-600 font-medium">Active</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Historical Performance</p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-blue-300 text-blue-700">
+                      {providerRotation.historicalLeader}
+                    </Badge>
+                    <span className="text-xs text-blue-600 font-medium">Consistent</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2 text-sm text-gray-700 mb-2">
+                <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <p>{providerRotation.recommendation}</p>
+              </div>
+              
+              <p className="text-xs text-gray-500 italic">
+                This intelligence complements your existing provider comparisons without overriding current rates or fees.
+              </p>
+              
+              {providerRotation.timePattern && (
+                <div className="mt-3 pt-3 border-t border-rose-100">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Market Insight</p>
+                      <p className="text-xs text-gray-600">Provider performance varies by timing and market conditions. Monitor multiple providers for optimal opportunities.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
             <div className="flex items-center gap-1">
               <Lightbulb className="h-3 w-3" />
-              <span>Forecasts use 60-day trend analysis with moving averages</span>
+              <span>AI analyses up to 2 years of data for seasonal patterns</span>
             </div>
             <span>Updated {new Date(insight.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
