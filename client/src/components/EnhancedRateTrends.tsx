@@ -74,7 +74,11 @@ type ChartDataPoint = {
   [key: string]: any; // Dynamic keys for different rate sources
 };
 
-const EnhancedRateTrends = () => {
+interface EnhancedRateTrendsProps {
+  hideRateTrendChart?: boolean;
+}
+
+const EnhancedRateTrends = ({ hideRateTrendChart = false }: EnhancedRateTrendsProps) => {
   const [periodOption, setPeriodOption] = useState<string>("30");
   const [currencyPair, setCurrencyPair] = useState<CurrencyPair>({
     from: "GBP",
@@ -579,9 +583,11 @@ const EnhancedRateTrends = () => {
           )}
 
           {/* Chart and League Table Section */}
-          <Tabs defaultValue="chart" className="mb-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="chart">Rate Trends Chart</TabsTrigger>
+          <Tabs defaultValue={hideRateTrendChart ? "rankings" : "chart"} className="mb-6">
+            <TabsList className={`grid w-full ${hideRateTrendChart ? "grid-cols-2" : "grid-cols-3"}`}>
+              {!hideRateTrendChart && (
+                <TabsTrigger value="chart">Rate Trends Chart</TabsTrigger>
+              )}
               <TabsTrigger value="rankings">Ranking Trends</TabsTrigger>
               <TabsTrigger value="league">Daily League Table</TabsTrigger>
             </TabsList>
