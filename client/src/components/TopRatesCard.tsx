@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import html2canvas from "html2canvas";
+import sabiSendLogo from "@assets/SabiSend Logo with tagline short.png";
 
 interface TransferResult {
   providerId: number;
@@ -101,79 +102,110 @@ const TopRatesCard = ({
     canvas.width = width;
     canvas.height = height;
 
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#1e3a8a');
-    gradient.addColorStop(0.5, '#7c3aed');
-    gradient.addColorStop(1, '#312e81');
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
-    ctx.fillText('SabiSend', 60, 70);
-    
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '22px system-ui, -apple-system, sans-serif';
-    ctx.fillText('Compare Best Exchange Rates', 60, 105);
+    const brandPrimary = '#3b82f6';
+    const brandDark = '#1e3a8a';
+    const textDark = '#1f2937';
+    const textMuted = '#6b7280';
+    const accentGreen = '#10b981';
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
-    ctx.fillText(`Top ${fromCurrency} to ${toCurrency} Rates`, 60, 175);
+    const loadImage = (src: string): Promise<HTMLImageElement> => {
+      return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    };
 
-    ctx.fillStyle = '#94a3b8';
+    try {
+      const logoImg = await loadImage(sabiSendLogo);
+      const logoHeight = 60;
+      const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+      ctx.drawImage(logoImg, 60, 30, logoWidth, logoHeight);
+    } catch {
+      ctx.fillStyle = brandPrimary;
+      ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
+      ctx.fillText('SabiSend', 60, 70);
+    }
+
+    ctx.fillStyle = textDark;
+    ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`Top ${fromCurrency} to ${toCurrency} Rates`, 60, 140);
+
+    ctx.fillStyle = textMuted;
     ctx.font = '20px system-ui, -apple-system, sans-serif';
     const now = new Date();
-    ctx.fillText(`Updated: ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, 60, 210);
+    ctx.fillText(`Updated: ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, 60, 175);
 
     const ratesToShow = sortedResults.slice(0, 5);
-    const startY = 260;
-    const rowHeight = 90;
+    const startY = 210;
+    const rowHeight = 95;
 
     ratesToShow.forEach((result, index) => {
       const yPos = startY + (index * rowHeight);
       
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillStyle = index === 0 ? '#f0fdf4' : '#f9fafb';
       ctx.beginPath();
-      ctx.roundRect(60, yPos, width - 120, 80, 12);
+      ctx.roundRect(60, yPos, width - 120, 85, 12);
       ctx.fill();
       
-      const medalColors = ['#fbbf24', '#9ca3af', '#d97706', '#6b7280', '#6b7280'];
+      ctx.strokeStyle = index === 0 ? accentGreen : '#e5e7eb';
+      ctx.lineWidth = index === 0 ? 2 : 1;
+      ctx.stroke();
+      
+      const medalColors = ['#fbbf24', '#9ca3af', '#d97706', '#9ca3af', '#9ca3af'];
       ctx.fillStyle = medalColors[index];
       ctx.beginPath();
-      ctx.arc(110, yPos + 40, 28, 0, Math.PI * 2);
+      ctx.arc(115, yPos + 42, 26, 0, Math.PI * 2);
       ctx.fill();
       
-      ctx.fillStyle = index < 3 ? '#1e3a8a' : '#ffffff';
-      ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = index < 3 ? '#ffffff' : '#374151';
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${index + 1}`, 110, yPos + 48);
+      ctx.fillText(`${index + 1}`, 115, yPos + 50);
       ctx.textAlign = 'left';
       
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
-      ctx.fillText(result.providerName, 160, yPos + 35);
+      ctx.fillStyle = textDark;
+      ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+      ctx.fillText(result.providerName, 165, yPos + 38);
       
-      ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = index === 0 ? accentGreen : brandPrimary;
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
       const rateText = `${currencySymbols[toCurrency]}${formatRate(result.exchangeRate)}`;
-      ctx.fillText(rateText, 160, yPos + 68);
+      ctx.fillText(rateText, 165, yPos + 70);
       
       const rateWidth = ctx.measureText(rateText).width;
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '20px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`per ${currencySymbols[fromCurrency]}1`, 170 + rateWidth, yPos + 68);
+      ctx.fillStyle = textMuted;
+      ctx.font = '18px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`per ${currencySymbols[fromCurrency]}1`, 175 + rateWidth, yPos + 70);
+
+      if (index === 0) {
+        ctx.fillStyle = accentGreen;
+        ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+        const bestLabel = 'BEST RATE';
+        const labelWidth = ctx.measureText(bestLabel).width + 16;
+        ctx.beginPath();
+        ctx.roundRect(width - 60 - labelWidth - 20, yPos + 30, labelWidth, 26, 4);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(bestLabel, width - 60 - labelWidth - 12, yPos + 48);
+      }
     });
 
-    const footerY = height - 70;
-    ctx.fillStyle = '#10b981';
+    const footerY = height - 80;
+    ctx.fillStyle = brandPrimary;
     ctx.beginPath();
-    ctx.roundRect(60, footerY, width - 120, 50, 8);
+    ctx.roundRect(60, footerY, width - 120, 55, 10);
     ctx.fill();
     
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Compare rates at sabisend.com', width / 2, footerY + 32);
+    ctx.fillText('Compare rates at sabisend.com', width / 2, footerY + 35);
     ctx.textAlign = 'left';
 
     return new Promise((resolve) => {
