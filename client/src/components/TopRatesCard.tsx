@@ -97,68 +97,83 @@ const TopRatesCard = ({
     if (!ctx) return null;
 
     const width = 1200;
-    const height = 630;
+    const height = 800;
     canvas.width = width;
     canvas.height = height;
 
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#1e3a5f');
-    gradient.addColorStop(0.5, '#2d4a6f');
-    gradient.addColorStop(1, '#1e3a5f');
+    gradient.addColorStop(0, '#1e3a8a');
+    gradient.addColorStop(0.5, '#7c3aed');
+    gradient.addColorStop(1, '#312e81');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
-    ctx.fillText('SabiSend', 60, 80);
+    ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
+    ctx.fillText('SabiSend', 60, 70);
     
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '20px system-ui, -apple-system, sans-serif';
-    ctx.fillText('Best Exchange Rates', 60, 115);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '22px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Compare Best Exchange Rates', 60, 105);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
-    ctx.fillText(`Top ${fromCurrency} to ${toCurrency} Rates`, 60, 200);
+    ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`Top ${fromCurrency} to ${toCurrency} Rates`, 60, 175);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '24px system-ui, -apple-system, sans-serif';
+    ctx.font = '20px system-ui, -apple-system, sans-serif';
     const now = new Date();
-    ctx.fillText(`Updated: ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, 60, 245);
+    ctx.fillText(`Updated: ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, 60, 210);
 
-    sortedResults.slice(0, 3).forEach((result, index) => {
-      const yPos = 310 + (index * 95);
+    const ratesToShow = sortedResults.slice(0, 5);
+    const startY = 260;
+    const rowHeight = 90;
+
+    ratesToShow.forEach((result, index) => {
+      const yPos = startY + (index * rowHeight);
       
-      const medals = ['#ffd700', '#c0c0c0', '#cd7f32'];
-      ctx.fillStyle = medals[index] || '#666';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.beginPath();
-      ctx.arc(90, yPos + 30, 30, 0, Math.PI * 2);
+      ctx.roundRect(60, yPos, width - 120, 80, 12);
       ctx.fill();
       
-      ctx.fillStyle = '#1e3a5f';
-      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+      const medalColors = ['#fbbf24', '#9ca3af', '#d97706', '#6b7280', '#6b7280'];
+      ctx.fillStyle = medalColors[index];
+      ctx.beginPath();
+      ctx.arc(110, yPos + 40, 28, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = index < 3 ? '#1e3a8a' : '#ffffff';
+      ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${index + 1}`, 90, yPos + 40);
+      ctx.fillText(`${index + 1}`, 110, yPos + 48);
       ctx.textAlign = 'left';
       
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
-      ctx.fillText(result.providerName, 140, yPos + 25);
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+      ctx.fillText(result.providerName, 160, yPos + 35);
       
       ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${currencySymbols[toCurrency]}${formatRate(result.exchangeRate)}`, 140, yPos + 65);
+      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      const rateText = `${currencySymbols[toCurrency]}${formatRate(result.exchangeRate)}`;
+      ctx.fillText(rateText, 160, yPos + 68);
       
+      const rateWidth = ctx.measureText(rateText).width;
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '22px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`per ${currencySymbols[fromCurrency]}1`, 350, yPos + 65);
+      ctx.font = '20px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`per ${currencySymbols[fromCurrency]}1`, 170 + rateWidth, yPos + 68);
     });
 
+    const footerY = height - 70;
     ctx.fillStyle = '#10b981';
-    ctx.fillRect(60, height - 80, width - 120, 50);
+    ctx.beginPath();
+    ctx.roundRect(60, footerY, width - 120, 50, 8);
+    ctx.fill();
+    
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Compare rates at sabisend.com', width / 2, height - 48);
+    ctx.fillText('Compare rates at sabisend.com', width / 2, footerY + 32);
     ctx.textAlign = 'left';
 
     return new Promise((resolve) => {
