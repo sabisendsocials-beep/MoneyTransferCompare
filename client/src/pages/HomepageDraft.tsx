@@ -111,7 +111,7 @@ const HomepageDraft = () => {
             
             <div className="lg:w-1/2">
               <TopRatesCard 
-                className="shadow-lg bg-white/15 backdrop-blur-xl border-white/20" 
+                className="shadow-xl bg-white border-gray-200" 
                 defaultFrom={calculatorValues.fromCurrency} 
                 defaultTo={calculatorValues.toCurrency}
                 showShareButton={true}
