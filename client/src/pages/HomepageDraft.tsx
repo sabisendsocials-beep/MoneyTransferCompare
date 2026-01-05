@@ -1,9 +1,20 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "wouter";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { 
+  ArrowRight, 
+  TrendingUp, 
+  Crown, 
+  BarChart3, 
+  Lightbulb, 
+  Bell, 
+  Target,
+  Sparkles,
+  MessageCircle
+} from "lucide-react";
 import CurrencyCalculator from "@/components/CurrencyCalculator";
 import TopRatesCard from "@/components/TopRatesCard";
 import ComparisonResults from "@/components/ComparisonResults";
@@ -18,6 +29,27 @@ import { MarketCommentary } from "@/components/MarketCommentary";
 import AccountCreationBanner from "@/components/AccountCreationBanner";
 import { TransferResult } from "@shared/schema";
 
+interface ProviderRotation {
+  currentBest: string;
+  historicalLeader: string;
+  recommendation: string;
+  timePattern?: string;
+}
+
+interface AlertSuggestion {
+  targetRate: number;
+  percentageAboveCurrent: number;
+  reasoning: string;
+}
+
+interface PowerInsightData {
+  alertSuggestion: AlertSuggestion;
+  currentMarket: {
+    bestProviderRate: number;
+    bestProvider: string;
+  };
+}
+
 const HomepageDraft = () => {
   const [, setLocation] = useLocation();
   const [comparisonResults, setComparisonResults] = useState<TransferResult[]>([]);
@@ -27,6 +59,26 @@ const HomepageDraft = () => {
     fromCurrency: "GBP",
     toCurrency: "NGN",
     calculationMode: "send"
+  });
+
+  const { data: providerRotation } = useQuery<ProviderRotation>({
+    queryKey: ['/api/ai/provider-rotation', calculatorValues.fromCurrency, calculatorValues.toCurrency],
+    queryFn: async () => {
+      const response = await fetch(`/api/ai/provider-rotation?fromCurrency=${calculatorValues.fromCurrency}&toCurrency=${calculatorValues.toCurrency}`);
+      if (!response.ok) throw new Error('Failed to fetch provider rotation');
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: powerInsight } = useQuery<PowerInsightData>({
+    queryKey: ['/api/ai/power-insight', calculatorValues.fromCurrency, calculatorValues.toCurrency, 500],
+    queryFn: async () => {
+      const response = await fetch(`/api/ai/power-insight?fromCurrency=${calculatorValues.fromCurrency}&toCurrency=${calculatorValues.toCurrency}&amount=500`);
+      if (!response.ok) throw new Error('Failed to fetch power insight');
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleCalculatorChange = (values: { amount: string; fromCurrency: string; toCurrency: string; calculationMode?: string }) => {
@@ -53,6 +105,14 @@ const HomepageDraft = () => {
     setShowResults(true);
   };
 
+  const formatRate = (rate: number) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(rate);
+  };
+
   return (
     <div className="min-h-screen">
       <div className="bg-yellow-50 border-b border-yellow-200 py-2">
@@ -61,7 +121,7 @@ const HomepageDraft = () => {
             DRAFT PREVIEW
           </Badge>
           <span className="ml-2 text-sm text-gray-600">
-            Proposed homepage redesign for review
+            Proposed homepage redesign - Calculator right, AI insights left
           </span>
         </div>
       </div>
@@ -119,40 +179,147 @@ const HomepageDraft = () => {
         </div>
       </section>
 
-      <section className="py-6 bg-gray-50">
+      <section className="py-8 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="max-w-lg mx-auto">
-            <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-4 md:p-6 rounded-xl shadow-xl">
-              <h2 className="text-lg font-semibold mb-3 text-center text-white">Quick Calculator</h2>
-              
-              <div data-testid="currency-calculator">
-                <CurrencyCalculator onValuesChange={handleCalculatorChange} />
-              </div>
-              
-              <div className="mt-4 text-center">
-                <Button 
-                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group"
-                  onClick={handleGetBestRate}
-                >
-                  <span className="inline-flex items-center">
-                    <span className="mr-1.5 text-yellow-200">✨</span> 
-                    Get Best Rate Now
-                    <ArrowRight size={16} className="ml-2" />
-                  </span>
-                </Button>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            
+            <div className="space-y-4 order-2 lg:order-1">
+              <Card className="border-0 shadow-md overflow-hidden">
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-white" />
+                    <h3 className="font-semibold text-white">Sabi Buzz</h3>
+                    <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
+                      Live
+                    </Badge>
+                  </div>
+                  <p className="text-amber-100 text-xs mt-1">Real insights with personality</p>
+                </div>
+                <CardContent className="p-4">
+                  <MarketCommentary 
+                    fromCurrency={calculatorValues.fromCurrency} 
+                    toCurrency={calculatorValues.toCurrency} 
+                  />
+                </CardContent>
+              </Card>
+
+              {providerRotation && (
+                <Card className="border-0 shadow-md overflow-hidden">
+                  <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-white" />
+                      <h3 className="font-semibold text-white">Market Intelligence</h3>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Current Market Leader</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="default" className="bg-rose-600">
+                            {providerRotation.currentBest}
+                          </Badge>
+                          <span className="text-xs text-green-600 font-medium">Active</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Historical Performance</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-blue-300 text-blue-700">
+                            {providerRotation.historicalLeader}
+                          </Badge>
+                          <span className="text-xs text-blue-600 font-medium">Consistent</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2 text-sm text-gray-700 mb-2">
+                      <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <p>{providerRotation.recommendation}</p>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 italic">
+                      This intelligence complements your existing provider comparisons.
+                    </p>
+                    
+                    {providerRotation.timePattern && (
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 text-gray-500" />
+                          <p className="text-xs text-gray-600">Provider performance varies by timing and market conditions.</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {powerInsight?.alertSuggestion && (
+                <Card className="border-0 shadow-md overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-5 w-5 text-white" />
+                      <h3 className="font-semibold text-white">Smart Alert Suggestion</h3>
+                      <Badge variant="secondary" className="ml-auto bg-white/20 text-white border-0 text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-start gap-3">
+                        <Target className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            Set alert at {formatRate(powerInsight.alertSuggestion.targetRate)} {calculatorValues.toCurrency}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {powerInsight.alertSuggestion.reasoning}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <Link href="/alerts">
+                      <Button 
+                        size="sm" 
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        data-testid="btn-create-smart-alert"
+                      >
+                        <Bell className="h-4 w-4 mr-2" />
+                        Create Alert
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 p-4 md:p-6 rounded-xl shadow-xl sticky top-4">
+                <h2 className="text-lg font-semibold mb-3 text-center text-white">Quick Calculator</h2>
+                
+                <div data-testid="currency-calculator">
+                  <CurrencyCalculator onValuesChange={handleCalculatorChange} />
+                </div>
+                
+                <div className="mt-4 text-center">
+                  <Button 
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 border-0 text-white font-medium w-full shadow-lg group"
+                    onClick={handleGetBestRate}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="mr-1.5 text-yellow-200">✨</span> 
+                      Get Best Rate Now
+                      <ArrowRight size={16} className="ml-2" />
+                    </span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Sabi Buzz</h2>
-          <p className="text-sm text-gray-600">Real insights with personality</p>
-        </div>
-        <MarketCommentary fromCurrency="GBP" toCurrency="NGN" />
-      </div>
 
       <ComparisonResults results={comparisonResults} visible={showResults} />
 
