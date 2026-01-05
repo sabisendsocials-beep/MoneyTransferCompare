@@ -15,6 +15,15 @@ interface CommentaryResponse {
     currencyPair: string;
     commentary: string;
     timestamp: string;
+    metadata?: {
+      bestProvider: string;
+      bestRate: number;
+      rateSpread: number;
+      movement: 'up' | 'down' | 'stable';
+      changePercent: number;
+      providerCount: number;
+      dataSource: string;
+    };
   };
 }
 
@@ -87,6 +96,7 @@ export function MarketCommentary({ fromCurrency = "GBP", toCurrency = "NGN" }: C
 
   const commentaryText = commentary?.data?.commentary || '';
   const timestamp = commentary?.data?.timestamp || '';
+  const metadata = commentary?.data?.metadata;
 
   return (
     <Card className={`${getCardStyle(commentaryText)} shadow-sm hover:shadow-md transition-shadow`}>
@@ -97,11 +107,23 @@ export function MarketCommentary({ fromCurrency = "GBP", toCurrency = "NGN" }: C
             <p className="text-sm font-medium text-gray-900 leading-relaxed">
               {commentaryText || 'Market analysis updating - fresh insights coming soon.'}
             </p>
-            {timestamp && (
-              <p className="text-xs text-gray-500 mt-2">
-                Updated {new Date(timestamp).toLocaleTimeString()}
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
+              {timestamp && (
+                <span>Updated {new Date(timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+              )}
+              {metadata && (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <span>Based on {metadata.providerCount} providers</span>
+                  {metadata.rateSpread > 0 && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <span className="font-medium text-gray-600">{metadata.rateSpread.toFixed(1)}% spread</span>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

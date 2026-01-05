@@ -118,36 +118,37 @@ function getSimulatedMarketData(fromCurrency: string, toCurrency: string): Marke
 }
 
 /**
- * Generate AI commentary for market data with entertaining tone
+ * Generate AI commentary for market data with data-driven insights
  */
 async function generateMarketCommentary(data: MarketData): Promise<string> {
   try {
-    const prompt = `Generate insightful market commentary about the ${data.currencyPair} exchange rate based on real data analysis.
+    const prompt = `Generate a concise, data-driven market insight about the ${data.currencyPair} exchange rate.
 
-Market Data Analysis:
+Key Market Data:
 - Current rate: ${data.currentRate.toFixed(2)}
 - Movement: ${data.movement} by ${Math.abs(data.changePercent).toFixed(2)}%
 - Best provider: ${data.bestProvider} at ${data.bestRate.toFixed(2)}
 - Provider spread: ${data.rateSpread.toFixed(1)}% between best and worst rates
-- Rate advantage: ${data.bestProvider} offers ${((data.bestRate - data.currentRate) / data.currentRate * 100).toFixed(1)}% better than market rate
 
-Focus on data-driven insights such as:
-- Why ${data.bestProvider} is leading today (rate competitiveness, position change)
-- What the ${Math.abs(data.changePercent).toFixed(2)}% movement means for transfers
-- How the ${data.rateSpread.toFixed(1)}% spread compares to typical market conditions
-- Provider performance relative to their usual position
-- Real value impact for customers sending money
+Requirements:
+- Be analytical and informative, not promotional
+- Include specific numbers from the data provided
+- Explain what the data means for someone sending money
+- Keep it under 35 words
+- Focus on ONE key insight (movement, spread, or provider leadership)
 
-Style: Analytical but accessible. Base insights on the actual data provided. Maximum 40 words.
+Examples of good insights:
+"${data.bestProvider} leads with rates ${data.rateSpread.toFixed(1)}% above competitors - on a £500 transfer, that's roughly £${(500 * data.rateSpread / 100).toFixed(0)} extra value."
+"The ${Math.abs(data.changePercent).toFixed(1)}% rate movement today means your transfer could be worth ${data.changePercent > 0 ? 'more' : 'less'} than yesterday."
 
-Generate ONE data-driven insight based on real market analysis:`;
+Generate ONE data-focused insight:`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      model: "gpt-4o",
       messages: [
         {
           role: "system",  
-          content: "You're texting your best friend about money transfer deals. Be super casual and excited! Use language like 'Yo!', 'Dude!', 'Bro!', 'Girl!', 'No way!', 'For real?', 'That's crazy!', 'Don't sleep on this!'. Keep it under 20 words and sound like you're actually texting a friend!"
+          content: "You are a financial analyst providing clear, data-driven market insights. Be informative and helpful, not promotional. Always reference specific numbers and explain what they mean for customers. Use British English."
         },
         {
           role: "user",
@@ -155,39 +156,40 @@ Generate ONE data-driven insight based on real market analysis:`;
         }
       ],
       max_tokens: 100,
-      temperature: 0.8
+      temperature: 0.6
     });
 
     return response.choices[0].message.content?.trim() || 
-           generateEntertainingFallback(data);
+           generateDataDrivenFallback(data);
     
   } catch (error) {
     console.error('Error generating AI commentary:', error);
-    return generateEntertainingFallback(data);
+    return generateDataDrivenFallback(data);
   }
 }
 
 /**
  * Generate data-driven fallback commentary when AI is unavailable
  */
-function generateEntertainingFallback(data: MarketData): string {
-  const rateAdvantage = ((data.bestRate - data.currentRate) / data.currentRate * 100).toFixed(1);
-  const isSignificantMovement = Math.abs(data.changePercent) > 0.5;
-  const isWideSpread = data.rateSpread > 3.0;
+function generateDataDrivenFallback(data: MarketData): string {
+  const spreadSavings = (500 * data.rateSpread / 100).toFixed(0);
+  const isSignificantMovement = Math.abs(data.changePercent) > 0.3;
+  const isWideSpread = data.rateSpread > 2.5;
   
   // Data-driven insights based on market conditions
-  const insightOptions = [
-    `${data.bestProvider} leads with ${rateAdvantage}% better rates than market average today.`,
-    `${data.currencyPair} ${data.movement === 'up' ? 'strengthened' : 'weakened'} ${Math.abs(data.changePercent).toFixed(1)}% - ${data.bestProvider} offers best value.`,
-    `Provider spread at ${data.rateSpread.toFixed(1)}% suggests ${isWideSpread ? 'varied' : 'competitive'} market conditions favoring ${data.bestProvider}.`,
-    `${data.bestProvider} outperforming with rates ${rateAdvantage}% above market - significant advantage for transfers.`,
-    `Market analysis: ${data.bestProvider} positioned best for ${data.currencyPair} with ${isSignificantMovement ? 'strong' : 'stable'} performance.`,
-    `Rate comparison shows ${data.bestProvider} offering ${rateAdvantage}% premium over standard rates today.`,
-    `${data.currencyPair} market dynamics favor ${data.bestProvider} - ${Math.abs(data.changePercent).toFixed(1)}% movement creates opportunity.`,
-    `Provider analysis: ${data.bestProvider} maintains competitive edge with ${data.rateSpread.toFixed(1)}% spread advantage.`
-  ];
+  if (isSignificantMovement) {
+    return `${data.currencyPair} ${data.movement === 'up' ? 'rose' : 'fell'} ${Math.abs(data.changePercent).toFixed(1)}% today. ${data.bestProvider} leads at ${data.bestRate.toFixed(0)} - a ${data.rateSpread.toFixed(1)}% edge over competitors.`;
+  }
   
-  return insightOptions[Math.floor(Math.random() * insightOptions.length)];
+  if (isWideSpread) {
+    return `Provider spread is ${data.rateSpread.toFixed(1)}% today - choosing ${data.bestProvider} over the lowest rate could mean ~£${spreadSavings} more on a £500 transfer.`;
+  }
+  
+  return `${data.bestProvider} leads ${data.currencyPair} at ${data.bestRate.toFixed(0)}. With a ${data.rateSpread.toFixed(1)}% spread between providers, comparing rates before sending is worthwhile.`;
+}
+
+function generateEntertainingFallback(data: MarketData): string {
+  return generateDataDrivenFallback(data);
 }
 
 /**
@@ -235,15 +237,58 @@ function generateFallbackCommentary(marketData: MarketData): string {
   }
 }
 
-/**
- * Generate commentary for a specific currency pair using smart caching
- */
-export async function generateCommentary(fromCurrency: string, toCurrency: string): Promise<{
+interface CommentaryResult {
   currencyPair: string;
   commentary: string;
   timestamp: string;
-}> {
+  metadata?: {
+    bestProvider: string;
+    bestRate: number;
+    rateSpread: number;
+    movement: 'up' | 'down' | 'stable';
+    changePercent: number;
+    providerCount: number;
+    dataSource: string;
+  };
+}
+
+/**
+ * Generate commentary for a specific currency pair using smart caching
+ */
+export async function generateCommentary(fromCurrency: string, toCurrency: string): Promise<CommentaryResult> {
   console.log(`Getting cached commentary for ${fromCurrency}/${toCurrency}...`);
+  
+  // Get real market data for metadata
+  const marketData = await getRealMarketData(fromCurrency, toCurrency);
+  
+  // Count providers from database
+  let providerCount = 0;
+  try {
+    const { db } = await import('../db');
+    const { exchangeRates, providers } = await import('../../shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+    
+    const rates = await db.select()
+      .from(exchangeRates)
+      .leftJoin(providers, eq(exchangeRates.provider_id, providers.id))
+      .where(and(
+        eq(exchangeRates.from_currency, fromCurrency),
+        eq(exchangeRates.to_currency, toCurrency)
+      ));
+    providerCount = rates.filter(r => r.exchange_rates.rate > 0).length;
+  } catch (e) {
+    providerCount = 12;
+  }
+  
+  const metadata = {
+    bestProvider: marketData.bestProvider,
+    bestRate: marketData.bestRate,
+    rateSpread: marketData.rateSpread,
+    movement: marketData.movement,
+    changePercent: marketData.changePercent,
+    providerCount: providerCount || 12,
+    dataSource: 'live'
+  };
   
   try {
     // Use smart caching system instead of generating on every request
@@ -255,13 +300,13 @@ export async function generateCommentary(fromCurrency: string, toCurrency: strin
     return {
       currencyPair: `${fromCurrency}/${toCurrency}`,
       commentary,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      metadata
     };
   } catch (error) {
     console.log(`Cache failed, using fallback for ${fromCurrency}/${toCurrency}`);
     
     // Fallback to real market data analysis
-    const marketData = await getRealMarketData(fromCurrency, toCurrency);
     const commentary = generateFallbackCommentary(marketData);
     
     console.log(`Generated fallback: "${commentary}"`);
@@ -269,7 +314,8 @@ export async function generateCommentary(fromCurrency: string, toCurrency: strin
     return {
       currencyPair: marketData.currencyPair,
       commentary,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      metadata
     };
   }
 }
