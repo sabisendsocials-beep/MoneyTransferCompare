@@ -303,16 +303,20 @@ const Home = () => {
                         </p>
                       </div>
                     </div>
-                    <Link href="/alerts">
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
-                        data-testid="btn-create-smart-alert"
-                      >
-                        <Bell className="h-4 w-4 mr-2" />
-                        Create Alert
-                      </Button>
-                    </Link>
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
+                      data-testid="btn-create-smart-alert"
+                      onClick={() => {
+                        const alertSection = document.getElementById('rate-alert-section');
+                        if (alertSection) {
+                          alertSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
+                    >
+                      <Bell className="h-4 w-4 mr-2" />
+                      Create Alert
+                    </Button>
                   </div>
                 </div>
               )}
@@ -346,7 +350,7 @@ const Home = () => {
 
       <ComparisonResults results={comparisonResults} visible={showResults} />
 
-      <div className="rate-alert-section">
+      <div id="rate-alert-section" className="rate-alert-section">
         <RateAlertModule />
       </div>
 
