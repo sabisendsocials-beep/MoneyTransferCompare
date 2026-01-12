@@ -153,7 +153,7 @@ const Home = () => {
     <div className="min-h-screen bg-gray-50">
       <SEO
         title="SabiSend - Compare Best Money Transfer Rates to Nigeria & Ghana | Save Money on Remittances"
-        description="Compare live exchange rates from 15+ money transfer providers. Send money to Nigeria and Ghana with the best rates. Save up to £50 per transfer with SabiSend."
+        description="Compare live exchange rates from trusted money transfer providers. Send to Nigeria and Ghana with the best rates and start saving today with SabiSend."
         keywords="money transfer, send money to Nigeria, GBP to NGN, remittance rates, transfer money Ghana, best exchange rates, international money transfer, UK to Nigeria, UK to Ghana"
         canonicalUrl="https://sabisend.com"
         structuredData={structuredData}
