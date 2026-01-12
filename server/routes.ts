@@ -23,6 +23,7 @@ import adminHistoricalRouter from "./routes/adminHistoricalRoutes";
 import rateAlertRouter from "./routes/rateAlertRoutes";
 import commentarySchedulerRouter from "./routes/commentarySchedulerRoutes";
 import { setupAuth, isAuthenticated, optionalAuth } from "./simpleAuth";
+import { webhookRouter } from "./webhookRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -64,6 +65,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register commentary scheduler admin routes
   app.use('/api/commentary-scheduler', commentarySchedulerRouter);
+  
+  // Register webhook routes for external integrations
+  app.use(webhookRouter);
   
   // Authentication endpoints for email/password auth
   app.get('/api/auth/status', optionalAuth, (req: any, res) => {

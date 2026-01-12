@@ -38,3 +38,8 @@ externalPort = 80
 
 [agent]
 integrations = ["javascript_sendgrid:1.0.0", "javascript_openai:1.0.0", "javascript_google_analytics:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+WEBHOOK_SECRET_TOKEN = "8079904d43e4d3eb8a5b313fb5aa42eae43c0d1c7c6f5c292dc756ef8b5449dc"
