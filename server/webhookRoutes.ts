@@ -60,8 +60,27 @@ function generateExcerpt(content: string): string {
 webhookRouter.post("/api/webhook/blog", webhookAuthMiddleware, async (req: Request, res: Response) => {
   try {
     console.log('[Webhook] Received blog post request');
+    console.log('[Webhook] Raw body:', JSON.stringify(req.body, null, 2));
     
-    const validationResult = webhookBlogPostSchema.safeParse(req.body);
+    const body = req.body;
+    const normalizedData = {
+      title: body.title || body.headline || body.name,
+      content: body.content || body.body || body.html_content || body.html || body.text,
+      excerpt: body.excerpt || body.summary || body.description || body.intro,
+      slug: body.slug || body.url_slug || body.permalink,
+      featured_image: body.featured_image || body.image || body.cover_image || body.thumbnail || body.featuredImage,
+      author: body.author || body.writer || body.by || 'SabiSend Team',
+      status: body.status || body.state || 'published',
+      meta_description: body.meta_description || body.metaDescription || body.seo_description,
+      meta_keywords: body.meta_keywords || body.metaKeywords || body.keywords,
+      category: body.category || body.type || 'money-transfer-guides',
+      tags: body.tags || body.labels || [],
+      featured: body.featured || body.is_featured || false,
+    };
+    
+    console.log('[Webhook] Normalized data:', JSON.stringify(normalizedData, null, 2));
+    
+    const validationResult = webhookBlogPostSchema.safeParse(normalizedData);
     
     if (!validationResult.success) {
       console.log('[Webhook] Validation failed:', validationResult.error.format());
