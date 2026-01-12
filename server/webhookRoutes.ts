@@ -29,8 +29,8 @@ const webhookAuthMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 const webhookBlogPostSchema = z.object({
-  title: z.string().min(5).max(200),
-  content: z.string().min(100),
+  title: z.string().min(3).max(200),
+  content: z.string().min(10),
   excerpt: z.string().optional(),
   slug: z.string().optional(),
   featured_image: z.string().url().optional().nullable(),
@@ -63,11 +63,18 @@ webhookRouter.post("/api/webhook/blog", webhookAuthMiddleware, async (req: Reque
     console.log('[Webhook] Raw body:', JSON.stringify(req.body, null, 2));
     
     const body = req.body;
+    
+    let slugFromUrl = undefined;
+    if (body.publicUrl) {
+      const urlParts = body.publicUrl.split('/');
+      slugFromUrl = urlParts[urlParts.length - 1];
+    }
+    
     const normalizedData = {
       title: body.title || body.headline || body.name,
-      content: body.content || body.body || body.html_content || body.html || body.text,
-      excerpt: body.excerpt || body.summary || body.description || body.intro,
-      slug: body.slug || body.url_slug || body.permalink,
+      content: body.content_html || body.content || body.body || body.html_content || body.html || body.content_markdown || body.text,
+      excerpt: body.excerpt || body.summary || body.metaDescription || body.description || body.intro,
+      slug: body.slug || body.url_slug || body.permalink || slugFromUrl,
       featured_image: body.featured_image || body.image || body.cover_image || body.thumbnail || body.featuredImage,
       author: body.author || body.writer || body.by || 'SabiSend Team',
       status: body.status || body.state || 'published',
