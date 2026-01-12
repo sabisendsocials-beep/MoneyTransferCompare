@@ -11,7 +11,7 @@ interface SEOProps {
 }
 
 export function SEO({
-  title = "SabiSend - Compare Best Money Transfer Rates to Nigeria & Ghana | Save Money on Remittances",
+  title = "Compare Real-Time Money Transfer Rates to Nigeria & Ghana",
   description = "Compare live exchange rates from trusted money transfer providers. Send to Nigeria and Ghana with the best rates and start saving today with SabiSend.",
   keywords = "money transfer, send money to Nigeria, GBP to NGN, remittance rates, transfer money Ghana, best exchange rates, international money transfer",
   canonicalUrl = "https://sabisend.com",
