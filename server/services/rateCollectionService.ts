@@ -175,10 +175,15 @@ export class RateCollectionService {
       }
       
       // Handle Wise API integration
-      if (provider.name.toLowerCase().includes('wise') && provider.api_url.includes('wise.com/rates/live')) {
+      if (provider.name.toLowerCase().includes('wise') && provider.api_url && provider.api_url.includes('wise.com/rates/live')) {
         return await this.collectFromWiseApi(provider, fromCurrency, toCurrency);
       }
-      
+
+      // Handle Rate Bridge integration (LemFi and future bridge-backed providers)
+      if (provider.api_url && provider.api_url.includes('trycloudflare.com')) {
+        return await this.collectFromRateBridge(provider, fromCurrency, toCurrency);
+      }
+
       // Add other provider API integrations here as needed
       log(`API implementation not available yet for ${provider.name}`);
       return null;
@@ -233,6 +238,51 @@ export class RateCollectionService {
     }
   }
   
+  /**
+   * Collect exchange rate from the external Rate Bridge API.
+   * The bridge sits at priority level equivalent to an API source —
+   * rates are saved with source = API and verified = true.
+   */
+  private async collectFromRateBridge(
+    provider: Provider,
+    fromCurrency: string,
+    toCurrency: string
+  ): Promise<ExchangeRate | null> {
+    try {
+      log(`[RateBridge] Collecting ${provider.name} ${fromCurrency}->${toCurrency} via bridge`);
+
+      const { fetchBridgeRate } = await import('./rateBridgeService.js');
+
+      const bridgeResult = await fetchBridgeRate(
+        provider.name.toLowerCase(),
+        fromCurrency,
+        toCurrency
+      );
+
+      if (!bridgeResult || bridgeResult.rate <= 0) {
+        log(`[RateBridge] No valid rate returned for ${provider.name}`);
+        return null;
+      }
+
+      log(`[RateBridge] Got rate ${bridgeResult.rate} for ${provider.name} (${bridgeResult.extractionMode})`);
+
+      const exchangeRate: InsertExchangeRate = {
+        provider_id: provider.id,
+        from_currency: fromCurrency,
+        to_currency: toCurrency,
+        rate: bridgeResult.rate,
+        source: RateSourceType.API,
+        source_url: provider.api_url || undefined,
+        verified: true
+      };
+
+      return await storage.createExchangeRate(exchangeRate);
+    } catch (error: any) {
+      log(`[RateBridge] Error collecting rate: ${error.message}`);
+      return null;
+    }
+  }
+
   /**
    * Collect exchange rate via web scraping
    */
