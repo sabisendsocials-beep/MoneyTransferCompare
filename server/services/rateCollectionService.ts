@@ -180,7 +180,10 @@ export class RateCollectionService {
       }
 
       // Handle Rate Bridge integration (LemFi and future bridge-backed providers)
-      if (provider.api_url && provider.api_url.includes('trycloudflare.com')) {
+      if (provider.api_url && (
+        provider.api_url.includes('sabisendrates.com') ||
+        provider.api_url.includes('trycloudflare.com')
+      )) {
         return await this.collectFromRateBridge(provider, fromCurrency, toCurrency);
       }
 

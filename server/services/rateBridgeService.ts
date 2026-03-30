@@ -9,7 +9,7 @@
 import { storage } from '../storage';
 import { RateSourceType, InsertExchangeRate } from '@shared/schema';
 
-const BRIDGE_BASE_URL = 'https://paperbacks-burner-armed-sherman.trycloudflare.com';
+const BRIDGE_BASE_URL = 'https://rates.sabisendrates.com';
 
 export interface BridgeRateResult {
   provider: string;
