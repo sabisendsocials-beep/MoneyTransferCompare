@@ -6,3 +6,9 @@ id = "gU2V0lsqIyQcS62Id9Gj_"
 uri = "file://rates_export.csv"
 type = "table"
 title = "SabiSend — Latest Rates Export (all providers & corridors)"
+
+[[outputs]]
+id = "XQapDW7ExYlLVXfaE3XVJ"
+uri = "file://sabisend-rates-export.csv"
+type = "table"
+title = "SabiSend Rates Export — All Providers & Corridors"
