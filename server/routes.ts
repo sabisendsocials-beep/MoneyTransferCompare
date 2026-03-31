@@ -24,12 +24,16 @@ import rateAlertRouter from "./routes/rateAlertRoutes";
 import commentarySchedulerRouter from "./routes/commentarySchedulerRoutes";
 import { setupAuth, isAuthenticated, optionalAuth } from "./simpleAuth";
 import { webhookRouter } from "./webhookRoutes";
+import exportRouter from "./routes/exportRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first
   await setupAuth(app);
   
+  // Register export routes
+  app.use(exportRouter);
+
   // Register rate source router
   app.use(rateSourceRouter);
   

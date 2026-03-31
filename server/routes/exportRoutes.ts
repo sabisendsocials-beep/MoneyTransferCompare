@@ -1,9 +1,82 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
-import { rateTrends } from '@shared/schema';
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { rateTrends, exchangeRates, providers } from '@shared/schema';
+import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 
 const router = Router();
+
+// Export latest provider rates across all corridors as CSV or JSON
+router.get('/api/export/rates', async (req: Request, res: Response) => {
+  try {
+    const format = (req.query.format as string) || 'csv';
+    const onlyFresh = req.query.fresh !== 'false'; // default: only latest per provider/corridor
+
+    const rows = await db.execute(sql`
+      SELECT 
+        p.name AS provider,
+        e.from_currency,
+        e.to_currency,
+        e.rate,
+        e.source,
+        e.verified,
+        e.source_url,
+        e.timestamp
+      FROM exchange_rates e
+      JOIN providers p ON p.id = e.provider_id
+      WHERE (e.provider_id, e.from_currency, e.to_currency, e.timestamp) IN (
+        SELECT provider_id, from_currency, to_currency, MAX(timestamp)
+        FROM exchange_rates
+        GROUP BY provider_id, from_currency, to_currency
+      )
+      ORDER BY e.from_currency, e.to_currency, p.name
+    `);
+
+    const data = rows.rows as {
+      provider: string;
+      from_currency: string;
+      to_currency: string;
+      rate: string;
+      source: string;
+      verified: boolean;
+      source_url: string | null;
+      timestamp: string;
+    }[];
+
+    if (format === 'json') {
+      return res.json({
+        success: true,
+        count: data.length,
+        exportedAt: new Date().toISOString(),
+        data
+      });
+    }
+
+    // CSV output
+    const header = 'provider,from_currency,to_currency,rate,source,verified,source_url,timestamp\n';
+    const csvRows = data.map(r =>
+      [
+        `"${r.provider}"`,
+        r.from_currency,
+        r.to_currency,
+        r.rate,
+        r.source,
+        r.verified,
+        r.source_url ? `"${r.source_url}"` : '',
+        r.timestamp
+      ].join(',')
+    ).join('\n');
+
+    const filename = `sabisend-rates-${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(header + csvRows);
+
+  } catch (error) {
+    console.error('Error exporting rates:', error);
+    res.status(500).json({ success: false, error: 'Failed to export rates' });
+  }
+});
 
 // Export rate history as CSV
 router.get('/api/export/rate-history', async (req: Request, res: Response) => {

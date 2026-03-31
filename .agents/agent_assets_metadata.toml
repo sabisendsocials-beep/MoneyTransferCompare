@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "gU2V0lsqIyQcS62Id9Gj_"
+uri = "file://rates_export.csv"
+type = "table"
+title = "SabiSend — Latest Rates Export (all providers & corridors)"
