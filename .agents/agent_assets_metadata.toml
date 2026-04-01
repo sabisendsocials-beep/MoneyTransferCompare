@@ -12,3 +12,9 @@ id = "XQapDW7ExYlLVXfaE3XVJ"
 uri = "file://sabisend-rates-export.csv"
 type = "table"
 title = "SabiSend Rates Export — All Providers & Corridors"
+
+[[outputs]]
+id = "5yekgp0C8ElzP0utRXw65"
+uri = "file://sabisend-full-history.csv"
+type = "table"
+title = "SabiSend — Full Rate History (112,025 records, May 2025–Apr 2026)"
