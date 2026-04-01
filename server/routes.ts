@@ -25,6 +25,7 @@ import commentarySchedulerRouter from "./routes/commentarySchedulerRoutes";
 import { setupAuth, isAuthenticated, optionalAuth } from "./simpleAuth";
 import { webhookRouter } from "./webhookRoutes";
 import exportRouter from "./routes/exportRoutes";
+import bridgeSyncRouter from "./routes/bridgeSyncRoutes";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -33,6 +34,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register export routes
   app.use(exportRouter);
+
+  // Register bridge sync routes
+  app.use(bridgeSyncRouter);
 
   // Register rate source router
   app.use(rateSourceRouter);

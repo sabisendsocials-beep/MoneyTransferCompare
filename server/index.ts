@@ -154,6 +154,17 @@ app.use((req, res, next) => {
       log(`Error setting up Provider API scheduler: ${apiError}`);
     }
     
+    // Initialize Rate Bridge sync scheduler
+    try {
+      log("🌉 Setting up Rate Bridge sync scheduler");
+      const { startBridgeSyncScheduler } = await import('./services/bridgeSyncService');
+      startBridgeSyncScheduler();
+      log("✓ Bridge sync scheduler initialized (runs every 6 hours, first run in 10s)");
+      log("📡 Fetches live rates from rates.sabisendrates.com for all 13 corridors");
+    } catch (bridgeError) {
+      log(`Error setting up bridge sync scheduler: ${bridgeError}`);
+    }
+
     // Strictly defer ALL operations until after server startup
     log("🔒 STRICT POLICY: All data operations deferred until scheduled time");
     log("📋 DATA OPERATIONS POLICY:");
