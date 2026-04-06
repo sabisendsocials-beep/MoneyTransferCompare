@@ -159,7 +159,7 @@ app.use((req, res, next) => {
       log("🌉 Setting up Rate Bridge sync scheduler");
       const { startBridgeSyncScheduler } = await import('./services/bridgeSyncService');
       startBridgeSyncScheduler();
-      log("✓ Bridge sync scheduler initialized (runs every 6 hours, first run in 10s)");
+      log("✓ Bridge sync scheduler initialized (runs every hour, first run in 10s)");
       log("📡 Fetches live rates from rates.sabisendrates.com for all 13 corridors");
     } catch (bridgeError) {
       log(`Error setting up bridge sync scheduler: ${bridgeError}`);

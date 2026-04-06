@@ -230,10 +230,10 @@ export async function runFullBridgeSync(): Promise<FullSyncReport> {
 
 /**
  * Start the auto-sync scheduler.
- * Runs immediately on startup, then every 6 hours.
+ * Runs immediately on startup, then every hour.
  */
 export function startBridgeSyncScheduler(): void {
-  const INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+  const INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
   // Run immediately (with short delay to let the app fully boot)
   setTimeout(async () => {
