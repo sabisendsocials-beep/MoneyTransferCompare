@@ -30,7 +30,9 @@ const BRIDGE_CORRIDORS = [
   { from: 'EUR', to: 'KES' },
   { from: 'EUR', to: 'INR' },
   { from: 'EUR', to: 'PKR' },
+  { from: 'USD', to: 'NGN' },
   { from: 'USD', to: 'GHS' },
+  { from: 'USD', to: 'KES' },
   { from: 'USD', to: 'INR' },
   { from: 'USD', to: 'PKR' },
 ];
@@ -102,7 +104,7 @@ async function buildProviderMap(): Promise<Map<string, number>> {
     map.set(row.name.toLowerCase().replace(/\s+/g, ''), row.id);
     map.set(row.name.toLowerCase(), row.id);
   }
-  // Manual aliases for common mismatches
+  // Manual aliases for common mismatches between bridge names and DB names
   const aliases: Record<string, string> = {
     'westernunion': 'western union',
     'taptapsend': 'taptap send',
@@ -111,6 +113,10 @@ async function buildProviderMap(): Promise<Map<string, number>> {
     'remitly': 'remitly',
     'wise': 'wise',
     'lemfi': 'lemfi',
+    'xoom': 'xoom (paypal)',
+    'monieworld': 'monieworld',
+    'nala': 'nala',
+    'sendwave': 'sendwave',
   };
   for (const [bridgeName, dbName] of Object.entries(aliases)) {
     const id = map.get(dbName);
