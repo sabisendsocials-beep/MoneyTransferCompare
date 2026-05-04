@@ -26,6 +26,8 @@ import { setupAuth, isAuthenticated, optionalAuth } from "./simpleAuth";
 import { webhookRouter } from "./webhookRoutes";
 import exportRouter from "./routes/exportRoutes";
 import bridgeSyncRouter from "./routes/bridgeSyncRoutes";
+import { androidEarlyAccess, insertAndroidEarlyAccessSchema } from "@shared/schema";
+import { db } from "./db";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -37,6 +39,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register bridge sync routes
   app.use(bridgeSyncRouter);
+
+  // Android early access sign-up
+  app.post("/api/early-access/android", async (req: Request, res: Response) => {
+    try {
+      const parsed = insertAndroidEarlyAccessSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors[0]?.message || "Invalid email" });
+      }
+      const { eq } = await import("drizzle-orm");
+      const existing = await db.select().from(androidEarlyAccess).where(eq(androidEarlyAccess.email, parsed.data.email)).limit(1);
+      if (existing.length > 0) {
+        return res.status(409).json({ error: "You're already on the early access list!" });
+      }
+      await db.insert(androidEarlyAccess).values(parsed.data);
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("[EarlyAccess] Error:", err);
+      return res.status(500).json({ error: "Something went wrong. Please try again." });
+    }
+  });
 
   // Register rate source router
   app.use(rateSourceRouter);

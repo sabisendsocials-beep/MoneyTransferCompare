@@ -81,17 +81,24 @@ export function AppDownloadBanner() {
 
   if (!visible) return null;
 
-  // Android: show a subtle "coming soon" variant
+  // Android: invite to early access
   if (device === "android") {
     return (
-      <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-6 md:w-80 animate-in slide-in-from-bottom-4 duration-300">
+      <div className="fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-4 duration-300">
         <div className="bg-gray-900 text-white rounded-2xl shadow-2xl p-4 flex items-start gap-3">
-          <div className="bg-blue-600 rounded-xl p-2 shrink-0">
+          <div className="bg-green-600 rounded-xl p-2 shrink-0">
             <Smartphone className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">Android app coming soon!</p>
-            <p className="text-xs text-gray-400 mt-0.5">We'll notify you when it's ready.</p>
+            <p className="font-semibold text-sm">SabiSend Android app coming soon!</p>
+            <p className="text-xs text-gray-400 mt-0.5 mb-2">Join early access — get the app before anyone else.</p>
+            <a
+              href="/android-early-access"
+              className="inline-block bg-green-500 hover:bg-green-400 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              onClick={handleDismiss}
+            >
+              Join Early Access
+            </a>
           </div>
           <button onClick={handleDismiss} className="text-gray-500 hover:text-white shrink-0 -mt-0.5">
             <X className="h-4 w-4" />

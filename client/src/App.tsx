@@ -28,6 +28,7 @@ import EnhancedTrendsTest from "@/pages/EnhancedTrendsTest";
 import ProviderTrends from "@/pages/ProviderTrends";
 import PreviewDashboard from "@/pages/PreviewDashboard";
 import HomepageDraft from "@/pages/HomepageDraft";
+import AndroidEarlyAccess from "@/pages/AndroidEarlyAccess";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -88,6 +89,9 @@ function Router() {
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/blog-admin" component={BlogAdmin} />
           
+          {/* Android Early Access */}
+          <Route path="/android-early-access" component={AndroidEarlyAccess} />
+
           {/* Authentication */}
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />

@@ -391,3 +391,18 @@ export const insertSystemSettingSchema = createInsertSchema(systemSettings).omit
 
 export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
 export type SystemSetting = typeof systemSettings.$inferSelect;
+
+// Android early access sign-ups
+export const androidEarlyAccess = pgTable("android_early_access", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAndroidEarlyAccessSchema = createInsertSchema(androidEarlyAccess).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAndroidEarlyAccess = z.infer<typeof insertAndroidEarlyAccessSchema>;
+export type AndroidEarlyAccess = typeof androidEarlyAccess.$inferSelect;
