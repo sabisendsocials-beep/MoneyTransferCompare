@@ -53,6 +53,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ error: "You're already on the early access list!" });
       }
       await db.insert(androidEarlyAccess).values(parsed.data);
+
+      // Notify owner
+      try {
+        const RESEND_API_KEY = process.env.RESEND_API_KEY;
+        if (RESEND_API_KEY) {
+          const { Resend } = await import("resend");
+          const resend = new Resend(RESEND_API_KEY);
+          await resend.emails.send({
+            from: "SabiSend <hello@sabisend.com>",
+            to: ["seyikusa@gmail.com"],
+            subject: "New Android Early Access Sign-up",
+            html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+              <h2 style="color:#16a34a;margin-bottom:4px">New Early Access Sign-up 🎉</h2>
+              <p style="color:#374151;font-size:15px">Someone just joined the SabiSend Android early access list.</p>
+              <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:16px 0">
+                <p style="margin:0;font-size:15px;color:#111827"><strong>Email:</strong> ${parsed.data.email}</p>
+              </div>
+              <p style="color:#6b7280;font-size:13px">SabiSend Android Early Access</p>
+            </div>`,
+          });
+        }
+      } catch (emailErr) {
+        console.error("[EarlyAccess] Failed to send owner notification:", emailErr);
+      }
+
       return res.json({ success: true });
     } catch (err: any) {
       console.error("[EarlyAccess] Error:", err);
