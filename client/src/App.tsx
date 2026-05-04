@@ -31,6 +31,7 @@ import HomepageDraft from "@/pages/HomepageDraft";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AppDownloadBanner } from "@/components/AppDownloadBanner";
 import { NewsletterPopupContainer } from "@/components/NewsletterPopupContainer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ImprovedOnboarding, useImprovedOnboarding } from "@/components/ImprovedOnboarding";
@@ -139,8 +140,8 @@ function Router() {
         isVisible={showPrompt}
         onClose={closePrompt}
       />
-      
 
+      <AppDownloadBanner />
     </div>
   );
 }

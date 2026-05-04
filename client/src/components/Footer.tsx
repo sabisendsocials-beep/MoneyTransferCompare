@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Facebook, Twitter, Instagram, Linkedin, Clock, Shield, Globe2, HelpCircle } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Clock, Shield, Globe2, HelpCircle, Smartphone } from "lucide-react";
+import { SiAppstore } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 
 const Footer = () => {
@@ -252,6 +253,22 @@ const Footer = () => {
           </div>
 
           <div>
+            <h3 className="text-lg font-semibold mb-4 text-white">Get the App</h3>
+            <p className="text-gray-200 text-sm mb-4 leading-relaxed">
+              Compare rates and set alerts on the go. Available now on iOS.
+            </p>
+            <a
+              href="https://apps.apple.com/gb/app/sabisend/id6763401572"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 bg-white text-gray-900 hover:bg-gray-100 font-semibold text-sm rounded-xl px-4 py-2.5 transition-colors mb-6"
+            >
+              <SiAppstore className="h-5 w-5 text-gray-800" />
+              <span>
+                <span className="block text-xs font-normal text-gray-500 leading-none">Download on the</span>
+                <span className="block leading-tight">App Store</span>
+              </span>
+            </a>
             <h3 className="text-lg font-semibold mb-4 text-white">Stay Updated</h3>
             <p className="text-gray-200 text-sm mb-4 leading-relaxed">
               Subscribe to our newsletter for the latest exchange rates, news and money-saving tips.
