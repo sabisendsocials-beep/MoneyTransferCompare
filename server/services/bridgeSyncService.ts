@@ -117,6 +117,7 @@ async function buildProviderMap(): Promise<Map<string, number>> {
     'monieworld': 'monieworld',
     'nala': 'nala',
     'sendwave': 'sendwave',
+    'yousend': 'yousend',
   };
   for (const [bridgeName, dbName] of Object.entries(aliases)) {
     const id = map.get(dbName);
