@@ -18,3 +18,9 @@ id = "5yekgp0C8ElzP0utRXw65"
 uri = "file://sabisend-full-history.csv"
 type = "table"
 title = "SabiSend — Full Rate History (112,025 records, May 2025–Apr 2026)"
+
+[[outputs]]
+id = "JyEIDhp02Pa0egmc5RJdS"
+uri = "file://CODEX_HANDOFF.md"
+type = "text"
+title = "SabiSend — Codex Handoff Document"
